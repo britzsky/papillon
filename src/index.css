@@ -1,0 +1,56 @@
+:root {
+  font-family: 'Segoe UI', 'Pretendard', 'Noto Sans KR', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --theme-color: #76776f;
+  --theme-color-strong: #76776f;
+  --theme-color-soft: #f0eee8;
+  --theme-color-softer: #faf8f2;
+  --theme-text: #25241f;
+  --theme-muted: #6b675c;
+  --theme-accent: #7c8a4b;
+  --theme-accent-soft: #f2f4e9;
+  --action-summary: #1f93c2;
+  --action-summary-hover: #197fac;
+  --action-summary-soft: #e7f6fb;
+  --action-summary-border: #187da8;
+  --action-warning: #e98851;
+  --action-warning-hover: #d87339;
+  --action-warning-soft: #fff3eb;
+  --action-warning-border: #d46f34;
+  --action-disabled-bg: #eee9df;
+  --action-disabled-border: #d7d1c5;
+  --action-disabled-text: #7b756a;
+  --query-control-font-size: 12px;
+  --query-control-font-weight: 500;
+  --table-border-strong: #aaa59a;
+  --table-border-mid: #ddd8ce;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  color: #0f172a;
+}
+
+#root {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
