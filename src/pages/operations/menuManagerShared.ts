@@ -273,32 +273,6 @@ export function isIngredientFieldDirty(
   return original ? item[field] !== original[field] : item[field] !== '' && item[field] !== 0
 }
 
-function isAccountIngredientDetailChanged(
-  detail: EditableMenuIngredientItem,
-  originalDetailsByMenuId: Record<string, Record<string, EditableMenuIngredientItem>>,
-) {
-  const original = originalDetailsByMenuId[detail.menu_id]?.[detail.row_id]
-
-  if (!original) {
-    return detail.ingredient_id !== ''
-  }
-
-  return (
-    detail.ingredient_id !== original.ingredient_id ||
-    detail.ingredient_name_raw !== original.ingredient_name_raw ||
-    detail.ingredient_name_std !== original.ingredient_name_std ||
-    detail.category_name !== original.category_name ||
-    detail.base_unit !== original.base_unit ||
-    detail.order_unit !== original.order_unit ||
-    detail.convert_value !== original.convert_value ||
-    detail.storage_type !== original.storage_type ||
-    detail.menu_usage_count !== original.menu_usage_count ||
-    detail.needs_review !== original.needs_review ||
-    detail.note !== original.note ||
-    detail.safe_stock_qty !== original.safe_stock_qty
-  )
-}
-
 export function buildMenuSavePayload(
   menuItems: MenuManagerItem[],
   detailItemsByMenuId: Record<string, EditableMenuIngredientItem[]>,
@@ -401,7 +375,7 @@ export function buildAccountMenuSavePayload(
   detailItemsByMenuId: Record<string, EditableMenuIngredientItem[]>,
   originalAssignedMenuIds: string[],
   originalMenusById: Record<string, MenuManagerItem>,
-  originalDetailsByMenuId: Record<string, Record<string, EditableMenuIngredientItem>>,
+  _originalDetailsByMenuId: Record<string, Record<string, EditableMenuIngredientItem>>,
 ) {
   const originalAssignedMenuIdSet = new Set(originalAssignedMenuIds)
   const assignedMenuIdSet = new Set(assignedMenus.map((item) => item.menu_id))
@@ -469,7 +443,6 @@ export function buildAccountMenuSavePayload(
 
   const ingredient_detail = assignedMenus.flatMap((menu) =>
     (detailItemsByMenuId[menu.menu_id] ?? [])
-      .filter((detail) => isAccountIngredientDetailChanged(detail, originalDetailsByMenuId))
       .map((detail) => ({
         ingredient_id: detail.ingredient_id,
         ingredient_name_raw: detail.ingredient_name_raw || detail.ingredient_name,

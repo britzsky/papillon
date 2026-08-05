@@ -49,6 +49,43 @@
   font-weight: var(--query-control-font-weight);
 }
 
+.food-order-item-search {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.food-order-item-search label {
+  display: grid;
+  gap: 3px;
+  font-size: 12px;
+  color: #334155;
+}
+
+.food-order-item-search input {
+  width: 130px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+.food-order-item-search button {
+  height: 36px;
+  padding: 0 18px;
+  border: 1px solid var(--theme-color-strong);
+  border-radius: 8px;
+  background: var(--theme-color);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.food-order-item-search button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
 .food-order-layout {
   display: grid;
   grid-template-columns: 250px minmax(0, 1.7fr) 320px;
@@ -178,6 +215,29 @@
 .food-order-table-scroll {
   flex: 1;
   overflow: auto;
+}
+
+.food-order-lookup {
+  min-height: 150px;
+  max-height: 42%;
+  border-top: 1px solid var(--table-border-strong);
+  display: flex;
+  flex-direction: column;
+}
+
+.food-order-lookup__title {
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  background: var(--theme-color-soft);
+  font-size: 12px;
+}
+
+.food-order-lookup__error {
+  padding: 8px 10px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 12px;
 }
 
 .food-order-table th,
@@ -628,6 +688,13 @@
   }
 
   .food-order-field select {
+    width: 100%;
+  }
+
+  .food-order-item-search,
+  .food-order-item-search label,
+  .food-order-item-search input,
+  .food-order-item-search button {
     width: 100%;
   }
 

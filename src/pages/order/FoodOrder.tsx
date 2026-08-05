@@ -11,6 +11,7 @@ import {
   type OrderMenu,
 } from '../../api/order'
 import { mealCategoryOptions } from '../operations/menuManagerShared'
+import { lookupItem, validateItemLookupRequest, type ItemLookupItem } from '../../api/itemLookup'
 import './FoodOrder.css'
 
 type Supplier = {
@@ -193,6 +194,12 @@ function getCurrentDate() {
   ).padStart(2, '0')}`
 }
 
+function getCompactDate(daysToAdd = 0) {
+  const date = new Date()
+  date.setDate(date.getDate() + daysToAdd)
+  return `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`
+}
+
 function sanitizeServingQty(value: number) {
   if (!Number.isFinite(value) || value < 1) {
     return 1
@@ -225,6 +232,12 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
   const [isDetailLoading, setIsDetailLoading] = useState(false)
   const [selectedSuppliers, setSelectedSuppliers] = useState<Record<string, boolean>>({})
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false)
+  const [itemCode, setItemCode] = useState('')
+  const [soldTo, setSoldTo] = useState(() => localStorage.getItem('sold_to') ?? '')
+  const [reqDeliveryDate, setReqDeliveryDate] = useState(() => getCompactDate(1))
+  const [lookupItems, setLookupItems] = useState<ItemLookupItem[]>([])
+  const [lookupError, setLookupError] = useState('')
+  const [isLookupLoading, setIsLookupLoading] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -390,6 +403,33 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
     setIsOrderModalOpen(false)
   }, [activeMenu?.menu_id, activeServingQty])
 
+  const handleItemSearch = async (event: React.FormEvent) => {
+    event.preventDefault()
+    const request = {
+      soldTo: soldTo.trim(),
+      itemCode: itemCode.trim(),
+      reqDeliveryDate: reqDeliveryDate.trim(),
+    }
+    const validationError = validateItemLookupRequest(request)
+    if (validationError) {
+      setLookupError(validationError)
+      return
+    }
+    localStorage.setItem('sold_to', request.soldTo)
+    setIsLookupLoading(true)
+    setLookupError('')
+    try {
+      const items = await lookupItem(request)
+      setLookupItems(items)
+      if (items.length === 0) setLookupError('해당 입고일에 주문 가능한 품목 정보가 없습니다.')
+    } catch (error) {
+      setLookupItems([])
+      setLookupError(error instanceof Error ? error.message : '품목 조회에 실패했습니다.')
+    } finally {
+      setIsLookupLoading(false)
+    }
+  }
+
   const selectedOrders = useMemo<SelectedOrder[]>(() => {
     if (!activeMenu) {
       return []
@@ -501,6 +541,12 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
                 ))}
               </select>
             </div>
+            <form className="food-order-item-search" onSubmit={handleItemSearch}>
+              <label>사업장코드<input value={soldTo} maxLength={10} autoComplete="off" onChange={(event) => setSoldTo(event.target.value.trimStart())} placeholder="최대 10자리" /></label>
+              <label>품목코드<input value={itemCode} maxLength={18} autoComplete="off" onChange={(event) => setItemCode(event.target.value.trimStart())} placeholder="최대 18자리" /></label>
+              <label>입고일자<input value={reqDeliveryDate} maxLength={8} inputMode="numeric" autoComplete="off" onChange={(event) => setReqDeliveryDate(event.target.value.replace(/\D/g, ''))} placeholder="YYYYMMDD" /></label>
+              <button type="submit" disabled={isLookupLoading}>품목 조회</button>
+            </form>
           </section>
 
           <section className="food-order-layout">
@@ -599,6 +645,27 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
               ) : (
                 <div className="food-order-empty">왼쪽 목록에서 메뉴를 선택하면 식자재를 확인할 수 있습니다.</div>
               )}
+              <div className="food-order-lookup">
+                <div className="food-order-lookup__title">
+                  <strong>제휴사 품목 조회 결과</strong>
+                  <span>{isLookupLoading ? '통신 중…' : `${lookupItems.length}건`}</span>
+                </div>
+                {lookupError ? <div className="food-order-lookup__error">{lookupError}</div> : null}
+                {lookupItems.length > 0 ? (
+                  <div className="food-order-table-scroll">
+                    <table className="food-order-table">
+                      <thead><tr><th>품목코드</th><th>품목명</th><th>규격</th><th>단위</th><th>가격</th><th>리드타임</th><th>최소발주</th><th>원산지</th><th>STOP</th></tr></thead>
+                      <tbody>{lookupItems.map((item, index) => (
+                        <tr key={`${item.itemCode}-${index}`}>
+                          <td>{item.itemCode}</td><td>{item.itemName || '-'}</td><td>{item.standard || '-'}</td>
+                          <td>{item.unit || '-'}</td><td>{formatNumber(item.price)}</td><td>{item.leadTime}</td>
+                          <td>{item.minQntty}</td><td>{item.origin || '-'}</td><td>{item.stopType || '-'}</td>
+                        </tr>
+                      ))}</tbody>
+                    </table>
+                  </div>
+                ) : !isLookupLoading ? <div className="food-order-empty">조회된 제휴사 품목이 없습니다.</div> : null}
+              </div>
             </section>
 
             <aside className="food-order-panel food-order-panel--suppliers">

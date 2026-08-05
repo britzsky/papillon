@@ -1,3 +1,5 @@
+import { buildApiUrl } from '../config/api'
+
 export type MenuCategory = '한식' | '중식' | '일식' | '양식' | '분식' | '간식' | '기타'
 export type MealType = '조식' | '중식' | '석식'
 
@@ -173,4 +175,3 @@ export async function getOrderDetailList(menuId: string, servingQty: number, men
     .map((detail) => normalizeOrderDetail(detail as RawOrderDetail))
     .filter((detail) => detail.ingredient_id !== '' || detail.ingredient_name !== '')
 }
-import { buildApiUrl } from '../config/api'
