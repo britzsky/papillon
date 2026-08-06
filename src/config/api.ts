@@ -1,5 +1,5 @@
 const envApiOrigin = import.meta.env.VITE_API_ORIGIN?.trim()
-const envApiPort = import.meta.env.VITE_API_PORT?.trim() ?? '9090'
+const envApiPort = import.meta.env.VITE_API_PORT?.trim() ?? '19090'
 
 function getBrowserOriginFromPort(port: string) {
   if (typeof window === 'undefined') {
