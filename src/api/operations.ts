@@ -237,6 +237,10 @@ export type AccountMenuSavePayload = {
     qty_raw: string
     qty_num: number
     qty_unit: string
+    recipe_yield_servings: number
+    qty_base: number
+    base_unit: string
+    qty_per_person: number
     review_flag: string
   }>
   ingredient_detail: Array<{

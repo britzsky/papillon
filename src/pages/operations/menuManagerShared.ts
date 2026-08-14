@@ -228,6 +228,23 @@ export function formatQtyRaw(qtyNum: number, qtyUnit: string) {
   return `${qtyNum}${qtyUnit}`
 }
 
+function normalizeUnit(unit: string) {
+  return unit.trim().toLowerCase()
+}
+
+function toBaseQuantity(qty: number, qtyUnit: string, baseUnit: string) {
+  const sourceUnit = normalizeUnit(qtyUnit)
+  const targetUnit = normalizeUnit(baseUnit)
+
+  if (!sourceUnit || !targetUnit || sourceUnit === targetUnit) return qty
+  if (sourceUnit === 'kg' && targetUnit === 'g') return qty * 1000
+  if (sourceUnit === 'g' && targetUnit === 'kg') return qty / 1000
+  if (sourceUnit === 'l' && targetUnit === 'ml') return qty * 1000
+  if (sourceUnit === 'ml' && targetUnit === 'l') return qty / 1000
+
+  return qty
+}
+
 export function getReviewFlag(qtyUnit: string) {
   return localizedQtyUnits.has(qtyUnit) ? 'text_qty' : ''
 }
@@ -448,8 +465,11 @@ export function buildAccountMenuSavePayload(
   })
   const menu_details = assignedMenus.flatMap((menu) =>
     (detailItemsByMenuId[menu.menu_id] ?? []).map((detail, index) => {
-      const qtyNum = detail.qty_num ?? detail.required_qty
+      const qtyNum = detail.required_qty ?? detail.qty_num
       const qtyUnit = detail.qty_unit ?? ''
+      const baseUnit = detail.base_unit || qtyUnit
+      const recipeYieldServings = 1
+      const qtyBase = toBaseQuantity(qtyNum, qtyUnit, baseUnit)
 
       return {
         recipe_id: detail.recipe_id ?? '',
@@ -461,6 +481,10 @@ export function buildAccountMenuSavePayload(
         qty_raw: detail.qty_raw || formatQtyRaw(qtyNum, qtyUnit),
         qty_num: qtyNum,
         qty_unit: qtyUnit,
+        recipe_yield_servings: recipeYieldServings,
+        qty_base: qtyBase,
+        base_unit: baseUnit,
+        qty_per_person: qtyBase / recipeYieldServings,
         review_flag: getReviewFlag(qtyUnit),
       }
     }),
