@@ -32,6 +32,7 @@ import {
   matchesMenuFilters,
   mealCategoryOptions,
   menuGubunOptions,
+  mealPlanTypeOptions,
   menuTypeOptions,
   parseNumber,
   qtyUnitOptions,
@@ -48,6 +49,7 @@ function MenuManager() {
   const [keywordFilter, setKeywordFilter] = useState(initialKeywordFilter)
   const [selectedMenuType, setSelectedMenuType] = useState('')
   const [selectedMenuGubun, setSelectedMenuGubun] = useState('')
+  const [selectedMealPlanType, setSelectedMealPlanType] = useState('')
   const [ingredientOptions, setIngredientOptions] = useState<IngredientOption[]>([])
   const [ingredientError, setIngredientError] = useState('')
   const [menuItems, setMenuItems] = useState<MenuManagerItem[]>([])
@@ -128,9 +130,10 @@ function MenuManager() {
           keyword: keywordFilter,
           menuType: selectedMenuType,
           menuGubun: selectedMenuGubun,
+          mealPlanType: selectedMealPlanType,
         }),
       ),
-    [keywordFilter, menuItems, selectedMealCategory, selectedMenuGubun, selectedMenuType],
+    [keywordFilter, menuItems, selectedMealCategory, selectedMealPlanType, selectedMenuGubun, selectedMenuType],
   )
 
   const ingredientCategoryOptions = useMemo(
@@ -147,7 +150,7 @@ function MenuManager() {
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [keywordFilter, selectedMealCategory, selectedMenuGubun, selectedMenuType])
+  }, [keywordFilter, selectedMealCategory, selectedMealPlanType, selectedMenuGubun, selectedMenuType])
 
   useEffect(() => {
     setCurrentPage((current) => Math.min(current, totalMenuPages))
@@ -229,6 +232,17 @@ function MenuManager() {
     value: string,
   ) => {
     setMenuItems((current) => current.map((item) => (item.menu_id === menuId ? { ...item, [field]: value } : item)))
+  }
+
+  const handleMenuNumberChange = (
+    menuId: string,
+    field: 'meal_plan_type' | 'calories_per_serving',
+    value: string,
+  ) => {
+    const parsed = Number(value)
+    setMenuItems((current) =>
+      current.map((item) => (item.menu_id === menuId ? { ...item, [field]: Number.isFinite(parsed) ? parsed : 0 } : item)),
+    )
   }
 
   const handleMenuImageFileChange = (menuId: string, file: File | null) => {
@@ -433,6 +447,15 @@ function MenuManager() {
                   ))}
                 </select>
               </div>
+              <div className="menu-manager-field">
+                <label htmlFor="meal-plan-type-filter">식단 유형</label>
+                <select id="meal-plan-type-filter" value={selectedMealPlanType} onChange={(event) => setSelectedMealPlanType(event.target.value)}>
+                  <option value="">전체</option>
+                  {mealPlanTypeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.text}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div className="menu-manager-filters__actions">
               <button type="button" className="menu-manager-save-button" onClick={() => void handleSave()} disabled={isSaving}>
@@ -464,6 +487,8 @@ function MenuManager() {
                           <th>식사분류</th>
                           <th>메뉴유형</th>
                           <th>메뉴구분</th>
+                          <th>식단 유형</th>
+                          <th>칼로리(kcal)</th>
                           <th>등록일</th>
                           <th>선택</th>
                         </tr>
@@ -551,6 +576,29 @@ function MenuManager() {
                                   </option>
                                 ))}
                               </select>
+                            </td>
+                            <td>
+                              <select
+                                className={`menu-manager-cell-input${isMenuFieldDirty(item, originalMenusById, 'meal_plan_type') ? ' is-dirty' : ''}`}
+                                value={item.meal_plan_type}
+                                onClick={(event) => event.stopPropagation()}
+                                onChange={(event) => handleMenuNumberChange(item.menu_id, 'meal_plan_type', event.target.value)}
+                              >
+                                {mealPlanTypeOptions.map((option) => (
+                                  <option key={option.value} value={option.value}>{option.text}</option>
+                                ))}
+                              </select>
+                            </td>
+                            <td>
+                              <input
+                                className={`menu-manager-cell-input${isMenuFieldDirty(item, originalMenusById, 'calories_per_serving') ? ' is-dirty' : ''}`}
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={item.calories_per_serving ?? 0}
+                                onClick={(event) => event.stopPropagation()}
+                                onChange={(event) => handleMenuNumberChange(item.menu_id, 'calories_per_serving', event.target.value)}
+                              />
                             </td>
                             <td>{item.created_at || '-'}</td>
                             <td>

@@ -22,6 +22,8 @@ export type MenuManagerItem = {
   image_url?: string
   image_file_id?: string
   like?: string
+  meal_plan_type: number
+  calories_per_serving?: number
 }
 
 export type MenuIngredientItem = {
@@ -83,6 +85,7 @@ export type TableMealsItem = {
   source?: 'auto' | 'pdf' | 'manual'
   file_name: string
   created_at?: string
+  meal_plan_type: number
 }
 
 export type TableMealsDetailItem = {
@@ -131,6 +134,7 @@ export type TableMealsSavePayload = {
   table_month: number
   table_week: number
   source: 'auto' | 'pdf' | 'manual'
+  meal_plan_type: number
   meals: Array<{
     meal_date: string
     weekday: string
@@ -169,6 +173,8 @@ export type MenuSavePayload = {
     created_at: string
     menu_img?: string | File
     image_file_id?: string
+    meal_plan_type: number
+    calories_per_serving?: number
   }>
   menu_details: Array<{
     recipe_id?: string
@@ -205,6 +211,8 @@ export type AccountMenuSavePayload = {
     menu_type: string
     menu_gubun: string
     del_yn?: string
+    meal_plan_type: number
+    calories_per_serving?: number
   }>
   removed_menu_ids: string[]
   removed_menus?: Array<{
@@ -216,6 +224,8 @@ export type AccountMenuSavePayload = {
     menu_type: string
     menu_gubun: string
     del_yn: string
+    meal_plan_type: number
+    calories_per_serving?: number
   }>
   menu_details: Array<{
     recipe_id: string
@@ -477,6 +487,8 @@ function normalizeMenu(record: RawRecord, index: number): MenuManagerItem {
     image_url: toBackendAssetUrl(menuImg),
     image_file_id: asText(record.image_file_id ?? record.imageFileId),
     like: asText(record.like ?? record.LIKE ?? record.is_like ?? record.isLike, 'N'),
+    meal_plan_type: asNumber(record.meal_plan_type ?? record.mealPlanType, 0),
+    calories_per_serving: asNumber(record.calories_per_serving ?? record.caloriesPerServing),
   }
 }
 
@@ -551,6 +563,7 @@ function normalizeTableMealsItem(record: RawRecord, index: number): TableMealsIt
     source: asText(record.source) as TableMealsItem['source'],
     file_name: asText(record.file_name ?? record.fileName ?? record.org_file_name ?? record.orgFileName),
     created_at: asText(record.created_at ?? record.createdAt),
+    meal_plan_type: asNumber(record.meal_plan_type ?? record.mealPlanType, 0),
   }
 }
 
@@ -577,10 +590,10 @@ function normalizeMealPlanAnalysisItem(record: RawRecord): MealPlanAnalysisItem 
     menu_id: asText(record.menu_id ?? record.menuId),
     menu_name: asText(record.menu_name ?? record.menuName),
     ingredient_id: asText(record.ingredient_id ?? record.ingredientId),
-    required_qty: asNumber(record.required_qty ?? record.requiredQty),
-    current_qty: asNumber(record.current_qty ?? record.currentQty),
-    shortage_qty: asNumber(record.shortage_qty ?? record.shortageQty),
-    ingredient_name: asText(record.ingredient_name ?? record.ingredientName),
+    required_qty: asNumber(record.required_base_qty ?? record.requiredBaseQty ?? record.required_qty ?? record.requiredQty),
+    current_qty: asNumber(record.current_base_qty ?? record.currentBaseQty ?? record.current_qty ?? record.currentQty),
+    shortage_qty: asNumber(record.shortage_base_qty ?? record.shortageBaseQty ?? record.shortage_qty ?? record.shortageQty),
+    ingredient_name: asText(record.ingredient_name ?? record.ingredientName ?? record.product_name ?? record.productName),
     average_usage_qty: asNumber(record.average_usage_qty ?? record.averageUsageQty ?? record.avg_usage_qty ?? record.avgUsageQty),
     total_capacity_qty: asNumber(record.total_capacity_qty ?? record.totalCapacityQty ?? record.total_qty ?? record.totalQty ?? record.capacity_qty ?? record.capacityQty),
     last_used_at: asText(record.last_used_at ?? record.lastUsedAt ?? record.last_usage_date ?? record.lastUsageDate),
@@ -782,7 +795,7 @@ export async function getTableMealsList(accountId: string, tableYear?: number, t
     searchParams.set('table_month', String(tableMonth))
   }
 
-  const response = await fetch(`${buildApiUrl('/Table/TableMealsList')}?${searchParams.toString()}`, {
+  const response = await fetch(`${buildApiUrl('/v2/meal-plans')}?${searchParams.toString()}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -820,7 +833,7 @@ export async function getTableMealsDetailList(
   })
   appendTableMealsPeriod(searchParams, period)
 
-  const response = await fetch(`${buildApiUrl('/Table/TableMealsDetailList')}?${searchParams.toString()}`, {
+  const response = await fetch(`${buildApiUrl('/v2/meal-plans/details')}?${searchParams.toString()}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -848,7 +861,7 @@ export async function getMealPlanAnalysis(
   })
   appendTableMealsPeriod(searchParams, period)
 
-  const response = await fetch(`${buildApiUrl('/Procurement/MealPlanAnalysis')}?${searchParams.toString()}`, {
+  const response = await fetch(`${buildApiUrl('/v2/procurement/analysis')}?${searchParams.toString()}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -862,23 +875,81 @@ export async function getMealPlanAnalysis(
   const payload = await parseResponseBody(response)
   return readMealPlanAnalysisItems(payload)
     .map((item) => normalizeMealPlanAnalysisItem(item as RawRecord))
-    .filter((item) => item.menu_id !== '' || item.menu_name !== '')
+    .filter((item) => item.ingredient_id !== '' || item.ingredient_name !== '')
+}
+
+export type ProcurementCartFromMealPlanResult = {
+  code: number
+  message: string
+  procurement_cart_id: number
+  item_count: number
+}
+
+export async function createProcurementCartFromMealPlan(
+  accountId: string,
+  tableId: string,
+): Promise<ProcurementCartFromMealPlanResult> {
+  const response = await fetch(buildApiUrl('/v2/procurement/carts/from-meal-plan'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      account_id: accountId,
+      table_id: tableId,
+      status: 'DRAFT',
+      note: `식단표 자동 발주: ${tableId}`,
+      user_id: getLocalUserId(),
+    }),
+  })
+  const payload = await parseResponseBody(response) as Partial<ProcurementCartFromMealPlanResult> & { message?: string }
+  if (!response.ok) {
+    throw new Error(payload?.message ?? '부족 식자재를 발주 카트에 담지 못했습니다.')
+  }
+  return {
+    code: Number(payload.code ?? 200),
+    message: String(payload.message ?? 'success'),
+    procurement_cart_id: Number(payload.procurement_cart_id ?? 0),
+    item_count: Number(payload.item_count ?? 0),
+  }
 }
 
 export async function saveTableMeals(payload: TableMealsSavePayload) {
-  const response = await fetch(buildApiUrl('/Table/TableMealsSave'), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(withLocalUserId(payload)),
-  })
-
-  if (!response.ok) {
-    throw new Error('식단표 저장에 실패했습니다.')
+  const userId = getLocalUserId()
+  const tableId = `${payload.account_id}_${payload.table_year}_${payload.table_month}_${payload.table_week}_${payload.source}_${payload.meal_plan_type}`
+  const post = async (path: string, body: Record<string, unknown>) => {
+    const response = await fetch(buildApiUrl(path), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...body, user_id: userId }),
+    })
+    const result = await parseResponseBody(response)
+    if (!response.ok) throw new Error((result as { message?: string } | null)?.message ?? '식단표 저장에 실패했습니다.')
+    return result as { id?: string | number }
   }
 
-  return parseResponseBody(response)
+  await post('/v2/meal-plans', { ...payload, table_id: tableId, status: 'DRAFT' })
+  for (const meal of payload.meals) {
+    const service = await post('/v2/meal-plans/services', {
+      table_id: tableId,
+      account_id: payload.account_id,
+      meal_date: meal.meal_date,
+      weekday: meal.weekday,
+      meal_slot: meal.meal_slot,
+      planned_servings: 1,
+      meal_budget_per_person: 3500,
+      status: 'DRAFT',
+    })
+    const mealServiceId = service.id
+    for (const menu of meal.menus) {
+      await post('/v2/meal-plans/details', {
+        meal_service_id: mealServiceId,
+        table_id: tableId,
+        account_id: payload.account_id,
+        ...menu,
+      })
+    }
+    await post('/v2/meal-plans/recalculate', { meal_service_id: mealServiceId, account_id: payload.account_id })
+  }
+  return { code: 200, message: 'success', table_id: tableId }
 }
 
 export async function saveMenuManager(payload: MenuSavePayload) {

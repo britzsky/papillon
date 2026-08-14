@@ -45,6 +45,7 @@ import {
   matchesMenuFilters,
   mealCategoryOptions,
   menuGubunOptions,
+  mealPlanTypeOptions,
   menuTypeOptions,
   parseNumber,
   qtyUnitOptions,
@@ -208,7 +209,7 @@ function AccountMenuManager() {
   const [assignedMenuIdsByAccount, setAssignedMenuIdsByAccount] = useState<Record<string, string[]>>({})
   const [originalAssignedMenuIdsByAccount, setOriginalAssignedMenuIdsByAccount] = useState<Record<string, string[]>>({})
   const [assignedMenuEditsByAccount, setAssignedMenuEditsByAccount] = useState<
-    Record<string, Record<string, Partial<Pick<MenuManagerItem, 'menu_type' | 'menu_gubun'>>>>
+    Record<string, Record<string, Partial<Pick<MenuManagerItem, 'menu_type' | 'menu_gubun' | 'meal_plan_type' | 'calories_per_serving'>>>>
   >({})
   const [originalAssignedMenuItemsByAccount, setOriginalAssignedMenuItemsByAccount] = useState<
     Record<string, Record<string, MenuManagerItem>>
@@ -676,8 +677,8 @@ function AccountMenuManager() {
 
   const handleAssignedMenuChange = (
     menuId: string,
-    field: keyof Pick<MenuManagerItem, 'menu_type' | 'menu_gubun'>,
-    value: string,
+    field: keyof Pick<MenuManagerItem, 'menu_type' | 'menu_gubun' | 'meal_plan_type' | 'calories_per_serving'>,
+    value: string | number,
   ) => {
     if (!selectedAccountId) return
 
@@ -1185,6 +1186,8 @@ function AccountMenuManager() {
                         <th>식사분류</th>
                         <th>메뉴유형</th>
                         <th>메뉴구분</th>
+                        <th>식단 유형</th>
+                        <th>칼로리(kcal)</th>
                         <th>관리</th>
                       </tr>
                     </thead>
@@ -1227,6 +1230,25 @@ function AccountMenuManager() {
                                 </option>
                               ))}
                             </select>
+                          </td>
+                          <td>
+                            <select
+                              className={`menu-manager-cell-input${isMenuFieldDirty(item, originalAssignedMenusById, 'meal_plan_type') ? ' is-dirty' : ''}`}
+                              value={item.meal_plan_type ?? 0}
+                              onClick={(event) => event.stopPropagation()}
+                              onChange={(event) => handleAssignedMenuChange(item.menu_id, 'meal_plan_type', Number(event.target.value))}
+                            >
+                              {mealPlanTypeOptions.map((option) => <option key={option.value} value={option.value}>{option.text}</option>)}
+                            </select>
+                          </td>
+                          <td>
+                            <input
+                              className={`menu-manager-cell-input${isMenuFieldDirty(item, originalAssignedMenusById, 'calories_per_serving') ? ' is-dirty' : ''}`}
+                              type="number" min="0" step="0.01"
+                              value={item.calories_per_serving ?? 0}
+                              onClick={(event) => event.stopPropagation()}
+                              onChange={(event) => handleAssignedMenuChange(item.menu_id, 'calories_per_serving', Number(event.target.value))}
+                            />
                           </td>
                           <td>
                             <select

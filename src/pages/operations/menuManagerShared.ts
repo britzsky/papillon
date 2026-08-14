@@ -13,6 +13,14 @@ export const menuTypeOptions = [
   { value: '3', text: '음료' },
   { value: '4', text: '기타' },
 ] as const
+export const mealPlanTypeOptions = [
+  { value: '0', text: '일반식' },
+  { value: '1', text: '가성비식단' },
+  { value: '2', text: '요양원맞춤식단' },
+  { value: '3', text: '테마식단' },
+  { value: '4', text: '다이어트식단' },
+  { value: '5', text: '프리미엄식단' },
+] as const
 export const menuGubunOptions = [
   { value: '0', text: '밥류/덮밥' },
   { value: '1', text: '탕/찌개/국' },
@@ -80,6 +88,7 @@ export function matchesMenuFilters(
     keyword?: string
     menuType?: string
     menuGubun?: string
+    mealPlanType?: string
   },
 ) {
   const normalizedKeyword = normalizeSearchText(filters.keyword ?? '')
@@ -93,6 +102,10 @@ export function matchesMenuFilters(
   }
 
   if (!matchesFilter(item.menu_gubun, filters.menuGubun ?? '')) {
+    return false
+  }
+
+  if (!matchesFilter(String(item.meal_plan_type), filters.mealPlanType ?? '')) {
     return false
   }
 
@@ -171,6 +184,8 @@ export function createEmptyMenuItemWithNextId(menuItems: MenuManagerItem[], sele
     image_url: '',
     image_file_id: '',
     like: 'N',
+    meal_plan_type: 0,
+    calories_per_serving: 0,
   }
 }
 
@@ -234,7 +249,7 @@ export function buildDetailSnapshotMap(items: EditableMenuIngredientItem[]) {
 export function isMenuFieldDirty(
   menu: MenuManagerItem,
   originalMenusById: Record<string, MenuManagerItem>,
-  field: keyof Pick<MenuManagerItem, 'menu_name' | 'meal_category' | 'menu_type' | 'menu_gubun' | 'menu_img' | 'image_url' | 'image_file_id'>,
+  field: keyof Pick<MenuManagerItem, 'menu_name' | 'meal_category' | 'menu_type' | 'menu_gubun' | 'meal_plan_type' | 'calories_per_serving' | 'menu_img' | 'image_url' | 'image_file_id'>,
 ) {
   const original = originalMenusById[menu.menu_id]
   const value = menu[field]
@@ -291,6 +306,8 @@ export function buildMenuSavePayload(
       item.meal_category !== original.meal_category ||
       item.menu_type !== original.menu_type ||
       item.menu_gubun !== original.menu_gubun ||
+      item.meal_plan_type !== original.meal_plan_type ||
+      item.calories_per_serving !== original.calories_per_serving ||
       item.created_at !== original.created_at ||
       (item.menu_img ?? '') !== (original.menu_img ?? '') ||
       (item.image_url ?? '') !== (original.image_url ?? '') ||
@@ -358,6 +375,8 @@ export function buildMenuSavePayload(
       food_type_reason: item.food_type_reason ?? '',
       menu_type: item.menu_type,
       menu_gubun: item.menu_gubun,
+      meal_plan_type: item.meal_plan_type,
+      calories_per_serving: item.calories_per_serving,
       created_at: item.created_at ?? '',
       menu_img: item.menu_img instanceof File ? item.menu_img : item.menu_img ?? item.image_url ?? '',
       image_file_id: item.image_file_id ?? '',
@@ -392,6 +411,8 @@ export function buildAccountMenuSavePayload(
         item.meal_category !== original?.meal_category ||
         item.menu_type !== original?.menu_type ||
         item.menu_gubun !== original?.menu_gubun
+        || item.meal_plan_type !== original?.meal_plan_type
+        || item.calories_per_serving !== original?.calories_per_serving
       )
     })
     .map(({ item, sort_order }) => ({
@@ -403,6 +424,8 @@ export function buildAccountMenuSavePayload(
       food_type_reason: item.food_type_reason ?? '',
       menu_type: item.menu_type,
       menu_gubun: item.menu_gubun,
+      meal_plan_type: item.meal_plan_type,
+      calories_per_serving: item.calories_per_serving,
       del_yn: 'N',
     }))
 
@@ -418,6 +441,8 @@ export function buildAccountMenuSavePayload(
       food_type: toFoodType(item?.meal_category ?? mealCategory),
       menu_type: item?.menu_type ?? '',
       menu_gubun: item?.menu_gubun ?? '',
+      meal_plan_type: item?.meal_plan_type ?? 0,
+      calories_per_serving: item?.calories_per_serving,
       del_yn: 'Y',
     }
   })
