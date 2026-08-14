@@ -16,6 +16,7 @@ import {
   getAccountMenuDetailList,
   getMenuDetailList,
   getMenuManagerList,
+  getMealPlanAnalysis,
   getTableMealsDetailList,
   getTableMealsList,
   saveTableMeals,
@@ -24,12 +25,14 @@ import {
   type MenuManagerItem,
   type TableMealsDetailItem,
   type TableMealsItem,
+  type TableMealsQueryPeriod,
   type TableMealsSavePayload,
 } from '../../api/operations'
 import type { RecipeRequest } from '../../api/recipe'
 import { requestAiTableMealsMatch } from '../../api/ai'
 import { mealCategoryOptions } from './menuManagerShared'
 import './TableMealsManager.css'
+import { getAverageUsage, getIngredientStockStatus } from '../../utils/ingredientStockStatus'
 
 GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()
 
@@ -371,6 +374,26 @@ function getCurrentMonthWeekOptions(baseDate = new Date()): MonthWeekOption[] {
   return weeks
 }
 
+function getTableMealsQueryPeriod(item: TableMealsItem, fallbackMonth: string): TableMealsQueryPeriod {
+  const nameParts = item.table_name.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})주차/)
+  const fallback = parseMonthValue(fallbackMonth)
+  const year = Number.isFinite(item.table_year) ? Number(item.table_year) : Number(nameParts?.[1] ?? fallback.year)
+  const month = Number.isFinite(item.table_month) ? Number(item.table_month) : Number(nameParts?.[2] ?? fallback.month)
+  const week = Number.isFinite(item.table_week) ? Number(item.table_week) : Number(nameParts?.[3] ?? 1)
+  const weeks = getCurrentMonthWeekOptions(new Date(year, month - 1, 1))
+  const selectedWeek = weeks[Math.max(0, Math.min(weeks.length - 1, week - 1))]
+  const startDate = selectedWeek?.dates[0] ?? new Date(year, month - 1, 1)
+  const endDate = selectedWeek?.dates[selectedWeek.dates.length - 1] ?? startDate
+
+  return {
+    table_year: year,
+    table_month: month,
+    table_week: week,
+    start_date: formatDateValue(startDate),
+    end_date: formatDateValue(endDate),
+  }
+}
+
 function normalizeCuisineText(value: string) {
   return value.normalize('NFKC').replace(/\s+/g, '').toLowerCase()
 }
@@ -404,7 +427,16 @@ function toDetailMealSlotKey(value: string): MealSlotKey {
 function buildTableMealsDetailDays(items: TableMealsDetailItem[]): TableMealsDetailDay[] {
   const dayMap = new Map<string, TableMealsDetailDay>()
 
-  items.forEach((item) => {
+  const uniqueItems = Array.from(
+    new Map(
+      items.map((item) => [
+        `${item.meal_date}-${item.meal_slot}-${item.menu_id || item.menu_name}`,
+        item,
+      ]),
+    ).values(),
+  )
+
+  uniqueItems.forEach((item) => {
     const key = `${item.meal_date || 'unknown'}-${item.weekday || ''}`
     const day = dayMap.get(key) ?? {
       key,
@@ -588,7 +620,7 @@ function buildTableMealsResultFromDays(days: ParsedDay[]): ParsedPdfResult {
 }
 
 function hasIngredientShortage(items: MenuIngredientItem[]) {
-  return items.some((item) => item.shortage_qty > 0 || item.required_qty > item.current_qty)
+  return items.some((item) => getIngredientStockStatus(item).needsOrder)
 }
 
 function mergeManualEveningSnacks(days: ParsedDay[], eveningSnacks: Record<string, ExtractedMenuItem[]>) {
@@ -960,6 +992,7 @@ function TableMealsManager() {
   const [selectedDetailMenu, setSelectedDetailMenu] = useState<MenuManagerItem | null>(null)
   const [detailItems, setDetailItems] = useState<MenuIngredientItem[]>([])
   const [menuShortageById, setMenuShortageById] = useState<Record<string, boolean>>({})
+  const [tableMealShortageById, setTableMealShortageById] = useState<Record<string, boolean>>({})
   const [detailError, setDetailError] = useState('')
   const [isDetailLoading, setIsDetailLoading] = useState(false)
   const [draftMenuName, setDraftMenuName] = useState('')
@@ -1156,14 +1189,8 @@ function TableMealsManager() {
       })
     })
 
-    tableMealDetailItems.forEach((item) => {
-      if (item.menu_id) {
-        ids.add(item.menu_id)
-      }
-    })
-
     return Array.from(ids)
-  }, [aiMatchedMenuIdsByText, displayedMealResult, manualDays, tableMealDetailItems])
+  }, [aiMatchedMenuIdsByText, displayedMealResult, manualDays])
 
   const selectedAccountName = useMemo(
     () => accountOptions.find((option) => option.value === selectedAccountId)?.text ?? '',
@@ -1219,6 +1246,7 @@ function TableMealsManager() {
     const loadTableMealDetailList = async () => {
       if (!selectedTableMeal?.table_id) {
         setTableMealDetailItems([])
+        setTableMealShortageById({})
         setTableMealDetailError('')
         setIsTableMealDetailLoading(false)
         return
@@ -1227,6 +1255,7 @@ function TableMealsManager() {
       const accountId = selectedTableMeal.account_id || selectedAccountId
       if (accountId === '') {
         setTableMealDetailItems([])
+        setTableMealShortageById({})
         setTableMealDetailError('거래처 정보가 없어 식단표 상세를 조회할 수 없습니다.')
         setIsTableMealDetailLoading(false)
         return
@@ -1235,18 +1264,31 @@ function TableMealsManager() {
       try {
         setIsTableMealDetailLoading(true)
         setTableMealDetailError('')
-        const items = await getTableMealsDetailList(accountId, selectedTableMeal.table_id)
+        const queryPeriod = getTableMealsQueryPeriod(selectedTableMeal, selectedTableMonth)
+        const [items, analysisItems] = await Promise.all([
+          getTableMealsDetailList(accountId, selectedTableMeal.table_id, queryPeriod),
+          getMealPlanAnalysis(accountId, selectedTableMeal.table_id, queryPeriod).catch(() => []),
+        ])
         if (!isMounted) {
           return
         }
 
         setTableMealDetailItems(items)
+        setTableMealShortageById(
+          analysisItems.reduce<Record<string, boolean>>((result, item) => {
+            if (item.menu_id && getIngredientStockStatus(item).needsOrder) {
+              result[item.menu_id] = true
+            }
+            return result
+          }, {}),
+        )
       } catch (error) {
         if (!isMounted) {
           return
         }
 
         setTableMealDetailItems([])
+        setTableMealShortageById({})
         setTableMealDetailError(error instanceof Error ? error.message : '식단표 상세를 불러오지 못했습니다.')
       } finally {
         if (isMounted) {
@@ -1260,7 +1302,7 @@ function TableMealsManager() {
     return () => {
       isMounted = false
     }
-  }, [selectedAccountId, selectedTableMeal?.account_id, selectedTableMeal?.table_id])
+  }, [selectedAccountId, selectedTableMeal, selectedTableMonth])
 
   useEffect(() => {
     let isMounted = true
@@ -1397,6 +1439,8 @@ function TableMealsManager() {
 
   const closeTableMealDetail = () => {
     setSelectedTableMeal(null)
+    setTableMealDetailItems([])
+    setTableMealShortageById({})
   }
 
   const printTableMealDetail = () => {
@@ -1892,6 +1936,9 @@ function TableMealsManager() {
 
   const getMenuShortageClass = (menu: Pick<MenuManagerItem, 'menu_id'> | null | undefined) =>
     menu?.menu_id && menuShortageById[menu.menu_id] ? ' is-shortage' : ''
+
+  const getTableMealShortageClass = (menu: Pick<TableMealsDetailItem, 'menu_id'>) =>
+    menu.menu_id && tableMealShortageById[menu.menu_id] ? ' is-shortage' : ''
 
   const goToFoodOrder = (menuId: string) => {
     navigate(`/order_manager/food_order/${encodeURIComponent(menuId)}`)
@@ -2444,12 +2491,12 @@ function TableMealsManager() {
                                     {menus.map((menu) => (
                                       <li
                                         key={`${day.key}-${mealRow.id}-${menu.sort_order}-${menu.menu_id || menu.menu_name}`}
-                                        className={getMenuShortageClass(menu)}
+                                        className={getTableMealShortageClass(menu)}
                                         {...(menu.menu_id
                                           ? createAiRecipeGestureHandlers(
                                               buildRecipeRequest(menu.menu_name || '-', menu),
                                               setRecipeMenuState,
-                                              menuShortageById[menu.menu_id] ? { orderMenuId: menu.menu_id } : undefined,
+                                              tableMealShortageById[menu.menu_id] ? { orderMenuId: menu.menu_id } : undefined,
                                             )
                                           : {})}
                                       >
@@ -2573,6 +2620,7 @@ function TableMealsManager() {
               {!isDetailLoading && detailError ? <div className="table-meals-empty">{detailError}</div> : null}
 
               {!isDetailLoading && !detailError && detailItems.length > 0 ? (
+                <>
                 <table className="table-meals-table">
                   <thead>
                     <tr>
@@ -2586,15 +2634,30 @@ function TableMealsManager() {
                   <tbody>
                     {detailItems.map((detail) => (
                       <tr key={`${detail.menu_id}-${detail.ingredient_id}`}>
-                        <td>{detail.ingredient_name || '-'}</td>
+                        <td title={getIngredientStockStatus(detail).label}>
+                          {getIngredientStockStatus(detail).emoji} {detail.ingredient_name || '-'}
+                        </td>
                         <td>{detail.required_qty}</td>
-                        <td>{detail.current_qty}</td>
+                        <td>
+                          {detail.current_qty}
+                          {getAverageUsage(detail) > 0 ? ` (평균 ${getAverageUsage(detail)}${detail.base_unit || ''})` : ''}
+                        </td>
                         <td>{detail.shortage_qty}</td>
                         <td>{detail.base_unit || '-'}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+                {detailItems.some((item) => getIngredientStockStatus(item).needsOrder) ? (
+                  <button
+                    type="button"
+                    className="table-meals-button table-meals-button--primary"
+                    onClick={() => goToFoodOrder(selectedDetailMenu.menu_id)}
+                  >
+                    부족 식자재 발주하기
+                  </button>
+                ) : null}
+                </>
               ) : null}
 
               {!isDetailLoading && !detailError && detailItems.length === 0 ? (

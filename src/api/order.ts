@@ -25,6 +25,10 @@ export type OrderDetailItem = {
   base_unit: string
   order_unit: string
   convert_value: number
+  average_usage_qty?: number
+  total_capacity_qty?: number
+  last_used_at?: string
+  menu_usage_count?: number
 }
 
 type RawMenu = Record<string, unknown>
@@ -112,6 +116,10 @@ function normalizeOrderDetail(detail: RawOrderDetail): OrderDetailItem {
     base_unit: asText(detail.base_unit),
     order_unit: asText(detail.order_unit),
     convert_value: asNumber(detail.convert_value, 0),
+    average_usage_qty: asNumber(detail.average_usage_qty ?? detail.averageUsageQty ?? detail.avg_usage_qty ?? detail.avgUsageQty, 0),
+    total_capacity_qty: asNumber(detail.total_capacity_qty ?? detail.totalCapacityQty ?? detail.total_qty ?? detail.totalQty ?? detail.capacity_qty ?? detail.capacityQty, 0),
+    last_used_at: asText(detail.last_used_at ?? detail.lastUsedAt ?? detail.last_usage_date ?? detail.lastUsageDate),
+    menu_usage_count: asNumber(detail.menu_usage_count ?? detail.menuUsageCount, 0),
   }
 }
 

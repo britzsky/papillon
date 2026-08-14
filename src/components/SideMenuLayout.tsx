@@ -28,6 +28,7 @@ const majorMenus: MajorMenu[] = [
     basePaths: ['/order_manager'],
     items: [
       { label: '식자재 발주', to: '/order_manager/food_order', exact: true },
+      { label: 'Welstory 연계 발주', to: '/order_manager/welstory', exact: true },
       { label: '발주서 관리' },
       { label: '거래명세서 관리' },
     ],

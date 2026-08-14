@@ -12,7 +12,9 @@ import {
 } from '../../api/order'
 import { mealCategoryOptions } from '../operations/menuManagerShared'
 import { lookupItem, validateItemLookupRequest, type ItemLookupItem } from '../../api/itemLookup'
+import { lookupWorkplaces, type Workplace } from '../../api/workplaceLookup'
 import './FoodOrder.css'
+import { getAverageUsage, getIngredientStockStatus } from '../../utils/ingredientStockStatus'
 
 type Supplier = {
   menu_id: string
@@ -32,6 +34,10 @@ type Ingredient = {
   base_unit: string
   order_unit: string
   convert_value: number
+  average_usage_qty?: number
+  total_capacity_qty?: number
+  last_used_at?: string
+  menu_usage_count?: number
   suppliers: Supplier[]
 }
 
@@ -216,6 +222,23 @@ type FoodOrderProps = {
   embedded?: boolean
 }
 
+const DEFAULT_WORKPLACE: Workplace = {
+  solTo: 'A0199183',
+  soldToNm: '더채움',
+  logisCd: '',
+  repSoldtoYn: '',
+  nextPGCycle: '',
+  payerCode: '',
+  payerNm: '',
+  pricingCode: '',
+}
+
+function withDefaultWorkplace(items: Workplace[]) {
+  return items.some((item) => item.solTo === DEFAULT_WORKPLACE.solTo)
+    ? items
+    : [DEFAULT_WORKPLACE, ...items]
+}
+
 function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
   void _embedded
   const { menuId: routeMenuId } = useParams<{ menuId?: string }>()
@@ -233,7 +256,10 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
   const [selectedSuppliers, setSelectedSuppliers] = useState<Record<string, boolean>>({})
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false)
   const [itemCode, setItemCode] = useState('')
-  const [soldTo, setSoldTo] = useState(() => localStorage.getItem('sold_to') ?? '')
+  const [soldTo, setSoldTo] = useState(DEFAULT_WORKPLACE.solTo)
+  const [workplaces, setWorkplaces] = useState<Workplace[]>([DEFAULT_WORKPLACE])
+  const [workplaceError, setWorkplaceError] = useState('')
+  const [isWorkplaceLoading, setIsWorkplaceLoading] = useState(false)
   const [reqDeliveryDate, setReqDeliveryDate] = useState(() => getCompactDate(1))
   const [lookupItems, setLookupItems] = useState<ItemLookupItem[]>([])
   const [lookupError, setLookupError] = useState('')
@@ -430,6 +456,28 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
     }
   }
 
+  const handleWorkplaceLookup = async () => {
+    setIsWorkplaceLoading(true)
+    setWorkplaceError('')
+    try {
+      const items = await lookupWorkplaces()
+      setWorkplaces(withDefaultWorkplace(items))
+      if (items.length === 0) setWorkplaceError('조회된 사업장이 없어 기본 사업장을 표시합니다.')
+    } catch (error) {
+      setWorkplaces([DEFAULT_WORKPLACE])
+      setWorkplaceError(error instanceof Error ? error.message : '사업장 조회에 실패했습니다.')
+    } finally {
+      setIsWorkplaceLoading(false)
+    }
+  }
+
+  const handleWorkplaceChange = (value: string) => {
+    setSoldTo(value)
+    localStorage.setItem('sold_to', value)
+    setLookupItems([])
+    setLookupError('')
+  }
+
   const selectedOrders = useMemo<SelectedOrder[]>(() => {
     if (!activeMenu) {
       return []
@@ -542,10 +590,26 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
               </select>
             </div>
             <form className="food-order-item-search" onSubmit={handleItemSearch}>
-              <label>사업장코드<input value={soldTo} maxLength={10} autoComplete="off" onChange={(event) => setSoldTo(event.target.value.trimStart())} placeholder="최대 10자리" /></label>
+              <label>사업장
+                <select value={soldTo} onChange={(event) => handleWorkplaceChange(event.target.value)} disabled={isWorkplaceLoading}>
+                  <option value="">사업장을 선택하세요</option>
+                  {workplaces.map((workplace) => (
+                    <option key={workplace.solTo} value={workplace.solTo}>
+                      {workplace.solTo}({workplace.soldToNm || '사업장명 없음'})
+                    </option>
+                  ))}
+                  {soldTo && !workplaces.some((workplace) => workplace.solTo === soldTo) ? (
+                    <option value={soldTo}>저장된 사업장 ({soldTo})</option>
+                  ) : null}
+                </select>
+              </label>
+              <button type="button" onClick={handleWorkplaceLookup} disabled={isWorkplaceLoading}>
+                {isWorkplaceLoading ? '조회 중…' : '사업장 조회'}
+              </button>
               <label>품목코드<input value={itemCode} maxLength={18} autoComplete="off" onChange={(event) => setItemCode(event.target.value.trimStart())} placeholder="최대 18자리" /></label>
               <label>입고일자<input value={reqDeliveryDate} maxLength={8} inputMode="numeric" autoComplete="off" onChange={(event) => setReqDeliveryDate(event.target.value.replace(/\D/g, ''))} placeholder="YYYYMMDD" /></label>
               <button type="submit" disabled={isLookupLoading}>품목 조회</button>
+              {workplaceError ? <span className="food-order-item-search__error">{workplaceError}</span> : null}
             </form>
           </section>
 
@@ -626,9 +690,14 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
                           <tr key={`${ingredient.menu_id}-${ingredient.ingredient_id}`}>
                             <td style={{ display: 'none' }}>{ingredient.menu_id}</td>
                             <td style={{ display: 'none' }}>{ingredient.ingredient_id}</td>
-                            <td>{ingredient.ingredient_name}</td>
+                            <td title={getIngredientStockStatus(ingredient).label}>
+                              {getIngredientStockStatus(ingredient).emoji} {ingredient.ingredient_name}
+                            </td>
                             <td>{ingredient.required_qty}({ingredient.base_unit})</td>
-                            <td>{ingredient.current_qty}</td>
+                            <td>
+                              {ingredient.current_qty}
+                              {getAverageUsage(ingredient) > 0 ? ` (평균 ${formatQuantity(getAverageUsage(ingredient), ingredient.base_unit)})` : ''}
+                            </td>
                             <td>{ingredient.shortage_qty}</td>
                             <td>{ingredient.order_needed_qty}</td>
                             <td style={{ display: 'none' }}>{ingredient.base_unit}</td>

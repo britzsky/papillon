@@ -13,6 +13,7 @@ import TableMealsManager from './pages/operations/TableMealsManager.tsx'
 import Payment from './pages/Payment.tsx'
 import PaymentResult from './pages/PaymentResult.tsx'
 import VendorSanitation from './pages/sanitation/VendorSanitation.tsx'
+import WelstoryOrder from './pages/order/WelstoryOrder.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -30,6 +31,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/order_manager" element={<OrderManager />} />
         <Route path="/order_manager/food_order" element={<FoodOrder />} />
         <Route path="/order_manager/food_order/:menuId" element={<FoodOrder />} />
+        <Route path="/order_manager/welstory" element={<WelstoryOrder />} />
         <Route path="/inventory/account" element={<AccountInventoryManager />} />
         <Route path="/operations/menu" element={<MenuManager />} />
         <Route path="/operations/account-menu" element={<AccountMenuManager />} />

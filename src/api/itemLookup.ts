@@ -17,11 +17,6 @@ const number = (value: unknown) => {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-function createGuid() {
-  const now = new Date()
-  return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}${String(now.getMilliseconds()).padStart(3, '0')}01`
-}
-
 function isValidCompactDate(value: string) {
   if (!/^\d{8}$/.test(value)) return false
   const year = Number(value.slice(0, 4))
@@ -64,9 +59,9 @@ export async function lookupItem(request: ItemLookupRequest, signal?: AbortSigna
   if (validationError) throw new Error(validationError)
 
   const configured = import.meta.env.VITE_ITEM_LOOKUP_API_URL?.trim()
-  const response = await fetch(configured || buildApiUrl('/Order/ItemLookup'), {
+  const response = await fetch(configured || buildApiUrl('/Order/Welstory/RealtimeItem'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', guid: createGuid() },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ dataHeader: normalizedRequest, dataBody: {} }),
     signal,
   })

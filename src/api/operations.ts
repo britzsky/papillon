@@ -50,6 +50,9 @@ export type MenuIngredientItem = {
   needs_review?: number
   note?: string
   safe_stock_qty?: number
+  average_usage_qty?: number
+  total_capacity_qty?: number
+  last_used_at?: string
   like?: string
 }
 
@@ -96,6 +99,28 @@ export type TableMealsDetailItem = {
   food_type: number
   menu_type: number
   menu_gubun: number
+}
+
+export type MealPlanAnalysisItem = {
+  menu_id: string
+  menu_name: string
+  ingredient_id: string
+  required_qty: number
+  current_qty: number
+  shortage_qty: number
+  ingredient_name?: string
+  average_usage_qty?: number
+  total_capacity_qty?: number
+  last_used_at?: string
+  menu_usage_count?: number
+}
+
+export type TableMealsQueryPeriod = {
+  table_year: number
+  table_month: number
+  table_week: number
+  start_date: string
+  end_date: string
 }
 
 export type TableMealsSavePayload = {
@@ -487,6 +512,9 @@ function normalizeIngredient(record: RawRecord): MenuIngredientItem {
     needs_review: asNumber(record.needs_review ?? record.needsReview),
     note: asText(record.note),
     safe_stock_qty: asNumber(record.safe_stock_qty ?? record.safeStockQty),
+    average_usage_qty: asNumber(record.average_usage_qty ?? record.averageUsageQty ?? record.avg_usage_qty ?? record.avgUsageQty),
+    total_capacity_qty: asNumber(record.total_capacity_qty ?? record.totalCapacityQty ?? record.total_qty ?? record.totalQty ?? record.capacity_qty ?? record.capacityQty),
+    last_used_at: asText(record.last_used_at ?? record.lastUsedAt ?? record.last_usage_date ?? record.lastUsageDate),
     like: asText(record.like ?? record.LIKE ?? record.is_like ?? record.isLike, 'N'),
   }
 }
@@ -542,6 +570,38 @@ function normalizeTableMealsDetailItem(record: RawRecord, index: number): TableM
     menu_type: asNumber(record.menu_type ?? record.menuType),
     menu_gubun: asNumber(record.menu_gubun ?? record.menuGubun),
   }
+}
+
+function normalizeMealPlanAnalysisItem(record: RawRecord): MealPlanAnalysisItem {
+  return {
+    menu_id: asText(record.menu_id ?? record.menuId),
+    menu_name: asText(record.menu_name ?? record.menuName),
+    ingredient_id: asText(record.ingredient_id ?? record.ingredientId),
+    required_qty: asNumber(record.required_qty ?? record.requiredQty),
+    current_qty: asNumber(record.current_qty ?? record.currentQty),
+    shortage_qty: asNumber(record.shortage_qty ?? record.shortageQty),
+    ingredient_name: asText(record.ingredient_name ?? record.ingredientName),
+    average_usage_qty: asNumber(record.average_usage_qty ?? record.averageUsageQty ?? record.avg_usage_qty ?? record.avgUsageQty),
+    total_capacity_qty: asNumber(record.total_capacity_qty ?? record.totalCapacityQty ?? record.total_qty ?? record.totalQty ?? record.capacity_qty ?? record.capacityQty),
+    last_used_at: asText(record.last_used_at ?? record.lastUsedAt ?? record.last_usage_date ?? record.lastUsageDate),
+    menu_usage_count: asNumber(record.menu_usage_count ?? record.menuUsageCount),
+  }
+}
+
+function readMealPlanAnalysisItems(payload: unknown) {
+  const directItems = readArray(payload)
+  if (directItems.length > 0) {
+    return directItems
+  }
+
+  if (!payload || typeof payload !== 'object') {
+    return []
+  }
+
+  const record = payload as RawRecord
+  const data = record.data && typeof record.data === 'object' ? (record.data as RawRecord) : undefined
+  const candidates = [record.ingredients, record.items, record.analysis, data?.ingredients, data?.items, data?.analysis]
+  return candidates.find(Array.isArray) ?? []
 }
 
 export async function getAccountOptions(): Promise<AccountOption[]> {
@@ -739,11 +799,26 @@ export async function getTableMealsList(accountId: string, tableYear?: number, t
     .filter((item) => item.table_id !== '' || item.table_name !== '')
 }
 
-export async function getTableMealsDetailList(accountId: string, tableId: string): Promise<TableMealsDetailItem[]> {
+function appendTableMealsPeriod(searchParams: URLSearchParams, period?: TableMealsQueryPeriod) {
+  if (!period) return
+
+  searchParams.set('table_year', String(period.table_year))
+  searchParams.set('table_month', String(period.table_month))
+  searchParams.set('table_week', String(period.table_week))
+  searchParams.set('start_date', period.start_date)
+  searchParams.set('end_date', period.end_date)
+}
+
+export async function getTableMealsDetailList(
+  accountId: string,
+  tableId: string,
+  period?: TableMealsQueryPeriod,
+): Promise<TableMealsDetailItem[]> {
   const searchParams = new URLSearchParams({
     account_id: accountId,
     table_id: tableId,
   })
+  appendTableMealsPeriod(searchParams, period)
 
   const response = await fetch(`${buildApiUrl('/Table/TableMealsDetailList')}?${searchParams.toString()}`, {
     method: 'GET',
@@ -759,6 +834,34 @@ export async function getTableMealsDetailList(accountId: string, tableId: string
   const payload = await parseResponseBody(response)
   return readArray(payload)
     .map((item, index) => normalizeTableMealsDetailItem(item as RawRecord, index))
+    .filter((item) => item.menu_id !== '' || item.menu_name !== '')
+}
+
+export async function getMealPlanAnalysis(
+  accountId: string,
+  tableId: string,
+  period?: TableMealsQueryPeriod,
+): Promise<MealPlanAnalysisItem[]> {
+  const searchParams = new URLSearchParams({
+    account_id: accountId,
+    table_id: tableId,
+  })
+  appendTableMealsPeriod(searchParams, period)
+
+  const response = await fetch(`${buildApiUrl('/Procurement/MealPlanAnalysis')}?${searchParams.toString()}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error('식단표 원가·재고 분석을 불러오지 못했습니다.')
+  }
+
+  const payload = await parseResponseBody(response)
+  return readMealPlanAnalysisItems(payload)
+    .map((item) => normalizeMealPlanAnalysisItem(item as RawRecord))
     .filter((item) => item.menu_id !== '' || item.menu_name !== '')
 }
 

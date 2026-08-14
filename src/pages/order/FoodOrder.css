@@ -63,12 +63,24 @@
   color: #334155;
 }
 
-.food-order-item-search input {
+.food-order-item-search input,
+.food-order-item-search select {
   width: 130px;
   height: 36px;
   padding: 0 10px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
+}
+
+.food-order-item-search select {
+  width: 240px;
+  background: #ffffff;
+}
+
+.food-order-item-search__error {
+  align-self: center;
+  color: #b45309;
+  font-size: 12px;
 }
 
 .food-order-item-search button {
@@ -694,6 +706,7 @@
   .food-order-item-search,
   .food-order-item-search label,
   .food-order-item-search input,
+  .food-order-item-search select,
   .food-order-item-search button {
     width: 100%;
   }

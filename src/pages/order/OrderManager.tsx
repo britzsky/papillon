@@ -8,6 +8,13 @@ import './OrderManager.css'
 
 const orderMenus = [
   {
+    key: 'welstory-order',
+    title: 'Welstory 연계 발주',
+    description: '사업장별 판가 조회부터 주문·입고·반품/교환까지 처리합니다.',
+    icon: order,
+    to: '/order_manager/welstory',
+  },
+  {
     key: 'food-order',
     title: '식자재 발주',
     description: '식자재 발주 대상을 확인하고 바로 주문 화면으로 이동합니다.',
