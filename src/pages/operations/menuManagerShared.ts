@@ -486,6 +486,16 @@ export function buildAccountMenuSavePayload(
         base_unit: baseUnit,
         qty_per_person: qtyBase / recipeYieldServings,
         review_flag: getReviewFlag(qtyUnit),
+        ingredient_name_std: detail.ingredient_name_std || detail.ingredient_name,
+        category_name: detail.category_name ?? '',
+        storage_type: detail.storage_type ?? '',
+        supplier_id: detail.supplier_id ?? 0,
+        supplier_item_code: detail.supplier_item_code ?? '',
+        product_name: detail.product_name ?? '',
+        order_unit: detail.order_unit || baseUnit,
+        package_qty: detail.package_qty ?? 1,
+        package_unit: detail.package_unit || baseUnit,
+        base_qty: detail.base_qty ?? detail.convert_value ?? 1,
       }
     }),
   )

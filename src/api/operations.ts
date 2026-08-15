@@ -56,6 +56,14 @@ export type MenuIngredientItem = {
   total_capacity_qty?: number
   last_used_at?: string
   like?: string
+  supplier_product_id?: number
+  supplier_id?: number
+  supplier_name?: string
+  supplier_item_code?: string
+  product_name?: string
+  package_qty?: number
+  package_unit?: string
+  base_qty?: number
 }
 
 export type IngredientOption = {
@@ -242,6 +250,16 @@ export type AccountMenuSavePayload = {
     base_unit: string
     qty_per_person: number
     review_flag: string
+    ingredient_name_std: string
+    category_name: string
+    storage_type: string
+    supplier_id: number
+    supplier_item_code: string
+    product_name: string
+    order_unit: string
+    package_qty?: number
+    package_unit?: string
+    base_qty: number
   }>
   ingredient_detail: Array<{
     ingredient_id: string
@@ -532,6 +550,14 @@ function normalizeIngredient(record: RawRecord): MenuIngredientItem {
     total_capacity_qty: asNumber(record.total_capacity_qty ?? record.totalCapacityQty ?? record.total_qty ?? record.totalQty ?? record.capacity_qty ?? record.capacityQty),
     last_used_at: asText(record.last_used_at ?? record.lastUsedAt ?? record.last_usage_date ?? record.lastUsageDate),
     like: asText(record.like ?? record.LIKE ?? record.is_like ?? record.isLike, 'N'),
+    supplier_product_id: asNumber(record.supplier_product_id ?? record.supplierProductId),
+    supplier_id: asNumber(record.supplier_id ?? record.supplierId),
+    supplier_name: asText(record.supplier_name ?? record.supplierName),
+    supplier_item_code: asText(record.supplier_item_code ?? record.supplierItemCode),
+    product_name: asText(record.product_name ?? record.productName),
+    package_qty: asNumber(record.package_qty ?? record.packageQty),
+    package_unit: asText(record.package_unit ?? record.packageUnit),
+    base_qty: asNumber(record.base_qty ?? record.baseQty),
   }
 }
 
@@ -725,9 +751,10 @@ export async function getMenuDetailList(menuId: string): Promise<MenuIngredientI
     .filter((item) => item.ingredient_id !== '' || item.ingredient_name !== '')
 }
 
-export async function getAccountMenuDetailList(menuId: string): Promise<MenuIngredientItem[]> {
+export async function getAccountMenuDetailList(menuId: string, accountId = getLocalAccountId()): Promise<MenuIngredientItem[]> {
   const searchParams = new URLSearchParams({
     menu_id: menuId,
+    account_id: accountId,
     servingQty: '1',
   })
 

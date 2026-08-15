@@ -144,7 +144,8 @@ function isInventoryItemChanged(
 function AccountInventoryManager() {
   const [searchParams] = useSearchParams()
   const initialKeyword = searchParams.get('q') ?? ''
-  const targetAccountId = searchParams.get('account_id') ?? searchParams.get('id') ?? undefined
+  const storedAccountId = typeof window !== 'undefined' ? localStorage.getItem('account_id')?.trim() ?? '' : ''
+  const targetAccountId = (searchParams.get('account_id') ?? searchParams.get('id') ?? '').trim() || storedAccountId
   const [items, setItems] = useState<EditableAccountInventoryItem[]>([])
   const [originalItemsByRowId, setOriginalItemsByRowId] = useState<Record<string, EditableAccountInventoryItem>>({})
   const [error, setError] = useState('')
@@ -164,6 +165,7 @@ function AccountInventoryManager() {
       try {
         setIsLoading(true)
         setError('')
+        if (!targetAccountId) throw new Error('로그인한 거래처 정보를 확인할 수 없습니다.')
         const nextItems = await getAccountInventoryList(targetAccountId)
         if (!isMounted) return
         const editableItems = applyIngredientCategories(nextItems.map(createInventoryRow), ingredientOptions)
@@ -303,7 +305,7 @@ function AccountInventoryManager() {
     try {
       setIsSaving(true)
       await saveAccountInventory({
-        account_id: targetAccountId ?? '',
+        account_id: targetAccountId,
         inventory_items: changedItems,
       })
       setOriginalItemsByRowId(buildInventorySnapshotMap(items))

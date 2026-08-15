@@ -32,6 +32,7 @@ import {
   type MenuManagerItem,
 } from '../../api/operations'
 import type { RecipeRequest } from '../../api/recipe'
+import { getSupplierProducts, type SupplierProductOption } from '../../api/supplierCatalog'
 import {
   MENU_PAGE_SIZE,
   buildAccountMenuSavePayload,
@@ -186,6 +187,7 @@ function AccountMenuManager() {
   const [accountOptions, setAccountOptions] = useState<AccountOption[]>([])
   const [accountError, setAccountError] = useState('')
   const [ingredientOptions, setIngredientOptions] = useState<IngredientOption[]>([])
+  const [supplierProducts, setSupplierProducts] = useState<SupplierProductOption[]>([])
   const [ingredientError, setIngredientError] = useState('')
   const [menuItems, setMenuItems] = useState<MenuManagerItem[]>([])
   const [originalMenusById, setOriginalMenusById] = useState<Record<string, MenuManagerItem>>({})
@@ -393,6 +395,44 @@ function AccountMenuManager() {
     }
   }, [])
 
+  useEffect(() => {
+    let isMounted = true
+    getSupplierProducts()
+      .then((items) => {
+        if (isMounted) setSupplierProducts(items)
+      })
+      .catch((error) => {
+        if (isMounted) setIngredientError(error instanceof Error ? error.message : '공급처 상품 목록을 불러오지 못했습니다.')
+      })
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (supplierProducts.length === 0) return
+    setDetailItemsByMenuId((current) => Object.fromEntries(
+      Object.entries(current).map(([menuId, details]) => [menuId, details.map((detail) => {
+        if (detail.supplier_id) return detail
+        const products = supplierProducts.filter((product) => product.ingredient_id === detail.ingredient_id)
+        const product = products.find((item) => item.supplier_code.includes('WELSTORY')) ?? products[0]
+        return product ? {
+          ...detail,
+          supplier_product_id: product.supplier_product_id,
+          supplier_id: product.supplier_id,
+          supplier_name: product.supplier_name,
+          supplier_item_code: product.supplier_item_code,
+          product_name: product.product_name,
+          order_unit: product.order_unit,
+          package_qty: product.package_qty,
+          package_unit: product.package_unit,
+          base_qty: product.base_qty,
+          base_unit: product.base_unit || detail.base_unit,
+        } : detail
+      })]),
+    ))
+  }, [supplierProducts])
+
   const filteredMenuItems = useMemo(
     () =>
       menuItems.filter((item) =>
@@ -550,6 +590,10 @@ function AccountMenuManager() {
   const toAccountEditableDetailItems = (items: Awaited<ReturnType<typeof getMenuDetailList>>) =>
     items.map((detail) => {
       const matchedOption = ingredientOptions.find((option) => option.ingredient_id === detail.ingredient_id)
+      const matchedProducts = supplierProducts.filter((product) => product.ingredient_id === detail.ingredient_id)
+      const defaultProduct = detail.supplier_id
+        ? undefined
+        : matchedProducts.find((product) => product.supplier_code.includes('WELSTORY')) ?? matchedProducts[0]
 
       return toEditableDetailItem({
         ...detail,
@@ -557,8 +601,7 @@ function AccountMenuManager() {
         ingredient_name: detail.ingredient_name || matchedOption?.ingredient_name || '',
         ingredient_name_raw: detail.ingredient_name_raw || detail.ingredient_name || matchedOption?.ingredient_name || '',
         ingredient_name_std: detail.ingredient_name_std || matchedOption?.ingredient_name_std || detail.ingredient_name || matchedOption?.ingredient_name || '',
-        base_unit: detail.base_unit || matchedOption?.base_unit || '',
-        order_unit: detail.order_unit || matchedOption?.order_unit || matchedOption?.base_unit || '',
+        base_unit: detail.base_unit || defaultProduct?.base_unit || matchedOption?.base_unit || '',
         convert_value: detail.convert_value || matchedOption?.convert_value || 1,
         storage_type: detail.storage_type || matchedOption?.storage_type || '',
         menu_usage_count: detail.menu_usage_count ?? matchedOption?.menu_usage_count ?? 0,
@@ -566,6 +609,15 @@ function AccountMenuManager() {
         note: detail.note ?? matchedOption?.note ?? '',
         safe_stock_qty: detail.safe_stock_qty ?? matchedOption?.safe_stock_qty ?? 0,
         like: detail.like ?? matchedOption?.like ?? 'N',
+        supplier_product_id: detail.supplier_product_id || defaultProduct?.supplier_product_id,
+        supplier_id: detail.supplier_id || defaultProduct?.supplier_id,
+        supplier_name: detail.supplier_name || defaultProduct?.supplier_name || '',
+        supplier_item_code: detail.supplier_item_code || defaultProduct?.supplier_item_code || '',
+        product_name: detail.product_name || defaultProduct?.product_name || '',
+        order_unit: detail.order_unit || defaultProduct?.order_unit || matchedOption?.order_unit || matchedOption?.base_unit || '',
+        package_qty: detail.package_qty || defaultProduct?.package_qty,
+        package_unit: detail.package_unit || defaultProduct?.package_unit || '',
+        base_qty: detail.base_qty || defaultProduct?.base_qty,
       })
     })
 
@@ -587,7 +639,11 @@ function AccountMenuManager() {
       try {
         setIsDetailLoading(true)
         setDetailError('')
-        const items = await getAccountMenuDetailList(activeMenu.menu_id)
+        const isExistingAccountMenu = originalAssignedMenuIds.includes(activeMenu.menu_id)
+        const accountItems = isExistingAccountMenu
+          ? await getAccountMenuDetailList(activeMenu.menu_id, selectedAccountId)
+          : []
+        const items = accountItems.length > 0 ? accountItems : await getMenuDetailList(activeMenu.menu_id)
         if (!isMounted) return
 
         const editableItems = toAccountEditableDetailItems(items)
@@ -612,7 +668,7 @@ function AccountMenuManager() {
     return () => {
       isMounted = false
     }
-  }, [activeMenu?.menu_id, detailLoadedByMenuId, ingredientOptions])
+  }, [activeMenu?.menu_id, detailLoadedByMenuId, ingredientOptions, originalAssignedMenuIds, selectedAccountId, supplierProducts])
 
   const handleAssignMenus = (menuIds: string[]) => {
     if (!selectedAccountId) return
@@ -886,7 +942,35 @@ function AccountMenuManager() {
           note: matchedIngredient?.note ?? item.note ?? '',
           safe_stock_qty: matchedIngredient?.safe_stock_qty ?? item.safe_stock_qty ?? 0,
           like: matchedIngredient?.like ?? item.like ?? 'N',
+          supplier_product_id: undefined,
+          supplier_id: undefined,
+          supplier_name: '',
+          supplier_item_code: '',
+          product_name: '',
+          package_qty: undefined,
+          package_unit: '',
+          base_qty: undefined,
         }
+      }),
+    }))
+  }
+
+  const handleSupplierProductSelect = (menuId: string, rowId: string, supplierProductId: string) => {
+    const product = supplierProducts.find((item) => item.supplier_product_id === Number(supplierProductId))
+    setDetailItemsByMenuId((current) => ({
+      ...current,
+      [menuId]: (current[menuId] ?? []).map((item) => item.row_id !== rowId || !product ? item : {
+        ...item,
+        supplier_product_id: product.supplier_product_id,
+        supplier_id: product.supplier_id,
+        supplier_name: product.supplier_name,
+        supplier_item_code: product.supplier_item_code,
+        product_name: product.product_name,
+        order_unit: product.order_unit,
+        package_qty: product.package_qty,
+        package_unit: product.package_unit,
+        base_qty: product.base_qty,
+        base_unit: product.base_unit || item.base_unit,
       }),
     }))
   }
@@ -968,6 +1052,13 @@ function AccountMenuManager() {
           ...current,
           ...Object.fromEntries(loadedEntries.map(([menuId]) => [menuId, true])),
         }))
+      }
+
+      const missingSupplierProduct = assignedMenus
+        .flatMap((menu) => nextDetailItemsByMenuId[menu.menu_id] ?? [])
+        .find((item) => item.ingredient_id && !item.supplier_id)
+      if (missingSupplierProduct) {
+        throw new Error(`${missingSupplierProduct.ingredient_name || '식자재'}의 공급처 상품을 선택해주세요.`)
       }
 
       const payload = buildAccountMenuSavePayload(
@@ -1233,6 +1324,22 @@ function AccountMenuManager() {
                           </td>
                           <td>
                             <select
+                              className={`menu-manager-cell-input${isMenuFieldDirty(item, originalAssignedMenusById, 'menu_gubun') ? ' is-dirty' : ''}`}
+                              value={item.menu_gubun}
+                              onClick={(event) => event.stopPropagation()}
+                              onFocus={() => setSelectedMenuId(item.menu_id)}
+                              onChange={(event) => handleAssignedMenuChange(item.menu_id, 'menu_gubun', event.target.value)}
+                            >
+                              <option value="">선택</option>
+                              {menuGubunOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.text}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td>
+                            <select
                               className={`menu-manager-cell-input${isMenuFieldDirty(item, originalAssignedMenusById, 'meal_plan_type') ? ' is-dirty' : ''}`}
                               value={item.meal_plan_type ?? 0}
                               onClick={(event) => event.stopPropagation()}
@@ -1249,22 +1356,6 @@ function AccountMenuManager() {
                               onClick={(event) => event.stopPropagation()}
                               onChange={(event) => handleAssignedMenuChange(item.menu_id, 'calories_per_serving', Number(event.target.value))}
                             />
-                          </td>
-                          <td>
-                            <select
-                              className={`menu-manager-cell-input${isMenuFieldDirty(item, originalAssignedMenusById, 'menu_gubun') ? ' is-dirty' : ''}`}
-                              value={item.menu_gubun}
-                              onClick={(event) => event.stopPropagation()}
-                              onFocus={() => setSelectedMenuId(item.menu_id)}
-                              onChange={(event) => handleAssignedMenuChange(item.menu_id, 'menu_gubun', event.target.value)}
-                            >
-                              <option value="">선택</option>
-                              {menuGubunOptions.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                  {option.text}
-                                </option>
-                              ))}
-                            </select>
                           </td>
                           <td>
                             <button
@@ -1503,6 +1594,7 @@ function AccountMenuManager() {
                         <tr>
                           <th>카테고리</th>
                           <th>식자재 선택</th>
+                          <th>공급처 상품</th>
                           <th>필요 수량</th>
                         </tr>
                       </thead>
@@ -1546,6 +1638,25 @@ function AccountMenuManager() {
                                   onChange={(ingredientId) => handleIngredientSelect(activeMenu.menu_id, item.row_id, ingredientId)}
                                   />
                                 </div>
+                              </td>
+                              <td>
+                                <select
+                                  className="menu-manager-cell-input"
+                                  value={item.supplier_product_id ?? ''}
+                                  onChange={(event) =>
+                                    handleSupplierProductSelect(activeMenu.menu_id, item.row_id, event.target.value)
+                                  }
+                                  disabled={!item.ingredient_id}
+                                >
+                                  <option value="">공급처 상품 선택</option>
+                                  {supplierProducts
+                                    .filter((product) => product.ingredient_id === item.ingredient_id)
+                                    .map((product) => (
+                                      <option key={product.supplier_product_id} value={product.supplier_product_id}>
+                                        {product.supplier_name} · {product.product_name} ({product.supplier_item_code})
+                                      </option>
+                                    ))}
+                                </select>
                               </td>
                               <td>
                                 <div className="menu-manager-qty-editor">
