@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import HeaderBar from '../../components/HeaderBar'
 import LoadingScreen from '../../components/LoadingScreen'
 import SideMenuLayout from '../../components/SideMenuLayout'
@@ -9,6 +9,7 @@ import { getIngredientOptions, type IngredientOption } from '../../api/operation
 import IngredientSearchSelect from '../operations/IngredientSearchSelect'
 import { MENU_PAGE_SIZE, parseNumber, qtyUnitOptions } from '../operations/menuManagerShared'
 import '../operations/MenuManager.css'
+import { getIngredientStockStatus } from '../../utils/ingredientStockStatus'
 
 const locationOptions = [
   { value: 'L001', text: '상온창고' },
@@ -44,24 +45,31 @@ function applyIngredientCategories(items: EditableAccountInventoryItem[], ingred
 
   return items.map((item) => ({
     ...item,
-    category_name: categoryByIngredientId.get(item.ingredient_id) ?? item.category_name,
+    category_name: item.category_name || categoryByIngredientId.get(item.ingredient_id) || '',
   }))
 }
 
 function getLocationName(locationId?: string) {
-  return locationOptions.find((option) => option.value === locationId)?.text ?? locationId ?? '-'
+  const labels: Record<string, string> = {
+    L001: '상온창고',
+    L002: '냉장고',
+    L003: '냉동고',
+    L999: '기타/미분류',
+  }
+  return locationId ? labels[locationId] ?? locationId : '-'
 }
 
-type EditableTextField = 'category_name' | 'location_id' | 'qty_unit' | 'base_unit' | 'order_unit'
+function getInventoryStockStatus(item: AccountInventoryItem) {
+  if (item.stock_status === 'RED') return { emoji: '🔴', label: '즉시 재고 부족', needsOrder: true }
+  if (item.stock_status === 'ORANGE') return { emoji: '🟠', label: '평균 사용량 대비 부족 예상', needsOrder: true }
+  if (item.stock_status === 'YELLOW') return { emoji: '🟡', label: '최근 사용 이력 없음 · 총용량 대비 재고 30% 이하', needsOrder: false }
+  if (item.stock_status === 'GREEN') return { emoji: '🟢', label: '정상', needsOrder: false }
+  return getIngredientStockStatus(item)
+}
+
+type EditableTextField = 'category_name' | 'location_id' | 'base_unit'
 type EditableIngredientField = 'ingredient_id' | 'ingredient_name'
-type EditableNumberField =
-  | 'required_qty'
-  | 'current_qty'
-  | 'safe_stock_qty'
-  | 'shortage_qty'
-  | 'order_needed_qty'
-  | 'convert_value'
-  | 'menu_usage_count'
+type EditableNumberField = 'current_qty' | 'safe_stock_qty'
 type EditableField = EditableTextField | EditableIngredientField | EditableNumberField
 
 function isInventoryFieldDirty(
@@ -124,24 +132,15 @@ function isInventoryItemChanged(
   }
 
   return ([
-    'ingredient_id',
-    'ingredient_name',
-    'category_name',
     'location_id',
-    'required_qty',
-    'qty_unit',
     'current_qty',
     'safe_stock_qty',
-    'shortage_qty',
-    'order_needed_qty',
     'base_unit',
-    'order_unit',
-    'convert_value',
-    'menu_usage_count',
   ] as const).some((field) => item[field] !== original[field])
 }
 
 function AccountInventoryManager() {
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const initialKeyword = searchParams.get('q') ?? ''
   const storedAccountId = typeof window !== 'undefined' ? localStorage.getItem('account_id')?.trim() ?? '' : ''
@@ -308,7 +307,12 @@ function AccountInventoryManager() {
         account_id: targetAccountId,
         inventory_items: changedItems,
       })
-      setOriginalItemsByRowId(buildInventorySnapshotMap(items))
+      const savedItems = applyIngredientCategories(
+        (await getAccountInventoryList(targetAccountId)).map(createInventoryRow),
+        ingredientOptions,
+      )
+      setItems(savedItems)
+      setOriginalItemsByRowId(buildInventorySnapshotMap(savedItems))
       setAlert({ type: 'success', title: '저장 완료', message: '거래처 재고를 저장했습니다.' })
     } catch (saveError) {
       setAlert({
@@ -319,6 +323,15 @@ function AccountInventoryManager() {
     } finally {
       setIsSaving(false)
     }
+  }
+
+  const goToOrder = (item: EditableAccountInventoryItem) => {
+    const params = new URLSearchParams({ account_id: targetAccountId, ingredient_id: item.ingredient_id })
+    if (item.account_ingredient_product_id) {
+      params.set('account_ingredient_product_id', String(item.account_ingredient_product_id))
+    }
+    const menuPath = item.menu_id ? `/${encodeURIComponent(item.menu_id)}` : ''
+    navigate(`/order_manager/food_order${menuPath}?${params.toString()}`)
   }
 
   return (
@@ -358,7 +371,7 @@ function AccountInventoryManager() {
                   <option value="">전체</option>
                   {locationOptions.map((option) => (
                     <option key={option.value} value={option.value}>
-                      {option.text}
+                      {getLocationName(option.value)}
                     </option>
                   ))}
                 </select>
@@ -399,6 +412,8 @@ function AccountInventoryManager() {
                         <th>안전재고</th>
                         <th>부족재고</th>
                         <th>발주필요</th>
+                        <th>재고상태</th>
+                        <th>발주</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -446,34 +461,13 @@ function AccountInventoryManager() {
                               <option value="">위치 선택</option>
                               {locationOptions.map((option) => (
                                 <option key={option.value} value={option.value}>
-                                  {option.text}
+                                  {getLocationName(option.value)}
                                 </option>
                               ))}
                             </select>
                           </td>
                           <td>
-                            <div className="menu-manager-qty-editor">
-                              <input
-                                className={getCellInputClass(item, originalItemsByRowId, 'required_qty', ' is-compact')}
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={item.required_qty}
-                                onChange={(event) => handleNumberChange(item, 'required_qty', event.target.value)}
-                              />
-                              <select
-                                className={getCellInputClass(item, originalItemsByRowId, 'qty_unit', ' is-unit')}
-                                value={item.qty_unit ?? ''}
-                                onChange={(event) => handleTextChange(item, 'qty_unit', event.target.value)}
-                              >
-                                <option value="">단위</option>
-                                {qtyUnitOptions.map((option) => (
-                                  <option key={option} value={option}>
-                                    {option}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
+                            {item.required_qty} {item.base_unit}
                           </td>
                           <td>
                             <div className="menu-manager-qty-editor">
@@ -500,48 +494,35 @@ function AccountInventoryManager() {
                             </div>
                           </td>
                           <td>
-                            <input
-                              className={getCellInputClass(item, originalItemsByRowId, 'safe_stock_qty')}
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={item.safe_stock_qty}
-                              onChange={(event) => handleNumberChange(item, 'safe_stock_qty', event.target.value)}
-                            />
-                          </td>
-                          <td>
-                            <input
-                              className={getCellInputClass(item, originalItemsByRowId, 'shortage_qty')}
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={item.shortage_qty}
-                              onChange={(event) => handleNumberChange(item, 'shortage_qty', event.target.value)}
-                            />
-                          </td>
-                          <td>
                             <div className="menu-manager-qty-editor">
                               <input
-                                className={getCellInputClass(item, originalItemsByRowId, 'order_needed_qty', ' is-compact')}
+                                className={getCellInputClass(item, originalItemsByRowId, 'safe_stock_qty', ' is-compact')}
                                 type="number"
                                 min="0"
                                 step="0.01"
-                                value={item.order_needed_qty}
-                                onChange={(event) => handleNumberChange(item, 'order_needed_qty', event.target.value)}
+                                value={item.safe_stock_qty}
+                                onChange={(event) => handleNumberChange(item, 'safe_stock_qty', event.target.value)}
                               />
-                              <select
-                                className={getCellInputClass(item, originalItemsByRowId, 'order_unit', ' is-unit')}
-                                value={item.order_unit ?? ''}
-                                onChange={(event) => handleTextChange(item, 'order_unit', event.target.value)}
-                              >
-                                <option value="">단위</option>
-                                {qtyUnitOptions.map((option) => (
-                                  <option key={option} value={option}>
-                                    {option}
-                                  </option>
-                                ))}
-                              </select>
+                              <span>{item.base_unit}</span>
                             </div>
+                          </td>
+                          <td>
+                            {item.shortage_qty} {item.base_unit}
+                          </td>
+                          <td>
+                            {item.order_needed_qty} {item.base_unit}
+                          </td>
+                          <td>
+                            <span title={getInventoryStockStatus(item).label}>
+                              {getInventoryStockStatus(item).emoji} {getInventoryStockStatus(item).label}
+                            </span>
+                          </td>
+                          <td>
+                            {getInventoryStockStatus(item).needsOrder ? (
+                              <button type="button" className="menu-manager-add-button" onClick={() => goToOrder(item)}>
+                                발주하러 가기
+                              </button>
+                            ) : '-'}
                           </td>
                         </tr>
                       ))}

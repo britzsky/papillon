@@ -29,6 +29,9 @@ export type OrderDetailItem = {
   total_capacity_qty?: number
   last_used_at?: string
   menu_usage_count?: number
+  supplier_product_id?: number
+  supplier_name?: string
+  purchase_price?: number
 }
 
 type RawMenu = Record<string, unknown>
@@ -120,12 +123,15 @@ function normalizeOrderDetail(detail: RawOrderDetail): OrderDetailItem {
     total_capacity_qty: asNumber(detail.total_capacity_qty ?? detail.totalCapacityQty ?? detail.total_qty ?? detail.totalQty ?? detail.capacity_qty ?? detail.capacityQty, 0),
     last_used_at: asText(detail.last_used_at ?? detail.lastUsedAt ?? detail.last_usage_date ?? detail.lastUsageDate),
     menu_usage_count: asNumber(detail.menu_usage_count ?? detail.menuUsageCount, 0),
+    supplier_product_id: asNumber(detail.supplier_product_id ?? detail.supplierProductId, 0),
+    supplier_name: asText(detail.supplier_name ?? detail.supplierName),
+    purchase_price: asNumber(detail.purchase_price ?? detail.purchasePrice, 0),
   }
 }
 
-export async function getOrderMenuList(): Promise<OrderMenu[]> {
+export async function getOrderMenuList(accountId = getLocalAccountId()): Promise<OrderMenu[]> {
   const searchParams = new URLSearchParams({
-    account_id: getLocalAccountId(),
+    account_id: accountId,
   })
 
   const response = await fetch(`${buildApiUrl('/Menu/AccountMenuList')}?${searchParams.toString()}`, {
@@ -151,9 +157,14 @@ export async function getOrderMenuList(): Promise<OrderMenu[]> {
     .filter(isAvailableMenu)
 }
 
-export async function getOrderDetailList(menuId: string, servingQty: number, menuType = ''): Promise<OrderDetailItem[]> {
+export async function getOrderDetailList(
+  menuId: string,
+  servingQty: number,
+  menuType = '',
+  accountId = getLocalAccountId(),
+): Promise<OrderDetailItem[]> {
   const searchParams = new URLSearchParams({
-    account_id: getLocalAccountId(),
+    account_id: accountId,
     menu_id: menuId,
     servingQty: String(servingQty),
   })

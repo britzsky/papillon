@@ -1,5 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import HeaderBar from '../../components/HeaderBar'
 import LoadingScreen from '../../components/LoadingScreen'
 import SideMenuLayout from '../../components/SideMenuLayout'
@@ -15,6 +15,7 @@ import { lookupItem, validateItemLookupRequest, type ItemLookupItem } from '../.
 import { lookupWorkplaces, type Workplace } from '../../api/workplaceLookup'
 import './FoodOrder.css'
 import { getAverageUsage, getIngredientStockStatus } from '../../utils/ingredientStockStatus'
+import { createProcurementCartFromMealPlan } from '../../api/operations'
 
 type Supplier = {
   menu_id: string
@@ -242,7 +243,10 @@ function withDefaultWorkplace(items: Workplace[]) {
 function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
   void _embedded
   const { menuId: routeMenuId } = useParams<{ menuId?: string }>()
+  const [searchParams] = useSearchParams()
   const targetMenuId = routeMenuId ? decodeURIComponent(routeMenuId) : ''
+  const targetAccountId = searchParams.get('account_id')?.trim() ?? ''
+  const targetTableId = searchParams.get('table_id')?.trim() ?? ''
 
   const [selectedCategory, setSelectedCategory] = useState<MenuCategory>(categoryOptions[0])
   const [menuList, setMenuList] = useState<OrderMenu[]>([])
@@ -266,13 +270,25 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
   const [isLookupLoading, setIsLookupLoading] = useState(false)
 
   useEffect(() => {
+    if (!targetAccountId || !targetTableId) return
+
+    const requestKey = `procurement-cart:${targetAccountId}:${targetTableId}`
+    if (sessionStorage.getItem(requestKey) === 'requested') return
+    sessionStorage.setItem(requestKey, 'requested')
+
+    void createProcurementCartFromMealPlan(targetAccountId, targetTableId).catch(() => {
+      sessionStorage.removeItem(requestKey)
+    })
+  }, [targetAccountId, targetTableId])
+
+  useEffect(() => {
     let isMounted = true
 
     const loadMenuList = async () => {
       try {
         setIsMenuListLoading(true)
         setMenuListError('')
-        const menus = await getOrderMenuList()
+        const menus = await getOrderMenuList(targetAccountId || undefined)
         if (!isMounted) {
           return
         }
@@ -313,7 +329,7 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [targetAccountId])
 
   useEffect(() => {
     if (!targetMenuId || menuList.length === 0) {
@@ -368,7 +384,12 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
       try {
         setIsDetailLoading(true)
         setDetailError('')
-        const details = await getOrderDetailList(activeMenuSummary.menu_id, activeServingQty, activeMenuSummary.menu_type)
+        const details = await getOrderDetailList(
+          activeMenuSummary.menu_id,
+          activeServingQty,
+          activeMenuSummary.menu_type,
+          targetAccountId || undefined,
+        )
         if (!isMounted) {
           return
         }
@@ -379,9 +400,19 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
         setDetailItems(
           (details.length > 0 ? details : fallbackIngredients).map((detail) => {
             const fallback = fallbackById.get(detail.ingredient_id)
+            const supplierProductId = 'supplier_product_id' in detail ? detail.supplier_product_id : undefined
+            const supplierName = 'supplier_name' in detail ? detail.supplier_name : undefined
+            const purchasePrice = 'purchase_price' in detail ? detail.purchase_price : undefined
             return {
               ...detail,
-              suppliers: fallback?.suppliers ?? [],
+              suppliers: supplierProductId
+                ? [{
+                    menu_id: String(supplierProductId),
+                    menu_name: supplierName || '연결 공급처',
+                    price: purchasePrice ?? 0,
+                    recommendedQuantity: detail.order_needed_qty,
+                  }]
+                : fallback?.suppliers ?? [],
             }
           }),
         )
@@ -404,7 +435,7 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
     return () => {
       isMounted = false
     }
-  }, [activeMenuSummary, activeServingQty])
+  }, [activeMenuSummary, activeServingQty, targetAccountId])
 
   const activeMenu = useMemo<MenuDetail | null>(() => {
     if (!activeMenuSummary) {
@@ -425,9 +456,17 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
   }, [activeMenuSummary, activeServingQty, detailItems])
 
   useEffect(() => {
-    setSelectedSuppliers({})
+    setSelectedSuppliers(
+      Object.fromEntries(
+        (activeMenu?.ingredients ?? []).flatMap((ingredient) =>
+          ingredient.order_needed_qty > 0 && ingredient.suppliers[0]
+            ? [[`${ingredient.ingredient_id}-${ingredient.suppliers[0].menu_id}`, true]]
+            : [],
+        ),
+      ),
+    )
     setIsOrderModalOpen(false)
-  }, [activeMenu?.menu_id, activeServingQty])
+  }, [activeMenu, activeServingQty])
 
   const handleItemSearch = async (event: React.FormEvent) => {
     event.preventDefault()

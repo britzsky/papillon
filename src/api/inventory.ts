@@ -20,6 +20,9 @@ export type AccountInventoryItem = {
   order_unit: string
   convert_value: number
   menu_usage_count?: number
+  average_usage_qty?: number
+  total_capacity_qty?: number
+  last_used_at?: string
   supplier_name?: string
   product_name?: string
   supplier_item_code?: string
@@ -103,6 +106,9 @@ function normalizeAccountInventoryItem(record: RawRecord): AccountInventoryItem 
     order_unit: asText(record.order_unit ?? record.orderUnit),
     convert_value: asNumber(record.convert_value ?? record.convertValue),
     menu_usage_count: asNumber(record.menu_usage_count ?? record.menuUsageCount),
+    average_usage_qty: asNumber(record.average_usage_qty ?? record.averageUsageQty ?? record.avg_daily_usage),
+    total_capacity_qty: asNumber(record.total_capacity_qty ?? record.totalCapacityQty ?? record.max_stock_base_qty),
+    last_used_at: asText(record.last_used_at ?? record.lastUsedAt ?? record.last_out_at),
     supplier_name: asText(record.supplier_name ?? record.supplierName),
     product_name: asText(record.product_name ?? record.productName),
     supplier_item_code: asText(record.supplier_item_code ?? record.supplierItemCode),
@@ -149,6 +155,7 @@ export async function saveAccountInventory(payload: AccountInventorySavePayload)
         location_id: item.location_id || 'L999',
         current_base_qty: item.current_qty,
         base_unit: item.base_unit,
+        safe_stock_base_qty: item.safe_stock_qty,
         user_id: getLocalUserId(),
       }),
     })

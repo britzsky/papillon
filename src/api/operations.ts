@@ -24,6 +24,7 @@ export type MenuManagerItem = {
   like?: string
   meal_plan_type: number
   calories_per_serving?: number
+  menu_cost_per_person?: number
 }
 
 export type MenuIngredientItem = {
@@ -511,6 +512,7 @@ function normalizeMenu(record: RawRecord, index: number): MenuManagerItem {
     like: asText(record.like ?? record.LIKE ?? record.is_like ?? record.isLike, 'N'),
     meal_plan_type: asNumber(record.meal_plan_type ?? record.mealPlanType, 0),
     calories_per_serving: asNumber(record.calories_per_serving ?? record.caloriesPerServing),
+    menu_cost_per_person: asNumber(record.menu_cost_per_person ?? record.menuCostPerPerson),
   }
 }
 
