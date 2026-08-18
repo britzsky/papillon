@@ -40,7 +40,7 @@ const majorMenus: MajorMenu[] = [
     items: [
       { label: '거래처 재고관리', to: '/inventory/account', exact: true },
       { label: '식자재 재고관리' },
-      { label: '재고 이동관리' },
+      // { label: '재고 이동관리' },
     ],
   },
   {
@@ -57,7 +57,7 @@ const majorMenus: MajorMenu[] = [
       { label: '메뉴 관리', to: '/operations/menu', exact: true },
       { label: '거래처 메뉴 관리', to: '/operations/account-menu', exact: true },
       { label: '식단표 관리', to: '/operations/table-meals', exact: true },
-      { label: '거래명세서 관리' },
+      // { label: '거래명세서 관리' },
     ],
   },
 ]
