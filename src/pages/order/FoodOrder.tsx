@@ -16,6 +16,8 @@ import { lookupWorkplaces, type Workplace } from '../../api/workplaceLookup'
 import './FoodOrder.css'
 import { getAverageUsage, getIngredientStockStatus } from '../../utils/ingredientStockStatus'
 import { createProcurementCartFromMealPlan } from '../../api/operations'
+import { getLikeIngredientOptions } from '../../api/operations'
+import { getAccountInventoryList, type AccountInventoryItem } from '../../api/inventory'
 
 type Supplier = {
   menu_id: string
@@ -246,6 +248,8 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
   const [searchParams] = useSearchParams()
   const targetMenuId = routeMenuId ? decodeURIComponent(routeMenuId) : ''
   const targetAccountId = searchParams.get('account_id')?.trim() ?? ''
+  const storedAccountId = typeof window !== 'undefined' ? localStorage.getItem('account_id')?.trim() ?? '' : ''
+  const effectiveAccountId = targetAccountId || storedAccountId
   const targetTableId = searchParams.get('table_id')?.trim() ?? ''
 
   const [selectedCategory, setSelectedCategory] = useState<MenuCategory>(categoryOptions[0])
@@ -268,18 +272,21 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
   const [lookupItems, setLookupItems] = useState<ItemLookupItem[]>([])
   const [lookupError, setLookupError] = useState('')
   const [isLookupLoading, setIsLookupLoading] = useState(false)
+  const [basketIngredients, setBasketIngredients] = useState<Ingredient[] | null>(null)
+  const [basketSearch, setBasketSearch] = useState('')
+  const [basketMessage, setBasketMessage] = useState('')
 
   useEffect(() => {
-    if (!targetAccountId || !targetTableId) return
+    if (!effectiveAccountId || !targetTableId) return
 
-    const requestKey = `procurement-cart:${targetAccountId}:${targetTableId}`
+    const requestKey = `procurement-cart:${effectiveAccountId}:${targetTableId}`
     if (sessionStorage.getItem(requestKey) === 'requested') return
     sessionStorage.setItem(requestKey, 'requested')
 
-    void createProcurementCartFromMealPlan(targetAccountId, targetTableId).catch(() => {
+    void createProcurementCartFromMealPlan(effectiveAccountId, targetTableId).catch(() => {
       sessionStorage.removeItem(requestKey)
     })
-  }, [targetAccountId, targetTableId])
+  }, [effectiveAccountId, targetTableId])
 
   useEffect(() => {
     let isMounted = true
@@ -288,7 +295,7 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
       try {
         setIsMenuListLoading(true)
         setMenuListError('')
-        const menus = await getOrderMenuList(targetAccountId || undefined)
+        const menus = await getOrderMenuList(effectiveAccountId || undefined)
         if (!isMounted) {
           return
         }
@@ -329,7 +336,7 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
     return () => {
       isMounted = false
     }
-  }, [targetAccountId])
+  }, [effectiveAccountId])
 
   useEffect(() => {
     if (!targetMenuId || menuList.length === 0) {
@@ -388,7 +395,7 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
           activeMenuSummary.menu_id,
           activeServingQty,
           activeMenuSummary.menu_type,
-          targetAccountId || undefined,
+          effectiveAccountId || undefined,
         )
         if (!isMounted) {
           return
@@ -435,7 +442,7 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
     return () => {
       isMounted = false
     }
-  }, [activeMenuSummary, activeServingQty, targetAccountId])
+  }, [activeMenuSummary, activeServingQty, effectiveAccountId])
 
   const activeMenu = useMemo<MenuDetail | null>(() => {
     if (!activeMenuSummary) {
@@ -455,10 +462,20 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
     }
   }, [activeMenuSummary, activeServingQty, detailItems])
 
+  const orderIngredients = useMemo(
+    () => basketIngredients ?? activeMenu?.ingredients ?? [],
+    [activeMenu, basketIngredients],
+  )
+
+  useEffect(() => {
+    setBasketIngredients(null)
+    setBasketMessage('')
+  }, [activeMenuSummary?.menu_id])
+
   useEffect(() => {
     setSelectedSuppliers(
       Object.fromEntries(
-        (activeMenu?.ingredients ?? []).flatMap((ingredient) =>
+        orderIngredients.flatMap((ingredient) =>
           ingredient.order_needed_qty > 0 && ingredient.suppliers[0]
             ? [[`${ingredient.ingredient_id}-${ingredient.suppliers[0].menu_id}`, true]]
             : [],
@@ -466,7 +483,71 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
       ),
     )
     setIsOrderModalOpen(false)
-  }, [activeMenu, activeServingQty])
+  }, [orderIngredients, activeServingQty])
+
+  const inventoryToIngredient = (item: AccountInventoryItem): Ingredient => ({
+    menu_id: activeMenu?.menu_id ?? 'BASKET',
+    ingredient_id: item.ingredient_id,
+    ingredient_name: item.ingredient_name,
+    required_qty: item.average_usage_qty ?? item.required_qty ?? 0,
+    current_qty: item.current_base_qty,
+    shortage_qty: item.shortage_qty,
+    order_needed_qty: item.order_needed_qty,
+    base_unit: item.base_unit,
+    order_unit: item.order_unit,
+    convert_value: item.convert_value || item.package_base_qty || 1,
+    average_usage_qty: item.average_usage_qty,
+    total_capacity_qty: item.total_capacity_qty,
+    last_used_at: item.last_used_at,
+    menu_usage_count: item.menu_usage_count,
+    suppliers: item.supplier_product_id
+      ? [{
+          menu_id: String(item.supplier_product_id),
+          menu_name: item.supplier_name || item.product_name || '연결 공급처',
+          price: item.purchase_price ?? 0,
+          recommendedQuantity: item.order_needed_qty > 0 ? item.order_needed_qty : 1,
+        }]
+      : [],
+  })
+
+  const mergeBasketItems = (nextItems: Ingredient[], message: string) => {
+    setBasketIngredients((current) => {
+      const merged = new Map((current ?? activeMenu?.ingredients ?? []).map((item) => [item.ingredient_id, item]))
+      nextItems.forEach((item) => merged.set(item.ingredient_id, item))
+      return Array.from(merged.values())
+    })
+    setBasketMessage(message)
+  }
+
+  const addShortageBasket = async () => {
+    const items = await getAccountInventoryList(effectiveAccountId)
+    const selected = items.filter((item) => item.stock_status === 'RED' || item.stock_status === 'ORANGE').map(inventoryToIngredient)
+    mergeBasketItems(selected, `부족품목 ${selected.length}건을 담았습니다.`)
+  }
+
+  const addFavoriteBasket = async () => {
+    const [inventory, favorites] = await Promise.all([getAccountInventoryList(effectiveAccountId), getLikeIngredientOptions(effectiveAccountId)])
+    const ids = new Set(favorites.map((item) => item.ingredient_id))
+    const selected = inventory.filter((item) => ids.has(item.ingredient_id)).map(inventoryToIngredient)
+    mergeBasketItems(selected, `즐겨찾기 ${selected.length}건을 담았습니다.`)
+  }
+
+  const addSearchedIngredient = async () => {
+    const keyword = basketSearch.trim().toLowerCase()
+    if (!keyword) return
+    const inventory = await getAccountInventoryList(effectiveAccountId)
+    const matched = inventory.find((item) => item.ingredient_name.toLowerCase().includes(keyword) || item.ingredient_id.toLowerCase() === keyword)
+    if (!matched) {
+      setBasketMessage('거래처 재고에서 일치하는 식자재를 찾지 못했습니다.')
+      return
+    }
+    mergeBasketItems([inventoryToIngredient(matched)], `${matched.ingredient_name}을(를) 담았습니다.`)
+    setBasketSearch('')
+  }
+
+  const removeBasketIngredient = (ingredientId: string) => {
+    setBasketIngredients(orderIngredients.filter((item) => item.ingredient_id !== ingredientId))
+  }
 
   const handleItemSearch = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -522,7 +603,7 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
       return []
     }
 
-    return activeMenu.ingredients.flatMap((ingredient) =>
+    return orderIngredients.flatMap((ingredient) =>
       ingredient.suppliers
         .filter((supplier) => selectedSuppliers[`${ingredient.ingredient_id}-${supplier.menu_id}`])
         .map((supplier) => ({
@@ -537,7 +618,7 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
           recommendedQuantity: ingredient.order_needed_qty || supplier.recommendedQuantity,
         })),
     )
-  }, [activeMenu, selectedSuppliers])
+  }, [activeMenu, orderIngredients, selectedSuppliers])
 
   const orderSheetRows = useMemo(
     () =>
@@ -648,6 +729,33 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
               <label>품목코드<input value={itemCode} maxLength={18} autoComplete="off" onChange={(event) => setItemCode(event.target.value.trimStart())} placeholder="최대 18자리" /></label>
               <label>입고일자<input value={reqDeliveryDate} maxLength={8} inputMode="numeric" autoComplete="off" onChange={(event) => setReqDeliveryDate(event.target.value.replace(/\D/g, ''))} placeholder="YYYYMMDD" /></label>
               <button type="submit" disabled={isLookupLoading}>품목 조회</button>
+              <label>식자재 추가
+                <input
+                  value={basketSearch}
+                  onChange={(event) => setBasketSearch(event.target.value)}
+                  placeholder="식자재명 또는 ID"
+                />
+              </label>
+              <button type="button" onClick={() => void addSearchedIngredient()}>추가</button>
+              <button
+                type="button"
+                className="food-order-basket-button is-shortage"
+                onClick={() => void addShortageBasket()}
+              >
+                부족품목🧺
+              </button>
+              <button
+                type="button"
+                className="food-order-basket-button is-favorite"
+                onClick={() => void addFavoriteBasket()}
+              >
+                즐겨찾기🧺
+              </button>
+              {basketMessage ? (
+                <span className={basketMessage === '거래처 재고에서 일치하는 식자재를 찾지 못했습니다.' ? 'food-order-basket-message is-error' : 'food-order-basket-message'}>
+                  {basketMessage}
+                </span>
+              ) : null}
               {workplaceError ? <span className="food-order-item-search__error">{workplaceError}</span> : null}
             </form>
           </section>
@@ -707,7 +815,7 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
                 <div className="food-order-empty">API 호출에 실패하여 임시 식자재 데이터를 표시합니다.</div>
               ) : null}
               {activeMenu ? (
-                activeMenu.ingredients.length > 0 ? (
+                orderIngredients.length > 0 ? (
                   <div className="food-order-table-scroll">
                     <table className="food-order-table">
                       <thead>
@@ -725,11 +833,19 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
                         </tr>
                       </thead>
                       <tbody>
-                        {activeMenu.ingredients.map((ingredient) => (
+                        {orderIngredients.map((ingredient) => (
                           <tr key={`${ingredient.menu_id}-${ingredient.ingredient_id}`}>
                             <td style={{ display: 'none' }}>{ingredient.menu_id}</td>
                             <td style={{ display: 'none' }}>{ingredient.ingredient_id}</td>
                             <td title={getIngredientStockStatus(ingredient).label}>
+                              <button
+                                type="button"
+                                className="food-order-remove-ingredient"
+                                onClick={() => removeBasketIngredient(ingredient.ingredient_id)}
+                                aria-label={`${ingredient.ingredient_name} 삭제`}
+                              >
+                                삭제
+                              </button>{' '}
                               {getIngredientStockStatus(ingredient).emoji} {ingredient.ingredient_name}
                             </td>
                             <td>{formatQuantity(ingredient.required_qty, ingredient.base_unit)}</td>
@@ -784,10 +900,10 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
               {activeMenu ? (
                 <>
                   <div className="supplier-list">
-                    {activeMenu.ingredients.length === 0 ? (
+                    {orderIngredients.length === 0 ? (
                       <div className="food-order-empty">업체 정보가 연결된 식자재가 없습니다.</div>
                     ) : null}
-                    {activeMenu.ingredients.map((ingredient) => {
+                    {orderIngredients.map((ingredient) => {
                       const shortage = ingredient.shortage_qty
 
                       return (

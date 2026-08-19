@@ -807,9 +807,9 @@ export async function getIngredientOptions(): Promise<IngredientOption[]> {
     .filter((item) => item.ingredient_id !== '' || item.ingredient_name !== '')
 }
 
-export async function getLikeIngredientOptions(): Promise<IngredientOption[]> {
+export async function getLikeIngredientOptions(accountId = getLocalAccountId()): Promise<IngredientOption[]> {
   const searchParams = new URLSearchParams({
-    account_id: getLocalAccountId(),
+    account_id: accountId,
     user_id: getLocalUserId(),
   })
 

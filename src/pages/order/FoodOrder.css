@@ -26,14 +26,15 @@
 .food-order-field {
   min-width: 180px;
   display: inline-flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
 }
 
-.food-order-field label {
-  font-size: var(--query-control-font-size);
-  font-weight: var(--query-control-font-weight);
+.food-order-field label,
+.food-order-item-search label {
+  font-size: 12px;
+  font-weight: 600;
   color: #334155;
   white-space: nowrap;
 }
@@ -43,7 +44,7 @@
   height: 36px;
   padding: 0 10px;
   border: 1px solid #cbd5e1;
-  border-radius: 12px;
+  border-radius: 8px;
   background: #ffffff;
   font-size: var(--query-control-font-size);
   font-weight: var(--query-control-font-weight);
@@ -59,8 +60,6 @@
 .food-order-item-search label {
   display: grid;
   gap: 3px;
-  font-size: 12px;
-  color: #334155;
 }
 
 .food-order-item-search input,
@@ -235,6 +234,56 @@
   border-top: 1px solid var(--table-border-strong);
   display: flex;
   flex-direction: column;
+}
+
+.food-order-remove-ingredient {
+  margin-right: 8px;
+  padding: 7px 11px;
+  border: 0;
+  border-radius: 8px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.food-order-remove-ingredient:hover {
+  background: #b91c1c;
+}
+
+.food-order-remove-ingredient:focus-visible {
+  outline: 3px solid rgba(220, 38, 38, 0.28);
+  outline-offset: 2px;
+}
+
+.food-order-item-search .food-order-basket-button.is-shortage {
+  border-color: #3b82f6;
+  background: #3b82f6;
+  color: #fff;
+}
+
+.food-order-item-search .food-order-basket-button.is-shortage:hover {
+  background: #2563eb;
+}
+
+.food-order-item-search .food-order-basket-button.is-favorite {
+  border-color: #22c55e;
+  background: #22c55e;
+  color: #fff;
+}
+
+.food-order-item-search .food-order-basket-button.is-favorite:hover {
+  background: #16a34a;
+}
+
+.food-order-basket-message.is-error {
+  color: #dc2626;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .food-order-lookup__title {

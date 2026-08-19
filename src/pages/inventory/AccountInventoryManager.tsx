@@ -111,6 +111,7 @@ function createEmptyInventoryRow(index: number): EditableAccountInventoryItem {
     qty_num: 0,
     qty_unit: '',
     current_qty: 0,
+    current_base_qty: 0,
     current_unit: '',
     safe_stock_qty: 0,
     shortage_qty: 0,

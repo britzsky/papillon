@@ -13,6 +13,7 @@ export type AccountInventoryItem = {
   qty_num?: number
   qty_unit?: string
   current_qty: number
+  current_base_qty: number
   current_unit: string
   safe_stock_qty: number
   shortage_qty: number
@@ -25,6 +26,9 @@ export type AccountInventoryItem = {
   total_capacity_qty?: number
   last_used_at?: string
   supplier_name?: string
+  supplier_product_id?: number
+  purchase_price?: number
+  package_base_qty?: number
   product_name?: string
   supplier_item_code?: string
   stock_status?: 'RED' | 'ORANGE' | 'YELLOW' | 'GREEN'
@@ -112,6 +116,7 @@ function normalizeAccountInventoryItem(record: RawRecord): AccountInventoryItem 
     qty_num: qtyNum,
     qty_unit: asText(record.qty_unit ?? record.qtyUnit ?? record.base_unit ?? record.baseUnit ?? record.order_unit ?? record.orderUnit),
     current_qty: convertBaseQtyToDisplay(currentBaseQty, baseUnit, currentUnit),
+    current_base_qty: currentBaseQty,
     current_unit: currentUnit,
     safe_stock_qty: asNumber(record.safe_stock_base_qty ?? record.safeStockBaseQty ?? record.safe_stock_qty ?? record.safeStockQty),
     shortage_qty: asNumber(record.shortage_qty ?? record.shortageQty),
@@ -124,6 +129,9 @@ function normalizeAccountInventoryItem(record: RawRecord): AccountInventoryItem 
     total_capacity_qty: asNumber(record.total_capacity_qty ?? record.totalCapacityQty ?? record.max_stock_base_qty),
     last_used_at: asText(record.last_used_at ?? record.lastUsedAt ?? record.last_out_at),
     supplier_name: asText(record.supplier_name ?? record.supplierName),
+    supplier_product_id: asNumber(record.supplier_product_id ?? record.supplierProductId),
+    purchase_price: asNumber(record.purchase_price ?? record.purchasePrice),
+    package_base_qty: asNumber(record.package_base_qty ?? record.packageBaseQty),
     product_name: asText(record.product_name ?? record.productName),
     supplier_item_code: asText(record.supplier_item_code ?? record.supplierItemCode),
     stock_status: asText(record.stock_status ?? record.stockStatus, 'GREEN') as AccountInventoryItem['stock_status'],
