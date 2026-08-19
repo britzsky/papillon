@@ -127,6 +127,18 @@ export type MealPlanAnalysisItem = {
   menu_usage_count?: number
 }
 
+export type MealPlanShortageItem = {
+  menu_id: string
+  menu_name: string
+  ingredient_id: string
+  ingredient_name: string
+  required_qty: number
+  total_required_qty: number
+  current_qty: number
+  shortage_qty: number
+  base_unit: string
+}
+
 export type TableMealsQueryPeriod = {
   table_year: number
   table_month: number
@@ -943,6 +955,31 @@ export async function createProcurementCartFromMealPlan(
     procurement_cart_id: Number(payload.procurement_cart_id ?? 0),
     item_count: Number(payload.item_count ?? 0),
   }
+}
+
+export async function getMealPlanShortages(accountId: string, tableId: string): Promise<MealPlanShortageItem[]> {
+  const searchParams = new URLSearchParams({ account_id: accountId, table_id: tableId })
+  const response = await fetch(`${buildApiUrl('/v2/procurement/shortages')}?${searchParams.toString()}`, {
+    headers: { 'Content-Type': 'application/json' },
+  })
+  const payload = await parseResponseBody(response)
+  if (!response.ok) {
+    throw new Error((payload as { message?: string } | null)?.message ?? '식단 부족 재고를 확인하지 못했습니다.')
+  }
+  return readArray(payload).map((item) => {
+    const record = item as RawRecord
+    return {
+      menu_id: asText(record.menu_id ?? record.menuId),
+      menu_name: asText(record.menu_name ?? record.menuName),
+      ingredient_id: asText(record.ingredient_id ?? record.ingredientId),
+      ingredient_name: asText(record.ingredient_name ?? record.ingredientName),
+      required_qty: asNumber(record.required_qty ?? record.requiredQty),
+      total_required_qty: asNumber(record.total_required_qty ?? record.totalRequiredQty),
+      current_qty: asNumber(record.current_qty ?? record.currentQty),
+      shortage_qty: asNumber(record.shortage_qty ?? record.shortageQty),
+      base_unit: asText(record.base_unit ?? record.baseUnit),
+    }
+  })
 }
 
 export async function saveTableMeals(payload: TableMealsSavePayload) {

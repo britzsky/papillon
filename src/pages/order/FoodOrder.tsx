@@ -732,13 +732,13 @@ function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
                             <td title={getIngredientStockStatus(ingredient).label}>
                               {getIngredientStockStatus(ingredient).emoji} {ingredient.ingredient_name}
                             </td>
-                            <td>{ingredient.required_qty}({ingredient.base_unit})</td>
+                            <td>{formatQuantity(ingredient.required_qty, ingredient.base_unit)}</td>
                             <td>
-                              {ingredient.current_qty}
+                              {formatQuantity(ingredient.current_qty, ingredient.base_unit)}
                               {getAverageUsage(ingredient) > 0 ? ` (평균 ${formatQuantity(getAverageUsage(ingredient), ingredient.base_unit)})` : ''}
                             </td>
-                            <td>{ingredient.shortage_qty}</td>
-                            <td>{ingredient.order_needed_qty}</td>
+                            <td>{formatQuantity(ingredient.shortage_qty, ingredient.base_unit)}</td>
+                            <td>{formatQuantity(ingredient.order_needed_qty, ingredient.base_unit)}</td>
                             <td style={{ display: 'none' }}>{ingredient.base_unit}</td>
                             <td>{ingredient.order_unit}</td>
                             <td>{ingredient.convert_value}</td>

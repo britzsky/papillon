@@ -13,6 +13,7 @@ export type AccountInventoryItem = {
   qty_num?: number
   qty_unit?: string
   current_qty: number
+  current_unit: string
   safe_stock_qty: number
   shortage_qty: number
   order_needed_qty: number
@@ -71,6 +72,15 @@ function asNumber(value: unknown, fallback = 0) {
   return fallback
 }
 
+function convertBaseQtyToDisplay(qty: number, baseUnit: string, displayUnit: string) {
+  const normalizedBase = baseUnit.toLowerCase()
+  const normalizedDisplay = displayUnit.toLowerCase()
+  if ((normalizedBase === 'g' && normalizedDisplay === 'kg') || (normalizedBase === 'ml' && normalizedDisplay === 'l')) {
+    return qty / 1000
+  }
+  return qty
+}
+
 function readArray(payload: unknown) {
   if (Array.isArray(payload)) {
     return payload
@@ -85,6 +95,9 @@ function readArray(payload: unknown) {
 
 function normalizeAccountInventoryItem(record: RawRecord): AccountInventoryItem {
   const qtyNum = asNumber(record.qty_num ?? record.qtyNum ?? record.required_qty ?? record.requiredQty)
+  const baseUnit = asText(record.base_unit ?? record.baseUnit)
+  const currentUnit = asText(record.current_unit ?? record.currentUnit, baseUnit)
+  const currentBaseQty = asNumber(record.current_base_qty ?? record.currentBaseQty ?? record.current_qty ?? record.currentQty)
 
   return {
     inventory_balance_id: asNumber(record.inventory_balance_id ?? record.inventoryBalanceId),
@@ -98,11 +111,12 @@ function normalizeAccountInventoryItem(record: RawRecord): AccountInventoryItem 
     required_qty: qtyNum,
     qty_num: qtyNum,
     qty_unit: asText(record.qty_unit ?? record.qtyUnit ?? record.base_unit ?? record.baseUnit ?? record.order_unit ?? record.orderUnit),
-    current_qty: asNumber(record.current_base_qty ?? record.currentBaseQty ?? record.current_qty ?? record.currentQty),
+    current_qty: convertBaseQtyToDisplay(currentBaseQty, baseUnit, currentUnit),
+    current_unit: currentUnit,
     safe_stock_qty: asNumber(record.safe_stock_base_qty ?? record.safeStockBaseQty ?? record.safe_stock_qty ?? record.safeStockQty),
     shortage_qty: asNumber(record.shortage_qty ?? record.shortageQty),
     order_needed_qty: asNumber(record.order_needed_qty ?? record.orderNeededQty),
-    base_unit: asText(record.base_unit ?? record.baseUnit),
+    base_unit: baseUnit,
     order_unit: asText(record.order_unit ?? record.orderUnit),
     convert_value: asNumber(record.convert_value ?? record.convertValue),
     menu_usage_count: asNumber(record.menu_usage_count ?? record.menuUsageCount),
@@ -153,9 +167,9 @@ export async function saveAccountInventory(payload: AccountInventorySavePayload)
         account_id: accountId,
         account_ingredient_product_id: item.account_ingredient_product_id,
         location_id: item.location_id || 'L999',
-        current_base_qty: item.current_qty,
+        current_qty: item.current_qty,
+        current_unit: item.current_unit || item.base_unit,
         base_unit: item.base_unit,
-        safe_stock_base_qty: item.safe_stock_qty,
         user_id: getLocalUserId(),
       }),
     })

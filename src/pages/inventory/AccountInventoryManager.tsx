@@ -67,9 +67,9 @@ function getInventoryStockStatus(item: AccountInventoryItem) {
   return getIngredientStockStatus(item)
 }
 
-type EditableTextField = 'category_name' | 'location_id' | 'base_unit'
+type EditableTextField = 'category_name' | 'location_id' | 'current_unit'
 type EditableIngredientField = 'ingredient_id' | 'ingredient_name'
-type EditableNumberField = 'current_qty' | 'safe_stock_qty'
+type EditableNumberField = 'current_qty'
 type EditableField = EditableTextField | EditableIngredientField | EditableNumberField
 
 function isInventoryFieldDirty(
@@ -111,6 +111,7 @@ function createEmptyInventoryRow(index: number): EditableAccountInventoryItem {
     qty_num: 0,
     qty_unit: '',
     current_qty: 0,
+    current_unit: '',
     safe_stock_qty: 0,
     shortage_qty: 0,
     order_needed_qty: 0,
@@ -134,8 +135,7 @@ function isInventoryItemChanged(
   return ([
     'location_id',
     'current_qty',
-    'safe_stock_qty',
-    'base_unit',
+    'current_unit',
   ] as const).some((field) => item[field] !== original[field])
 }
 
@@ -276,6 +276,7 @@ function AccountInventoryManager() {
               ingredient_name: selectedIngredient?.ingredient_name ?? '',
               category_name: selectedIngredient?.category_name ?? item.category_name ?? '',
               base_unit: selectedIngredient?.base_unit ?? item.base_unit ?? '',
+              current_unit: item.current_unit || selectedIngredient?.base_unit || '',
               qty_unit: item.qty_unit || selectedIngredient?.base_unit || '',
               order_unit: item.order_unit || selectedIngredient?.base_unit || '',
               menu_usage_count: selectedIngredient?.menu_usage_count ?? item.menu_usage_count ?? 0,
@@ -407,7 +408,7 @@ function AccountInventoryManager() {
                         <th>카테고리</th>
                         <th>식자재명</th>
                         <th>보관위치</th>
-                        <th>필요수량</th>
+                        <th>예상필요수량</th>
                         <th>현재고</th>
                         <th>안전재고</th>
                         <th>부족재고</th>
@@ -480,9 +481,9 @@ function AccountInventoryManager() {
                                 onChange={(event) => handleNumberChange(item, 'current_qty', event.target.value)}
                               />
                               <select
-                                className={getCellInputClass(item, originalItemsByRowId, 'base_unit', ' is-unit')}
-                                value={item.base_unit ?? ''}
-                                onChange={(event) => handleTextChange(item, 'base_unit', event.target.value)}
+                                className={getCellInputClass(item, originalItemsByRowId, 'current_unit', ' is-unit')}
+                                value={item.current_unit ?? item.base_unit ?? ''}
+                                onChange={(event) => handleTextChange(item, 'current_unit', event.target.value)}
                               >
                                 <option value="">단위</option>
                                 {qtyUnitOptions.map((option) => (
@@ -494,17 +495,7 @@ function AccountInventoryManager() {
                             </div>
                           </td>
                           <td>
-                            <div className="menu-manager-qty-editor">
-                              <input
-                                className={getCellInputClass(item, originalItemsByRowId, 'safe_stock_qty', ' is-compact')}
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={item.safe_stock_qty}
-                                onChange={(event) => handleNumberChange(item, 'safe_stock_qty', event.target.value)}
-                              />
-                              <span>{item.base_unit}</span>
-                            </div>
+                            {item.safe_stock_qty} {item.base_unit}
                           </td>
                           <td>
                             {item.shortage_qty} {item.base_unit}
