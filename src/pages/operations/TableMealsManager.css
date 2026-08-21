@@ -13,7 +13,7 @@
 
 .table-meals-toolbar {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 12px;
   margin-bottom: 12px;
   padding: 12px 14px;
@@ -26,8 +26,9 @@
 .table-meals-field {
   min-width: 320px;
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
 }
 
 .table-meals-field--week {
@@ -39,7 +40,7 @@
 }
 
 .table-meals-field label {
-  min-width: 58px;
+  min-width: 0;
   font-size: var(--query-control-font-size);
   font-weight: var(--query-control-font-weight);
   color: #334155;

@@ -54,6 +54,7 @@ const majorMenus: MajorMenu[] = [
     label: '운영관리',
     basePaths: ['/operations'],
     items: [
+      { label: '고객사 관리', to: '/operations/account', exact: true },
       { label: '메뉴 관리', to: '/operations/menu', exact: true },
       { label: '거래처 메뉴 관리', to: '/operations/account-menu', exact: true },
       { label: '식단표 관리', to: '/operations/table-meals', exact: true },

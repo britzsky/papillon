@@ -14,12 +14,14 @@ import {
   getAccountOptions,
   getAccountMenuManagerList,
   getAccountMenuDetailList,
+  getAccountMealSlots,
   getMenuManagerList,
   getMealPlanAnalysis,
   getTableMealsDetailList,
   getTableMealsList,
   saveTableMeals,
   type AccountOption,
+  type AccountMealSlot,
   type MenuIngredientItem,
   type MenuManagerItem,
   type TableMealsDetailItem,
@@ -35,7 +37,7 @@ import { getAverageUsage, getIngredientStockStatus } from '../../utils/ingredien
 
 GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()
 
-type MealSlotKey = 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'dcSnack'
+type MealSlotKey = string
 
 type PdfTextItem = {
   text: string
@@ -106,7 +108,7 @@ type TableMealsDetailDay = {
   meals: Record<MealSlotKey, TableMealsDetailItem[]>
 }
 
-type ManualMealRowId = 'breakfast' | 'lunch' | 'snack-afternoon' | 'dc-snack' | 'dinner' | 'snack-evening'
+type ManualMealRowId = string
 
 type ManualMealTarget = {
   dayId: string
@@ -152,6 +154,33 @@ const MANUAL_MEAL_SLOT_ORDER: Array<{ id: ManualMealRowId; key: MealSlotKey; lab
   { id: 'dinner', key: 'dinner', label: '저녁' },
   { id: 'snack-evening', key: 'snack', label: '간식' },
 ]
+
+type MealSlotRow = { id: string; key: MealSlotKey; label: string; code: number }
+
+const ACCOUNT_MEAL_SLOT_ROWS: MealSlotRow[] = [
+  { id: 'breakfast', key: '0', label: '조식', code: 0 },
+  { id: 'morning-snack', key: '1', label: '오전간식', code: 1 },
+  { id: 'lunch', key: '2', label: '중식', code: 2 },
+  { id: 'afternoon-snack', key: '3', label: '오후간식', code: 3 },
+  { id: 'dc', key: '4', label: 'DC', code: 4 },
+  { id: 'dinner', key: '5', label: '석식', code: 5 },
+  { id: 'evening-snack', key: '6', label: '저녁간식', code: 6 },
+  { id: 'other-snack', key: '7', label: '기타간식', code: 7 },
+  { id: 'kinder-snack', key: '8', label: '킨더간식', code: 8 },
+]
+
+function toMealSlotRows(items: AccountMealSlot[]) {
+  const selectedItems = items
+    .filter((item) => item.selected_yn === 'Y')
+    .sort((a, b) => a.display_order - b.display_order)
+
+  return selectedItems
+    .map((item) => {
+      const slot = ACCOUNT_MEAL_SLOT_ROWS.find((row) => row.code === item.meal_slot_code)
+      return slot ? { ...slot, label: item.meal_slot_name || slot.label } : null
+    })
+    .filter((slot): slot is MealSlotRow => slot !== null)
+}
 
 const MANUAL_FOOD_TYPE_OPTIONS = [
   { value: '', label: '전체' },
@@ -400,6 +429,8 @@ function normalizeCuisineText(value: string) {
 function toDetailMealSlotKey(value: string): MealSlotKey {
   const normalized = value.normalize('NFKC').replace(/\s+/g, '').toLowerCase()
 
+  if (/^[0-8]$/.test(normalized)) return normalized
+
   if (normalized === 'breakfast' || normalized === '1' || normalized.includes('아침') || normalized.includes('조식')) {
     return 'breakfast'
   }
@@ -441,13 +472,14 @@ function buildTableMealsDetailDays(items: TableMealsDetailItem[]): TableMealsDet
       key,
       date: item.meal_date,
       weekday: item.weekday,
-      meals: {
-        breakfast: [],
-        lunch: [],
-        dinner: [],
-        snack: [],
-        dcSnack: [],
-      },
+      meals: Object.fromEntries([
+        ...ACCOUNT_MEAL_SLOT_ROWS.map((slot) => [slot.key, [] as TableMealsDetailItem[]]),
+        ['breakfast', [] as TableMealsDetailItem[]],
+        ['lunch', [] as TableMealsDetailItem[]],
+        ['dinner', [] as TableMealsDetailItem[]],
+        ['snack', [] as TableMealsDetailItem[]],
+        ['dcSnack', [] as TableMealsDetailItem[]],
+      ]),
     }
 
     day.meals[toDetailMealSlotKey(item.meal_slot)].push(item)
@@ -457,13 +489,9 @@ function buildTableMealsDetailDays(items: TableMealsDetailItem[]): TableMealsDet
   return Array.from(dayMap.values())
     .map((day) => ({
       ...day,
-      meals: {
-        breakfast: [...day.meals.breakfast].sort((a, b) => a.sort_order - b.sort_order),
-        lunch: [...day.meals.lunch].sort((a, b) => a.sort_order - b.sort_order),
-        dinner: [...day.meals.dinner].sort((a, b) => a.sort_order - b.sort_order),
-        snack: [...day.meals.snack].sort((a, b) => a.sort_order - b.sort_order),
-        dcSnack: [...day.meals.dcSnack].sort((a, b) => a.sort_order - b.sort_order),
-      },
+      meals: Object.fromEntries(
+        Object.entries(day.meals).map(([key, items]) => [key, [...items].sort((a, b) => a.sort_order - b.sort_order)]),
+      ),
     }))
     .sort((a, b) => a.date.localeCompare(b.date))
 }
@@ -614,6 +642,72 @@ function buildAutoTableMealsResult(accountMenus: MenuManagerItem[], week: MonthW
     days,
   }
 }
+
+// 고객사에서 설정한 식사구분만 대상으로 자동 식단을 생성한다.
+function buildConfiguredAutoTableMealsResult(
+  accountMenus: MenuManagerItem[],
+  week: MonthWeekOption,
+  mealSlotRows: MealSlotRow[],
+): ParsedPdfResult {
+  const snackMenus = accountMenus.filter((menu) => getMenuFoodTypeCode(menu) === AUTO_SNACK_FOOD_TYPE)
+  const jjajangMenus = accountMenus.filter(isJjajangMenu)
+  const usedMenuIds = new Set<string>()
+  const days = week.dates.map((date, dayIndex) => {
+    const isThursday = date.getDay() === 4
+    const lunchFoodType = isThursday || dayIndex % 2 === 0 ? AUTO_CHINESE_FOOD_TYPE : AUTO_JAPANESE_FOOD_TYPE
+    const meals: Record<MealSlotKey, ExtractedMenuItem[]> = {}
+
+    mealSlotRows.forEach((slot, slotIndex) => {
+      if ([1, 3, 4, 6, 7, 8].includes(slot.code)) {
+        const snack = pickRotatingMenu(snackMenus, usedMenuIds, dayIndex * 10 + slotIndex)
+        meals[slot.key] = snack ? [{ text: snack.menu_name, matchedMenu: snack }] : []
+        return
+      }
+
+      const preferredMenu = slot.code === 2 && isThursday
+        ? pickRotatingMenu(jjajangMenus, usedMenuIds, dayIndex)
+        : null
+      const foodType = slot.code === 2 ? lunchFoodType : AUTO_KOREAN_FOOD_TYPE
+      meals[slot.key] = pickAutoMealMenus(
+        accountMenus,
+        foodType,
+        usedMenuIds,
+        dayIndex * 100 + slotIndex * 10,
+        preferredMenu,
+      ).map((menu) => ({ text: menu.menu_name, matchedMenu: menu }))
+    })
+
+    return {
+      id: `auto-${formatDateValue(date)}`,
+      label: AUTO_WEEKDAY_LABELS[(date.getDay() + 6) % 7],
+      date: formatDateLabel(date),
+      meals,
+    }
+  })
+
+  return {
+    pageCount: 0,
+    textItemCount: days.reduce(
+      (sum, day) => sum + Object.values(day.meals).reduce((mealSum, items) => mealSum + items.length, 0),
+      0,
+    ),
+    originTexts: [],
+    days,
+  }
+}
+
+// 고객사에서 사용하는 식사구분 행만 빈 수기 식단으로 만든다.
+function createConfiguredManualTableMealsDays(week: MonthWeekOption, mealSlotRows: MealSlotRow[]): ParsedDay[] {
+  return week.dates.map((date) => ({
+    id: `manual-${formatDateValue(date)}`,
+    label: AUTO_WEEKDAY_LABELS[(date.getDay() + 6) % 7],
+    date: formatDateLabel(date),
+    meals: Object.fromEntries(mealSlotRows.map((slot) => [slot.key, [] as ExtractedMenuItem[]])),
+  }))
+}
+
+// PDF 기존 형식 파서와의 호환을 위해 기존 고정 정의를 유지한다.
+void [MEAL_SLOT_LABELS, MANUAL_MEAL_SLOT_ORDER, buildAutoTableMealsResult, createManualTableMealsDays]
 
 function createManualTableMealsDays(week: MonthWeekOption): ParsedDay[] {
   return week.dates.map((date) => ({
@@ -997,6 +1091,7 @@ function TableMealsManager() {
   const [selectedTableMonth, setSelectedTableMonth] = useState(() => formatMonthValue(new Date()))
   const [selectedMealPlanType, setSelectedMealPlanType] = useState(0)
   const [accountOptions, setAccountOptions] = useState<AccountOption[]>([])
+  const [accountMealSlots, setAccountMealSlots] = useState<AccountMealSlot[]>([])
   const [accountError, setAccountError] = useState('')
   const [tableMeals, setTableMeals] = useState<TableMealsItem[]>([])
   const [menuItems, setMenuItems] = useState<MenuManagerItem[]>([])
@@ -1191,6 +1286,24 @@ function TableMealsManager() {
     }
   }, [selectedAccountId])
 
+  useEffect(() => {
+    let isMounted = true
+    if (!selectedAccountId) {
+      setAccountMealSlots([])
+      return () => { isMounted = false }
+    }
+
+    void getAccountMealSlots(selectedAccountId)
+      .then((items) => {
+        if (isMounted) setAccountMealSlots(items)
+      })
+      .catch(() => {
+        if (isMounted) setAccountMealSlots([])
+      })
+
+    return () => { isMounted = false }
+  }, [selectedAccountId])
+
   const parsedPdfResult = useMemo(
     () => (rawParsedResult ? buildParsedPdfResult(rawParsedResult, menuItems) : null),
     [rawParsedResult, menuItems],
@@ -1222,6 +1335,8 @@ function TableMealsManager() {
     () => accountOptions.find((option) => option.value === selectedAccountId)?.text ?? '',
     [accountOptions, selectedAccountId],
   )
+
+  const configuredMealSlotRows = useMemo(() => toMealSlotRows(accountMealSlots), [accountMealSlots])
 
   const selectedTableMonthParts = useMemo(() => parseMonthValue(selectedTableMonth), [selectedTableMonth])
 
@@ -1632,12 +1747,16 @@ function TableMealsManager() {
       const items = await getAccountMenuManagerList(selectedAccountId)
       setAccountMenuItems(items)
       setMealEditorSource('manual')
-      setManualDays(createManualTableMealsDays(selectedAutoWeek))
+      if (configuredMealSlotRows.length === 0) {
+        setManualMessage('고객사 관리에서 제공할 식사구분을 먼저 설정해 주세요.')
+        return
+      }
+      setManualDays(createConfiguredManualTableMealsDays(selectedAutoWeek, configuredMealSlotRows))
       setManualEveningSnackItems({})
       setManualTarget({
         dayId: `manual-${formatDateValue(selectedAutoWeek.dates[0] ?? new Date())}`,
-        rowId: 'breakfast',
-        mealKey: 'breakfast',
+        rowId: configuredMealSlotRows[0].id,
+        mealKey: configuredMealSlotRows[0].key,
       })
       setIsManualEditorOpen(true)
     } catch (error) {
@@ -1666,8 +1785,8 @@ function TableMealsManager() {
       autoGeneratedResult.days[0]
         ? {
             dayId: autoGeneratedResult.days[0].id,
-            rowId: 'breakfast',
-            mealKey: 'breakfast',
+            rowId: configuredMealSlotRows[0]?.id ?? '',
+            mealKey: configuredMealSlotRows[0]?.key ?? '',
           }
         : null,
     )
@@ -1775,9 +1894,10 @@ function TableMealsManager() {
       return
     }
 
-    const recommendedResult = buildAutoTableMealsResult(
+    const recommendedResult = buildConfiguredAutoTableMealsResult(
       accountMenuItems.filter((menu) => (menu.meal_plan_type ?? 0) === selectedMealPlanType),
       selectedAutoWeek,
+      configuredMealSlotRows,
     )
     setManualDays(recommendedResult.days)
     setManualEveningSnackItems({})
@@ -1785,8 +1905,8 @@ function TableMealsManager() {
       recommendedResult.days[0]
         ? {
             dayId: recommendedResult.days[0].id,
-            rowId: 'breakfast',
-            mealKey: 'breakfast',
+            rowId: configuredMealSlotRows[0]?.id ?? '',
+            mealKey: configuredMealSlotRows[0]?.key ?? '',
           }
         : null,
     )
@@ -1879,12 +1999,18 @@ function TableMealsManager() {
       return
     }
 
-    const result = buildAutoTableMealsResult(
+    if (configuredMealSlotRows.length === 0) {
+      setAutoGenerateMessage('고객사 관리에서 제공할 식사구분을 먼저 설정해 주세요.')
+      return
+    }
+
+    const result = buildConfiguredAutoTableMealsResult(
       selectedAccountMenus.filter((menu) => (menu.meal_plan_type ?? 0) === selectedMealPlanType),
       selectedAutoWeek,
+      configuredMealSlotRows,
     )
     const generatedMenuCount = result.days.reduce(
-      (sum, day) => sum + day.meals.lunch.length + day.meals.snack.length,
+      (sum, day) => sum + Object.values(day.meals).reduce((mealSum, items) => mealSum + items.length, 0),
       0,
     )
 
@@ -1901,8 +2027,8 @@ function TableMealsManager() {
       result.days[0]
         ? {
             dayId: result.days[0].id,
-            rowId: 'breakfast',
-            mealKey: 'breakfast',
+            rowId: configuredMealSlotRows[0].id,
+            mealKey: configuredMealSlotRows[0].key,
           }
         : null,
     )
@@ -2308,7 +2434,7 @@ function TableMealsManager() {
                             <span>{day.date || '-'}</span>
                           </header>
                           <dl>
-                            {Object.entries(MEAL_SLOT_LABELS).map(([mealKey, mealLabel]) => {
+                            {configuredMealSlotRows.map(({ key: mealKey, label: mealLabel }) => {
                               const mealItems = day.meals[mealKey as MealSlotKey]
                               if (mealItems.length === 0) {
                                 return null
@@ -2407,7 +2533,7 @@ function TableMealsManager() {
                   </div>
                 ))}
 
-                {MANUAL_MEAL_SLOT_ORDER.map((mealSlot, mealRowIndex) => (
+                {configuredMealSlotRows.map((mealSlot, mealRowIndex) => (
                   <Fragment key={mealSlot.id}>
                     <div
                       key={`${mealSlot.id}-label`}
@@ -2484,7 +2610,7 @@ function TableMealsManager() {
                   <strong>
                     {manualSelectedDay
                       ? `${manualSelectedDay.label} ${manualSelectedDay.date} · ${
-                          MANUAL_MEAL_SLOT_ORDER.find((slot) => slot.id === manualTarget?.rowId)?.label ?? ''
+                          configuredMealSlotRows.find((slot) => slot.id === manualTarget?.rowId)?.label ?? ''
                         }`
                       : '칸을 선택해주세요'}
                   </strong>
@@ -2615,7 +2741,9 @@ function TableMealsManager() {
                       </tr>
                     </thead>
                     <tbody>
-                      {DETAIL_MEAL_SLOT_ORDER.map((mealRow) => (
+                      {(selectedTableMeal?.account_id === selectedAccountId && configuredMealSlotRows.length > 0
+                        ? configuredMealSlotRows
+                        : DETAIL_MEAL_SLOT_ORDER).map((mealRow) => (
                         <tr key={mealRow.id} className={`table-meals-hangyeol__row table-meals-hangyeol__row--${mealRow.id}`}>
                           <th>{mealRow.label}</th>
                           {tableMealDetailDays.map((day) => {

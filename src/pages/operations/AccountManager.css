@@ -1,0 +1,26 @@
+.account-manager-page { min-height: 100vh; padding: 8px; background: #dfe7ef; color: #162033; }
+.account-manager-toolbar { display: flex; align-items: flex-end; gap: 12px; padding: 10px 12px; border: 1px solid #b6c6d5; background: #f6f9fc; }
+.account-manager-toolbar__field { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.account-manager-toolbar label { font-size: 13px; font-weight: 700; color: #526173; }
+.account-manager-toolbar select { width: min(360px, 55vw); height: 34px; border: 1px solid #aebdca; background: #fff; padding: 0 10px; }
+.account-manager-toolbar button { margin-left: auto; height: 34px; min-width: 86px; border: 1px solid #245e91; background: #2f75ad; color: #fff; font-weight: 700; cursor: pointer; }
+.account-manager-toolbar button:disabled { opacity: .5; cursor: default; }
+.account-manager-panel { margin-top: 8px; border: 1px solid #aebdca; background: #fff; min-height: 420px; }
+.account-manager-panel__header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid #cad5df; background: linear-gradient(180deg, #f8fbfd, #e6eef5); }
+.account-manager-panel__header h1 { margin: 0; font-size: 19px; color: #1f3e5d; }
+.account-manager-panel__header p { margin: 6px 0 0; font-size: 13px; color: #627184; }
+.account-manager-panel__header span { padding: 6px 10px; background: #d7e9f7; color: #245e91; font-size: 12px; font-weight: 700; }
+.account-manager-slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; padding: 24px; }
+.account-manager-slot { min-height: 92px; display: grid; grid-template-columns: 28px 1fr; grid-template-rows: 1fr 1fr; align-items: center; gap: 0 10px; padding: 16px; border: 1px solid #bbc8d3; background: #fff; text-align: left; cursor: pointer; }
+.account-manager-slot:hover { border-color: #4d8cbd; background: #f7fbfe; }
+.account-manager-slot.is-selected { border: 2px solid #2f75ad; background: #edf6fc; }
+.account-manager-slot.is-selected { cursor: grab; }
+.account-manager-slot.is-selected:active { cursor: grabbing; }
+.account-manager-slot.is-dragging { opacity: .45; border-style: dashed; }
+.account-manager-slot__check { grid-row: 1 / 3; width: 24px; height: 24px; display: grid; place-items: center; border: 1px solid #91a4b5; background: #fff; color: #fff; }
+.account-manager-slot.is-selected .account-manager-slot__check { border-color: #2f75ad; background: #2f75ad; }
+.account-manager-slot strong { align-self: end; font-size: 15px; }
+.account-manager-slot small { align-self: start; margin-top: 4px; color: #718093; }
+.account-manager-empty { display: grid; place-items: center; min-height: 280px; color: #718093; }
+.account-manager-message { margin: 0 24px 20px; padding: 10px 12px; background: #f1f6fa; color: #35536d; font-size: 13px; }
+@media (max-width: 640px) { .account-manager-toolbar { flex-wrap: wrap; } .account-manager-toolbar__field, .account-manager-toolbar select { width: 100%; } .account-manager-toolbar button { margin-left: 0; width: 100%; } }

@@ -38,12 +38,13 @@
 
 .menu-manager-field {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
 }
 
 .menu-manager-field label {
-  min-width: 58px;
+  min-width: 0;
   font-size: var(--query-control-font-size);
   font-weight: var(--query-control-font-weight);
   color: #526173;

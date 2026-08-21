@@ -7,6 +7,19 @@ export type AccountOption = {
   text: string
 }
 
+export type AccountMealSlot = {
+  meal_slot_code: number
+  meal_slot_name: string
+  display_order: number
+  selected_yn: 'Y' | 'N'
+}
+
+export type AccountMealSlotSavePayload = {
+  account_id: string
+  user_id: string
+  meal_slots: Array<{ meal_slot_code: number; display_order: number }>
+}
+
 export type MenuManagerItem = {
   menu_id: string
   menu_name: string
@@ -677,6 +690,47 @@ export async function getAccountOptions(): Promise<AccountOption[]> {
   return readArray(payload)
     .map((item) => normalizeAccountOption(item as RawRecord))
     .filter((item) => item.value !== '' || item.text !== '')
+}
+
+// 선택한 고객사의 전체 식사구분과 설정 여부를 조회한다.
+export async function getAccountMealSlots(accountId: string): Promise<AccountMealSlot[]> {
+  const searchParams = new URLSearchParams({ account_id: accountId })
+  const response = await fetch(`${buildApiUrl('/Account/MealSlotList')}?${searchParams.toString()}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  })
+
+  if (!response.ok) throw new Error('고객사 식사구분 설정을 불러오지 못했습니다.')
+
+  const payload = (await response.json()) as unknown
+  return readArray(payload).map((item) => {
+    const record = item as RawRecord
+    return {
+      meal_slot_code: asNumber(record.meal_slot_code ?? record.mealSlotCode),
+      meal_slot_name: asText(record.meal_slot_name ?? record.mealSlotName),
+      display_order: asNumber(record.display_order ?? record.displayOrder),
+      selected_yn: asText(record.selected_yn ?? record.selectedYn, 'N') === 'Y' ? 'Y' : 'N',
+    }
+  })
+}
+
+// 고객사에서 제공하는 식사구분 선택값을 저장한다.
+export async function saveAccountMealSlots(accountId: string, mealSlotCodes: number[]) {
+  const payload: AccountMealSlotSavePayload = {
+    account_id: accountId,
+    user_id: getLocalUserId(),
+    meal_slots: mealSlotCodes.map((mealSlotCode, index) => ({
+      meal_slot_code: mealSlotCode,
+      display_order: index + 1,
+    })),
+  }
+  const response = await fetch(buildApiUrl('/Account/MealSlotSave'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) throw new Error('고객사 식사구분 설정을 저장하지 못했습니다.')
 }
 
 export async function getMenuManagerList(): Promise<MenuManagerItem[]> {
