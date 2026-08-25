@@ -735,6 +735,377 @@
   flex-grow: 0.75;
 }
 
+.account-menu-manager-layout .menu-manager-table--ingredients th:nth-child(5),
+.account-menu-manager-layout .menu-manager-table--ingredients td:nth-child(5) {
+  width: 92px;
+}
+
+.account-menu-cost-summary {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  column-gap: 8px;
+  min-width: 150px;
+  padding: 5px 10px;
+  border: 1px solid #9fc9b4;
+  border-radius: 8px;
+  background: #f1faf5;
+  color: #315b47;
+}
+
+.account-menu-cost-summary span,
+.account-menu-cost-summary small {
+  font-size: 11px;
+}
+
+.account-menu-cost-summary strong {
+  font-size: 15px;
+  text-align: right;
+}
+
+.account-menu-cost-summary small {
+  grid-column: 1 / -1;
+  color: #688174;
+  text-align: right;
+}
+
+.account-menu-cost-summary.is-incomplete {
+  border-color: #e5b28d;
+  background: #fff7f0;
+  color: #9a4f20;
+}
+
+.account-menu-ingredient-cost {
+  color: #2f6650;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.account-menu-ingredient-cost.is-missing {
+  color: #b05a2c;
+  font-size: 11px;
+}
+
+.account-menu-manager-layout {
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.02fr) minmax(0, 1.28fr);
+}
+
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) .menu-manager-readonly-cell > span:last-child {
+  display: block;
+  max-width: 136px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-menu-manager-layout > .menu-manager-panel:nth-child(2) .menu-manager-readonly-cell > span:last-child {
+  display: block;
+  max-width: 108px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-menu-manager-layout .menu-manager-table--ingredients th:nth-child(1),
+.account-menu-manager-layout .menu-manager-table--ingredients td:nth-child(1) {
+  width: 19%;
+}
+
+.account-menu-manager-layout .menu-manager-table--ingredients th:nth-child(2),
+.account-menu-manager-layout .menu-manager-table--ingredients td:nth-child(2) {
+  width: 25%;
+}
+
+.account-menu-manager-layout .menu-manager-table--ingredients th:nth-child(3),
+.account-menu-manager-layout .menu-manager-table--ingredients td:nth-child(3) {
+  width: 28%;
+}
+
+.account-menu-manager-layout .menu-manager-table--ingredients th:nth-child(4),
+.account-menu-manager-layout .menu-manager-table--ingredients td:nth-child(4) {
+  width: 18%;
+}
+
+.account-menu-manager-layout .menu-manager-table--ingredients th:nth-child(5),
+.account-menu-manager-layout .menu-manager-table--ingredients td:nth-child(5) {
+  width: 10%;
+}
+
+.menu-manager-layout .menu-manager-table--ingredients th:nth-child(1),
+.menu-manager-layout .menu-manager-table--ingredients td:nth-child(1) {
+  width: 22%;
+}
+
+.menu-manager-layout .menu-manager-table--ingredients th:nth-child(2),
+.menu-manager-layout .menu-manager-table--ingredients td:nth-child(2) {
+  width: 36%;
+}
+
+.menu-manager-layout .menu-manager-table--ingredients th:nth-child(3),
+.menu-manager-layout .menu-manager-table--ingredients td:nth-child(3) {
+  width: 27%;
+}
+
+.menu-manager-layout .menu-manager-table--ingredients th:nth-child(4),
+.menu-manager-layout .menu-manager-table--ingredients td:nth-child(4) {
+  width: 15%;
+}
+
+.account-menu-cost-compare {
+  display: grid;
+  gap: 1px;
+  line-height: 1.25;
+}
+
+.account-menu-cost-compare span,
+.account-menu-cost-compare small {
+  font-size: 10px;
+  color: #667980;
+}
+
+.account-menu-cost-compare strong,
+.account-menu-master-cost {
+  color: #315b47;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.account-menu-cost-compare small.is-higher {
+  color: #b44f25;
+}
+
+.account-menu-cost-compare small.is-lower {
+  color: #27735a;
+}
+
+/* 재고/식자재 표는 가격과 단위 정보를 줄이지 않고 가로 스크롤로 확인한다. */
+.account-inventory-layout .menu-manager-table-scroll,
+.ingredient-master-layout .menu-manager-table-scroll {
+  overflow-x: auto;
+}
+
+.account-inventory-table {
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
+}
+
+.account-inventory-table th:nth-child(1), .account-inventory-table td:nth-child(1) { min-width: 105px; }
+.account-inventory-table th:nth-child(2), .account-inventory-table td:nth-child(2) { min-width: 145px; }
+.account-inventory-table th:nth-child(3), .account-inventory-table td:nth-child(3) { min-width: 200px; max-width: 300px; }
+.account-inventory-table th:nth-child(4), .account-inventory-table td:nth-child(4) { min-width: 72px; }
+.account-inventory-table th:nth-child(5), .account-inventory-table td:nth-child(5) { min-width: 82px; }
+.account-inventory-table th:nth-child(6), .account-inventory-table td:nth-child(6) { min-width: 125px; }
+.account-inventory-table th:nth-child(7), .account-inventory-table td:nth-child(7) { min-width: 125px; }
+.account-inventory-table th:nth-child(8), .account-inventory-table td:nth-child(8) { min-width: 145px; }
+.account-inventory-table th:nth-child(9), .account-inventory-table td:nth-child(9),
+.account-inventory-table th:nth-child(10), .account-inventory-table td:nth-child(10),
+.account-inventory-table th:nth-child(11), .account-inventory-table td:nth-child(11) { min-width: 120px; }
+.account-inventory-table th:nth-child(12), .account-inventory-table td:nth-child(12) { min-width: 175px; max-width: 260px; }
+.account-inventory-table th:nth-child(13), .account-inventory-table td:nth-child(13) { min-width: 120px; }
+
+.ingredient-master-table {
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
+}
+
+/* 식자재 관리: 짧은 코드·단위·가격은 내용만큼, 명칭 계열은 남는 공간에 맞춰 확장한다. */
+.ingredient-master-layout .ingredient-master-table th,
+.ingredient-master-layout .ingredient-master-table td {
+  width: auto;
+  max-width: none;
+}
+
+.ingredient-master-table th:nth-child(1),
+.ingredient-master-table td:nth-child(1) { min-width: max(105px, 9ch); }
+
+.ingredient-master-table th:nth-child(2),
+.ingredient-master-table td:nth-child(2) { width: clamp(145px, 15vw, 240px); min-width: 145px; }
+
+.ingredient-master-table th:nth-child(3),
+.ingredient-master-table td:nth-child(3) { width: clamp(115px, 11vw, 190px); min-width: 115px; }
+
+.ingredient-master-table th:nth-child(4),
+.ingredient-master-table td:nth-child(4) { min-width: max(92px, 8ch); }
+
+.ingredient-master-table th:nth-child(5),
+.ingredient-master-table td:nth-child(5),
+.ingredient-master-table th:nth-child(6),
+.ingredient-master-table td:nth-child(6) { min-width: max(88px, 8ch); }
+
+.ingredient-master-table th:nth-child(7),
+.ingredient-master-table td:nth-child(7),
+.ingredient-master-table th:nth-child(8),
+.ingredient-master-table td:nth-child(8) { min-width: max(100px, 9ch); }
+
+.ingredient-master-table th:nth-child(9),
+.ingredient-master-table td:nth-child(9) { width: clamp(180px, 22vw, 360px); min-width: 180px; }
+
+.ingredient-master-table th:nth-child(10),
+.ingredient-master-table td:nth-child(10) { min-width: max(100px, 10ch); }
+
+.ingredient-master-table th:nth-child(11),
+.ingredient-master-table td:nth-child(11) { min-width: max(125px, 13ch); }
+
+.ingredient-master-table th:nth-child(12),
+.ingredient-master-table td:nth-child(12) { min-width: 88px; text-align: center; }
+
+.ingredient-product-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.48);
+}
+
+.ingredient-product-modal__dialog {
+  width: min(680px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+}
+
+.ingredient-product-modal__dialog > header,
+.ingredient-product-modal__dialog > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+}
+
+.ingredient-product-modal__dialog > header { border-bottom: 1px solid #dbe3ec; }
+.ingredient-product-modal__dialog > footer { border-top: 1px solid #dbe3ec; }
+.ingredient-product-modal__dialog h2,
+.ingredient-product-modal__dialog p { margin: 0; }
+.ingredient-product-modal__dialog h2 { font-size: 17px; }
+.ingredient-product-modal__dialog p { margin-top: 4px; color: #64748b; font-size: 12px; }
+.ingredient-product-modal__dialog header > button { border: 0; background: transparent; font-size: 25px; cursor: pointer; }
+
+.ingredient-product-modal__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 18px;
+}
+
+.ingredient-product-modal__grid label { display: grid; gap: 6px; }
+.ingredient-product-modal__grid label.is-wide { grid-column: 1 / -1; }
+.ingredient-product-modal__grid span { color: #43566c; font-size: 12px; font-weight: 700; }
+.ingredient-product-modal__grid input,
+.ingredient-product-modal__grid select { width: 100%; height: 36px; padding: 0 10px; border: 1px solid #b8c5d2; border-radius: 5px; background: #fff; }
+.ingredient-product-modal__dialog footer > span { color: #315b47; font-weight: 800; }
+.ingredient-product-modal__dialog footer > div { display: flex; gap: 8px; }
+.ingredient-product-modal__dialog footer button { padding: 8px 13px; border: 1px solid #b8c5d2; border-radius: 5px; background: #fff; cursor: pointer; }
+.ingredient-product-modal__dialog footer button.is-primary { border-color: #315b47; background: #315b47; color: #fff; }
+.ingredient-product-modal__dialog button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+@media (max-width: 620px) {
+  .ingredient-product-modal__grid { grid-template-columns: 1fr; }
+  .ingredient-product-modal__grid label.is-wide { grid-column: auto; }
+  .ingredient-product-modal__dialog > footer { align-items: stretch; flex-direction: column; }
+  .ingredient-product-modal__dialog footer > div { justify-content: flex-end; }
+}
+
+/* 거래처 메뉴 배치: 메뉴구분까지 고정하고 나머지 정보는 가로 스크롤로 확인한다. */
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) > .menu-manager-table-scroll {
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) > .menu-manager-table-scroll > .menu-manager-table {
+  width: 920px;
+  min-width: 920px;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) > .menu-manager-table-scroll > .menu-manager-table th:nth-child(1),
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) > .menu-manager-table-scroll > .menu-manager-table td:nth-child(1) {
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  position: sticky;
+  left: 0;
+}
+
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) > .menu-manager-table-scroll > .menu-manager-table th:nth-child(2),
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) > .menu-manager-table-scroll > .menu-manager-table td:nth-child(2) {
+  width: 72px;
+  min-width: 72px;
+  max-width: 72px;
+  position: sticky;
+  left: 160px;
+}
+
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) > .menu-manager-table-scroll > .menu-manager-table th:nth-child(3),
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) > .menu-manager-table-scroll > .menu-manager-table td:nth-child(3) {
+  width: 90px;
+  min-width: 90px;
+  max-width: 90px;
+  position: sticky;
+  left: 232px;
+}
+
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) > .menu-manager-table-scroll > .menu-manager-table th:nth-child(4),
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) > .menu-manager-table-scroll > .menu-manager-table td:nth-child(4) {
+  width: 105px;
+  min-width: 105px;
+  max-width: 105px;
+  position: sticky;
+  left: 322px;
+  box-shadow: 4px 0 6px rgba(36, 48, 54, 0.12);
+}
+
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) > .menu-manager-table-scroll > .menu-manager-table th:nth-child(-n+4) {
+  z-index: 4;
+  background: var(--theme-color-soft);
+}
+
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) > .menu-manager-table-scroll > .menu-manager-table td:nth-child(-n+4) {
+  z-index: 2;
+  background: #fff;
+}
+
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) > .menu-manager-table-scroll > .menu-manager-table tbody tr:hover td:nth-child(-n+4) {
+  background: #f6fbff;
+}
+
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) > .menu-manager-table-scroll > .menu-manager-table tbody tr.is-active td:nth-child(-n+4) {
+  background: var(--action-warning-soft);
+}
+
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) > .menu-manager-table-scroll > .menu-manager-table th:nth-child(5),
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) > .menu-manager-table-scroll > .menu-manager-table td:nth-child(5) {
+  width: 130px;
+  min-width: 130px;
+}
+
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) > .menu-manager-table-scroll > .menu-manager-table th:nth-child(6),
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) > .menu-manager-table-scroll > .menu-manager-table td:nth-child(6) {
+  width: 110px;
+  min-width: 110px;
+}
+
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) > .menu-manager-table-scroll > .menu-manager-table th:nth-child(7),
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) > .menu-manager-table-scroll > .menu-manager-table td:nth-child(7) {
+  width: 155px;
+  min-width: 155px;
+}
+
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) > .menu-manager-table-scroll > .menu-manager-table th:nth-child(8),
+.account-menu-manager-layout > .menu-manager-panel:nth-child(1) > .menu-manager-table-scroll > .menu-manager-table td:nth-child(8) {
+  width: 72px;
+  min-width: 72px;
+}
+
 .menu-manager-dropzone {
   margin: 14px 14px 0;
   padding: 18px 16px;

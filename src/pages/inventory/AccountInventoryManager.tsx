@@ -403,11 +403,14 @@ function AccountInventoryManager() {
                 {isLoading ? <LoadingScreen compact message="거래처 재고 목록을 불러오는 중입니다." /> : null}
                 {!isLoading && error ? <div className="menu-manager-empty">{error}</div> : null}
                 {!isLoading && !error && locationFilteredItems.length > 0 ? (
-                  <table className="menu-manager-table">
+                  <table className="menu-manager-table account-inventory-table">
                     <thead>
                       <tr>
                         <th>카테고리</th>
                         <th>식자재명</th>
+                        <th>공급상품</th>
+                        <th>포장가격</th>
+                        <th>기준단가</th>
                         <th>보관위치</th>
                         <th>예상필요수량</th>
                         <th>현재고</th>
@@ -453,6 +456,19 @@ function AccountInventoryManager() {
                                 onChange={(ingredientId) => handleIngredientSelect(item, ingredientId)}
                               />
                             </div>
+                          </td>
+                          <td title={`${item.supplier_name ?? ''} ${item.product_name ?? ''}`}>
+                            {item.product_name || '상품 미연결'}
+                          </td>
+                          <td>
+                            {(item.purchase_price ?? 0) > 0
+                              ? `${Math.round(item.purchase_price ?? 0).toLocaleString('ko-KR')}원`
+                              : '가격 미등록'}
+                          </td>
+                          <td>
+                            {(item.purchase_price ?? 0) > 0 && (item.package_base_qty ?? 0) > 0
+                              ? `${((item.purchase_price ?? 0) / (item.package_base_qty ?? 1)).toLocaleString('ko-KR', { maximumFractionDigits: 2 })}원/${item.base_unit}`
+                              : '미산정'}
                           </td>
                           <td>
                             <select

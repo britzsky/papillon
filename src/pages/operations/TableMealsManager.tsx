@@ -15,6 +15,7 @@ import {
   getAccountMenuManagerList,
   getAccountMenuDetailList,
   getAccountMealSlots,
+  getAccountMealConfiguration,
   getMenuManagerList,
   getMealPlanAnalysis,
   getTableMealsDetailList,
@@ -22,6 +23,7 @@ import {
   saveTableMeals,
   type AccountOption,
   type AccountMealSlot,
+  type AccountMealConfiguration,
   type MenuIngredientItem,
   type MenuManagerItem,
   type TableMealsDetailItem,
@@ -38,6 +40,8 @@ import { getAverageUsage, getIngredientStockStatus } from '../../utils/ingredien
 GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()
 
 type MealSlotKey = string
+type WeeklyMealSetting = { food_type: number; meal_plan_type: number }
+type WeeklyMealSettings = Record<string, WeeklyMealSetting>
 
 type PdfTextItem = {
   text: string
@@ -522,9 +526,8 @@ function isJjajangMenu(menu: MenuManagerItem) {
   return normalizedName.includes(normalizeMenuText('짜장면')) || normalizedName.includes(normalizeMenuText('자장면'))
 }
 
-const AUTO_MEAL_BUDGET_PER_PERSON = 3500
-
 function getAutoMenuCost(menu: MenuManagerItem) {
+  if (menu.menu_cost_complete === false) return 0
   return Math.max(menu.menu_cost_per_person ?? 0, 0)
 }
 
@@ -541,8 +544,7 @@ function pickRotatingMenu(
   const unusedItems = items.filter((item) => !usedMenuIds.has(item.menu_id))
   const availableItems = unusedItems.length > 0 ? unusedItems : items
   const pricedItems = availableItems.filter((item) => getAutoMenuCost(item) > 0 && getAutoMenuCost(item) <= remainingBudget)
-  const unpricedItems = availableItems.filter((item) => getAutoMenuCost(item) === 0)
-  const candidates = pricedItems.length > 0 ? pricedItems : unpricedItems
+  const candidates = pricedItems
   if (candidates.length === 0) return null
   const picked = candidates[seed % candidates.length]
   usedMenuIds.add(picked.menu_id)
@@ -564,6 +566,7 @@ function pickAutoMealMenus(
   usedMenuIds: Set<string>,
   seed: number,
   preferredMainMenu: MenuManagerItem | null = null,
+  mealBudgetPerPerson = Number.POSITIVE_INFINITY,
 ) {
   const cuisineMenus = accountMenus.filter((menu) => getMenuFoodTypeCode(menu) === foodType)
   const mainMenus = cuisineMenus.filter((menu) => menu.menu_type === AUTO_MAIN_MENU_TYPE)
@@ -575,9 +578,11 @@ function pickAutoMealMenus(
   const mealMenus: MenuManagerItem[] = []
   const primaryMainMenus = foodType === AUTO_KOREAN_FOOD_TYPE ? mainMenusWithoutRice : mainMenus
   const remainingBudget = () =>
-    Math.max(AUTO_MEAL_BUDGET_PER_PERSON - mealMenus.reduce((sum, menu) => sum + getAutoMenuCost(menu), 0), 0)
+    Math.max(mealBudgetPerPerson - mealMenus.reduce((sum, menu) => sum + getAutoMenuCost(menu), 0), 0)
   const affordablePreferredMain =
-    preferredMainMenu && getAutoMenuCost(preferredMainMenu) <= remainingBudget() ? preferredMainMenu : null
+    preferredMainMenu && getAutoMenuCost(preferredMainMenu) > 0 && getAutoMenuCost(preferredMainMenu) <= remainingBudget()
+      ? preferredMainMenu
+      : null
 
   addMenuIfPresent(
     mealMenus,
@@ -648,9 +653,9 @@ function buildConfiguredAutoTableMealsResult(
   accountMenus: MenuManagerItem[],
   week: MonthWeekOption,
   mealSlotRows: MealSlotRow[],
+  configuration: AccountMealConfiguration | null = null,
+  weeklySettings: WeeklyMealSettings = {},
 ): ParsedPdfResult {
-  const snackMenus = accountMenus.filter((menu) => getMenuFoodTypeCode(menu) === AUTO_SNACK_FOOD_TYPE)
-  const jjajangMenus = accountMenus.filter(isJjajangMenu)
   const usedMenuIds = new Set<string>()
   const days = week.dates.map((date, dayIndex) => {
     const isThursday = date.getDay() === 4
@@ -658,22 +663,36 @@ function buildConfiguredAutoTableMealsResult(
     const meals: Record<MealSlotKey, ExtractedMenuItem[]> = {}
 
     mealSlotRows.forEach((slot, slotIndex) => {
+      const profile = configuration?.profiles.find((item) => item.meal_slot_code === slot.code)
+      const weeklySetting = weeklySettings[`${formatDateValue(date)}:${slot.code}`]
+      const planType = weeklySetting?.meal_plan_type ?? profile?.default_meal_plan_type
+      const slotMenus = planType == null
+        ? accountMenus
+        : accountMenus.filter((menu) => (menu.meal_plan_type ?? 0) === planType)
+      const snackMenus = slotMenus.filter((menu) => getMenuFoodTypeCode(menu) === AUTO_SNACK_FOOD_TYPE)
       if ([1, 3, 4, 6, 7, 8].includes(slot.code)) {
-        const snack = pickRotatingMenu(snackMenus, usedMenuIds, dayIndex * 10 + slotIndex)
+        const snack = pickRotatingMenu(
+          snackMenus,
+          usedMenuIds,
+          dayIndex * 10 + slotIndex,
+          profile?.budget_per_person ?? Number.POSITIVE_INFINITY,
+        )
         meals[slot.key] = snack ? [{ text: snack.menu_name, matchedMenu: snack }] : []
         return
       }
 
-      const preferredMenu = slot.code === 2 && isThursday
+      const foodType = weeklySetting?.food_type ?? profile?.default_food_type ?? (slot.code === 2 ? lunchFoodType : AUTO_KOREAN_FOOD_TYPE)
+      const jjajangMenus = slotMenus.filter(isJjajangMenu)
+      const preferredMenu = slot.code === 2 && isThursday && foodType === AUTO_CHINESE_FOOD_TYPE
         ? pickRotatingMenu(jjajangMenus, usedMenuIds, dayIndex)
         : null
-      const foodType = slot.code === 2 ? lunchFoodType : AUTO_KOREAN_FOOD_TYPE
       meals[slot.key] = pickAutoMealMenus(
-        accountMenus,
+        slotMenus,
         foodType,
         usedMenuIds,
         dayIndex * 100 + slotIndex * 10,
         preferredMenu,
+        profile?.budget_per_person ?? Number.POSITIVE_INFINITY,
       ).map((menu) => ({ text: menu.menu_name, matchedMenu: menu }))
     })
 
@@ -734,6 +753,30 @@ function buildTableMealsResultFromDays(days: ParsedDay[]): ParsedPdfResult {
     originTexts: [],
     days,
   }
+}
+
+function getTableMealsBudgetError(
+  result: ParsedPdfResult,
+  mealSlotRows: MealSlotRow[],
+  configuration: AccountMealConfiguration | null,
+) {
+  for (const day of result.days) {
+    for (const [mealKey, mealItems] of Object.entries(day.meals)) {
+      if (mealItems.length === 0) continue
+      const slot = mealSlotRows.find((item) => item.key === mealKey)
+      const profile = configuration?.profiles.find((item) => item.meal_slot_code === slot?.code)
+      const unpricedMenu = mealItems.find((item) => !item.matchedMenu || getAutoMenuCost(item.matchedMenu) <= 0)
+      if (unpricedMenu) {
+        return `${day.label} ${slot?.label ?? mealKey}의 '${unpricedMenu.text}' 메뉴는 원가가 산정되지 않아 저장할 수 없습니다.`
+      }
+
+      const mealCost = mealItems.reduce((sum, item) => sum + getAutoMenuCost(item.matchedMenu!), 0)
+      if (profile?.budget_per_person != null && mealCost > profile.budget_per_person) {
+        return `${day.label} ${slot?.label ?? mealKey}의 1인 원가 ${Math.round(mealCost).toLocaleString('ko-KR')}원이 고객사 단가 ${Math.round(profile.budget_per_person).toLocaleString('ko-KR')}원을 초과합니다.`
+      }
+    }
+  }
+  return null
 }
 
 function hasIngredientShortage(items: MenuIngredientItem[]) {
@@ -799,11 +842,18 @@ function buildTableMealsSavePayload(
   accountName: string,
   source: TableMealsSavePayload['source'] = 'auto',
   mealPlanType = 0,
+  configuration: AccountMealConfiguration | null = null,
+  weeklySettings: WeeklyMealSettings = {},
 ): TableMealsSavePayload {
   const firstDate = week.dates[0] ?? new Date()
   const meals = result.days.flatMap((day) =>
     Object.entries(day.meals)
       .map(([mealSlot, mealItems]) => {
+        const mealSlotCode = /^\d+$/.test(mealSlot)
+          ? Number(mealSlot)
+          : ({ breakfast: 0, lunch: 2, dinner: 5, snack: 3, dcSnack: 4 } as Record<string, number>)[mealSlot]
+        const profile = configuration?.profiles.find((item) => item.meal_slot_code === mealSlotCode)
+        const weeklySetting = weeklySettings[`${day.id.replace(/^(auto|manual)-/, '')}:${mealSlotCode}`]
         const menus = mealItems
           .map((item) => item.matchedMenu)
           .filter((menu): menu is MenuManagerItem => menu !== null)
@@ -820,6 +870,11 @@ function buildTableMealsSavePayload(
           meal_date: day.id.replace(/^(auto|manual)-/, ''),
           weekday: day.label,
           meal_slot: mealSlot,
+          meal_slot_code: mealSlotCode,
+          food_type: weeklySetting?.food_type ?? profile?.default_food_type,
+          meal_plan_type: weeklySetting?.meal_plan_type ?? profile?.default_meal_plan_type ?? mealPlanType,
+          template_id: profile?.template_id,
+          meal_budget_per_person: profile?.budget_per_person,
           menu_count: menus.length,
           menus,
         }
@@ -1092,6 +1147,9 @@ function TableMealsManager() {
   const [selectedMealPlanType, setSelectedMealPlanType] = useState(0)
   const [accountOptions, setAccountOptions] = useState<AccountOption[]>([])
   const [accountMealSlots, setAccountMealSlots] = useState<AccountMealSlot[]>([])
+  const [accountMealConfiguration, setAccountMealConfiguration] = useState<AccountMealConfiguration | null>(null)
+  const [weeklyMealSettings, setWeeklyMealSettings] = useState<WeeklyMealSettings>({})
+  const [isWeeklySettingsOpen, setIsWeeklySettingsOpen] = useState(false)
   const [accountError, setAccountError] = useState('')
   const [tableMeals, setTableMeals] = useState<TableMealsItem[]>([])
   const [menuItems, setMenuItems] = useState<MenuManagerItem[]>([])
@@ -1290,15 +1348,22 @@ function TableMealsManager() {
     let isMounted = true
     if (!selectedAccountId) {
       setAccountMealSlots([])
+      setAccountMealConfiguration(null)
       return () => { isMounted = false }
     }
 
-    void getAccountMealSlots(selectedAccountId)
-      .then((items) => {
-        if (isMounted) setAccountMealSlots(items)
+    void Promise.all([getAccountMealSlots(selectedAccountId), getAccountMealConfiguration(selectedAccountId)])
+      .then(([items, configuration]) => {
+        if (isMounted) {
+          setAccountMealSlots(items)
+          setAccountMealConfiguration(configuration)
+        }
       })
       .catch(() => {
-        if (isMounted) setAccountMealSlots([])
+        if (isMounted) {
+          setAccountMealSlots([])
+          setAccountMealConfiguration(null)
+        }
       })
 
     return () => { isMounted = false }
@@ -1308,6 +1373,24 @@ function TableMealsManager() {
     () => (rawParsedResult ? buildParsedPdfResult(rawParsedResult, menuItems) : null),
     [rawParsedResult, menuItems],
   )
+
+  useEffect(() => {
+    setWeeklyMealSettings({})
+    setIsWeeklySettingsOpen(false)
+  }, [selectedAccountId, autoWeekValue])
+
+  const updateWeeklyMealSetting = (date: Date, slot: MealSlotRow, patch: Partial<WeeklyMealSetting>) => {
+    const key = `${formatDateValue(date)}:${slot.code}`
+    const profile = accountMealConfiguration?.profiles.find((item) => item.meal_slot_code === slot.code)
+    setWeeklyMealSettings((current) => ({
+      ...current,
+      [key]: {
+        food_type: current[key]?.food_type ?? profile?.default_food_type ?? ([1, 3, 4, 6, 7, 8].includes(slot.code) ? 6 : 1),
+        meal_plan_type: current[key]?.meal_plan_type ?? profile?.default_meal_plan_type ?? selectedMealPlanType,
+        ...patch,
+      },
+    }))
+  }
 
   const currentMonthWeeks = useMemo(() => getCurrentMonthWeekOptions(), [])
   const selectedAutoWeek = currentMonthWeeks[Number(autoWeekValue)] ?? currentMonthWeeks[0]
@@ -1895,9 +1978,11 @@ function TableMealsManager() {
     }
 
     const recommendedResult = buildConfiguredAutoTableMealsResult(
-      accountMenuItems.filter((menu) => (menu.meal_plan_type ?? 0) === selectedMealPlanType),
+      accountMenuItems,
       selectedAutoWeek,
       configuredMealSlotRows,
+      accountMealConfiguration,
+      weeklyMealSettings,
     )
     setManualDays(recommendedResult.days)
     setManualEveningSnackItems({})
@@ -1920,6 +2005,11 @@ function TableMealsManager() {
     }
 
     const result = buildTableMealsResultFromDays(mergeManualEveningSnacks(manualDays, manualEveningSnackItems))
+    const budgetError = getTableMealsBudgetError(result, configuredMealSlotRows, accountMealConfiguration)
+    if (budgetError) {
+      setManualMessage(budgetError)
+      return
+    }
     const payload = buildTableMealsSavePayload(
       result,
       selectedAutoWeek,
@@ -1927,6 +2017,8 @@ function TableMealsManager() {
       selectedAccountName,
       mealEditorSource,
       selectedMealPlanType,
+      accountMealConfiguration,
+      weeklyMealSettings,
     )
 
     if (payload.table_meals.length === 0) {
@@ -2005,9 +2097,11 @@ function TableMealsManager() {
     }
 
     const result = buildConfiguredAutoTableMealsResult(
-      selectedAccountMenus.filter((menu) => (menu.meal_plan_type ?? 0) === selectedMealPlanType),
+      selectedAccountMenus,
       selectedAutoWeek,
       configuredMealSlotRows,
+      accountMealConfiguration,
+      weeklyMealSettings,
     )
     const generatedMenuCount = result.days.reduce(
       (sum, day) => sum + Object.values(day.meals).reduce((mealSum, items) => mealSum + items.length, 0),
@@ -2051,6 +2145,12 @@ function TableMealsManager() {
       return
     }
 
+    const budgetError = getTableMealsBudgetError(autoGeneratedResult, configuredMealSlotRows, accountMealConfiguration)
+    if (budgetError) {
+      setTableSaveMessage(budgetError)
+      return
+    }
+
     const payload = buildTableMealsSavePayload(
       autoGeneratedResult,
       selectedAutoWeek,
@@ -2058,6 +2158,8 @@ function TableMealsManager() {
       selectedAccountName,
       'auto',
       selectedMealPlanType,
+      accountMealConfiguration,
+      weeklyMealSettings,
     )
 
     if (payload.table_meals.length === 0) {
@@ -2332,6 +2434,20 @@ function TableMealsManager() {
               onChange={handleFileChange}
             />
           </section>
+
+          {selectedAccountId && selectedAutoWeek && configuredMealSlotRows.length > 0 ? (
+            <section className="table-meals-weekly-summary" aria-label="주간 식사 편성 요약">
+              <div>
+                <strong>주간 식사 편성</strong>
+                <span>
+                  {Object.keys(weeklyMealSettings).length > 0
+                    ? `고객사 기본값에서 ${Object.keys(weeklyMealSettings).length}개 식사를 변경했습니다.`
+                    : '고객사 기본값을 적용합니다.'}
+                </span>
+              </div>
+              <button type="button" onClick={() => setIsWeeklySettingsOpen(true)}>편성 설정</button>
+            </section>
+          ) : null}
 
           <section className="table-meals-layout">
             <section className="table-meals-panel">
@@ -2689,6 +2805,65 @@ function TableMealsManager() {
               >
                 {isTableSaving ? '저장 중' : mealEditorSource === 'auto' ? '수정한 자동 식단표 저장' : '수기 식단표 저장'}
               </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {isWeeklySettingsOpen && selectedAutoWeek ? (
+        <div className="table-meals-modal-backdrop table-meals-modal-backdrop--weekly" role="presentation" onClick={() => setIsWeeklySettingsOpen(false)}>
+          <section className="table-meals-modal table-meals-modal--weekly" role="dialog" aria-modal="true" aria-labelledby="table-meals-weekly-modal-title" onClick={(event) => event.stopPropagation()}>
+            <div className="table-meals-modal__header">
+              <div>
+                <p className="table-meals-modal__eyebrow">Weekly Schedule</p>
+                <h2 id="table-meals-weekly-modal-title">주간 식사 편성</h2>
+              </div>
+              <span>{selectedAutoWeek.label}</span>
+            </div>
+
+            <div className="table-meals-weekly-settings__notice">
+              고객사 기본값으로 채워져 있습니다. 특별한 날짜의 식사분류나 식단유형만 변경하세요.
+            </div>
+            <div className="table-meals-weekly-settings__scroll">
+              <table className="table-meals-weekly-settings__table">
+                <thead>
+                  <tr>
+                    <th>날짜</th>
+                    {configuredMealSlotRows.map((slot) => <th key={slot.id}>{slot.label}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedAutoWeek.dates.map((date) => (
+                    <tr key={formatDateValue(date)}>
+                      <th>{formatDateLabel(date)} ({AUTO_WEEKDAY_LABELS[(date.getDay() + 6) % 7]})</th>
+                      {configuredMealSlotRows.map((slot) => {
+                        const key = `${formatDateValue(date)}:${slot.code}`
+                        const profile = accountMealConfiguration?.profiles.find((item) => item.meal_slot_code === slot.code)
+                        const isSnack = [1, 3, 4, 6, 7, 8].includes(slot.code)
+                        const setting = weeklyMealSettings[key]
+                        const foodType = setting?.food_type ?? profile?.default_food_type ?? (isSnack ? 6 : 1)
+                        const planType = setting?.meal_plan_type ?? profile?.default_meal_plan_type ?? selectedMealPlanType
+                        return (
+                          <td key={slot.id} className={setting ? 'is-changed' : ''}>
+                            <select aria-label={`${formatDateLabel(date)} ${slot.label} 식사분류`} value={foodType} onChange={(event) => updateWeeklyMealSetting(date, slot, { food_type: Number(event.target.value) })}>
+                              {MANUAL_FOOD_TYPE_OPTIONS.filter((option) => option.value).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                            </select>
+                            <select aria-label={`${formatDateLabel(date)} ${slot.label} 식단유형`} value={planType} onChange={(event) => updateWeeklyMealSetting(date, slot, { meal_plan_type: Number(event.target.value) })}>
+                              {mealPlanTypeOptions.map((option) => <option key={option.value} value={option.value}>{option.text}</option>)}
+                            </select>
+                            <small>{profile?.budget_per_person == null ? '단가 서버 계산' : `${Math.round(profile.budget_per_person).toLocaleString('ko-KR')}원`}</small>
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="table-meals-modal__actions">
+              <button type="button" className="table-meals-modal__button is-secondary" onClick={() => setWeeklyMealSettings({})}>고객사 기본값으로 초기화</button>
+              <button type="button" className="table-meals-modal__button is-primary" onClick={() => setIsWeeklySettingsOpen(false)}>편성 적용</button>
             </div>
           </section>
         </div>

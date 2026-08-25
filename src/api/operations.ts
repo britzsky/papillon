@@ -20,6 +20,38 @@ export type AccountMealSlotSavePayload = {
   meal_slots: Array<{ meal_slot_code: number; display_order: number }>
 }
 
+export type AccountMealSlotProfile = {
+  meal_slot_code: number
+  default_food_type: number
+  default_meal_plan_type: number
+  template_id?: number | null
+  template_name?: string
+  budget_per_person?: number | null
+  budget_source?: string
+}
+
+export type AccountMealConfiguration = {
+  account_id: string
+  account_type: number
+  account_type_name: string
+  price_source: 'ELDERLY' | 'DIET_PRICE' | 'SNACK' | 'OVERRIDE' | 'UNSUPPORTED'
+  price_source_amount?: number | null
+  main_meal_count: number
+  profiles: AccountMealSlotProfile[]
+}
+
+export type AccountMealConfigurationSavePayload = {
+  account_id: string
+  user_id: string
+  meal_slots: Array<{
+    meal_slot_code: number
+    display_order: number
+    default_food_type: number
+    default_meal_plan_type: number
+    template_id?: number | null
+  }>
+}
+
 export type MenuManagerItem = {
   menu_id: string
   menu_name: string
@@ -38,6 +70,7 @@ export type MenuManagerItem = {
   meal_plan_type: number
   calories_per_serving?: number
   menu_cost_per_person?: number
+  menu_cost_complete?: boolean
 }
 
 export type MenuIngredientItem = {
@@ -173,6 +206,11 @@ export type TableMealsSavePayload = {
     meal_date: string
     weekday: string
     meal_slot: string
+    meal_slot_code?: number
+    food_type?: number
+    meal_plan_type?: number
+    template_id?: number | null
+    meal_budget_per_person?: number | null
     menu_count: number
     menus: Array<{
       sort_order: number
@@ -515,6 +553,7 @@ function normalizeAccountOption(record: RawRecord): AccountOption {
 
 function normalizeMenu(record: RawRecord, index: number): MenuManagerItem {
   const menuImg = asText(record.menu_img ?? record.menuImg ?? record.image_url ?? record.imageUrl)
+  const menuCostComplete = record.menu_cost_complete ?? record.menuCostComplete
 
   return {
     menu_id: asText(record.menu_id ?? record.menuId, `row-${index + 1}`),
@@ -538,6 +577,8 @@ function normalizeMenu(record: RawRecord, index: number): MenuManagerItem {
     meal_plan_type: asNumber(record.meal_plan_type ?? record.mealPlanType, 0),
     calories_per_serving: asNumber(record.calories_per_serving ?? record.caloriesPerServing),
     menu_cost_per_person: asNumber(record.menu_cost_per_person ?? record.menuCostPerPerson),
+    menu_cost_complete:
+      menuCostComplete == null ? undefined : ['1', 'true', 'Y'].includes(asText(menuCostComplete)),
   }
 }
 
@@ -731,6 +772,53 @@ export async function saveAccountMealSlots(accountId: string, mealSlotCodes: num
   })
 
   if (!response.ok) throw new Error('고객사 식사구분 설정을 저장하지 못했습니다.')
+}
+
+// 고객사 유형별 원가 규칙이 반영된 식사구분별 기본 구성을 조회한다.
+export async function getAccountMealConfiguration(accountId: string): Promise<AccountMealConfiguration> {
+  const searchParams = new URLSearchParams({ account_id: accountId })
+  const response = await fetch(`${buildApiUrl('/Account/MealConfiguration')}?${searchParams.toString()}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  })
+  const payload = await parseResponseBody(response) as RawRecord | null
+  if (!response.ok || !payload) throw new Error('고객사 식사 구성과 단가를 불러오지 못했습니다.')
+  const profileItems = readArray(payload.profiles ?? payload.meal_slots ?? payload.mealSlots)
+  const sourceAmount = payload.price_source_amount ?? payload.priceSourceAmount
+  return {
+    account_id: asText(payload.account_id ?? payload.accountId, accountId),
+    account_type: asNumber(payload.account_type ?? payload.accountType),
+    account_type_name: asText(payload.account_type_name ?? payload.accountTypeName),
+    price_source: asText(payload.price_source ?? payload.priceSource, 'UNSUPPORTED') as AccountMealConfiguration['price_source'],
+    price_source_amount: sourceAmount == null || sourceAmount === '' ? null : asNumber(sourceAmount),
+    main_meal_count: asNumber(payload.main_meal_count ?? payload.mainMealCount),
+    profiles: profileItems.map((item) => {
+      const record = item as RawRecord
+      const budget = record.budget_per_person ?? record.budgetPerPerson
+      return {
+        meal_slot_code: asNumber(record.meal_slot_code ?? record.mealSlotCode),
+        default_food_type: asNumber(record.default_food_type ?? record.defaultFoodType, 1),
+        default_meal_plan_type: asNumber(record.default_meal_plan_type ?? record.defaultMealPlanType),
+        template_id: asNumber(record.template_id ?? record.templateId) || null,
+        template_name: asText(record.template_name ?? record.templateName),
+        budget_per_person: budget == null || budget === '' ? null : asNumber(budget),
+        budget_source: asText(record.budget_source ?? record.budgetSource),
+      }
+    }),
+  }
+}
+
+// 식사구분 선택과 기본 식사분류·식단유형을 한 번에 저장한다.
+export async function saveAccountMealConfiguration(payload: Omit<AccountMealConfigurationSavePayload, 'user_id'>) {
+  const response = await fetch(buildApiUrl('/Account/MealConfigurationSave'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...payload, user_id: getLocalUserId() }),
+  })
+  if (!response.ok) {
+    const result = await parseResponseBody(response) as { message?: string } | null
+    throw new Error(result?.message ?? '고객사 식사 구성을 저장하지 못했습니다.')
+  }
 }
 
 export async function getMenuManagerList(): Promise<MenuManagerItem[]> {
@@ -1058,8 +1146,12 @@ export async function saveTableMeals(payload: TableMealsSavePayload) {
       meal_date: meal.meal_date,
       weekday: meal.weekday,
       meal_slot: meal.meal_slot,
+      meal_slot_code: meal.meal_slot_code,
+      food_type: meal.food_type,
+      meal_plan_type: meal.meal_plan_type ?? payload.meal_plan_type,
+      template_id: meal.template_id,
       planned_servings: 1,
-      meal_budget_per_person: 3500,
+      meal_budget_per_person: meal.meal_budget_per_person,
       status: 'DRAFT',
     })
     const mealServiceId = service.id

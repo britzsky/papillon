@@ -6,6 +6,7 @@ import App from './App.tsx'
 import Home from './pages/Home.tsx'
 import FoodOrder from './pages/order/FoodOrder.tsx'
 import AccountInventoryManager from './pages/inventory/AccountInventoryManager.tsx'
+import IngredientMasterManager from './pages/inventory/IngredientMasterManager.tsx'
 import OrderManager from './pages/order/OrderManager.tsx'
 import AccountMenuManager from './pages/operations/AccountMenuManager.tsx'
 import AccountManager from './pages/operations/AccountManager.tsx'
@@ -34,6 +35,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/order_manager/food_order/:menuId" element={<FoodOrder />} />
         <Route path="/order_manager/welstory" element={<WelstoryOrder />} />
         <Route path="/inventory/account" element={<AccountInventoryManager />} />
+        <Route path="/inventory/ingredients" element={<IngredientMasterManager />} />
         <Route path="/operations/menu" element={<MenuManager />} />
         <Route path="/operations/account" element={<AccountManager />} />
         <Route path="/operations/account-menu" element={<AccountMenuManager />} />

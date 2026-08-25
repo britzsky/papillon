@@ -232,7 +232,7 @@ function normalizeUnit(unit: string) {
   return unit.trim().toLowerCase()
 }
 
-function toBaseQuantity(qty: number, qtyUnit: string, baseUnit: string) {
+export function toBaseQuantity(qty: number, qtyUnit: string, baseUnit: string) {
   const sourceUnit = normalizeUnit(qtyUnit)
   const targetUnit = normalizeUnit(baseUnit)
 

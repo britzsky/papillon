@@ -51,6 +51,7 @@ import {
   parseNumber,
   qtyUnitOptions,
   recalculateQuantities,
+  toBaseQuantity,
   toEditableDetailItem,
   type EditableMenuIngredientItem,
 } from './menuManagerShared'
@@ -586,6 +587,20 @@ function AccountMenuManager() {
       null
     : null
   const activeDetailItems = activeMenu ? detailItemsByMenuId[activeMenu.menu_id] ?? [] : []
+  const activeMenuCost = useMemo(() => {
+    let total = 0
+    let missingCount = 0
+    activeDetailItems.forEach((item) => {
+      const product = supplierProducts.find((candidate) => candidate.supplier_product_id === item.supplier_product_id)
+      const qtyBase = toBaseQuantity(item.qty_num ?? item.required_qty, item.qty_unit ?? '', item.base_unit)
+      if (!item.ingredient_id || qtyBase <= 0 || !product || product.base_qty <= 0 || product.current_price <= 0) {
+        missingCount += 1
+        return
+      }
+      total += qtyBase * product.current_price / product.base_qty
+    })
+    return { total, missingCount }
+  }, [activeDetailItems, supplierProducts])
 
   const toAccountEditableDetailItems = (items: Awaited<ReturnType<typeof getMenuDetailList>>) =>
     items.map((detail) => {
@@ -1279,11 +1294,20 @@ function AccountMenuManager() {
                         <th>메뉴구분</th>
                         <th>식단 유형</th>
                         <th>칼로리(kcal)</th>
+                        <th>원가 비교</th>
                         <th>관리</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {assignedMenus.map((item) => (
+                      {assignedMenus.map((item) => {
+                        const masterCost = menuItems.find((menu) => menu.menu_id === item.menu_id)?.menu_cost_per_person ?? 0
+                        const accountCost = item.menu_id === activeMenu?.menu_id
+                          ? activeMenuCost.total
+                          : item.menu_cost_per_person ?? 0
+                        const isAccountCostComplete = item.menu_id === activeMenu?.menu_id
+                          ? activeMenuCost.missingCount === 0
+                          : item.menu_cost_complete !== false && accountCost > 0
+                        return (
                         <tr
                           key={item.menu_id}
                           className={item.menu_id === activeMenu?.menu_id ? 'is-active' : ''}
@@ -1358,6 +1382,17 @@ function AccountMenuManager() {
                             />
                           </td>
                           <td>
+                            <div className="account-menu-cost-compare">
+                              <span>본사 {masterCost > 0 ? `${Math.round(masterCost).toLocaleString('ko-KR')}원` : '미산정'}</span>
+                              <strong>{isAccountCostComplete ? `거래처 ${Math.round(accountCost).toLocaleString('ko-KR')}원` : '거래처 미산정'}</strong>
+                              {masterCost > 0 && isAccountCostComplete ? (
+                                <small className={accountCost - masterCost > 0 ? 'is-higher' : 'is-lower'}>
+                                  차이 {accountCost - masterCost >= 0 ? '+' : ''}{Math.round(accountCost - masterCost).toLocaleString('ko-KR')}원
+                                </small>
+                              ) : null}
+                            </div>
+                          </td>
+                          <td>
                             <button
                               type="button"
                               className="menu-manager-select-button"
@@ -1370,7 +1405,8 @@ function AccountMenuManager() {
                             </button>
                           </td>
                         </tr>
-                      ))}
+                        )
+                      })}
                     </tbody>
                   </table>
                 ) : (
@@ -1426,6 +1462,7 @@ function AccountMenuManager() {
                           <th>식사분류</th>
                           <th>메뉴유형</th>
                           <th>메뉴구분</th>
+                          <th>기준원가</th>
                           <th>선택</th>
                         </tr>
                       </thead>
@@ -1507,6 +1544,11 @@ function AccountMenuManager() {
                                   ))}
                                 </select>
                               </td>
+                              <td className="account-menu-master-cost">
+                                {(item.menu_cost_per_person ?? 0) > 0
+                                  ? `${Math.round(item.menu_cost_per_person ?? 0).toLocaleString('ko-KR')}원`
+                                  : '미산정'}
+                              </td>
                               <td>
                                 <button
                                   type="button"
@@ -1578,6 +1620,13 @@ function AccountMenuManager() {
                   <span>{activeMenu ? activeMenu.menu_name || '메뉴를 선택하세요.' : '메뉴를 선택하세요.'}</span>
                 </div>
                 <div className="menu-manager-panel__actions">
+                  {activeMenu ? (
+                    <div className={`account-menu-cost-summary${activeMenuCost.missingCount > 0 ? ' is-incomplete' : ''}`}>
+                      <span>예상 1인 원가</span>
+                      <strong>{Math.round(activeMenuCost.total).toLocaleString('ko-KR')}원</strong>
+                      <small>{activeMenuCost.missingCount > 0 ? `미산정 ${activeMenuCost.missingCount}개` : '산정 완료'}</small>
+                    </div>
+                  ) : null}
                   <button type="button" className="menu-manager-add-button" onClick={handleAddIngredient} disabled={!activeMenu}>
                   식자재 추가
                   </button>
@@ -1596,6 +1645,7 @@ function AccountMenuManager() {
                           <th>식자재 선택</th>
                           <th>공급처 상품</th>
                           <th>필요 수량</th>
+                          <th>1인 원가</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1603,6 +1653,13 @@ function AccountMenuManager() {
                           const filteredIngredientOptions = ingredientOptions.filter(
                             (option) => item.category_name === '' || option.category_name === item.category_name,
                           )
+                          const selectedProduct = supplierProducts.find(
+                            (product) => product.supplier_product_id === item.supplier_product_id,
+                          )
+                          const qtyBase = toBaseQuantity(item.qty_num ?? item.required_qty, item.qty_unit ?? '', item.base_unit)
+                          const ingredientCost = selectedProduct && selectedProduct.base_qty > 0 && selectedProduct.current_price > 0 && qtyBase > 0
+                            ? qtyBase * selectedProduct.current_price / selectedProduct.base_qty
+                            : null
 
                           return (
                             <tr key={item.row_id}>
@@ -1685,6 +1742,9 @@ function AccountMenuManager() {
                                     ))}
                                   </select>
                                 </div>
+                              </td>
+                              <td className={`account-menu-ingredient-cost${ingredientCost == null ? ' is-missing' : ''}`}>
+                                {ingredientCost == null ? '가격 확인 필요' : `${Math.round(ingredientCost).toLocaleString('ko-KR')}원`}
                               </td>
                             </tr>
                           )

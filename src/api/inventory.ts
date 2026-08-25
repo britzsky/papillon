@@ -41,9 +41,28 @@ export type AccountInventorySavePayload = {
   }>
 }
 
+// 본사에서 공통으로 사용하는 식자재 마스터와 기준 공급가격이다.
+export type IngredientMasterItem = {
+  ingredient_id: string
+  ingredient_name: string
+  category_name: string
+  storage_type: string
+  base_unit: string
+  order_unit: string
+  convert_value: number
+  safe_stock_qty: number
+  menu_usage_count: number
+  note: string
+  supplier_name: string
+  product_name: string
+  purchase_price: number
+  package_base_qty: number
+  is_new?: boolean
+}
+
 type RawRecord = Record<string, unknown>
 
-function getLocalUserId() {
+export function getLocalUserId() {
   return typeof window !== 'undefined' ? localStorage.getItem('user_id') ?? '' : ''
 }
 
@@ -183,5 +202,44 @@ export async function saveAccountInventory(payload: AccountInventorySavePayload)
     })
     if (!response.ok) throw new Error('거래처 재고 저장에 실패했습니다.')
     return response.json() as Promise<unknown>
+  }))
+}
+
+function normalizeIngredientMasterItem(record: RawRecord): IngredientMasterItem {
+  return {
+    ingredient_id: asText(record.ingredient_id ?? record.ingredientId),
+    ingredient_name: asText(record.ingredient_name ?? record.ingredientName ?? record.ingredient_name_std),
+    category_name: asText(record.category_name ?? record.categoryName),
+    storage_type: asText(record.storage_type ?? record.storageType),
+    base_unit: asText(record.base_unit ?? record.baseUnit),
+    order_unit: asText(record.order_unit ?? record.orderUnit),
+    convert_value: asNumber(record.convert_value ?? record.convertValue, 1),
+    safe_stock_qty: asNumber(record.safe_stock_qty ?? record.safeStockQty),
+    menu_usage_count: asNumber(record.menu_usage_count ?? record.menuUsageCount),
+    note: asText(record.note),
+    supplier_name: asText(record.supplier_name ?? record.supplierName),
+    product_name: asText(record.product_name ?? record.productName),
+    purchase_price: asNumber(record.purchase_price ?? record.purchasePrice),
+    package_base_qty: asNumber(record.package_base_qty ?? record.packageBaseQty),
+  }
+}
+
+// 거래처 재고와 분리된 본사 식자재 마스터 전용 API다.
+export async function getIngredientMasterList(): Promise<IngredientMasterItem[]> {
+  const response = await fetch(buildApiUrl('/v2/ingredients'), { headers: { 'Content-Type': 'application/json' } })
+  if (!response.ok) throw new Error('본사 식자재 마스터를 불러오지 못했습니다.')
+  return readArray(await response.json()).map((item) => normalizeIngredientMasterItem(item as RawRecord))
+}
+
+export async function saveIngredientMasters(items: IngredientMasterItem[]) {
+  return Promise.all(items.map(async (item) => {
+    const response = await fetch(buildApiUrl('/v2/ingredients'), {
+      method: item.is_new ? 'POST' : 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...item, user_id: getLocalUserId() }),
+    })
+    const result = await response.json() as { message?: string }
+    if (!response.ok) throw new Error(result.message ?? '본사 식자재 마스터 저장에 실패했습니다.')
+    return result
   }))
 }

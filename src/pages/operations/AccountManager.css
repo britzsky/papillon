@@ -23,4 +23,20 @@
 .account-manager-slot small { align-self: start; margin-top: 4px; color: #718093; }
 .account-manager-empty { display: grid; place-items: center; min-height: 280px; color: #718093; }
 .account-manager-message { margin: 0 24px 20px; padding: 10px 12px; background: #f1f6fa; color: #35536d; font-size: 13px; }
+.account-manager-config { margin: 0 24px 24px; border: 1px solid #c1cfda; background: #f8fafc; }
+.account-manager-config__heading { display: flex; justify-content: space-between; gap: 20px; padding: 16px 18px; border-bottom: 1px solid #cfdae3; background: #eef4f8; }
+.account-manager-config__heading h2 { margin: 0; font-size: 17px; color: #1f3e5d; }
+.account-manager-config__heading p { margin: 5px 0 0; color: #66778a; font-size: 12px; }
+.account-manager-price-summary { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; white-space: nowrap; }
+.account-manager-price-summary strong { color: #245e91; font-size: 14px; }
+.account-manager-price-summary span { margin-top: 3px; color: #718093; font-size: 11px; }
+.account-manager-config__rows { display: grid; gap: 1px; background: #d5dee6; }
+.account-manager-config-row { display: grid; grid-template-columns: minmax(90px, .7fr) repeat(2, minmax(150px, 1fr)) minmax(160px, 1fr); align-items: end; gap: 14px; padding: 12px 16px; background: #fff; }
+.account-manager-config-row > strong { align-self: center; color: #243f58; }
+.account-manager-config-row label, .account-manager-config-row__budget { display: flex; flex-direction: column; gap: 4px; }
+.account-manager-config-row label span, .account-manager-config-row__budget > span { color: #68798b; font-size: 11px; font-weight: 700; }
+.account-manager-config-row select { height: 34px; border: 1px solid #afbdca; background: #fff; padding: 0 8px; color: #24374a; }
+.account-manager-config-row__budget strong { color: #17643a; font-size: 16px; }
+.account-manager-config-row__budget small { color: #788797; font-size: 10px; }
 @media (max-width: 640px) { .account-manager-toolbar { flex-wrap: wrap; } .account-manager-toolbar__field, .account-manager-toolbar select { width: 100%; } .account-manager-toolbar button { margin-left: 0; width: 100%; } }
+@media (max-width: 800px) { .account-manager-config__heading { flex-direction: column; } .account-manager-price-summary { align-items: flex-start; } .account-manager-config-row { grid-template-columns: 1fr; } }

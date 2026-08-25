@@ -21,6 +21,11 @@ import {
 } from '../../api/operations'
 import type { RecipeRequest } from '../../api/recipe'
 import {
+  getHeadquartersBenchmarkProduct,
+  getSupplierProducts,
+  type SupplierProductOption,
+} from '../../api/supplierCatalog'
+import {
   MENU_PAGE_SIZE,
   buildDetailSnapshotMap,
   buildMenuSavePayload,
@@ -37,6 +42,7 @@ import {
   parseNumber,
   qtyUnitOptions,
   recalculateQuantities,
+  toBaseQuantity,
   toEditableDetailItem,
   type EditableMenuIngredientItem,
 } from './menuManagerShared'
@@ -51,6 +57,7 @@ function MenuManager() {
   const [selectedMenuGubun, setSelectedMenuGubun] = useState('')
   const [selectedMealPlanType, setSelectedMealPlanType] = useState('')
   const [ingredientOptions, setIngredientOptions] = useState<IngredientOption[]>([])
+  const [supplierProducts, setSupplierProducts] = useState<SupplierProductOption[]>([])
   const [ingredientError, setIngredientError] = useState('')
   const [menuItems, setMenuItems] = useState<MenuManagerItem[]>([])
   const [originalMenusById, setOriginalMenusById] = useState<Record<string, MenuManagerItem>>({})
@@ -122,6 +129,18 @@ function MenuManager() {
     }
   }, [])
 
+  useEffect(() => {
+    let isMounted = true
+    void getSupplierProducts()
+      .then((items) => {
+        if (isMounted) setSupplierProducts(items)
+      })
+      .catch((error) => {
+        if (isMounted) setIngredientError(error instanceof Error ? error.message : '본사 기준 매입가를 불러오지 못했습니다.')
+      })
+    return () => { isMounted = false }
+  }, [])
+
   const filteredMenuItems = useMemo(
     () =>
       menuItems.filter((item) =>
@@ -164,6 +183,20 @@ function MenuManager() {
   const activeMenu = filteredMenuItems.find((item) => item.menu_id === selectedMenuId) ?? null
   const imageEditorMenu = imageEditorMenuId ? menuItems.find((item) => item.menu_id === imageEditorMenuId) ?? null : null
   const activeDetailItems = activeMenu ? detailItemsByMenuId[activeMenu.menu_id] ?? [] : []
+  const activeMenuCost = useMemo(() => {
+    let total = 0
+    let missingCount = 0
+    activeDetailItems.forEach((item) => {
+      const product = getHeadquartersBenchmarkProduct(supplierProducts, item.ingredient_id)
+      const qtyBase = toBaseQuantity(item.qty_num ?? item.required_qty, item.qty_unit ?? '', item.base_unit)
+      if (!item.ingredient_id || qtyBase <= 0 || !product) {
+        missingCount += 1
+        return
+      }
+      total += qtyBase * product.current_price / product.base_qty
+    })
+    return { total, missingCount }
+  }, [activeDetailItems, supplierProducts])
 
   useEffect(() => {
     let isMounted = true
@@ -671,6 +704,13 @@ function MenuManager() {
                   <span>{activeMenu ? activeMenu.menu_name || '신규 메뉴' : '메뉴를 선택하세요.'}</span>
                 </div>
                 <div className="menu-manager-panel__actions">
+                  {activeMenu ? (
+                    <div className={`account-menu-cost-summary${activeMenuCost.missingCount > 0 ? ' is-incomplete' : ''}`}>
+                      <span>본사 기준 1인 원가</span>
+                      <strong>{Math.round(activeMenuCost.total).toLocaleString('ko-KR')}원</strong>
+                      <small>{activeMenuCost.missingCount > 0 ? `미산정 ${activeMenuCost.missingCount}개` : '산정 완료'}</small>
+                    </div>
+                  ) : null}
                   <button type="button" className="menu-manager-add-button" onClick={handleAddIngredient} disabled={!activeMenu}>
                   식자재 추가
                   </button>
@@ -688,6 +728,7 @@ function MenuManager() {
                           <th>카테고리</th>
                           <th>식자재 선택</th>
                           <th>필요 수량</th>
+                          <th>기준 원가</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -695,6 +736,11 @@ function MenuManager() {
                           const filteredIngredientOptions = ingredientOptions.filter(
                             (option) => item.category_name === '' || option.category_name === item.category_name,
                           )
+                          const benchmarkProduct = getHeadquartersBenchmarkProduct(supplierProducts, item.ingredient_id)
+                          const qtyBase = toBaseQuantity(item.qty_num ?? item.required_qty, item.qty_unit ?? '', item.base_unit)
+                          const ingredientCost = benchmarkProduct && qtyBase > 0
+                            ? qtyBase * benchmarkProduct.current_price / benchmarkProduct.base_qty
+                            : null
 
                           return (
                             <tr key={item.row_id}>
@@ -753,6 +799,9 @@ function MenuManager() {
                                     ))}
                                   </select>
                                 </div>
+                              </td>
+                              <td className={`account-menu-ingredient-cost${ingredientCost == null ? ' is-missing' : ''}`}>
+                                {ingredientCost == null ? '가격 확인 필요' : `${Math.round(ingredientCost).toLocaleString('ko-KR')}원`}
                               </td>
                             </tr>
                           )
