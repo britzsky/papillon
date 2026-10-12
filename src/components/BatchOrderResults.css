@@ -1,0 +1,22 @@
+/* 공급사별 발주 결과: 발주서마다 카드, 상태 색 배지, 발주서 확인·인쇄는 작은 버튼 모양 */
+.batch-results { margin: 8px 0; }
+.batch-results h3 { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; font-size: 14px; color: #1f2d3d; }
+.batch-results h3 span { padding: 1px 8px; border-radius: 10px; background: #eef2f7; color: #475569; font-size: 12px; font-weight: 600; }
+.batch-results ul { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.batch-result { padding: 8px 10px; border: 1px solid #e2e8f0; border-left-width: 4px; border-radius: 8px; background: #fff; }
+.batch-result.is-ok { border-left-color: #16a34a; }
+.batch-result.is-fail { border-left-color: #dc2626; background: #fffafa; }
+.batch-result.is-warn { border-left-color: #d97706; background: #fffcf5; }
+.batch-result__head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.batch-result__head strong { font-size: 14px; color: #1f2d3d; }
+.batch-result__badge { padding: 1px 8px; border-radius: 10px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.batch-result.is-ok .batch-result__badge { background: #dcfce7; color: #166534; }
+.batch-result.is-fail .batch-result__badge { background: #fee2e2; color: #991b1b; }
+.batch-result.is-warn .batch-result__badge { background: #fef3c7; color: #92400e; }
+.batch-result__meta { color: #64748b; font-size: 12px; }
+.batch-results .batch-result__link { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; padding: 3px 10px; border: 1px solid #c7d4e2; border-radius: 6px; background: #f8fafc; color: #1d5585; font-size: 12px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.batch-results .batch-result__link:hover { border-color: #1d5585; background: #eaf1f8; }
+.batch-results .batch-result__message { margin: 4px 0 0; font-size: 12px; line-height: 1.4; color: #7f1d1d; }
+.batch-result.is-warn .batch-result__message { color: #78350f; }
+.batch-result.is-ok .batch-result__message { color: #475569; }
+.batch-results__note { margin: 6px 0 0; font-size: 12px; line-height: 1.4; color: #64748b; }

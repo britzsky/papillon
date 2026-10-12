@@ -1,0 +1,214 @@
+/* 식단표 PDF 미등록 메뉴 등록 창. 틀은 TableMealsManager.css의 table-meals-modal을 쓴다 */
+
+.table-meals-modal.pdf-menu-register {
+  width: min(760px, 100%);
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-menu-register__body {
+  overflow-y: auto;
+}
+
+.pdf-menu-register__section {
+  display: grid;
+  gap: 10px;
+}
+
+.pdf-menu-register__section h3 {
+  margin: 0;
+  font-size: 15px;
+  color: #0f2f2a;
+}
+
+.pdf-menu-register__section h3 small {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.pdf-menu-register__similar {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.pdf-menu-register__similar li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.pdf-menu-register__name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.pdf-menu-register__similar small {
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.pdf-menu-register__badge {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #e7f6fb;
+  color: #197fac;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.pdf-menu-register__badge.is-standard {
+  background: #e5f4eb;
+  color: #23744b;
+}
+
+.pdf-menu-register__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.pdf-menu-register__grid .is-wide {
+  grid-column: span 2;
+}
+
+.pdf-menu-register__ingredients {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.pdf-menu-register__ingredients-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pdf-menu-register__ingredient {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 150px auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.pdf-menu-register__qty {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pdf-menu-register__qty input {
+  width: 100%;
+  min-width: 0;
+  text-align: right;
+}
+
+.pdf-menu-register__qty span {
+  min-width: 26px;
+  color: #475569;
+  font-size: 13px;
+}
+
+.pdf-menu-register__hint {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.pdf-menu-register__error {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fcebea;
+  color: #ac3934;
+  font-size: 13px;
+}
+
+.pdf-menu-register__promote p {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .pdf-menu-register__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pdf-menu-register__grid .is-wide {
+    grid-column: auto;
+  }
+
+  .pdf-menu-register__similar li {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .pdf-menu-register__similar li small,
+  .pdf-menu-register__similar li button {
+    grid-column: 2;
+  }
+
+  .pdf-menu-register__ingredient {
+    grid-template-columns: minmax(0, 1fr) 110px;
+  }
+
+  .pdf-menu-register__remove {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+}
+
+.pdf-menu-register__new-ingredient {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) 80px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.pdf-menu-register__new-ingredient input,
+.pdf-menu-register__new-ingredient select {
+  min-width: 0;
+}
+
+.pdf-menu-register__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #197fac;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.pdf-menu-register__promote-list {
+  margin: 0;
+  padding: 10px 12px;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  font-size: 13px;
+}
+
+.pdf-menu-register__promote-list .pdf-menu-register__badge {
+  margin-right: 8px;
+}
+
+@media (max-width: 640px) {
+  .pdf-menu-register__new-ingredient {
+    grid-template-columns: minmax(0, 1fr) 80px;
+  }
+}

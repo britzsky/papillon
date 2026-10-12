@@ -21,11 +21,6 @@ import {
 } from '../../api/operations'
 import type { RecipeRequest } from '../../api/recipe'
 import {
-  getHeadquartersBenchmarkProduct,
-  getSupplierProducts,
-  type SupplierProductOption,
-} from '../../api/supplierCatalog'
-import {
   MENU_PAGE_SIZE,
   buildDetailSnapshotMap,
   buildMenuSavePayload,
@@ -42,13 +37,13 @@ import {
   parseNumber,
   qtyUnitOptions,
   recalculateQuantities,
-  toBaseQuantity,
   toEditableDetailItem,
   type EditableMenuIngredientItem,
 } from './menuManagerShared'
 import './MenuManager.css'
 
 function MenuManager() {
+  const [menuView, setMenuView] = useState<'table' | 'cards'>('table')
   const [searchParams] = useSearchParams()
   const initialKeywordFilter = searchParams.get('q') ?? ''
   const [selectedMealCategory, setSelectedMealCategory] = useState('')
@@ -57,13 +52,12 @@ function MenuManager() {
   const [selectedMenuGubun, setSelectedMenuGubun] = useState('')
   const [selectedMealPlanType, setSelectedMealPlanType] = useState('')
   const [ingredientOptions, setIngredientOptions] = useState<IngredientOption[]>([])
-  const [supplierProducts, setSupplierProducts] = useState<SupplierProductOption[]>([])
   const [ingredientError, setIngredientError] = useState('')
   const [menuItems, setMenuItems] = useState<MenuManagerItem[]>([])
   const [originalMenusById, setOriginalMenusById] = useState<Record<string, MenuManagerItem>>({})
   const [menuError, setMenuError] = useState('')
   const [isMenuLoading, setIsMenuLoading] = useState(true)
-  const [selectedMenuId, setSelectedMenuId] = useState<string | null>(null)
+  const [selectedMenuId, setSelectedMenuId] = useState<string | null>(() => searchParams.get('type') === 'menu' ? searchParams.get('id') : null)
   const [detailItemsByMenuId, setDetailItemsByMenuId] = useState<Record<string, EditableMenuIngredientItem[]>>({})
   const [originalDetailsByMenuId, setOriginalDetailsByMenuId] = useState<
     Record<string, Record<string, EditableMenuIngredientItem>>
@@ -129,17 +123,6 @@ function MenuManager() {
     }
   }, [])
 
-  useEffect(() => {
-    let isMounted = true
-    void getSupplierProducts()
-      .then((items) => {
-        if (isMounted) setSupplierProducts(items)
-      })
-      .catch((error) => {
-        if (isMounted) setIngredientError(error instanceof Error ? error.message : '본사 기준 매입가를 불러오지 못했습니다.')
-      })
-    return () => { isMounted = false }
-  }, [])
 
   const filteredMenuItems = useMemo(
     () =>
@@ -183,20 +166,6 @@ function MenuManager() {
   const activeMenu = filteredMenuItems.find((item) => item.menu_id === selectedMenuId) ?? null
   const imageEditorMenu = imageEditorMenuId ? menuItems.find((item) => item.menu_id === imageEditorMenuId) ?? null : null
   const activeDetailItems = activeMenu ? detailItemsByMenuId[activeMenu.menu_id] ?? [] : []
-  const activeMenuCost = useMemo(() => {
-    let total = 0
-    let missingCount = 0
-    activeDetailItems.forEach((item) => {
-      const product = getHeadquartersBenchmarkProduct(supplierProducts, item.ingredient_id)
-      const qtyBase = toBaseQuantity(item.qty_num ?? item.required_qty, item.qty_unit ?? '', item.base_unit)
-      if (!item.ingredient_id || qtyBase <= 0 || !product) {
-        missingCount += 1
-        return
-      }
-      total += qtyBase * product.current_price / product.base_qty
-    })
-    return { total, missingCount }
-  }, [activeDetailItems, supplierProducts])
 
   useEffect(() => {
     let isMounted = true
@@ -422,6 +391,7 @@ function MenuManager() {
 
   return (
     <div className="menu-manager-page">
+      {isSaving ? <LoadingScreen overlay message="메뉴 정보를 저장하고 있습니다." /> : null}
       <main className="menu-manager-content">
         <SideMenuLayout
           header={
@@ -454,7 +424,7 @@ function MenuManager() {
                   id="menu-keyword"
                   type="search"
                   value={keywordFilter}
-                  placeholder="메뉴명, 키워드"
+                  placeholder="메뉴명, 키워드, 레시피 식재료"
                   onChange={(event) => setKeywordFilter(event.target.value)}
                 />
               </div>
@@ -497,12 +467,16 @@ function MenuManager() {
             </div>
           </section>
 
-          <section className="menu-manager-layout">
+          <section className="menu-manager-layout menu-manager-layout--equal-headers">
             <section className="menu-manager-panel">
               <div className="menu-manager-panel__header">
                 <div>
                   <h2>메뉴 리스트</h2>
                   <span>{filteredMenuItems.length}건</span>
+                </div>
+                <div className="workspace-view-switch" role="group" aria-label="메뉴 보기 방식">
+                  <button type="button" aria-pressed={menuView === 'table'} onClick={() => setMenuView('table')}>표 보기</button>
+                  <button type="button" aria-pressed={menuView === 'cards'} onClick={() => setMenuView('cards')}>사진 카드</button>
                 </div>
                 <button type="button" className="menu-manager-add-button" onClick={handleAddRow}>
                   행 추가
@@ -513,7 +487,7 @@ function MenuManager() {
                 {isMenuLoading ? <LoadingScreen compact message="메뉴 목록을 불러오는 중입니다." /> : null}
                 {!isMenuLoading ? (
                   <>
-                    <table className="menu-manager-table">
+                    <table className={`menu-manager-table menu-manager-menu-list-table${menuView === 'cards' ? ' workspace-menu-cards' : ''}`}>
                       <thead>
                         <tr>
                           <th>메뉴명</th>
@@ -533,23 +507,17 @@ function MenuManager() {
                             className={item.menu_id === activeMenu?.menu_id ? 'is-active' : ''}
                             onClick={() => setSelectedMenuId(item.menu_id)}
                           >
-                            <td>
+                            <td data-label="메뉴명">
                               <div className="menu-manager-menu-cell">
-                                <button
-                                  type="button"
-                                  className="menu-manager-thumbnail-button"
-                                  onClick={(event) => {
-                                    event.stopPropagation()
-                                    setSelectedMenuId(item.menu_id)
-                                    setImageEditorMenuId(item.menu_id)
-                                  }}
-                                >
                                   <MenuThumbnail
                                     src={item.image_url}
                                     name={item.menu_name}
                                     isDirty={isMenuFieldDirty(item, originalMenusById, 'menu_img')}
+                                    onEdit={() => {
+                                      setSelectedMenuId(item.menu_id)
+                                      setImageEditorMenuId(item.menu_id)
+                                    }}
                                   />
-                                </button>
                                 <input
                                 className={`menu-manager-cell-input${isMenuFieldDirty(item, originalMenusById, 'menu_name') ? ' is-dirty' : ''}`}
                                 value={item.menu_name}
@@ -562,7 +530,7 @@ function MenuManager() {
                                 />
                               </div>
                             </td>
-                            <td>
+                            <td data-label="식사분류">
                               <select
                                 className={`menu-manager-cell-input${isMenuFieldDirty(item, originalMenusById, 'meal_category') ? ' is-dirty' : ''}`}
                                 value={item.meal_category}
@@ -578,7 +546,7 @@ function MenuManager() {
                                 ))}
                               </select>
                             </td>
-                            <td>
+                            <td data-label="메뉴유형">
                               <select
                                 className={`menu-manager-cell-input${isMenuFieldDirty(item, originalMenusById, 'menu_type') ? ' is-dirty' : ''}`}
                                 value={item.menu_type}
@@ -594,9 +562,9 @@ function MenuManager() {
                                 ))}
                               </select>
                             </td>
-                            <td>
+                            <td data-label="메뉴구분">
                               <select
-                                className={`menu-manager-cell-input${isMenuFieldDirty(item, originalMenusById, 'menu_gubun') ? ' is-dirty' : ''}`}
+                                className={`menu-manager-cell-input menu-manager-menu-gubun-select${isMenuFieldDirty(item, originalMenusById, 'menu_gubun') ? ' is-dirty' : ''}`}
                                 value={item.menu_gubun}
                                 onClick={(event) => event.stopPropagation()}
                                 onFocus={() => setSelectedMenuId(item.menu_id)}
@@ -610,7 +578,7 @@ function MenuManager() {
                                 ))}
                               </select>
                             </td>
-                            <td>
+                            <td data-label="식단 유형">
                               <select
                                 className={`menu-manager-cell-input${isMenuFieldDirty(item, originalMenusById, 'meal_plan_type') ? ' is-dirty' : ''}`}
                                 value={item.meal_plan_type}
@@ -622,7 +590,7 @@ function MenuManager() {
                                 ))}
                               </select>
                             </td>
-                            <td>
+                            <td data-label="칼로리(kcal)">
                               <input
                                 className={`menu-manager-cell-input${isMenuFieldDirty(item, originalMenusById, 'calories_per_serving') ? ' is-dirty' : ''}`}
                                 type="number"
@@ -633,11 +601,11 @@ function MenuManager() {
                                 onChange={(event) => handleMenuNumberChange(item.menu_id, 'calories_per_serving', event.target.value)}
                               />
                             </td>
-                            <td>{item.created_at || '-'}</td>
-                            <td>
+                            <td data-label="등록일">{item.created_at || '-'}</td>
+                            <td data-label="선택">
                               <button
                                 type="button"
-                                className="menu-manager-select-button"
+                                className="menu-manager-select-button menu-manager-menu-select-button"
                                 onClick={(event) => {
                                   event.stopPropagation()
                                   setSelectedMenuId(item.menu_id)
@@ -704,13 +672,7 @@ function MenuManager() {
                   <span>{activeMenu ? activeMenu.menu_name || '신규 메뉴' : '메뉴를 선택하세요.'}</span>
                 </div>
                 <div className="menu-manager-panel__actions">
-                  {activeMenu ? (
-                    <div className={`account-menu-cost-summary${activeMenuCost.missingCount > 0 ? ' is-incomplete' : ''}`}>
-                      <span>본사 기준 1인 원가</span>
-                      <strong>{Math.round(activeMenuCost.total).toLocaleString('ko-KR')}원</strong>
-                      <small>{activeMenuCost.missingCount > 0 ? `미산정 ${activeMenuCost.missingCount}개` : '산정 완료'}</small>
-                    </div>
-                  ) : null}
+
                   <button type="button" className="menu-manager-add-button" onClick={handleAddIngredient} disabled={!activeMenu}>
                   식자재 추가
                   </button>
@@ -728,7 +690,6 @@ function MenuManager() {
                           <th>카테고리</th>
                           <th>식자재 선택</th>
                           <th>필요 수량</th>
-                          <th>기준 원가</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -736,11 +697,6 @@ function MenuManager() {
                           const filteredIngredientOptions = ingredientOptions.filter(
                             (option) => item.category_name === '' || option.category_name === item.category_name,
                           )
-                          const benchmarkProduct = getHeadquartersBenchmarkProduct(supplierProducts, item.ingredient_id)
-                          const qtyBase = toBaseQuantity(item.qty_num ?? item.required_qty, item.qty_unit ?? '', item.base_unit)
-                          const ingredientCost = benchmarkProduct && qtyBase > 0
-                            ? qtyBase * benchmarkProduct.current_price / benchmarkProduct.base_qty
-                            : null
 
                           return (
                             <tr key={item.row_id}>
@@ -799,9 +755,6 @@ function MenuManager() {
                                     ))}
                                   </select>
                                 </div>
-                              </td>
-                              <td className={`account-menu-ingredient-cost${ingredientCost == null ? ' is-missing' : ''}`}>
-                                {ingredientCost == null ? '가격 확인 필요' : `${Math.round(ingredientCost).toLocaleString('ko-KR')}원`}
                               </td>
                             </tr>
                           )

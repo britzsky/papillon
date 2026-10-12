@@ -53,6 +53,7 @@ export type AccountMealConfigurationSavePayload = {
 }
 
 export type MenuManagerItem = {
+  recipe_ingredient_names?: string
   menu_id: string
   menu_name: string
   food_type?: number
@@ -70,6 +71,7 @@ export type MenuManagerItem = {
   meal_plan_type: number
   calories_per_serving?: number
   menu_cost_per_person?: number
+  menu_cost_reason?: string
   menu_cost_complete?: boolean
 }
 
@@ -107,6 +109,16 @@ export type MenuIngredientItem = {
   supplier_id?: number
   supplier_name?: string
   supplier_item_code?: string
+  cost_unit_cost?: number
+  cost_base_unit?: string
+  cost_source?: string
+  cost_source_date?: string
+  cost_reason?: string
+  cost_per_person?: number
+  purchase_price?: number
+  origin_name?: string
+  incoming_qty?: number
+  stock_status?: string
   product_name?: string
   package_qty?: number
   package_unit?: string
@@ -144,6 +156,7 @@ export type TableMealsItem = {
 }
 
 export type TableMealsDetailItem = {
+  calories_per_serving?: number
   table_id: string
   account_id: string
   account_name: string
@@ -194,6 +207,7 @@ export type TableMealsQueryPeriod = {
 }
 
 export type TableMealsSavePayload = {
+  planned_servings?: number
   account_id: string
   account_name: string
   table_name: string
@@ -317,13 +331,6 @@ export type AccountMenuSavePayload = {
     ingredient_name_std: string
     category_name: string
     storage_type: string
-    supplier_id: number
-    supplier_item_code: string
-    product_name: string
-    order_unit: string
-    package_qty?: number
-    package_unit?: string
-    base_qty: number
   }>
   ingredient_detail: Array<{
     ingredient_id: string
@@ -559,6 +566,7 @@ function normalizeMenu(record: RawRecord, index: number): MenuManagerItem {
     menu_id: asText(record.menu_id ?? record.menuId, `row-${index + 1}`),
     menu_name: asText(record.menu_name ?? record.menuName, `메뉴 ${index + 1}`),
     food_type: asNumber(record.food_type ?? record.foodType, Number.NaN),
+    recipe_ingredient_names: Array.isArray(record.recipe_ingredient_names) ? record.recipe_ingredient_names.join(' ') : asText(record.recipe_ingredient_names),
     food_type_reason: asText(record.food_type_reason ?? record.foodTypeReason),
     meal_category: toMealCategory(record),
     menu_type: asOptionValue(record.menu_type ?? record.menuType, menuTypeValueByText, ['0', '1', '2', '3', '4']),
@@ -576,14 +584,15 @@ function normalizeMenu(record: RawRecord, index: number): MenuManagerItem {
     like: asText(record.like ?? record.LIKE ?? record.is_like ?? record.isLike, 'N'),
     meal_plan_type: asNumber(record.meal_plan_type ?? record.mealPlanType, 0),
     calories_per_serving: asNumber(record.calories_per_serving ?? record.caloriesPerServing),
+    menu_cost_reason: asText(record.menu_cost_reason),
     menu_cost_per_person: asNumber(record.menu_cost_per_person ?? record.menuCostPerPerson),
     menu_cost_complete:
-      menuCostComplete == null ? undefined : ['1', 'true', 'Y'].includes(asText(menuCostComplete)),
+      menuCostComplete == null ? undefined : ['1', 'true', 'Y'].includes(String(menuCostComplete)),
   }
 }
 
 function normalizeIngredient(record: RawRecord): MenuIngredientItem {
-  const qtyNum = asNumber(record.qty_num ?? record.qtyNum ?? record.required_qty ?? record.requiredQty)
+  const qtyNum = asNumber(record.qty_num ?? record.qtyNum ?? record.required_qty ?? record.requiredQty) / Math.max(asNumber(record.recipe_yield_servings, 1), 1)
   const ingredientNameRaw = asText(
     record.ingredient_name_raw ?? record.ingredientNameRaw ?? record.ingredient_name ?? record.ingredientName,
   )
@@ -622,6 +631,16 @@ function normalizeIngredient(record: RawRecord): MenuIngredientItem {
     supplier_id: asNumber(record.supplier_id ?? record.supplierId),
     supplier_name: asText(record.supplier_name ?? record.supplierName),
     supplier_item_code: asText(record.supplier_item_code ?? record.supplierItemCode),
+    cost_unit_cost: record.cost_unit_cost == null ? undefined : asNumber(record.cost_unit_cost),
+    cost_base_unit: asText(record.cost_base_unit),
+    cost_source: asText(record.cost_source),
+    cost_source_date: asText(record.cost_source_date),
+    cost_reason: asText(record.cost_reason),
+    cost_per_person: record.cost_per_person == null ? undefined : asNumber(record.cost_per_person),
+    purchase_price: record.purchase_price == null ? undefined : asNumber(record.purchase_price),
+    origin_name: asText(record.origin_name),
+    incoming_qty: asNumber(record.incoming_qty),
+    stock_status: asText(record.stock_status),
     product_name: asText(record.product_name ?? record.productName),
     package_qty: asNumber(record.package_qty ?? record.packageQty),
     package_unit: asText(record.package_unit ?? record.packageUnit),
@@ -667,6 +686,7 @@ function normalizeTableMealsItem(record: RawRecord, index: number): TableMealsIt
 
 function normalizeTableMealsDetailItem(record: RawRecord, index: number): TableMealsDetailItem {
   return {
+    calories_per_serving: asNumber(record.calories_per_serving ?? record.caloriesPerServing),
     table_id: asText(record.table_id ?? record.tableId),
     account_id: asText(record.account_id ?? record.accountId),
     account_name: asText(record.account_name ?? record.accountName),
@@ -822,7 +842,8 @@ export async function saveAccountMealConfiguration(payload: Omit<AccountMealConf
 }
 
 export async function getMenuManagerList(): Promise<MenuManagerItem[]> {
-  const response = await fetch(buildApiUrl('/Menu/MenuList'), {
+  const query = new URLSearchParams({ account_id: getLocalAccountId() })
+  const response = await fetch(buildApiUrl(`/Menu/MenuList?${query}`), {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -862,10 +883,12 @@ export async function getLikeMenuManagerList(): Promise<MenuManagerItem[]> {
     .filter((item) => item.menu_id !== '' || item.menu_name !== '')
 }
 
-export async function getAccountMenuManagerList(accountId: string): Promise<MenuManagerItem[]> {
+export async function getAccountMenuManagerList(accountId: string, costDate?: string): Promise<MenuManagerItem[]> {
   const searchParams = new URLSearchParams({
     account_id: accountId,
   })
+
+  if (costDate) searchParams.set('cost_date', costDate)
 
   const response = await fetch(`${buildApiUrl('/Menu/AccountMenuList')}?${searchParams.toString()}`, {
     method: 'GET',
@@ -1124,9 +1147,22 @@ export async function getMealPlanShortages(accountId: string, tableId: string): 
   })
 }
 
+const tableMealsId = (payload: TableMealsSavePayload) =>
+  `${payload.account_id}_${payload.table_year}_${payload.table_month}_${payload.table_week}_${payload.source}_${payload.meal_plan_type}`
+
+/** 저장하려는 식단표(주)에 이미 사용 확정된 식사 수. 조회 실패 시 0(저장 자체가 서버 검증을 거친다). */
+export async function countConfirmedMeals(payload: TableMealsSavePayload) {
+  try {
+    const response = await fetch(buildApiUrl(`/v2/meal-plans/usage-week?${new URLSearchParams({ account_id: payload.account_id, table_id: tableMealsId(payload) })}`))
+    if (!response.ok) return 0
+    const data = await response.json() as { meals?: { status: string }[] }
+    return (data.meals ?? []).filter(meal => meal.status === 'COMPLETED').length
+  } catch { return 0 }
+}
+
 export async function saveTableMeals(payload: TableMealsSavePayload) {
   const userId = getLocalUserId()
-  const tableId = `${payload.account_id}_${payload.table_year}_${payload.table_month}_${payload.table_week}_${payload.source}_${payload.meal_plan_type}`
+  const tableId = tableMealsId(payload)
   const post = async (path: string, body: Record<string, unknown>) => {
     const response = await fetch(buildApiUrl(path), {
       method: 'POST',
@@ -1138,33 +1174,7 @@ export async function saveTableMeals(payload: TableMealsSavePayload) {
     return result as { id?: string | number }
   }
 
-  await post('/v2/meal-plans', { ...payload, table_id: tableId, status: 'DRAFT' })
-  for (const meal of payload.meals) {
-    const service = await post('/v2/meal-plans/services', {
-      table_id: tableId,
-      account_id: payload.account_id,
-      meal_date: meal.meal_date,
-      weekday: meal.weekday,
-      meal_slot: meal.meal_slot,
-      meal_slot_code: meal.meal_slot_code,
-      food_type: meal.food_type,
-      meal_plan_type: meal.meal_plan_type ?? payload.meal_plan_type,
-      template_id: meal.template_id,
-      planned_servings: 1,
-      meal_budget_per_person: meal.meal_budget_per_person,
-      status: 'DRAFT',
-    })
-    const mealServiceId = service.id
-    for (const menu of meal.menus) {
-      await post('/v2/meal-plans/details', {
-        meal_service_id: mealServiceId,
-        table_id: tableId,
-        account_id: payload.account_id,
-        ...menu,
-      })
-    }
-    await post('/v2/meal-plans/recalculate', { meal_service_id: mealServiceId, account_id: payload.account_id })
-  }
+  await post('/v2/meal-plans/save', { ...payload, table_id: tableId, status: 'DRAFT' })
   return { code: 200, message: 'success', table_id: tableId }
 }
 

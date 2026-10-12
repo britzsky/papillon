@@ -1,0 +1,81 @@
+.purchase-orders { height:100%; overflow:auto; color:#172b3a; }
+.purchase-orders__filters { display:flex; flex-wrap:wrap; gap:12px; align-items:end; margin-bottom:16px; }
+.purchase-orders label { display:flex; flex-direction:column; gap:5px; font-size:13px; }
+.purchase-orders__layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.2fr); gap:20px; }
+.purchase-orders__layout section { overflow:auto; padding:16px; border:1px solid #dbe3eb; border-radius:8px; background:white; }
+.purchase-orders table { width:100%; border-collapse:collapse; margin:12px 0; font-size:13px; }
+.purchase-orders td,.purchase-orders th { padding:10px; border-bottom:1px solid #e5eaf0; text-align:left; }
+.purchase-orders th { background:#f4f7fa; white-space:nowrap; }
+.purchase-orders input,.purchase-orders select { border:1px solid #a8b8c8; border-radius:4px; padding:6px; min-height:36px; }
+.purchase-orders td input { width:90px; }
+.purchase-orders small { display:block; color:#596b7a; }
+.purchase-orders .is-selected { background:#eff6ff; }
+.purchase-orders h2 { font-size:17px; }
+.purchase-orders nav { display:flex; gap:8px; }
+.purchase-orders__receipt-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; align-items:end; flex-shrink:0; }
+.purchase-orders__receipt-actions > * { width:100%; min-width:0; }
+.purchase-orders__receipt-actions input { width:100%; min-width:0; }
+.purchase-orders .purchase-orders__select { background:transparent!important; color:#1d4ed8!important; border:0!important; min-width:0!important; height:auto!important; text-decoration:underline; }
+@media(max-width:1100px) { .purchase-orders__layout { grid-template-columns:1fr; } }
+
+.purchase-orders__summary { display:flex; flex-wrap:wrap; align-items:center; gap:6px 16px; margin:4px 0 8px; font-size:13px; }
+.purchase-orders__summary { flex-wrap:nowrap; }
+.purchase-orders__summary > * { flex:none; white-space:nowrap; }
+/* 폭이 모자라면 사업장만 단어 단위로 두 줄(말줄임은 사업장 코드를 가려서 쓰지 않음) */
+.purchase-orders__summary > span:first-child { flex:0 1 auto; min-width:0; white-space:normal; word-break:keep-all; line-height:1.35; }
+@media (max-width:700px) { .purchase-orders__summary { flex-wrap:wrap; } .purchase-orders__summary > span:first-child { white-space:normal; } }
+.purchase-orders__summary em { margin-right:4px; font-style:normal; font-weight:700; color:#475569; }
+.purchase-orders__summary button { margin-left:auto; }
+.purchase-orders__response { display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; margin:0 0 4px; }
+.purchase-orders__response p { flex:1 1 300px; margin:0; font-size:13px; line-height:1.4; }
+.purchase-orders__response em { margin-right:6px; font-style:normal; font-weight:700; color:#475569; }
+.purchase-orders__response b { color:#b45309; }
+.purchase-orders section[aria-label="발주 상세"] h2 { margin:0 0 2px; }
+.purchase-orders section[aria-label="발주 상세"] table { margin-top:6px; }
+
+/* 공급사 발주서 인쇄(A4 세로). 화면에서는 숨긴다 */
+.supplier-order-print { display:none; }
+@page supplier-order { size:A4 portrait; margin:12mm; }
+@media print {
+  /* 업무 화면 공통 표 스타일(body.workspace-ui table td 등)보다 우선하도록 body.workspace-ui를 붙인다 */
+  body:has(.supplier-order-print) > *:not(.supplier-order-print) { display:none!important; }
+  body.workspace-ui > .supplier-order-print { page:supplier-order; display:block!important; color:#000; background:white; font-size:11pt; font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif; }
+  body.workspace-ui .supplier-order-print table { width:100%; border-collapse:collapse; }
+  body.workspace-ui .supplier-order-print th,body.workspace-ui .supplier-order-print td { padding:5px 7px; border:1px solid #333; text-align:left; vertical-align:middle; }
+  body.workspace-ui .supplier-order-print th { background:#eef1f4; font-weight:700; white-space:nowrap; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body.workspace-ui .po-doc__head { position:relative; display:flex; align-items:center; justify-content:center; min-height:22mm; margin-bottom:6mm; }
+  body.workspace-ui .po-doc__head h1 { margin:0; font-size:26pt; font-weight:800; letter-spacing:10pt; padding-bottom:2pt; border-bottom:3px double #000; }
+  body.workspace-ui .supplier-order-print .po-doc__approval { position:absolute; right:0; top:0; width:auto; }
+  body.workspace-ui .supplier-order-print .po-doc__approval th,body.workspace-ui .supplier-order-print .po-doc__approval td { width:18mm; text-align:center; font-size:9pt; padding:2px; }
+  body.workspace-ui .supplier-order-print .po-doc__approval th[rowspan] { width:7mm; }
+  body.workspace-ui .supplier-order-print .po-doc__approval td { height:14mm; }
+  body.workspace-ui .po-doc__parties { display:grid; grid-template-columns:1fr 1fr; gap:4mm; }
+  body.workspace-ui .supplier-order-print .po-doc__info th { width:24mm; text-align:center; }
+  body.workspace-ui .po-doc__lead { margin:5mm 0 2mm; font-size:11pt; }
+  body.workspace-ui .po-doc__total { display:flex; align-items:center; gap:8mm; margin-bottom:3mm; padding:3mm 5mm; border:2px solid #000; font-size:12pt; }
+  body.workspace-ui .po-doc__total span:first-child { font-weight:700; letter-spacing:2pt; }
+  body.workspace-ui .po-doc__total strong { font-size:14pt; }
+  body.workspace-ui .supplier-order-print .po-doc__items th { text-align:center; }
+  body.workspace-ui .supplier-order-print .po-doc__items .is-number { text-align:right; white-space:nowrap; }
+  body.workspace-ui .supplier-order-print .po-doc__items .is-center { text-align:center; }
+  body.workspace-ui .supplier-order-print .po-doc__items tfoot th { text-align:center; letter-spacing:6pt; }
+  body.workspace-ui .supplier-order-print .po-doc__items tr { break-inside:avoid; }
+  body.workspace-ui .po-doc__notes { margin-top:5mm; padding:3mm 5mm; border:1px solid #333; }
+  body.workspace-ui .po-doc__notes h2 { margin:0 0 2mm; font-size:11pt; letter-spacing:4pt; }
+  body.workspace-ui .po-doc__notes p { min-height:10mm; margin:0 0 2mm; white-space:pre-line; }
+  body.workspace-ui .po-doc__notes ul { margin:0; padding-left:5mm; font-size:9pt; color:#333; }
+  body.workspace-ui .po-doc__foot { margin-top:4mm; text-align:right; font-size:8pt; color:#555; }
+  /* 업무 테마의 전역 !important(모든 요소 글자 10~12px, 표 칸 폭·높이 auto — 선택자에 #root 포함)를 인쇄 양식에서만 이기도록 id로 지정 */
+  body.workspace-ui > #supplier-order-print, body.workspace-ui > #supplier-order-print * { font-size:10.5pt !important; line-height:1.45 !important; }
+  /* 제목은 테마의 :is(h1, .home-hero h1, …) 규칙이 더 구체적이라 id를 겹쳐 우선순위를 올린다 */
+  body.workspace-ui > #supplier-order-print#supplier-order-print .po-doc__head h1 { font-size:26pt !important; line-height:1.2 !important; }
+  body.workspace-ui > #supplier-order-print .po-doc__total strong { font-size:14pt !important; }
+  body.workspace-ui > #supplier-order-print .po-doc__total span { font-size:11pt !important; }
+  body.workspace-ui > #supplier-order-print .po-doc__notes ul, body.workspace-ui > #supplier-order-print .po-doc__notes li { font-size:9pt !important; }
+  body.workspace-ui > #supplier-order-print .po-doc__foot { font-size:8pt !important; }
+  body.workspace-ui > #supplier-order-print .po-doc__approval th, body.workspace-ui > #supplier-order-print .po-doc__approval td { width:18mm !important; font-size:9pt !important; text-align:center !important; }
+  body.workspace-ui > #supplier-order-print .po-doc__approval th[rowspan] { width:7mm !important; }
+  body.workspace-ui > #supplier-order-print .po-doc__approval td { height:15mm !important; }
+  body.workspace-ui > #supplier-order-print .po-doc__info th { width:24mm !important; }
+  body.workspace-ui > #supplier-order-print .po-doc__items .is-number { white-space:nowrap !important; }
+}

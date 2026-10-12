@@ -1,0 +1,162 @@
+/* 재고 변동 이력 (InventoryHistory.tsx). 기본 틀은 MenuManager.css를 따른다 */
+
+.inventory-history-filters {
+  flex-wrap: wrap;
+}
+
+/* 조회 컨트롤 고정 폭(--query-control-width, ResponsiveWorkspace.css)을 검색칸만 넓힌다: 입력 + 검색 버튼 */
+.inventory-history-keyword {
+  --query-control-width: 300px;
+}
+
+.inventory-history-search {
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+}
+
+.inventory-history-search input {
+  --query-control-width: calc(100% - 94px);
+  flex: 1 1 auto;
+}
+
+.inventory-history-search button {
+  flex: none;
+}
+
+.inventory-history-periods {
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  gap: 4px;
+}
+
+/* 구분 선택: 선택 상태는 테마의 button[aria-pressed=true] 스타일을 쓴다 */
+.inventory-history-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.inventory-history-focus {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #526173;
+}
+
+.inventory-history-focus > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid #b6d9ea;
+  border-radius: 2px;
+  background: #e7f6fb;
+}
+
+.inventory-history-focus button {
+  border: 0;
+  background: transparent;
+  color: #197fac;
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.inventory-history-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.inventory-history-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid #d3dde6;
+  border-left-width: 4px;
+  background: #ffffff;
+}
+
+.inventory-history-card span {
+  font-size: 12px;
+  color: #526173;
+}
+
+.inventory-history-card strong {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  color: #25241f;
+}
+
+.inventory-history-card small {
+  font-size: 12px;
+  color: #6b7785;
+  font-variant-numeric: tabular-nums;
+}
+
+.inventory-history-card--success { border-left-color: #23744b; }
+.inventory-history-card--warning { border-left-color: #c58a1f; }
+.inventory-history-card--danger { border-left-color: #ac3934; }
+.inventory-history-card--neutral { border-left-color: #8a9aa8; }
+.inventory-history-card--total { border-left-color: #1f93c2; background: #f6f9fc; }
+
+.inventory-history-loading {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: #526173;
+}
+
+.inventory-history-table td {
+  vertical-align: top;
+}
+
+.inventory-history-table td small {
+  display: block;
+  font-size: 11px;
+  color: #6b7785;
+}
+
+.inventory-history-table td a {
+  display: inline-block;
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+.inventory-history-nowrap {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.inventory-history-product {
+  font-weight: 600;
+  color: #1d4f7a;
+}
+
+.inventory-history-delta {
+  font-weight: 700;
+}
+
+.inventory-history-delta.is-plus { color: #23744b; }
+.inventory-history-delta.is-minus { color: #ac3934; }
+
+@media (max-width: 720px) {
+  .inventory-history-periods {
+    width: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .inventory-history-periods button {
+    min-width: 0;
+    padding: 7px 4px;
+  }
+
+  .inventory-history-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

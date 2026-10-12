@@ -27,11 +27,11 @@ function IngredientSearchSelect({
   const [isOpen, setIsOpen] = useState(false)
   const [query, setQuery] = useState('')
 
-  useEffect(() => {
-    if (!isOpen) {
-      setQuery('')
-    }
-  }, [isOpen, selectedName, value])
+  // 닫힐 때마다 검색어를 비운다 (effect에서 초기화하면 렌더가 한 번 더 일어남)
+  const close = () => {
+    setIsOpen(false)
+    setQuery('')
+  }
 
   useEffect(() => {
     if (!isOpen) return
@@ -39,6 +39,7 @@ function IngredientSearchSelect({
     const handlePointerDown = (event: MouseEvent) => {
       if (!containerRef.current?.contains(event.target as Node)) {
         setIsOpen(false)
+        setQuery('')
       }
     }
 
@@ -67,13 +68,12 @@ function IngredientSearchSelect({
 
   const handleSelect = (ingredientId: string) => {
     onChange(ingredientId)
-    setIsOpen(false)
-    setQuery('')
+    close()
   }
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape') {
-      setIsOpen(false)
+      close()
     }
   }
 
@@ -84,7 +84,7 @@ function IngredientSearchSelect({
         className={`menu-manager-cell-input menu-manager-search-select__trigger${className ? ` ${className}` : ''}`}
         aria-controls={searchInputId}
         aria-expanded={isOpen}
-        onClick={() => setIsOpen((current) => !current)}
+        onClick={() => (isOpen ? close() : setIsOpen(true))}
       >
         <span>{selectedOption?.ingredient_name || selectedName || placeholder}</span>
       </button>

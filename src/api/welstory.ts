@@ -1,8 +1,9 @@
 import { buildApiUrl } from '../config/api'
+import { getProductImageUrl } from '../utils/productImage'
 
 export type ApiRecord = Record<string, unknown>
 export type Workplace = { soldTo: string; soldToNm: string; payerNm: string; pricingCode: string; repSoldtoYn: string }
-export type Product = ApiRecord & { itemCode: string; itemName: string; standard: string; unit: string; price: number; minQntty: number; orderIncrs: number; stopType: string; reqDeliveryDate: string }
+export type Product = ApiRecord & { itemCode: string; itemName: string; standard: string; unit: string; price: number; minQntty: number; orderIncrs: number; stopType: string; reqDeliveryDate: string; image_url?: string }
 export type CartLine = Product & { quantity: number; clientOrdItem?: string; status?: 'N' | 'U' | 'D' }
 export type OrderResult = { resCd: string; resMsg: string; items: ApiRecord[] }
 
@@ -31,7 +32,7 @@ async function post(path: string, dataHeader: ApiRecord, dataBody: ApiRecord = {
 
 async function paged(path: string, body: ApiRecord, signal?: AbortSignal) {
   const rows: ApiRecord[] = []
-  let contYn = 'N', nextKey = ''
+  let contYn = 'Y', nextKey = ''
   do {
     const payload = await post(path, { pageRow: 10000, contYn, nextKey }, body, signal)
     const result = unwrap(payload)
@@ -48,6 +49,7 @@ const normalizeProduct = (row: ApiRecord): Product => ({
   standard: stringValue(row.standard), unit: stringValue(row.unit), price: numberValue(row.price),
   minQntty: numberValue(row.minQntty), orderIncrs: numberValue(row.orderIncrs),
   stopType: stringValue(row.stopType), reqDeliveryDate: stringValue(row.reqDeliveryDate),
+  image_url: getProductImageUrl(row),
 })
 
 export async function getSoldToList(signal?: AbortSignal): Promise<Workplace[]> {

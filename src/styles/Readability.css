@@ -1,0 +1,65 @@
+/* 가독성 보정 (2026-10-08 사용자 요청).
+ * 글자 크기는 UserTypography.css(사용자 지정)를 그대로 두고 줄바꿈·대비·굵기·링크 모양만 맞춘다.
+ * main.tsx에서 마지막에 불러온다. `body.workspace-ui > :is(#root,:not(#root))`는 화면과 body 포털(모달)을 같은 우선순위로 맞춘다.
+ */
+
+/* 1. 표: 단어 단위 줄바꿈.
+ * ResponsiveWorkspace.css의 overflow-wrap:anywhere는 열 최소폭을 한 글자로 만들어
+ * '가격 미등록'이 '가격/미등/록', 머리글 '포장 가격'이 한 글자씩 세로로 끊겼다. 넘치는 표는 감싼 영역이 가로 스크롤한다.
+ * (.workspace-ui를 두 번 써서 ResponsiveWorkspace보다만 앞서고, 화면별로 줄바꿈을 정한 규칙은 그대로 둔다) */
+body.workspace-ui.workspace-ui table :is(th, td) { word-break: keep-all; overflow-wrap: break-word; }
+
+/* 2. 비활성 버튼: 흐린 글자에 opacity(.45~.62)가 한 번 더 걸려 문구를 읽을 수 없었다 → 불투명 회색 바탕 + 진한 회색 글자 */
+body.workspace-ui > :is(#root, :not(#root)) :is(button:disabled, [role=button][aria-disabled=true]):not(.purchase-orders__select, .menu-manager-link-button) {
+  opacity: 1 !important; background: #eef1f0 !important; border-color: #d3dbd6 !important; color: #5f6d66 !important; background-image: none !important;
+}
+
+/* 3. 화면 이동 링크: 브라우저 기본(파란 밑줄) 대신 발주 결과 '발주서 확인·인쇄'와 같은 작은 버튼 모양 + 이동 표시(›, 새 창 ↗) */
+body.workspace-ui > #root .side-layout__content a:not([class]),
+body.workspace-ui > :not(#root) a:not([class]) {
+  display: inline-flex; align-items: center; gap: 3px; padding: 2px 9px; margin: 1px 0; vertical-align: middle;
+  border: 1px solid #c7d4e2; border-radius: 6px; background: #f8fafc; color: #1d5585 !important;
+  font-weight: 600; line-height: 1.5; text-decoration: none !important; word-break: keep-all;
+}
+body.workspace-ui > #root .side-layout__content a:not([class])::after,
+body.workspace-ui > :not(#root) a:not([class])::after { content: '›'; font-weight: 700; }
+body.workspace-ui > #root .side-layout__content a[target=_blank]:not([class])::after,
+body.workspace-ui > :not(#root) a[target=_blank]:not([class])::after { content: '↗'; }
+body.workspace-ui > #root .side-layout__content a:not([class]):hover,
+body.workspace-ui > :not(#root) a:not([class]):hover { border-color: #1d5585; background: #eaf1f8; }
+
+/* 표 안에서 행을 고르는 글자형 버튼(주문번호 등): 밑줄 대신 파랑 굵게, 마우스를 올리면 밑줄 */
+body.workspace-ui > :is(#root, :not(#root)) button:is(.purchase-orders__select, .menu-manager-link-button) {
+  color: #1d5585 !important; font-weight: 700 !important; text-decoration: none !important;
+  background: transparent !important; border: 0 !important; padding: 0 !important; text-align: left;
+}
+body.workspace-ui > :is(#root, :not(#root)) button:is(.purchase-orders__select, .menu-manager-link-button):hover {
+  text-decoration: underline !important; background: transparent !important;
+}
+
+/* 4. 인쇄 버튼: 프린터 아이콘 + 파란 글자(링크 버튼과 같은 색 계열) */
+body.workspace-ui > :is(#root, :not(#root)) button.print-button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+body.workspace-ui > :is(#root, :not(#root)) button.print-button:not(:disabled) {
+  background: #fff !important; border-color: #9fb7cf !important; color: #1d5585 !important; font-weight: 700 !important;
+}
+body.workspace-ui > :is(#root, :not(#root)) button.print-button:not(:disabled):hover { background: #eaf1f8 !important; border-color: #1d5585 !important; }
+body.workspace-ui > :is(#root, :not(#root)) button.print-button svg { flex-shrink: 0; }
+
+/* 5. 정보를 담은 보조 문구의 대비(흰 바탕 3.4~4.4:1 → 약 6:1). 일부러 흐리게 둔 장식·비활성·제외 행은 손대지 않는다. */
+body.workspace-ui > :is(#root, :not(#root)) :is(
+  .procurement-summary dt, .procurement-summary__hint, .procurement-summary__formula,
+  .procurement-product__info p, .procurement-product__info small, .procurement-product__action small,
+  .procurement-cart-line small, .procurement-cart-line label, .procurement-empty,
+  .procurement-page-heading p, .shortage-order-toolbar > span,
+  .procurement-shortcut small, .side-layout__account span
+) { color: #4e5e56 !important; }
+body.workspace-ui > :is(#root, :not(#root)) :is(
+  .account-manager-slot small, .account-manager-empty,
+  .account-manager-config-row__budget small, .table-meals-weekly-summary span, .account-menu-cost-summary small,
+  .menu-manager-empty, .menu-manager-notice, .table-meals-manual__empty,
+  .loading-screen__panel small, .menu-card__description
+) { color: #4b5867 !important; }
+
+/* 6. 일반 버튼에 마우스를 올리면 index.css가 글자를 흰색으로, 테마가 바탕을 연한 초록으로 바꿔 글자가 사라졌다.
+ * 테마 hover 규칙과 같은 우선순위로 글자색만 진하게. 주요(초록) 버튼·선택 탭처럼 더 구체적인 hover 규칙은 그대로 흰 글자. */
+body.workspace-ui button:hover:not(:disabled) { color: #14634d !important; }

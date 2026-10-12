@@ -1,0 +1,14 @@
+/* 발주 마감 알림 배너 (SideMenuLayout 본문 위). 색과 문구를 함께 사용한다. */
+.deadline-alert { margin: 0 0 12px; padding: 10px 14px; border: 1px solid #f0c36d; border-radius: 10px; background: #fff8e6; color: #4a3800; }
+.deadline-alert.is-urgent { border-color: #e39a90; background: #fdecea; color: #6b1d14; }
+.deadline-alert__summary { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.deadline-alert__summary > span { flex: 1 1 260px; font-size: 13px; }
+.deadline-alert__actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.deadline-alert button { min-height: 30px; padding: 0 10px; border: 1px solid #c9b27a; border-radius: 6px; background: #fff; color: inherit; font-size: 13px; cursor: pointer; }
+.deadline-alert button.is-primary { border-color: #1d5585; background: #1d5585; color: #fff; }
+.deadline-alert__groups { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.deadline-alert__groups > li > div { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.deadline-alert__groups > li > div span { font-size: 12px; }
+.deadline-alert__groups ul { margin: 6px 0 0; padding-left: 18px; font-size: 13px; }
+.deadline-alert__groups small { color: #66796f; }
+@media (max-width: 700px) { .deadline-alert__actions { width: 100%; } .deadline-alert__actions button { flex: 1 1 auto; } }

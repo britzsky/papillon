@@ -1,0 +1,14 @@
+/* User typography preferences, recovered from prior requests.
+ * General 10px; sidebar 12px; query controls/buttons 11px at 500;
+ * All screens use the purchase-order-management font sizes.
+ * Match route content and body portals with the same specificity.
+ */
+body.workspace-ui { --query-control-font-size: 12px; --query-control-font-weight: 500; }
+body.workspace-ui > :is(#root, :not(#root)),
+body.workspace-ui > :is(#root, :not(#root)) * { font-size: 10px !important; }
+body.workspace-ui > :is(#root, :not(#root)) .side-layout__sidebar,
+body.workspace-ui > :is(#root, :not(#root)) .side-layout__sidebar * { font-size: 12px !important; }
+body.workspace-ui > :is(#root, :not(#root)) :is(.food-order-filters,.menu-manager-filters,.vendor-sanitation-filters,.table-meals-toolbar,.account-manager-toolbar,.welstory-toolbar,.supplier-integration-toolbar,.search-admin-toolbar,.shortage-order-filters,.purchase-orders__filters),
+body.workspace-ui > :is(#root, :not(#root)) :is(.food-order-filters,.menu-manager-filters,.vendor-sanitation-filters,.table-meals-toolbar,.account-manager-toolbar,.welstory-toolbar,.supplier-integration-toolbar,.search-admin-toolbar,.shortage-order-filters,.purchase-orders__filters) *,
+body.workspace-ui > :is(#root, :not(#root)) button,
+body.workspace-ui > :is(#root, :not(#root)) button * { font-size: 11px !important; font-weight: 500 !important; }

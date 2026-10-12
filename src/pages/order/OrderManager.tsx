@@ -8,21 +8,22 @@ import './OrderManager.css'
 
 const orderMenus = [
   {
-    key: 'welstory-order',
-    title: 'Welstory 연계 발주',
-    description: '사업장별 판가 조회부터 주문·입고·반품/교환까지 처리합니다.',
-    icon: order,
-    to: '/order_manager/welstory',
+    key: 'supplier-integration',
+    title: '공급사 통합 연동',
+    description: '웰스토리·아워홈과 향후 공급사의 사업장, 상품, 판가, 동기화 상태를 통합 조회합니다.',
+    icon: operation,
+    to: '/order_manager/suppliers',
   },
   {
-    key: 'food-order',
-    title: '식자재 발주',
-    description: '식자재 발주 대상을 확인하고 바로 주문 화면으로 이동합니다.',
+    key: 'order',
+    title: '발주하기',
+    description: '추천 발주안·부족 식자재·상품 검색을 한 화면에서 고르고 웰스토리·아워홈에 함께 발주합니다.',
     icon: order,
-    to: '/order_manager/food_order',
+    to: '/order_manager/order',
   },
   {
     key: 'order-sheet',
+    to: '/order_manager/orders',
     title: '발주서 관리',
     description: '작성된 발주서를 확인하고 진행 상태를 관리합니다.',
     icon: hygiene,

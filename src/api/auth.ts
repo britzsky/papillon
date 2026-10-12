@@ -6,8 +6,10 @@ export type LoginRequest = {
 }
 
 export type LoginResponse = {
+  user_type?: string
   user_id: string
   account_id?: string
+  account_name?: string
   position?: string
   department?: string
   user_name?: string
@@ -88,6 +90,17 @@ function extractAccountId(payload: unknown): string {
 
   const data = readRecord(record.data)
   return data ? asText(data.account_id ?? data.accountId) : ''
+}
+
+function extractAccountName(payload: unknown): string {
+  const record = readRecord(payload)
+  if (!record) return ''
+
+  const accountName = asText(record.account_name ?? record.accountName)
+  if (accountName !== '') return accountName
+
+  const data = readRecord(record.data)
+  return data ? asText(data.account_name ?? data.accountName) : ''
 }
 
 function extractUserId(payload: unknown): string {
@@ -198,14 +211,21 @@ export async function login(payload: LoginRequest): Promise<LoginResponse> {
   }
 
   const rawData = (await response.json()) as unknown
+  const record = readRecord(rawData)
+  if (String(record?.code) !== "200") throw new Error(String(record?.msg || "로그인 정보를 확인해주세요."))
+  const userType = String(record?.user_type || "")
+  if (!["2", "3"].includes(userType)) throw new Error("본사 또는 현장 계정인지 확인해주세요.")
   const data: LoginResponse = {
     user_id: extractUserId(rawData),
     user_name: extractUserName(rawData),
     account_id: extractAccountId(rawData),
+    account_name: extractAccountName(rawData),
     code: extractCode(rawData),
+    user_type: userType,
   }
   
   const accountId = data.account_id ?? ''
+  const accountName = data.account_name ?? ''
   /*
   if (accountId === '') {
     window.location.assign('/home')
@@ -239,14 +259,34 @@ export async function login(payload: LoginRequest): Promise<LoginResponse> {
   const user_name = data.user_name ?? ''
   const user_id = data.user_id ?? ''
 
-  console.log
-
   if (typeof window !== 'undefined') {
+    if (localStorage.getItem('user_id') !== user_id) sessionStorage.clear()
+    localStorage.setItem('user_type', userType)
     localStorage.setItem('user_name', user_name)
     localStorage.setItem('user_id', user_id)
     localStorage.setItem('account_id', accountId)
+    localStorage.setItem('account_name', accountName);
     window.location.assign('/home')
   }
 
   return data
+}
+
+export function logout(): void {
+  if (typeof window === 'undefined') return
+
+  for (const key of [
+    'user_type',
+    'user_name',
+    'user_id',
+    'account_id',
+    'account_name',
+    'pending_payment_account_id',
+    'pending_payment_status',
+  ]) {
+    localStorage.removeItem(key)
+  }
+
+  sessionStorage.clear()
+  void fetch(buildApiUrl('/User/Logout'), { method: 'POST', credentials: 'include' }).finally(() => window.location.replace('/'))
 }

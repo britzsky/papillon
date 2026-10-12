@@ -29,6 +29,53 @@
   --query-control-font-weight: 500;
   --table-border-strong: #aaa59a;
   --table-border-mid: #ddd8ce;
+  --form-label-width: 72px;
+  --form-label-height: 23px;
+  --form-label-font-size: 12px;
+  --form-label-bg: #e98851;
+  --form-control-width: 171px;
+  --form-control-height: 32px;
+  --button-bg: #76776f;
+  --button-bg-hover: #5f605a;
+  --button-bg-disabled: #aaa9a3;
+  --button-text: #ffffff;
+  --button-width: 90px;
+  --button-height: 32px;
+  --form-control-gap: 10px;
+}
+
+/* The home screen keeps the previous component dimensions. */
+.home-page {
+  --form-label-width: 75px;
+  --form-label-height: 26px;
+  --form-control-width: 177px;
+  --form-control-height: 38px;
+  --button-width: 96px;
+  --button-height: 38px;
+}
+
+:where(.food-order-filters,.menu-manager-filters,.vendor-sanitation-filters,.table-meals-toolbar,.table-meals-modal__field,.account-manager-toolbar,.account-manager-config-row,.welstory-toolbar,.payment-form,.search-admin-toolbar,.ingredient-product-modal__grid) :is(input:not([type='checkbox']):not([type='radio']):not([type='file']),select) {
+  width: var(--form-control-width) !important;
+  height: var(--form-control-height) !important;
+  min-height: var(--form-control-height);
+  box-sizing: border-box;
+}
+
+:where(.food-order-control-label,.menu-manager-field>label,.vendor-sanitation-field>label,.table-meals-field>label,.account-manager-toolbar label,.account-manager-config-row label>span,.account-manager-config-row__budget>span,.search-admin-toolbar label>span,.table-meals-modal__field>label) {
+  width: var(--form-label-width) !important;
+  height: var(--form-label-height) !important;
+  min-height: var(--form-label-height);
+  padding: 0 10px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-radius: 6px;
+  background: var(--form-label-bg) !important;
+  color: #fff !important;
+  font-size: var(--form-label-font-size) !important;
+  font-weight: 700 !important;
+  white-space: nowrap;
 }
 
 *,
@@ -43,6 +90,18 @@ body {
   overflow: hidden;
 }
 
+/* Use a compact 10px type scale everywhere except the side navigation. */
+.side-layout__main,
+.side-layout__main *,
+.login-page,
+.login-page *,
+.payment-page,
+.payment-page *,
+.result-page,
+.result-page * {
+  font-size: 10px !important;
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -54,3 +113,266 @@ body {
   min-height: 0;
   overflow: hidden;
 }
+
+/* Application-wide button color standard. */
+button,
+[role='button'] {
+  min-width: var(--button-width) !important;
+  height: var(--button-height) !important;
+  border-color: var(--button-bg) !important;
+  background-color: var(--button-bg) !important;
+  background-image: none !important;
+  color: var(--button-text) !important;
+}
+
+:where(.food-order-filters,.menu-manager-filters,.vendor-sanitation-filters,.table-meals-toolbar,.account-manager-toolbar,.welstory-toolbar,.payment-form,.search-admin-toolbar,.ingredient-product-modal__grid) {
+  gap: var(--form-control-gap) !important;
+}
+
+:where(.food-order-filters,.menu-manager-filters,.vendor-sanitation-filters,.table-meals-toolbar,.account-manager-toolbar,.welstory-toolbar,.payment-form,.search-admin-toolbar,.ingredient-product-modal__grid) label {
+  gap: 3px !important;
+}
+
+/* Navigation, cards and image tiles keep their component dimensions and original surfaces. */
+:where(.side-layout__toggle,.side-layout__reopen,.side-layout__major-button,.side-layout__sublink--disabled) {
+  min-width: 0 !important;
+  height: auto !important;
+  background-color: transparent !important;
+  color: #253238 !important;
+}
+
+.side-layout__toggle { flex:0 0 22px!important;width:22px!important;min-width:22px!important;max-width:22px!important;height:22px!important;padding:0!important;border-radius:50%!important;border-color:var(--action-warning-border)!important;background-color:var(--action-warning)!important;color:#fff!important; }
+.side-layout__reopen { min-width:72px!important;height:32px!important;background-color:var(--action-warning)!important;color:#fff!important; }
+
+.side-layout__major-button:hover { background-color: var(--action-warning-soft) !important; color: #9a4519 !important; }
+.side-layout__major-button.is-active { background-color: var(--action-warning-soft) !important; color: #9a4519 !important; }
+.side-layout__sublink--disabled { color: #667980 !important; }
+
+:where(.menu-card,.home-search__result,.home-search__match,.assistant-result,.assistant-popular button,.vendor-sanitation-photo,.food-order-menu-item,.menu-manager-thumbnail-button,.menu-manager-like-button,.menu-manager-search-select__trigger) {
+  min-width: 0 !important;
+  height: auto !important;
+}
+
+/* Custom selects, thumbnail buttons and favorite hearts retain their original component appearance. */
+.menu-manager-search-select__trigger {
+  width: 100% !important;
+  height: 28px !important;
+  border-color: #aebdca !important;
+  background: #ffffff !important;
+  color: #162033 !important;
+}
+
+.menu-manager-filters .menu-manager-search-select__trigger,
+.menu-manager-account-select__trigger {
+  height: var(--form-control-height) !important;
+}
+
+.menu-manager-account-select__trigger {
+  height: 24px !important;
+  border-color: #aebdca !important;
+  border-radius: 2px !important;
+  background: #ffffff !important;
+  color: #162033 !important;
+}
+
+.menu-manager-thumbnail-button {
+  width: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.menu-manager-like-button {
+  width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  color: #9aa6b5 !important;
+}
+
+.menu-manager-like-button:hover,
+.menu-manager-like-button:focus-visible,
+.menu-manager-like-button.is-liked {
+  border: 0 !important;
+  background: transparent !important;
+  color: #f06292 !important;
+}
+
+.vendor-sanitation-photo {
+  border-color: var(--table-border-mid) !important;
+  background-color: #ffffff !important;
+  color: #475569 !important;
+}
+
+.vendor-sanitation-photo:hover {
+  border-color: #6b7280 !important;
+  background-color: #d1d5db !important;
+  color: #1f2937 !important;
+  box-shadow: inset 0 0 0 2px rgba(75, 85, 99, 0.28) !important;
+}
+
+.vendor-sanitation-photo img {
+  width: 100% !important;
+  height: 48px !important;
+  object-fit: contain;
+}
+
+.vendor-sanitation-photo-grid {
+  height: 75px;
+}
+
+.vendor-sanitation-photo {
+  height: 75px !important;
+  min-height: 75px !important;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.vendor-sanitation-photo:hover img {
+  opacity: 0.76;
+  filter: grayscale(0.35);
+}
+
+.vendor-sanitation-note input {
+  width: 100% !important;
+  height: 36px !important;
+}
+
+/* Action colors shared across screens. */
+button[type='submit'],
+.food-order-filters button,
+.vendor-sanitation-button.is-secondary.is-summary,
+.menu-manager-select-button,
+.menu-manager-add-button,
+.action-query-button {
+  border-color: #2563eb !important;
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+button[type='submit']:not(:disabled):hover,
+.food-order-filters button:not(:disabled):hover,
+.vendor-sanitation-button.is-secondary.is-summary:not(:disabled):hover,
+.menu-manager-select-button:not(:disabled):hover,
+.menu-manager-add-button:not(:disabled):hover,
+.action-query-button:not(:disabled):hover {
+  border-color: #1d4ed8 !important;
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.menu-manager-save-button,
+.vendor-sanitation-button.is-primary.is-summary,
+.action-save-button {
+  border-color: #15803d !important;
+  background-color: #22c55e !important;
+  color: #ffffff !important;
+}
+
+.menu-manager-save-button:not(:disabled):hover,
+.vendor-sanitation-button.is-primary.is-summary:not(:disabled):hover,
+.action-save-button:not(:disabled):hover {
+  border-color: #166534 !important;
+  background-color: #16a34a !important;
+  color: #ffffff !important;
+}
+
+button:not(:disabled):hover,
+[role='button']:not([aria-disabled='true']):hover {
+  border-color: var(--button-bg-hover) !important;
+  background-color: var(--button-bg-hover) !important;
+  color: var(--button-text) !important;
+}
+
+button:disabled,
+[role='button'][aria-disabled='true'] {
+  border-color: var(--button-bg-disabled) !important;
+  background-color: var(--button-bg-disabled) !important;
+  color: var(--button-text) !important;
+  opacity: 0.62;
+}
+
+/* Keep semantic action colors after the generic hover rule. */
+button[type='submit']:not(:disabled):hover,
+.food-order-filters button:not(:disabled):hover,
+.vendor-sanitation-button.is-secondary.is-summary:not(:disabled):hover,
+.menu-manager-select-button:not(:disabled):hover,
+.menu-manager-add-button:not(:disabled):hover,
+.action-query-button:not(:disabled):hover {
+  border-color: #1d4ed8 !important;
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.menu-manager-save-button:not(:disabled):hover,
+.vendor-sanitation-button.is-primary.is-summary:not(:disabled):hover,
+.action-save-button:not(:disabled):hover {
+  border-color: #166534 !important;
+  background-color: #16a34a !important;
+  color: #ffffff !important;
+}
+
+.menu-manager-thumbnail-button:not(:disabled):hover,
+.menu-manager-like-button:not(:disabled):hover,
+.menu-manager-like-button:focus-visible {
+  border-color: transparent !important;
+  background-color: transparent !important;
+}
+
+button.vendor-sanitation-photo:not(:disabled):hover {
+  border-color: #6b7280 !important;
+  background-color: #d1d5db !important;
+  color: #1f2937 !important;
+  box-shadow: inset 0 0 0 2px rgba(75, 85, 99, 0.28) !important;
+}
+
+/* Responsive content-sized tables outside the home screen and side navigation. */
+:where(#root) table:not(.home-page *):not(.side-layout__sidebar *) {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  table-layout: auto !important;
+}
+
+:where(#root) table:not(.home-page *):not(.side-layout__sidebar *) :is(th, td) {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 27px !important;
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+  position: static !important;
+  left: auto !important;
+  right: auto !important;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+:where(#root) table:not(.home-page *):not(.side-layout__sidebar *) :is(input:not([type='checkbox']):not([type='radio']), select, button) {
+  height: 27px !important;
+  min-height: 27px !important;
+}
+
+/* 조회와 저장 역할별 공통 색상 */
+button.action-query-button, .food-order-filters button, button.menu-manager-select-button {
+  background-color:#15803d!important; border-color:#166534!important; color:#fff!important;
+}
+button.action-query-button:not(:disabled):hover, .food-order-filters button:not(:disabled):hover {
+  background-color:#166534!important;
+}
+button.action-save-button, button.menu-manager-save-button {
+  background-color:#2563eb!important; border-color:#1d4ed8!important; color:#fff!important;
+}
+button.action-save-button:not(:disabled):hover { background-color:#1d4ed8!important; }
+button:disabled { cursor:not-allowed; opacity:.55; }
+button:focus-visible,input:focus-visible,select:focus-visible { outline:2px solid #2563eb; outline-offset:2px; }
+
+.meal-recommendations {padding:12px;border:1px solid #dbeafe;border-radius:8px;background:#f8fbff;margin-bottom:12px;}
+.meal-recommendations p {font-size:12px;color:#52677b;}
+.meal-recommendations button {display:block;width:100%;height:auto!important;text-align:left;margin:5px 0;padding:8px;background:white!important;color:#1e3a5f!important;border-color:#bfdbfe!important;}
+.meal-recommendations small {display:block;font-size:11px;font-weight:normal;}

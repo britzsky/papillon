@@ -25,7 +25,7 @@
   flex: 1;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 240px));
-  gap: 14px;
+  gap: var(--form-control-gap);
 }
 
 .menu-manager-filters__actions {
@@ -40,7 +40,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 4px;
+  gap: 3px;
 }
 
 .menu-manager-field label {
@@ -77,6 +77,33 @@
   z-index: 40;
 }
 
+.menu-manager-account-select__trigger,
+.menu-manager-account-select__trigger span {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+button.menu-manager-account-select__trigger:not(:disabled):hover,
+button.menu-manager-account-select__trigger:not(:disabled):hover span {
+  border-color: #aebdca !important;
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+.menu-manager-account-select__dropdown,
+.menu-manager-account-select__dropdown .menu-manager-search-select__input,
+.menu-manager-account-select__dropdown .menu-manager-search-select__option,
+.menu-manager-account-select__dropdown .menu-manager-search-select__empty {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+.menu-manager-account-select__dropdown .menu-manager-search-select__option:not(:disabled):hover,
+.menu-manager-account-select__dropdown .menu-manager-search-select__option.is-selected {
+  background: #f1f3f5 !important;
+  color: #000000 !important;
+}
+
 .menu-manager-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
@@ -109,6 +136,30 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.menu-manager-layout--equal-headers > .menu-manager-panel > .menu-manager-panel__header {
+  box-sizing: content-box;
+  height: 42px;
+  flex-shrink: 0;
+}
+
+.menu-manager-layout--equal-headers .menu-manager-panel__header > div:first-child {
+  min-width: 0;
+}
+
+.menu-manager-layout--equal-headers .menu-manager-panel__header > div:first-child > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-manager-layout--equal-headers .account-menu-cost-summary {
+  padding: 3px 10px;
+}
+
+.menu-manager-layout--equal-headers .account-menu-cost-summary span {
+  margin-top: 0;
 }
 
 .menu-manager-panel__header h2 {
@@ -236,6 +287,100 @@
   padding: 0 6px;
 }
 
+/* Menu list column width redistribution. */
+.menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > table.menu-manager-menu-list-table {
+  width: 100% !important;
+  min-width: 0 !important;
+  table-layout: auto !important;
+}
+
+.menu-manager-menu-list-table :is(th, td) {
+  min-width: 0 !important;
+  max-width: none !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+}
+
+.menu-manager-menu-list-table :is(input, select, button) {
+  max-width: 100%;
+}
+
+.menu-manager-menu-list-table :is(th, td):nth-child(7) {
+  display: none !important;
+}
+
+.menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > table.menu-manager-menu-list-table :is(th, td):nth-child(6) {
+  width: calc(12% - 20px) !important;
+}
+
+.menu-manager-menu-list-table td:nth-child(6) .menu-manager-cell-input {
+  width: calc(100% - 5px) !important;
+  max-width: calc(100% - 5px) !important;
+}
+
+.menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > table.menu-manager-menu-list-table td:nth-child(4) {
+  width: calc(12% + 24px) !important;
+}
+
+.menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > table.menu-manager-menu-list-table th:nth-child(4) {
+  width: calc(12% + 24px) !important;
+}
+
+/* The seven visible menu-list columns use equal widths. */
+.menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > table.menu-manager-menu-list-table {
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+
+.menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > table.menu-manager-menu-list-table :is(th, td):not(:nth-child(7)) {
+  width: 14.285714% !important;
+}
+
+.menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > table.menu-manager-menu-list-table :is(th, td):nth-child(4) {
+  width: 16.285714% !important;
+}
+
+.menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > table.menu-manager-menu-list-table :is(th, td):nth-child(8) {
+  width: 10% !important;
+}
+
+.menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > table.menu-manager-menu-list-table :is(th, td):nth-child(7) {
+  display: none !important;
+}
+
+.menu-manager-menu-list-table .menu-manager-menu-gubun-select {
+  width: calc(100% + 10px) !important;
+  max-width: calc(100% + 10px) !important;
+}
+
+.menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > table.menu-manager-menu-list-table :is(th, td):nth-child(1) {
+  width: 20% !important;
+}
+
+.menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > .menu-manager-table :is(th, td):nth-child(2) {
+  width: calc(12% + 3px) !important;
+}
+
+.menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > .menu-manager-table :is(th, td):nth-child(3) {
+  width: calc(12% + 3px) !important;
+}
+
+.menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > .menu-manager-table :is(th, td):nth-child(4) {
+  width: calc(12% + 2px) !important;
+}
+
+.menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > .menu-manager-table :is(th, td):nth-child(6) {
+  width: calc(12% - 15px) !important;
+}
+
+.menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > .menu-manager-table :is(th, td):nth-child(7) {
+  width: calc(12% + 2px) !important;
+}
+
+.menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > table.menu-manager-menu-list-table :is(th, td):nth-child(8) {
+  width: 10% !important;
+}
+
 .menu-manager-table tbody tr {
   transition: background 0.14s ease;
 }
@@ -315,7 +460,8 @@
 .menu-manager-menu-cell {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: flex-start;
+  gap: 1px;
   min-width: 0;
 }
 
@@ -332,6 +478,25 @@
   border-radius: 4px;
   background: transparent;
   cursor: pointer;
+}
+
+table .menu-manager-menu-cell button.menu-manager-thumbnail-button {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  flex: 0 0 30px !important;
+  width: 30px !important;
+  min-width: 30px !important;
+  max-width: 30px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  padding: 0 !important;
+}
+
+table .menu-manager-menu-cell .menu-manager-thumbnail-frame,
+table .menu-manager-menu-cell .menu-manager-thumbnail {
+  width: 30px;
+  height: 30px;
 }
 
 .menu-manager-thumbnail-button:focus-visible {
@@ -793,18 +958,20 @@
 
 .account-menu-manager-layout > .menu-manager-panel:nth-child(1) .menu-manager-readonly-cell > span:last-child {
   display: block;
-  max-width: 136px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .account-menu-manager-layout > .menu-manager-panel:nth-child(2) .menu-manager-readonly-cell > span:last-child {
   display: block;
-  max-width: 108px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .account-menu-manager-layout .menu-manager-table--ingredients th:nth-child(1),
@@ -1220,6 +1387,212 @@
   min-width: 0;
 }
 
+.account-menu-manager-layout .menu-manager-readonly-cell {
+  gap: 1px;
+}
+
+.account-menu-manager-layout .menu-manager-ingredient-cell {
+  gap: 1px;
+}
+
+.account-menu-manager-layout .menu-manager-like-button {
+  flex: 0 0 17px !important;
+  width: 17px !important;
+  min-width: 17px !important;
+  max-width: 17px !important;
+  height: 22px !important;
+}
+
+.account-menu-manager-layout .menu-manager-like-button span {
+  width: 17px;
+  height: 22px;
+  font-size: 17px;
+}
+
+.account-menu-manager-layout .menu-manager-readonly-cell > .menu-manager-like-button + span {
+  flex: 1 1 auto;
+  width: auto;
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+  margin-left: 0;
+}
+
+.account-menu-manager-layout .menu-manager-ingredient-cell > .menu-manager-like-button {
+  order: 0;
+}
+
+.account-menu-manager-layout .menu-manager-ingredient-cell > .menu-manager-search-select {
+  order: 1;
+  flex: 1 1 auto;
+  width: 0;
+  min-width: 0;
+  margin-left: 0;
+}
+
+.account-menu-manager-layout .menu-manager-ingredient-cell .menu-manager-search-select__trigger span {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+}
+
+.account-menu-manager-layout .menu-manager-ingredient-cell .menu-manager-search-select__trigger {
+  padding-left: 2px;
+}
+
+.account-menu-list-select-button {
+  width: 71px !important;
+  min-width: 71px !important;
+  max-width: 71px !important;
+}
+
+.account-menu-manager-layout .menu-manager-table--ingredients .menu-manager-qty-editor .menu-manager-cell-input.is-compact {
+  flex: 0 1 62px;
+  width: 62px;
+  max-width: 62px;
+}
+
+.account-menu-manager-layout .menu-manager-table--ingredients .menu-manager-qty-editor .menu-manager-cell-input.is-unit {
+  flex: 0 1 67px;
+  width: 67px;
+  max-width: 67px;
+}
+
+.account-menu-placement-manage-button {
+  width: 71px !important;
+  min-width: 71px !important;
+  max-width: 71px !important;
+}
+
+.account-menu-manager-layout .menu-manager-table--ingredients th:nth-child(2),
+.account-menu-manager-layout .menu-manager-table--ingredients td:nth-child(2) {
+  width: calc(25% + 17px) !important;
+  min-width: 120px !important;
+}
+
+.account-menu-manager-layout .menu-manager-table--ingredients th:nth-child(3),
+.account-menu-manager-layout .menu-manager-table--ingredients td:nth-child(3) {
+  width: calc(28% - 20px) !important;
+}
+
+.account-menu-manager-layout .menu-manager-table--ingredients .account-menu-supplier-product-select {
+  width: calc(100% - 20px) !important;
+  max-width: calc(100% - 20px) !important;
+}
+
+.account-menu-manager-layout .menu-manager-table--ingredients th:nth-child(5),
+.account-menu-manager-layout .menu-manager-table--ingredients td:nth-child(5) {
+  width: calc(10% + 3px) !important;
+  min-width: 95px !important;
+}
+
+/* Account menu panels respond to their content and the available viewport width. */
+.account-menu-manager-layout {
+  grid-template-columns:
+    minmax(360px, 0.95fr)
+    minmax(400px, 1.08fr)
+    minmax(460px, 1.25fr);
+  align-items: stretch;
+  overflow-x: auto;
+}
+
+.account-menu-manager-layout > .menu-manager-panel {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 1500px) {
+  .account-menu-manager-layout {
+    grid-template-columns: minmax(360px, 0.95fr) minmax(400px, 1.05fr);
+    overflow-x: visible;
+  }
+
+  .account-menu-manager-layout > .menu-manager-panel:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 1150px) {
+  .account-menu-manager-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .account-menu-manager-layout > .menu-manager-panel:nth-child(3) {
+    grid-column: auto;
+  }
+}
+
+.menu-manager-menu-list-table .menu-manager-menu-select-button {
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+}
+
+.menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > table.menu-manager-menu-list-table :is(th, td):nth-child(8) {
+  width: calc(10% - 21px) !important;
+}
+
+.menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > table.menu-manager-menu-list-table :is(th, td):nth-child(4) {
+  width: calc(12% + 14px) !important;
+}
+
+.menu-manager-menu-list-table .menu-manager-menu-gubun-select {
+  width: calc(100% + 10px) !important;
+  max-width: calc(100% + 10px) !important;
+}
+
+.menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > table.menu-manager-menu-list-table :is(th, td):nth-child(7) {
+  width: calc(12% - 9px) !important;
+}
+
+/* Menu list column proportions; the remaining 24% is shared by calories and selection. */
+body.workspace-ui .menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > table.menu-manager-menu-list-table :is(th, td) {
+  box-sizing: border-box;
+}
+
+body.workspace-ui .menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > table.menu-manager-menu-list-table :is(th, td):nth-child(1) {
+  width: 20% !important;
+}
+
+body.workspace-ui .menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > table.menu-manager-menu-list-table :is(th, td):nth-child(2) {
+  width: 10% !important;
+}
+
+body.workspace-ui .menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > table.menu-manager-menu-list-table :is(th, td):nth-child(3) {
+  width: 12% !important;
+}
+
+body.workspace-ui .menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > table.menu-manager-menu-list-table :is(th, td):nth-child(4),
+body.workspace-ui .menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > table.menu-manager-menu-list-table :is(th, td):nth-child(5) {
+  width: 17% !important;
+}
+
+body.workspace-ui .menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > table.menu-manager-menu-list-table :is(th, td):nth-child(6),
+body.workspace-ui .menu-manager-layout > .menu-manager-panel:first-child > .menu-manager-table-scroll > table.menu-manager-menu-list-table :is(th, td):nth-child(8) {
+  width: 12% !important;
+}
+
+body.workspace-ui .menu-manager-menu-list-table .menu-manager-menu-gubun-select {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.menu-manager-layout .menu-manager-table--ingredients .menu-manager-qty-editor .menu-manager-cell-input.is-compact {
+  flex: 0 1 82px;
+  width: 82px;
+  max-width: 82px;
+}
+
+.menu-manager-layout .menu-manager-table--ingredients .menu-manager-qty-editor .menu-manager-cell-input.is-unit {
+  flex: 0 1 62px;
+  width: 62px;
+  max-width: 62px;
+}
+
 .menu-manager-row-handle {
   flex: 0 0 auto;
   color: #9aa6b5;
@@ -1237,8 +1610,8 @@
   position: relative;
   flex: 0 0 auto;
   display: inline-flex;
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
 }
 
 .menu-manager-thumbnail-frame.is-dirty .menu-manager-thumbnail {
@@ -1246,10 +1619,39 @@
   box-shadow: 0 0 0 2px rgba(232, 120, 71, 0.18);
 }
 
+body.workspace-ui table .menu-manager-menu-cell button.menu-manager-thumbnail-frame.menu-manager-photo-button {
+  box-sizing: border-box;
+  flex: 0 0 20px !important;
+  width: 30px !important;
+  min-width: 30px !important;
+  max-width: 30px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  cursor: pointer;
+}
+
+table .menu-manager-menu-cell .menu-manager-photo-button .menu-manager-thumbnail {
+  width: 30px;
+  height: 30px;
+  border-radius: 0;
+}
+
+.menu-manager-photo-button:focus-visible {
+  outline: 2px solid #296ea8;
+  outline-offset: 2px;
+}
+
+
 .menu-manager-thumbnail {
+  box-sizing: border-box;
   flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
   border: 1px solid #cbd6e2;
   border-radius: 4px;
   background: #f6f9fc;
@@ -1764,4 +2166,73 @@
   .menu-manager-panel {
     height: 44vh;
   }
+}
+
+/* 후보와 등록 메뉴는 위에, 식재료·구매상품 상세는 전체 폭으로 표시한다. */
+.account-menu-manager-layout {grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-content:start;overflow:auto;}
+.account-menu-manager-layout > .menu-manager-panel:nth-child(3) {grid-column:1 / -1;min-height:300px;}
+.account-menu-manager-layout > .menu-manager-panel:nth-child(-n+2) {max-height:420px;min-height:260px;}
+.account-menu-manager-layout .menu-manager-table--ingredients {min-width:1000px;}
+@media(max-width:900px) {.account-menu-manager-layout {grid-template-columns:1fr;} .account-menu-manager-layout > .menu-manager-panel {grid-column:1!important;}}
+
+/* 공급사 첫 글자 배지: 전체 이름은 마우스 오버 title로 확인한다. */
+.account-ingredient-layout .account-ingredient-supplier-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #94a3b8;
+  border-radius: 50%;
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 700;
+  line-height: 1;
+  cursor: help;
+}
+.account-ingredient-layout .account-ingredient-supplier-badge[title*="웰스토리"] {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+.account-ingredient-layout .account-ingredient-supplier-badge[title*="아워홈"] {
+  border-color: #ea580c;
+  color: #ea580c;
+}
+.account-ingredient-layout .account-ingredient-supplier-badge:focus-visible {
+  outline: 2px solid #64748b;
+  outline-offset: 2px;
+}
+
+/* 재고 목록 보조 표시: 직접구매 상품, 추정 단가 기초재고 */
+.account-inventory-tag {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: #fff4d6;
+  color: #7a5a00;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* 상품별 재고 조정: 현재고는 5~6자리(예: 21600 g)도 잘리지 않게 넓힌다 */
+.account-inventory-table .menu-manager-qty-editor .menu-manager-cell-input.is-compact {
+  flex: 0 0 96px;
+  max-width: 96px;
+}
+
+/* 거래처 메뉴: 식단표 표기 연결(별칭) */
+.menu-alias-list { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 0 8px; font-size: 12px; }
+.menu-alias-list > strong { margin-right: 4px; color: #334155; }
+.menu-alias-list__item { display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 8px; border: 1px solid #cbd5e1; border-radius: 999px; background: #f8fafc; }
+.menu-alias-list__item button { border: 0; background: transparent; color: #64748b; cursor: pointer; font-size: 14px; line-height: 1; padding: 0 4px; }
+.menu-alias-list small { color: #b91c1c; }
+
+/* 재고 목록 상품 셀의 재고 변동 이력 바로가기 */
+.account-inventory-history-link {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: #197fac;
 }

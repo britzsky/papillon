@@ -1,0 +1,4 @@
+/** 버튼·링크 앞에 붙이는 작은 선 아이콘. 글자색(currentColor)을 따른다. */
+export const DocumentIcon = () => <svg aria-hidden="true" viewBox="0 0 16 16" width="14" height="14"><path d="M4 1.5h5l3 3v10H4z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" /><path d="M9 1.5v3h3M6 8h4M6 10.5h4" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
+
+export const PrintIcon = () => <svg aria-hidden="true" viewBox="0 0 16 16" width="14" height="14"><path d="M4.5 5.5v-4h7v4" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" /><rect x="1.5" y="5.5" width="13" height="6" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.4" /><path d="M4.5 9.5h7v5h-7z" fill="white" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" /><path d="M6.5 11.5h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /><circle cx="12" cy="7.6" r=".8" fill="currentColor" /></svg>

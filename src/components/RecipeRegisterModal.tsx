@@ -103,7 +103,7 @@ function RecipeRegisterModal({ request, onClose, onSaved }: RecipeRegisterModalP
           tips: normalizeItems(recipe.tips),
           storage: normalizeItems(recipe.storage),
           allergens: normalizeItems(recipe.allergens),
-          images: recipe.images.map(({ file: _file, ...image }) => image),
+          images: recipe.images.map((image) => ({ ...image, file: undefined })),
         },
       },
       null,

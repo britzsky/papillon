@@ -1,0 +1,10 @@
+.mixed-product-order .menu-manager-panel { height:auto; min-height:0; padding:16px; display:block; overflow:visible; font-size:14px; }
+.mixed-product-order .menu-manager-filter-grid { display:flex; flex-wrap:wrap; gap:12px; align-items:end; }
+.mixed-product-order .menu-manager-filter-grid label { display:flex; flex-direction:column; gap:6px; }
+.mixed-product-order .menu-manager-table-scroll { display:block; flex:none; max-height:420px; overflow:auto; margin-top:16px; }
+.mixed-product-order .menu-manager-table { min-width:650px; font-size:13px; }
+.mixed-product-order [aria-label="혼합 발주 미리보기"] > section { border:1px solid #e2eaed; border-radius:8px; padding:12px; margin:12px 0; }
+.mixed-product-order [aria-label="혼합 발주 미리보기"] > section > div { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:8px 0; }
+.mixed-product-order [aria-label="혼합 발주 미리보기"] input { width:100px; }
+.mixed-product-order [aria-label="공급사별 발주 결과"] li { padding:12px 0; border-bottom:1px solid #e2eaed; }
+@media(max-width:600px) { .mixed-product-order .menu-manager-panel { padding:12px; } .mixed-product-order .menu-manager-filter-grid label { flex:1 1 140px; min-width:0; } .mixed-product-order .menu-manager-filter-grid input,.mixed-product-order .menu-manager-filter-grid select { width:100%; min-width:0; } }

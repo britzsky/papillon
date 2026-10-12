@@ -1,0 +1,39 @@
+/* Single-line controls share one height, including controls in portal dialogs. */
+body.workspace-ui > :is(#root, :not(#root)) :is(input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file]):not([type=range]):not([type=color]), select, .menu-manager-search-select__trigger) {
+  height: 30px !important;
+  min-height: 30px !important;
+  box-sizing: border-box;
+}
+
+/* Query inputs use 150px; other native selects retain their existing width. */
+body.workspace-ui :is(.food-order-filters,.food-order-item-search,.menu-manager-filters,.vendor-sanitation-filters,.table-meals-toolbar,.table-meals-manual__filters,.account-manager-toolbar,.welstory-toolbar,.supplier-integration-toolbar,.search-admin-toolbar,.shortage-order-filters,.shortage-order-toolbar,.purchase-orders__filters,.welstory-panel__head) input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file]) {
+  width: 150px !important;
+}
+
+/* Expand the label/control grid as well as the account or workplace selector. */
+body.workspace-ui :is(.menu-manager-field,.table-meals-field,.vendor-sanitation-field,.account-manager-toolbar__field,label):has(#account-menu-account-id, #table-account-id, #account-manager-account, #vendor, .workplace-select) {
+  --query-control-width: 190px;
+}
+
+/* Keep the servings label, control and unit together instead of a two-column grid. */
+body.workspace-ui label.table-meals-servings-field {
+  display: inline-flex !important;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+body.workspace-ui .table-meals-servings-field input {
+  flex-shrink: 0;
+}
+
+/* Let the current value determine table control width instead of filling the cell. */
+body.workspace-ui > :is(#root, :not(#root)) table :is(input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file]), select) {
+  field-sizing: content;
+  width: auto !important;
+  min-width: 4ch !important;
+  max-width: none !important;
+  height: 30px !important;
+  min-height: 30px !important;
+}

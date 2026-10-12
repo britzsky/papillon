@@ -1,0 +1,221 @@
+/* Responsive workspace: neutral navigation, compact data, photo gallery. */
+body.workspace-ui { --theme-color:#5e6ad2; --theme-color-strong:#4954b8; --theme-color-soft:#eef0ff; --theme-accent:#5e6ad2; --form-control-height:34px; background:#f7f8fa; color:#242632; }
+body.workspace-ui *, body.workspace-ui *::before, body.workspace-ui *::after { box-sizing:border-box; }
+body.workspace-ui > :is(#root,:not(#root)), body.workspace-ui > :is(#root,:not(#root)) * { font-size:12px !important; }
+body.workspace-ui > :is(#root,:not(#root)) :is(h1,.header-bar__status,.home-hero h1,.home-insight strong,.supplier-integration-summary strong,.search-admin-kpis strong) { font-size:16px !important; line-height:1.45; }
+body.workspace-ui > :is(#root,:not(#root)) h2 { font-size:14px !important; }
+body.workspace-ui > :is(#root,:not(#root)) :is(h3,.menu-card__title) { font-size:14px !important; }
+body.workspace-ui > :is(#root,:not(#root)) .home-hero__copy > p:not(.home-hero__eyebrow) { font-size:13px !important; }
+body.workspace-ui > :is(#root,:not(#root)) .home-hero .home-hero__eyebrow { font-size:12px !important; }
+body.workspace-ui > :is(#root,:not(#root)) :is(table,table *,input,select,textarea,[class*="filters"],[class*="filters"] *,[class*="toolbar"],[class*="toolbar"] *, .home-search__box *) { font-size:10px !important; }
+/* Buttons retain their own size, including nested labels in data and filters. */
+body.workspace-ui > :is(#root,:not(#root)) button,
+body.workspace-ui > :is(#root,:not(#root)) button * { font-size:11px !important; }
+body.workspace-ui .side-layout { grid-template-columns:216px minmax(0,1fr); grid-template-rows:minmax(0,1fr); gap:0; background:#f7f8fa; }
+body.workspace-ui .side-layout.is-collapsed { grid-template-columns:minmax(0,1fr); }
+body.workspace-ui .side-layout__sidebar { background:#f2f3f7; color:#484b58; border-right:1px solid #e2e4eb; padding:12px; }
+body.workspace-ui .side-layout__sidebar-top { background:transparent; border-bottom:1px solid #e2e4eb; margin:0 0 16px; padding:14px 4px 20px; }
+body.workspace-ui .side-layout__brand { min-width:0; }
+body.workspace-ui .side-layout__brand img { width:112px; }
+body.workspace-ui :is(.side-layout__sublink,.side-layout__major-button,.side-layout__home-link) { color:#535767 !important; font-weight:500; }
+body.workspace-ui :is(.side-layout__sublink.is-active,.side-layout__major-button.is-active,.side-layout__home-link.is-active) { background:#e5e7f5 !important; color:#424da6 !important; }
+body.workspace-ui :is(.side-layout__sublink,.side-layout__home-link,.side-layout__major-button):hover { background:#e9ebf1 !important; color:#303647 !important; }
+body.workspace-ui .side-layout__toggle { background:#e9ebf1 !important; color:#535767 !important; min-width:32px; min-height:32px; padding:0; }
+body.workspace-ui .side-layout__content { padding:clamp(12px,1.6vw,10px); gap:16px; overflow:hidden; min-width:0; }
+body.workspace-ui .side-layout__content > * { min-width:0; flex-shrink:0; }
+body.workspace-ui .side-layout__main-top { padding:8px 14px; margin:0; background:white; border-bottom:1px solid #e6e8ee; }
+body.workspace-ui .header-shell { padding:11px 24px; flex-shrink:0; }
+body.workspace-ui .header-bar { flex-wrap:wrap; gap:12px; }
+body.workspace-ui .header-breadcrumbs { padding-bottom:6px; }
+body.workspace-ui .side-layout__backdrop { display:none; }
+body.workspace-ui button:hover:not(:disabled) { background:#eef0f7 !important; border-color:#b8bfdb !important; }
+body.workspace-ui button:is(.is-primary,.is-query,.action-query-button,.action-save-button,.menu-manager-save-button,.menu-manager-add-button,.home-hero__primary,.home-search__assistant) { background:#5e6ad2 !important; border-color:#5e6ad2 !important; color:white !important; }
+body.workspace-ui button:is(.is-primary,.is-query,.action-query-button,.action-save-button,.menu-manager-save-button,.menu-manager-add-button,.home-hero__primary,.home-search__assistant):hover:not(:disabled) { background:#4954b8 !important; }
+body.workspace-ui :is(input,select,textarea,button,a):focus-visible { outline:2px solid #7d87e0 !important; outline-offset:2px; }
+body.workspace-ui :is(.food-order-filters,.menu-manager-filters,.vendor-sanitation-filters,.table-meals-toolbar,.account-manager-toolbar,.welstory-toolbar,.supplier-integration-toolbar,.search-admin-toolbar,.shortage-order-filters,.purchase-orders__filters) { gap:12px !important; padding:14px; margin-bottom:0px; border:1px solid #e2e5ed; border-radius:8px; align-items:flex-end; }
+body.workspace-ui .menu-manager-filters { padding:10px; }
+body.workspace-ui :is(.menu-manager-field,.table-meals-field,.vendor-sanitation-field,.account-manager-toolbar__field) { min-width:0; max-width:100%; flex:1 1 150px; gap:5px; }
+body.workspace-ui :is(.menu-manager-field,.table-meals-field,.vendor-sanitation-field,.account-manager-toolbar__field) :is(input,select) { width:100%; min-width:0; }
+body.workspace-ui :is(.menu-manager-panel__header,.table-meals-panel__header,.account-manager-panel__header,.welstory-panel__header,.menu-manager-pagination,.menu-manager-pagination__actions) { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+body.workspace-ui :is(.menu-manager-panel,.table-meals-panel,.food-order-panel,.welstory-panel) { min-width:0; height:auto; }
+body.workspace-ui :is(.menu-manager-layout,.table-meals-layout) { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; height:auto; }
+body.workspace-ui :is(.menu-manager-content,.table-meals-content) { height:100% !important; min-height:0; overflow:hidden; }
+body.workspace-ui :is(.menu-manager-table-scroll,.workspace-table-scroll,.food-order-table-wrap,.shortage-order-table-wrap,.welstory-table-wrap,.supplier-integration-table-wrap,.table-meals-table-scroll) { width:100%; min-width:0; overflow:auto; overscroll-behavior-inline:contain; }
+body.workspace-ui table { table-layout:auto !important; width:100%; min-width:0 !important; }
+body.workspace-ui table :is(col,th,td) { width:auto !important; height:auto !important; min-width:0; max-width:none; }
+body.workspace-ui table :is(th,td) { padding:9px 10px; white-space:normal !important; overflow-wrap:anywhere; line-height:1.6; vertical-align:middle; }
+body.workspace-ui table th { background:#f5f6fa; color:#686e7f; border-bottom:1px solid #dfe3ed; }
+body.workspace-ui table td { border-bottom:1px solid #edf0f5; }
+body.workspace-ui table tr:is(.is-active,.is-selected,.is-focused) td { background:#eef0ff; }
+body.workspace-ui table :is(input:not([type=checkbox]):not([type=radio]),select) { width:100%; min-width:7ch; height:auto !important; min-height:32px; }
+body.workspace-ui table input[type=number] { min-width:9ch; text-align:right; font-variant-numeric:tabular-nums; }
+body.workspace-ui table input:not([type]) { min-width:14ch; }
+body.workspace-ui .home-hero { min-height:180px; padding:12px; border-color:#e2e5ed; background:#fff; }
+body.workspace-ui .home-hero__copy { min-width:0; }
+body.workspace-ui .home-hero__background { opacity:1.16; }
+body.workspace-ui :is(.menu-grid,.order-manager-grid,.vendor-sanitation-grid) { grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); gap:14px; }
+body.workspace-ui :is(.menu-card,.home-insight) { padding:12px; border-color:#e2e5ed; }
+body.workspace-ui :is([role=dialog],[role=alertdialog]) { max-width:calc(100vw - 24px); max-height:calc(100dvh - 24px); overflow:auto; }
+body.workspace-ui .workspace-view-switch { display:flex; flex-wrap:wrap; gap:4px; margin-left:auto; }
+body.workspace-ui .workspace-view-switch button { padding:6px 10px; }
+body.workspace-ui .workspace-view-switch button[aria-pressed=true] { background:#eef0ff !important; color:#4954b8 !important; border-color:#aeb5ea !important; }
+body.workspace-ui table.workspace-menu-cards { display:block; }
+body.workspace-ui .workspace-menu-cards thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+body.workspace-ui .workspace-menu-cards tbody { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr)); gap:14px; padding:14px; }
+body.workspace-ui .workspace-menu-cards tbody tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-content:start; padding:10px; border:1px solid #e2e5ed; border-radius:10px; background:white; }
+body.workspace-ui .workspace-menu-cards tbody tr.is-active { border-color:#7d87e0; box-shadow:0 0 0 1px #7d87e0; }
+body.workspace-ui .workspace-menu-cards td { display:block; padding:6px; border:0; background:transparent !important; }
+body.workspace-ui .workspace-menu-cards td::before { content:attr(data-label); display:block; color:#717582; margin-bottom:4px; }
+body.workspace-ui .workspace-menu-cards td:first-child { grid-column:1 / -1; }
+body.workspace-ui .workspace-menu-cards .menu-manager-menu-cell { display:flex; flex-direction:column; align-items:stretch; min-width:0; }
+body.workspace-ui .workspace-menu-cards .menu-manager-thumbnail-button { width:100% !important; height:140px !important; overflow:hidden; }
+body.workspace-ui .workspace-menu-cards .menu-manager-thumbnail-button :is(.menu-manager-thumbnail-frame,.menu-manager-thumbnail) { width:100%; height:100%; object-fit:cover; }
+body.workspace-ui .workspace-menu-cards .menu-manager-thumbnail-badge { width:auto; height:auto; }
+@media (max-width:1200px) {
+  body.workspace-ui :is(.menu-manager-layout,.table-meals-layout,.purchase-orders__layout,.supplier-integration-grid,.search-admin-grid,.search-admin-charts) { grid-template-columns:minmax(0,1fr); }
+}
+@media (max-width:960px) {
+  body.workspace-ui .side-layout { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr); }
+  body.workspace-ui .side-layout__sidebar { position:fixed; inset:0 auto 0 0; width:min(280px,85vw); height:100dvh; max-height:none; z-index:120; box-shadow:8px 0 30px #24263222; }
+  body.workspace-ui button.side-layout__backdrop { display:block; position:fixed; inset:0; z-index:110; width:100%; height:100%; border:0 !important; border-radius:0 !important; background:#171b304d !important; }
+  body.workspace-ui .header-shell { padding:12px 16px; }
+  body.workspace-ui .table-meals-manual__body { grid-template-columns:minmax(0,1fr); overflow:auto; }
+}
+@media (max-width:640px) {
+  body.workspace-ui .side-layout__content { padding:10px !important; }
+  body.workspace-ui :is(.home-insights,.supplier-integration-summary,.search-admin-kpis,.account-manager-config-row,.ingredient-product-modal__grid) { grid-template-columns:minmax(0,1fr); }
+  body.workspace-ui :is(.menu-manager-field,.table-meals-field,.vendor-sanitation-field,.account-manager-toolbar__field) { flex-basis:100%; width:100%; }
+  body.workspace-ui .home-search { grid-template-columns:minmax(0,1fr); }
+  body.workspace-ui .home-search .home-search__assistant { grid-column:1; grid-row:2; min-height:40px; }
+  body.workspace-ui .home-hero { padding:18px; grid-template-columns:minmax(0,1fr); }
+  body.workspace-ui :is(button,input:not([type=checkbox]):not([type=radio]),select) { min-height:40px; }
+  body.workspace-ui table :is(th,td) { padding:8px; }
+  body.workspace-ui table { min-width:min-content !important; }
+  body.workspace-ui .workspace-menu-cards { min-width:0 !important; }
+  body.workspace-ui :is(.menu-manager-panel__header,.table-meals-panel__header) { padding:12px; }
+  body.workspace-ui .workspace-view-switch { margin-left:0; }
+}
+/* Query labels stay beside their control, including on narrow screens. */
+body.workspace-ui :is(.food-order-filters,.menu-manager-filters,.vendor-sanitation-filters,.table-meals-toolbar,.table-meals-manual__filters,.account-manager-toolbar,.welstory-toolbar,.supplier-integration-toolbar,.search-admin-toolbar,.shortage-order-filters,.purchase-orders__filters) :is(.menu-manager-field,.table-meals-field,.vendor-sanitation-field,.account-manager-toolbar__field,label:has(> input:not([type=checkbox]):not([type=radio]),> select)) {
+  display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center;
+  gap:8px; min-width:0; max-width:100%; white-space:nowrap;
+}
+body.workspace-ui :is(.food-order-filters,.menu-manager-filters,.vendor-sanitation-filters,.table-meals-toolbar,.table-meals-manual__filters,.account-manager-toolbar,.welstory-toolbar,.supplier-integration-toolbar,.search-admin-toolbar,.shortage-order-filters,.purchase-orders__filters) :is(.menu-manager-field,.table-meals-field,.vendor-sanitation-field,.account-manager-toolbar__field) > label {
+  width:auto !important; min-width:0 !important; height:auto !important;
+  margin:0; padding:0 !important; white-space:nowrap;
+}
+body.workspace-ui :is(.food-order-filters,.menu-manager-filters,.vendor-sanitation-filters,.table-meals-toolbar,.table-meals-manual__filters,.account-manager-toolbar,.welstory-toolbar,.supplier-integration-toolbar,.search-admin-toolbar,.shortage-order-filters,.purchase-orders__filters) label:has(> input:not([type=checkbox]):not([type=radio]),> select) {
+  flex:1 1 240px; width:auto;
+}
+body.workspace-ui :is(.food-order-filters,.menu-manager-filters,.vendor-sanitation-filters,.table-meals-toolbar,.table-meals-manual__filters,.account-manager-toolbar,.welstory-toolbar,.supplier-integration-toolbar,.search-admin-toolbar,.shortage-order-filters,.purchase-orders__filters) label > :is(input:not([type=checkbox]):not([type=radio]),select) {
+  width:100%; min-width:0;
+}
+/* Fixed query control width; fields wrap as a label/control pair. */
+body.workspace-ui { --query-control-width:125px; }
+body.workspace-ui :is(.food-order-filters,.food-order-item-search,.menu-manager-filters,.vendor-sanitation-filters,.table-meals-toolbar,.table-meals-manual__filters,.account-manager-toolbar,.welstory-toolbar,.supplier-integration-toolbar,.search-admin-toolbar,.shortage-order-filters,.shortage-order-toolbar,.purchase-orders__filters,.welstory-panel__head) :is(input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file]),select,.menu-manager-search-select) {
+  width:var(--query-control-width) !important; max-width:100%; min-width:0; box-sizing:border-box;
+}
+body.workspace-ui :is(.food-order-filters,.menu-manager-filters,.vendor-sanitation-filters,.table-meals-toolbar,.table-meals-manual__filters,.account-manager-toolbar,.welstory-toolbar,.supplier-integration-toolbar,.search-admin-toolbar,.shortage-order-filters,.purchase-orders__filters) :is(.menu-manager-field,.table-meals-field,.vendor-sanitation-field,.account-manager-toolbar__field,label:has(> input:not([type=checkbox]):not([type=radio]),> select)) {
+  flex:0 1 auto; width:auto; grid-template-columns:auto minmax(0,var(--query-control-width)); justify-content:start;
+}
+body.workspace-ui .menu-manager-filter-grid { display:flex; flex-wrap:wrap; gap:12px; }
+body.workspace-ui .menu-manager-panel__header { padding:10px; }
+/* Compact spacing between the procurement criteria, guidance and results. */
+body.workspace-ui .shortage-order-page .side-layout__content { gap:6px; }
+body.workspace-ui .shortage-order-page .side-layout__content > :is(.shortage-order-filters,.shortage-delivery-guidance,.shortage-order-note,.shortage-order-toolbar,.shortage-order-table-wrap,.shortage-order-footer,.shortage-order-error) { margin-top:0; margin-bottom:0; }
+body.workspace-ui .shortage-order-page .shortage-order-filters { padding:10px; }
+body.workspace-ui .shortage-order-page .shortage-order-note { padding:6px 10px; }
+body.workspace-ui .shortage-order-page .shortage-delivery-guidance { padding:6px 10px; }
+body.workspace-ui .shortage-order-page .shortage-delivery-guidance p { margin:2px 0; }
+body.workspace-ui .shortage-order-page .shortage-order-intro h2 { margin-bottom:4px; }
+body.workspace-ui .purchase-orders__receipt-actions :is(input,button) {
+  height:36px !important;
+  min-height:36px !important;
+}
+body.workspace-ui .purchase-orders__inventory-link { margin:0; padding:0; line-height:1.5; }
+body.workspace-ui .side-layout__content:has(> .purchase-orders__inventory-link) { gap:6px; }
+body.workspace-ui .side-layout__content:has(> .purchase-orders__inventory-link) > .purchase-orders__filters { margin-bottom:0; }
+@media screen {
+  /* The document stays in the viewport; route content owns its scrolling. */
+  html:has(body.workspace-ui), body.workspace-ui, body.workspace-ui #root {
+    width:100%; height:100%; min-width:0; min-height:0; overflow:hidden;
+  }
+  body.workspace-ui #root { height:100dvh; }
+  body.workspace-ui #root > :has(.side-layout) {
+    height:100%; max-height:100%; min-height:0; overflow:hidden;
+  }
+  body.workspace-ui .side-layout { height:100%; min-height:0; overflow:hidden; }
+  body.workspace-ui .side-layout__main { min-height:0; min-width:0; overflow:hidden; }
+  body.workspace-ui .side-layout__content { min-height:0; overflow:hidden; }
+  /* Each route region can shrink inside the shell instead of extending it. */
+  body.workspace-ui .side-layout__content > :is(div,section,main) {
+    flex-shrink:1; min-height:0; max-height:100%; overflow:auto;
+  }
+  body.workspace-ui .side-layout__content > :is(.menu-manager-layout,.account-menu-manager-layout,.table-meals-layout,.purchase-orders__layout,.welstory-grid,.supplier-integration-grid) {
+    flex:1 1 0; min-height:0; height:auto; grid-auto-rows:minmax(0,1fr); overflow:hidden;
+  }
+  body.workspace-ui :is(.menu-manager-layout,.account-menu-manager-layout,.table-meals-layout,.purchase-orders__layout,.welstory-grid,.supplier-integration-grid) > section {
+    display:flex; flex-direction:column; min-height:0; min-width:0; height:auto;
+    max-height:100%; overflow:auto;
+  }
+  body.workspace-ui :is(.menu-manager-panel__header,.table-meals-panel__header,.welstory-panel__header) { flex-shrink:0; }
+  body.workspace-ui .account-menu-manager-layout > .menu-manager-panel { min-height:0; max-height:100%; }
+  body.workspace-ui > :is(#root,:not(#root)) :is(.menu-manager-table-scroll,.workspace-table-scroll,.table-meals-table-scroll,.welstory-table-wrap,.supplier-integration-table-wrap) {
+    flex:1 1 auto; min-height:0; max-height:100%; overflow:auto !important;
+  }
+  body.workspace-ui .side-layout__content > :is(.home-dashboard,.search-admin-content,.assistant-content,.shortage-order-table-wrap,.vendor-sanitation-gallery-shell,.order-manager-grid,.account-manager-panel) {
+    flex:1 1 0; min-height:0; overflow:auto;
+  }
+
+  /* Inventory pages have one full-width panel, regardless of breakpoint. */
+  body.workspace-ui .menu-manager-layout.account-inventory-layout {
+    grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr);
+    width:100%; min-width:0; min-height:0; height:auto; flex:1 1 0; overflow:hidden;
+  }
+  body.workspace-ui .side-layout__content:has(> .account-inventory-layout) {
+    overflow:hidden; min-height:0;
+  }
+  body.workspace-ui .account-inventory-layout > .menu-manager-panel {
+    width:100%; height:100%; min-height:0; overflow:hidden;
+  }
+  body.workspace-ui .account-inventory-layout .menu-manager-panel__header { flex:0 0 auto; }
+  body.workspace-ui > :is(#root,:not(#root)) .account-inventory-layout .menu-manager-table-scroll {
+    flex:1 1 0; min-height:0; max-height:none; overflow:auto !important;
+  }
+  body.workspace-ui .side-layout__content:has(> :is(.account-inventory-layout,.account-ingredient-layout)) > .menu-manager-filters {
+    flex:0 1 auto; min-height:0; max-height:45%; overflow:auto; margin-bottom:0;
+  }
+  body.workspace-ui .menu-manager-filter-grid {
+    min-width:0; grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));
+  }
+}
+@media screen {
+  body.workspace-ui .menu-manager-layout.account-ingredient-layout {
+    grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);
+    grid-template-rows:minmax(0,1fr);
+  }
+  body.workspace-ui .account-ingredient-layout > .menu-manager-panel {
+    overflow:hidden;
+  }
+  body.workspace-ui .account-ingredient-layout .menu-manager-pagination {
+    flex-shrink:0;
+  }
+  body.workspace-ui .account-ingredient-layout .menu-manager-select-button {
+    --button-width:64px;
+    width:auto;
+    padding-inline:6px;
+    white-space:nowrap;
+  }
+}
+@media screen and (max-width:760px) {
+  body.workspace-ui .menu-manager-layout.account-ingredient-layout {
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:repeat(2,minmax(320px,1fr));
+    overflow:auto;
+  }
+}
+@media print {
+  body.workspace-ui :is(.side-layout__sidebar,.side-layout__backdrop,.side-layout__main-top,.workspace-view-switch) { display:none !important; }
+  body.workspace-ui .side-layout { display:block; height:auto; overflow:visible; }
+  body.workspace-ui .side-layout__content { overflow:visible; }
+}

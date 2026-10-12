@@ -1,7 +1,9 @@
 ﻿import { useEffect, useMemo, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import './SideMenuLayout.css'
-import logo from '../assets/logo/the-full-logo2.png'
+import logo from '../assets/logo/thefull.png'
+import WorkspaceIcon, { type WorkspaceIconName } from './WorkspaceIcon'
+import DeadlineAlertBanner from './DeadlineAlertBanner'
 
 type SideMenuLayoutProps = {
   children: ReactNode
@@ -27,9 +29,10 @@ const majorMenus: MajorMenu[] = [
     label: '발주관리',
     basePaths: ['/order_manager'],
     items: [
-      { label: '식자재 발주', to: '/order_manager/food_order', exact: true },
-      { label: 'Welstory 연계 발주', to: '/order_manager/welstory', exact: true },
-      { label: '발주서 관리' },
+      { label: '발주하기', to: '/order_manager/order', exact: true },
+      { label: '공급사 통합 연동', to: '/order_manager/suppliers', exact: true },
+      { label: '공급사 사업장 매핑', to: '/order_manager/supplier-sites', exact: true },
+      { label: '발주서 관리', to: '/order_manager/orders', exact: true },
       { label: '거래명세서 관리' },
     ],
   },
@@ -38,7 +41,9 @@ const majorMenus: MajorMenu[] = [
     label: '재고관리',
     basePaths: ['/inventory'],
     items: [
-      { label: '거래처 재고관리', to: '/inventory/account', exact: true },
+      { label: '재고 변동 이력', to: '/inventory/history', exact: true },
+      { label: '상품별 재고 조정', to: '/inventory/account', exact: true },
+      { label: '거래처 재고 관리', to: '/inventory/account-ingredients', exact: true },
       { label: '식자재 관리', to: '/inventory/ingredients', exact: true },
       // { label: '재고 이동관리' },
     ],
@@ -50,11 +55,19 @@ const majorMenus: MajorMenu[] = [
     items: [{ label: '거래처별 위생관리', to: '/sanitation/vendor', exact: true }],
   },
   {
-    key: 'operations',
-    label: '운영관리',
-    basePaths: ['/operations'],
+    key: 'headquarters',
+    label: '본사관리',
+    basePaths: ['/operations/account', '/operations/search-analytics'],
     items: [
       { label: '고객사 관리', to: '/operations/account', exact: true },
+      { label: '검색어 관리', to: '/operations/search-analytics', exact: true },
+    ],
+  },
+  {
+    key: 'operations',
+    label: '운영관리',
+    basePaths: ['/operations/menu', '/operations/account-menu', '/operations/table-meals'],
+    items: [
       { label: '메뉴 관리', to: '/operations/menu', exact: true },
       { label: '거래처 메뉴 관리', to: '/operations/account-menu', exact: true },
       { label: '식단표 관리', to: '/operations/table-meals', exact: true },
@@ -68,7 +81,7 @@ function findActiveMenuKey(pathname: string) {
     menu.basePaths.some((basePath) => pathname === basePath || pathname.startsWith(`${basePath}/`)),
   )
 
-  return matchedMenu?.key ?? 'order'
+  return matchedMenu?.key ?? ''
 }
 
 function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
@@ -93,17 +106,35 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  useEffect(() => {
+  const [menuPath, setMenuPath] = useState(location.pathname)
+  if (menuPath !== location.pathname) {
+    setMenuPath(location.pathname)
     setOpenMenuKey(findActiveMenuKey(location.pathname))
-  }, [location.pathname])
+  }
+
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && window.innerWidth <= 960) setIsCollapsed(true)
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [])
 
   const activeMenuKey = useMemo(() => findActiveMenuKey(location.pathname), [location.pathname])
 
+  const withAccount = (to: string) => {
+    if (!to.startsWith('/')) return to
+    const query = new URLSearchParams(location.search)
+    const accountId = query.get('account_id') || (location.pathname === '/inventory/account' ? query.get('id') : '') || localStorage.getItem('account_id')
+    return accountId ? `${to}?${new URLSearchParams({ account_id: accountId })}` : to
+  }
+
   const navigateWithFallback = (to: string) => {
+    if (window.innerWidth <= 960) setIsCollapsed(true)
     navigate(to)
 
     window.setTimeout(() => {
-      if (window.location.pathname !== to) {
+      if (window.location.pathname + window.location.search !== to) {
         window.location.assign(to)
       }
     }, 0)
@@ -147,7 +178,7 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
 
     const target = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>('a[data-side-nav-to]') : null
     const to = target?.dataset.sideNavTo
-    if (!to || to === location.pathname) return
+    if (!to || to === location.pathname + location.search) return
 
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur()
@@ -160,6 +191,7 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
 
   return (
     <div className={`side-layout${isCollapsed ? ' is-collapsed' : ''}`}>
+      {!isCollapsed ? <button type="button" className="side-layout__backdrop" aria-label="메뉴 닫기" onClick={() => setIsCollapsed(true)} /> : null}
       <aside
         className="side-layout__sidebar"
         aria-label="사이드 메뉴"
@@ -168,7 +200,7 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
       >
         <div className="side-layout__sidebar-top">
           <div className="side-layout__brand">
-            <img src={logo} alt="The Full" />
+            <img src={logo} alt="더채움 THE CHAEWOOM" />
           </div>
           <button
             type="button"
@@ -188,10 +220,12 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
             data-side-nav-to="/home"
             onClick={(event) => handleNavigate(event, '/home')}
           >
-            홈
+            <WorkspaceIcon name="home" /><span>홈</span>
           </NavLink>
 
-          {majorMenus.map((menu) => {
+
+
+          {majorMenus.filter(menu => localStorage.getItem('user_type') !== '3' || menu.key !== 'headquarters').map((menu) => {
             const isOpen = openMenuKey === menu.key
             const isActive = activeMenuKey === menu.key
 
@@ -206,7 +240,7 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
                   onClick={() => setOpenMenuKey((current) => (current === menu.key ? '' : menu.key))}
                   aria-expanded={isOpen}
                 >
-                  <span>{menu.label}</span>
+                  <WorkspaceIcon name={menu.key as WorkspaceIconName} /><span>{menu.label}</span>
                   <span className={`side-layout__chevron${isOpen ? ' is-open' : ''}`} aria-hidden="true">
                     v
                   </span>
@@ -214,14 +248,14 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
 
                 {isOpen ? (
                   <div className="side-layout__submenu">
-                    {menu.items.map((item) =>
+                    {menu.items.filter(item => localStorage.getItem('user_type') !== '3' || !['/order_manager/suppliers', '/order_manager/supplier-sites', '/order_manager/welstory', '/inventory/ingredients', '/operations/menu'].includes(item.to || '')).map((item) =>
                       item.to ? (
                         <NavLink
                           key={`${menu.key}-${item.label}`}
-                          to={item.to}
+                          to={withAccount(item.to)}
                           end={item.exact}
-                          data-side-nav-to={item.to}
-                          onClick={(event) => handleNavigate(event, item.to!)}
+                          data-side-nav-to={withAccount(item.to)}
+                          onClick={(event) => handleNavigate(event, withAccount(item.to!))}
                           className={({ isActive: isSubActive }) =>
                             `side-layout__sublink${isSubActive ? ' is-active' : ''}`
                           }
@@ -244,6 +278,10 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
             )
           })}
         </nav>
+        <div className="side-layout__account">
+          <WorkspaceIcon name="headquarters" />
+          <div><strong>{localStorage.getItem('account_name') || '더채움'}</strong><span>{localStorage.getItem('user_name') || '구매·재고 업무 공간'}</span></div>
+        </div>
       </aside>
 
       <section className="side-layout__main">
@@ -260,7 +298,7 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
             </button>
           </div>
         ) : null}
-        <div className="side-layout__content">{children}</div>
+        <div className="side-layout__content"><DeadlineAlertBanner />{children}</div>
       </section>
     </div>
   )

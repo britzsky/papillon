@@ -1,1121 +1,251 @@
-﻿import { useEffect, useMemo, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
-import HeaderBar from '../../components/HeaderBar'
+import CatalogPreparation from '../../components/CatalogPreparation'
 import LoadingScreen from '../../components/LoadingScreen'
+import BatchOrderResults from '../../components/BatchOrderResults'
+import { clearDeadlineAlertCache } from '../../api/deadlineAlerts'
+import { submitMixedProcurement, recoverMixedProcurement, startNewMixedProcurement, type BatchResult } from '../../api/mixedProcurement'
+import { createPortal } from 'react-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import HeaderBar from '../../components/HeaderBar'
 import SideMenuLayout from '../../components/SideMenuLayout'
-import {
-  getOrderDetailList,
-  getOrderMenuList,
-  type MealType,
-  type MenuCategory,
-  type OrderMenu,
-} from '../../api/order'
-import { mealCategoryOptions } from '../operations/menuManagerShared'
-import { lookupItem, validateItemLookupRequest, type ItemLookupItem } from '../../api/itemLookup'
-import { lookupWorkplaces, type Workplace } from '../../api/workplaceLookup'
-import './FoodOrder.css'
-import { getAverageUsage, getIngredientStockStatus } from '../../utils/ingredientStockStatus'
-import { createProcurementCartFromMealPlan } from '../../api/operations'
-import { getLikeIngredientOptions } from '../../api/operations'
-import { getAccountInventoryList, type AccountInventoryItem } from '../../api/inventory'
+import { getTableMealsList, type TableMealsItem } from '../../api/operations'
+import { getSupplierSites, type SupplierSite } from '../../api/supplierIntegration'
+import { getPlanDates, getShortages, MANUAL_MAX_ORDER_QTY, matchesStockFilter, previewShortageOrder, shortageStockStatus, SHORTAGE_STOCK_LABELS, type OrderPreview, type OrderSelection, type ShortageCriteria, type ShortageResult, type ShortageOffer, type ShortageStockFilter } from '../../api/shortageProcurement'
+import { PrintIcon } from '../../components/ActionIcons'
+import './ShortageFoodOrder.css'
 
-type Supplier = {
-  menu_id: string
-  menu_name: string
-  price: number
-  recommendedQuantity: number
+const day = (offset = 0) => { const date = new Date(); date.setDate(date.getDate() + offset); return date.toLocaleDateString('sv-SE') }
+const number = (value: number) => value.toLocaleString('ko-KR', { maximumFractionDigits: 3 })
+const money = (value: number) => value.toLocaleString('ko-KR', { maximumFractionDigits: 2 })
+const taxLabel = (value: string) => value === 'No tax' ? '면세' : ['Full tax', 'CONS', 'CONS(소모품)'].includes(value) ? '과세 · 세액 확인 필요' : '과세정보 확인 필요'
+
+const statusRank = { RED: 0, YELLOW: 1, GREEN: 2 } as const
+
+function deliveryTerms(offer: ShortageOffer) {
+  const state = offer.orderability_status === 'AVAILABLE' ? '발주 가능' : offer.orderability_status === 'UNAVAILABLE' ? '발주 불가' : '확인 필요'
+  return state + ' · ' + (offer.orderability_reason || '납품·마감 조건 확인 필요')
 }
 
-type Ingredient = {
-  menu_id: string
-  ingredient_id: string
-  ingredient_name: string
-  required_qty: number
-  current_qty: number
-  shortage_qty: number
-  order_needed_qty: number
-  base_unit: string
-  order_unit: string
-  convert_value: number
-  average_usage_qty?: number
-  total_capacity_qty?: number
-  last_used_at?: string
-  menu_usage_count?: number
-  suppliers: Supplier[]
+function deliveryWarning(offer: ShortageOffer, deliveryDate: string, now: Date) {
+  const lead = Number(offer.lead_time_days)
+  if (offer.lead_time_days == null || !Number.isInteger(lead) || lead < 0 || !deliveryDate) return ''
+  const today = now.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })
+  const earliest = new Date(today + 'T00:00:00Z')
+  earliest.setUTCDate(earliest.getUTCDate() + lead)
+  if (deliveryDate < earliest.toISOString().slice(0, 10)) return '선택한 납품일은 리드타임 ' + lead + '일보다 빠릅니다. 납품일을 변경해주세요.'
+  return ''
 }
 
-type MenuDetail = OrderMenu & {
-  mealType?: MealType
-  servings?: number
-  ingredients: Ingredient[]
-}
-
-type SelectedOrder = {
-  ingredientmenu_id: string
-  ingredientmenu_name: string
-  unit: string
-  requiredQuantity: number
-  stockQuantity: number
-  suppliermenu_id: string
-  suppliermenu_name: string
-  price: number
-  recommendedQuantity: number
-}
-
-const MEAL_BREAKFAST = '조식' as MealType
-const MEAL_LUNCH = '중식' as MealType
-const MEAL_DINNER = '석식' as MealType
-
-function getCategoryLabel(category: MenuCategory) {
-  return category
-}
-
-const categoryOptions = [...mealCategoryOptions] as MenuCategory[]
-
-const mockMenuDetails: MenuDetail[] = [
-  {
-    menu_id: '1',
-    food_type: '한식',
-    meal_category: '한식',
-    menu_type: '0',
-    mealType: MEAL_BREAKFAST,
-    menu_name: '소고기미역국 정식',
-    created_at: '2026-03-12',
-    servings: 120,
-    ingredients: [
-      {
-        menu_id: '1',
-        ingredient_id: '101',
-        ingredient_name: '미역',
-        required_qty: 8,
-        current_qty: 2,
-        shortage_qty: 6,
-        order_needed_qty: 6,
-        base_unit: 'kg',
-        order_unit: 'kg',
-        convert_value: 1,
-        suppliers: [
-          { menu_id: '1001', menu_name: '바다유통', price: 12000, recommendedQuantity: 6 },
-          { menu_id: '1002', menu_name: '청해식품', price: 11500, recommendedQuantity: 6 },
-        ],
-      },
-      {
-        menu_id: '1',
-        ingredient_id: '102',
-        ingredient_name: '소고기',
-        required_qty: 18,
-        current_qty: 7,
-        shortage_qty: 11,
-        order_needed_qty: 11,
-        base_unit: 'kg',
-        order_unit: 'kg',
-        convert_value: 1,
-        suppliers: [
-          { menu_id: '1003', menu_name: '서우직송', price: 28000, recommendedQuantity: 11 },
-          { menu_id: '1004', menu_name: '미트밸리', price: 26500, recommendedQuantity: 11 },
-        ],
-      },
-    ],
-  },
-  {
-    menu_id: 'M0049',
-    food_type: '중식',
-    meal_category: '중식',
-    menu_type: '0',
-    mealType: MEAL_LUNCH,
-    menu_name: '제육볶음 정식',
-    created_at: '2026-03-12',
-    servings: 150,
-    ingredients: [
-      {
-        menu_id: '2',
-        ingredient_id: '104',
-        ingredient_name: '돼지고기',
-        required_qty: 24,
-        current_qty: 9,
-        shortage_qty: 15,
-        order_needed_qty: 15,
-        base_unit: 'kg',
-        order_unit: 'kg',
-        convert_value: 1,
-        suppliers: [
-          { menu_id: 'M0049', menu_name: '축산플러스', price: 16000, recommendedQuantity: 15 },
-          { menu_id: 'M0049', menu_name: '신선정육', price: 15800, recommendedQuantity: 15 },
-        ],
-      },
-      {
-        menu_id: 'M0049',
-        ingredient_id: 'I0157',
-        ingredient_name: '고추장',
-        required_qty: 6,
-        current_qty: 2,
-        shortage_qty: 4,
-        order_needed_qty: 4,
-        base_unit: 'kg',
-        order_unit: 'kg',
-        convert_value: 1,
-        suppliers: [{ menu_id: 'M0049', menu_name: '맛있는상회', price: 9000, recommendedQuantity: 4 }],
-      },
-    ],
-  },
-  {
-    menu_id: 'M0049',
-    food_type: '일식',
-    meal_category: '일식',
-    menu_type: '0',
-    mealType: MEAL_DINNER,
-    menu_name: '닭갈비 정식',
-    created_at: '2026-03-13',
-    servings: 100,
-    ingredients: [
-      {
-        menu_id: 'M0049',
-        ingredient_id: 'I0004',
-        ingredient_name: '닭고기',
-        required_qty: 20,
-        current_qty: 8,
-        shortage_qty: 12,
-        order_needed_qty: 12,
-        base_unit: 'kg',
-        order_unit: 'kg',
-        convert_value: 1,
-        suppliers: [
-          { menu_id: '1101', menu_name: '한빛축산', price: 14500, recommendedQuantity: 12 },
-          { menu_id: '1102', menu_name: '푸드허브', price: 14200, recommendedQuantity: 12 },
-        ],
-      },
-    ],
-  },
-]
-
-function formatNumber(value: number) {
-  return new Intl.NumberFormat('ko-KR').format(value)
-}
-
-function formatQuantity(value: number, unit: string) {
-  return `${Number.isInteger(value) ? value : value.toFixed(1)}${unit}`
-}
-
-function getCurrentDate() {
-  const now = new Date()
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
-    now.getDate(),
-  ).padStart(2, '0')}`
-}
-
-function getCompactDate(daysToAdd = 0) {
-  const date = new Date()
-  date.setDate(date.getDate() + daysToAdd)
-  return `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`
-}
-
-function sanitizeServingQty(value: number) {
-  if (!Number.isFinite(value) || value < 1) {
-    return 1
-  }
-
-  return Math.floor(value)
-}
-
-function buildFallbackIngredients(menu: MenuDetail | undefined): Ingredient[] {
-  return menu?.ingredients ?? []
-}
-
-type FoodOrderProps = {
-  embedded?: boolean
-}
-
-const DEFAULT_WORKPLACE: Workplace = {
-  solTo: 'A0199183',
-  soldToNm: '더채움',
-  logisCd: '',
-  repSoldtoYn: '',
-  nextPGCycle: '',
-  payerCode: '',
-  payerNm: '',
-  pricingCode: '',
-}
-
-function withDefaultWorkplace(items: Workplace[]) {
-  return items.some((item) => item.solTo === DEFAULT_WORKPLACE.solTo)
-    ? items
-    : [DEFAULT_WORKPLACE, ...items]
-}
-
-function FoodOrder({ embedded: _embedded = false }: FoodOrderProps) {
-  void _embedded
-  const { menuId: routeMenuId } = useParams<{ menuId?: string }>()
-  const [searchParams] = useSearchParams()
-  const targetMenuId = routeMenuId ? decodeURIComponent(routeMenuId) : ''
-  const targetAccountId = searchParams.get('account_id')?.trim() ?? ''
-  const storedAccountId = typeof window !== 'undefined' ? localStorage.getItem('account_id')?.trim() ?? '' : ''
-  const effectiveAccountId = targetAccountId || storedAccountId
-  const targetTableId = searchParams.get('table_id')?.trim() ?? ''
-
-  const [selectedCategory, setSelectedCategory] = useState<MenuCategory>(categoryOptions[0])
-  const [menuList, setMenuList] = useState<OrderMenu[]>([])
-  const [menuListError, setMenuListError] = useState('')
-  const [isMenuListLoading, setIsMenuListLoading] = useState(true)
-  const [selectedMenuId, setSelectedMenuId] = useState<string | null>(null)
-  const [servingQtyByMenuId, setServingQtyByMenuId] = useState<Record<string, number>>({})
-  const [detailItems, setDetailItems] = useState<Ingredient[]>([])
-  const [detailError, setDetailError] = useState('')
-  const [isDetailLoading, setIsDetailLoading] = useState(false)
-  const [selectedSuppliers, setSelectedSuppliers] = useState<Record<string, boolean>>({})
-  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false)
-  const [itemCode, setItemCode] = useState('')
-  const [soldTo, setSoldTo] = useState(DEFAULT_WORKPLACE.solTo)
-  const [workplaces, setWorkplaces] = useState<Workplace[]>([DEFAULT_WORKPLACE])
-  const [workplaceError, setWorkplaceError] = useState('')
-  const [isWorkplaceLoading, setIsWorkplaceLoading] = useState(false)
-  const [reqDeliveryDate, setReqDeliveryDate] = useState(() => getCompactDate(1))
-  const [lookupItems, setLookupItems] = useState<ItemLookupItem[]>([])
-  const [lookupError, setLookupError] = useState('')
-  const [isLookupLoading, setIsLookupLoading] = useState(false)
-  const [basketIngredients, setBasketIngredients] = useState<Ingredient[] | null>(null)
-  const [basketSearch, setBasketSearch] = useState('')
-  const [basketMessage, setBasketMessage] = useState('')
-
-  useEffect(() => {
-    if (!effectiveAccountId || !targetTableId) return
-
-    const requestKey = `procurement-cart:${effectiveAccountId}:${targetTableId}`
-    if (sessionStorage.getItem(requestKey) === 'requested') return
-    sessionStorage.setItem(requestKey, 'requested')
-
-    void createProcurementCartFromMealPlan(effectiveAccountId, targetTableId).catch(() => {
-      sessionStorage.removeItem(requestKey)
-    })
-  }, [effectiveAccountId, targetTableId])
-
-  useEffect(() => {
-    let isMounted = true
-
-    const loadMenuList = async () => {
+/**
+ * embedded: 발주하기(OrderWorkspace) 탭 안에서 레이아웃 없이 내용만 그린다.
+ * fixedSource: 발주하기의 기준 탭(식단표·현재 부족 재고·최근 사용량)이 정한 계산 기준. 이때 화면 안의 기준 전환은 숨긴다.
+ * 식단표 기준 탭은 식단 구성 화면에서 넘어온 '구성 중인 식단(DRAFT)'도 받는다.
+ */
+function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY' }) {
+  const [params] = useSearchParams()
+  const accountId = params.get('account_id') || localStorage.getItem('account_id') || ''
+  const focusIngredient = params.get('ingredient_id') || ''
+  const [criteria, setCriteria] = useState<ShortageCriteria>(() => {
+    const resumeKey = !params.get('source') && !params.get('table_id') && !params.get('ingredient_id') && sessionStorage.getItem(`plan-editor:${accountId}`) ? `plan-procurement:${accountId}` : ''
+    const draftKey = !fixedSource || fixedSource === 'PLAN' ? params.get('draft_key') || (resumeKey && sessionStorage.getItem(resumeKey) ? resumeKey : '') : ''
+    if (draftKey) {
       try {
-        setIsMenuListLoading(true)
-        setMenuListError('')
-        const menus = await getOrderMenuList(effectiveAccountId || undefined)
-        if (!isMounted) {
-          return
-        }
-
-        const fallbackMenus = menus.length > 0 ? menus : mockMenuDetails
-
-        setMenuList(fallbackMenus)
-        setServingQtyByMenuId((current) => {
-          const next = { ...current }
-          fallbackMenus.forEach((menu) => {
-            next[menu.menu_id] = next[menu.menu_id] ?? 1
-          })
-          return next
-        })
-      } catch (error) {
-        if (!isMounted) {
-          return
-        }
-
-        setMenuList(mockMenuDetails)
-        setServingQtyByMenuId((current) => {
-          const next = { ...current }
-          mockMenuDetails.forEach((menu) => {
-            next[menu.menu_id] = next[menu.menu_id] ?? 1
-          })
-          return next
-        })
-        setMenuListError(error instanceof Error ? error.message : '메뉴 목록을 불러오지 못했습니다.')
-      } finally {
-        if (isMounted) {
-          setIsMenuListLoading(false)
-        }
-      }
+        const draft = JSON.parse(sessionStorage.getItem(draftKey) || 'null') as ShortageCriteria | null
+        if (draft?.account_id === accountId && draft.source === 'DRAFT') return draft
+      } catch { /* The API will explain that the draft must be reopened. */ }
+      return { account_id: accountId, source: 'DRAFT', draft_meals: [], table_id: '', date_from: day(), date_to: day(6), delivery_date: day(), sold_to: '', average_days: 30, coverage_days: 1 }
     }
-
-    loadMenuList()
-
-    return () => {
-      isMounted = false
-    }
-  }, [effectiveAccountId])
-
+    // 마감 알림의 '발주하기'는 해당 납품일(delivery_date)로 연다. 조회 기간은 납품일까지 포함하도록 늘린다.
+    const requestedDelivery = /^\d{4}-\d{2}-\d{2}$/.test(params.get('delivery_date') || '') && (params.get('delivery_date') as string) >= day() ? params.get('delivery_date') as string : ''
+    return ({
+    account_id: accountId, source: fixedSource ?? (params.get('source') === 'PLAN' || (!params.get('source') && params.get('table_id')) ? 'PLAN' : params.get('source') === 'STOCK' ? 'STOCK' : 'INVENTORY'),
+    table_id: params.get('table_id') || '', date_from: day(), date_to: requestedDelivery > day(6) ? requestedDelivery : day(6), delivery_date: requestedDelivery || day(1),
+    sold_to: '', average_days: 30, coverage_days: 1,
+  })})
+  const [guidanceNow, setGuidanceNow] = useState(() => new Date())
   useEffect(() => {
-    if (!targetMenuId || menuList.length === 0) {
-      return
-    }
-
-    const targetMenu = menuList.find((menu) => menu.menu_id === targetMenuId)
-    if (!targetMenu) {
-      return
-    }
-
-    setSelectedCategory(targetMenu.meal_category)
-    setSelectedMenuId(targetMenu.menu_id)
-  }, [menuList, targetMenuId])
-
-  const filteredMenus = useMemo(() => {
-    const items = menuList.filter((item) => item.meal_category === selectedCategory)
-    if (!targetMenuId) {
-      return items
-    }
-
-    return [...items].sort((a, b) => {
-      if (a.menu_id === targetMenuId) return -1
-      if (b.menu_id === targetMenuId) return 1
-      return 0
-    })
-  }, [menuList, selectedCategory, targetMenuId])
-
-  useEffect(() => {
-    const nextMenu = filteredMenus.find((menu) => menu.menu_id === selectedMenuId) ?? filteredMenus[0] ?? null
-    setSelectedMenuId(nextMenu?.menu_id ?? null)
-  }, [filteredMenus, selectedMenuId])
-
-  const activeMenuSummary =
-    filteredMenus.find((menu) => menu.menu_id === selectedMenuId) ?? filteredMenus[0] ?? null
-
-  const activeServingQty = activeMenuSummary ? servingQtyByMenuId[activeMenuSummary.menu_id] ?? 1 : 1
-
-  useEffect(() => {
-    let isMounted = true
-
-    const loadDetailList = async () => {
-      if (!activeMenuSummary?.menu_id) {
-        setDetailItems([])
-        setDetailError('')
-        setIsDetailLoading(false)
-        return
-      }
-
-      const matchedMock = mockMenuDetails.find((menu) => menu.menu_id === activeMenuSummary.menu_id)
-
-      try {
-        setIsDetailLoading(true)
-        setDetailError('')
-        const details = await getOrderDetailList(
-          activeMenuSummary.menu_id,
-          activeServingQty,
-          activeMenuSummary.menu_type,
-          effectiveAccountId || undefined,
-        )
-        if (!isMounted) {
-          return
-        }
-
-        const fallbackIngredients = buildFallbackIngredients(matchedMock)
-        const fallbackById = new Map(fallbackIngredients.map((item) => [item.ingredient_id, item]))
-
-        setDetailItems(
-          (details.length > 0 ? details : fallbackIngredients).map((detail) => {
-            const fallback = fallbackById.get(detail.ingredient_id)
-            const supplierProductId = 'supplier_product_id' in detail ? detail.supplier_product_id : undefined
-            const supplierName = 'supplier_name' in detail ? detail.supplier_name : undefined
-            const purchasePrice = 'purchase_price' in detail ? detail.purchase_price : undefined
-            return {
-              ...detail,
-              suppliers: supplierProductId
-                ? [{
-                    menu_id: String(supplierProductId),
-                    menu_name: supplierName || '연결 공급처',
-                    price: purchasePrice ?? 0,
-                    recommendedQuantity: detail.order_needed_qty,
-                  }]
-                : fallback?.suppliers ?? [],
-            }
-          }),
-        )
-      } catch (error) {
-        if (!isMounted) {
-          return
-        }
-
-        setDetailItems(buildFallbackIngredients(matchedMock))
-        setDetailError(error instanceof Error ? error.message : '식자재 상세 목록을 불러오지 못했습니다.')
-      } finally {
-        if (isMounted) {
-          setIsDetailLoading(false)
-        }
-      }
-    }
-
-    loadDetailList()
-
-    return () => {
-      isMounted = false
-    }
-  }, [activeMenuSummary, activeServingQty, effectiveAccountId])
-
-  const activeMenu = useMemo<MenuDetail | null>(() => {
-    if (!activeMenuSummary) {
-      return null
-    }
-
-    const matchedMock = mockMenuDetails.find((menu) => menu.menu_id === activeMenuSummary.menu_id)
-
-    return {
-      ...(matchedMock ?? {
-        ...activeMenuSummary,
-        ingredients: [],
-      }),
-      ...activeMenuSummary,
-      servings: activeServingQty,
-      ingredients: detailItems,
-    }
-  }, [activeMenuSummary, activeServingQty, detailItems])
-
-  const orderIngredients = useMemo(
-    () => basketIngredients ?? activeMenu?.ingredients ?? [],
-    [activeMenu, basketIngredients],
-  )
-
-  useEffect(() => {
-    setBasketIngredients(null)
-    setBasketMessage('')
-  }, [activeMenuSummary?.menu_id])
-
-  useEffect(() => {
-    setSelectedSuppliers(
-      Object.fromEntries(
-        orderIngredients.flatMap((ingredient) =>
-          ingredient.order_needed_qty > 0 && ingredient.suppliers[0]
-            ? [[`${ingredient.ingredient_id}-${ingredient.suppliers[0].menu_id}`, true]]
-            : [],
-        ),
-      ),
-    )
-    setIsOrderModalOpen(false)
-  }, [orderIngredients, activeServingQty])
-
-  const inventoryToIngredient = (item: AccountInventoryItem): Ingredient => ({
-    menu_id: activeMenu?.menu_id ?? 'BASKET',
-    ingredient_id: item.ingredient_id,
-    ingredient_name: item.ingredient_name,
-    required_qty: item.average_usage_qty ?? item.required_qty ?? 0,
-    current_qty: item.current_base_qty,
-    shortage_qty: item.shortage_qty,
-    order_needed_qty: item.order_needed_qty,
-    base_unit: item.base_unit,
-    order_unit: item.order_unit,
-    convert_value: item.convert_value || item.package_base_qty || 1,
-    average_usage_qty: item.average_usage_qty,
-    total_capacity_qty: item.total_capacity_qty,
-    last_used_at: item.last_used_at,
-    menu_usage_count: item.menu_usage_count,
-    suppliers: item.supplier_product_id
-      ? [{
-          menu_id: String(item.supplier_product_id),
-          menu_name: item.supplier_name || item.product_name || '연결 공급처',
-          price: item.purchase_price ?? 0,
-          recommendedQuantity: item.order_needed_qty > 0 ? item.order_needed_qty : 1,
-        }]
-      : [],
+    const timer = window.setInterval(() => setGuidanceNow(new Date()), 60_000)
+    return () => window.clearInterval(timer)
+  }, [])
+  const [plans, setPlans] = useState<TableMealsItem[]>([])
+  const [sites, setSites] = useState<SupplierSite[]>([])
+  const [result, setResult] = useState<ShortageResult | null>(null)
+  const [selected, setSelected] = useState<Record<string, OrderSelection>>({})
+  const [keyword, setKeyword] = useState('')
+  // 재고 상태 필터: ?stock=RED|YELLOW|CHECK 로 바로 열 수 있다
+  const [stockFilter, setStockFilter] = useState<ShortageStockFilter>(() => {
+    const value = params.get('stock')?.toUpperCase()
+    return value === 'RED' || value === 'YELLOW' || value === 'CHECK' ? value : ''
   })
+  const [autoRefresh, setAutoRefresh] = useState(false)
+  const [revision, setRevision] = useState(0)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
+  const [batchResult, setBatchResult] = useState<BatchResult | null>(null)
+  const [preview, setPreview] = useState<OrderPreview | null>(null)
+  const [previewing, setPreviewing] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [completed, setCompleted] = useState(false)
 
-  const mergeBasketItems = (nextItems: Ingredient[], message: string) => {
-    setBasketIngredients((current) => {
-      const merged = new Map((current ?? activeMenu?.ingredients ?? []).map((item) => [item.ingredient_id, item]))
-      nextItems.forEach((item) => merged.set(item.ingredient_id, item))
-      return Array.from(merged.values())
-    })
-    setBasketMessage(message)
+  useEffect(() => {
+    let active = true
+    setSelected({}); setResult(null)
+    setCriteria(current => ({ ...current, account_id: accountId, sold_to: '' }))
+    if (!accountId) { setError('로그인한 거래처 정보를 확인해주세요.'); return }
+    void Promise.all([getTableMealsList(accountId), getSupplierSites(accountId)]).then(([tables, rows]) => {
+      if (!active) return
+      const unique = rows.filter(site => ['WELSTORY', 'OURHOME'].includes(site.supplier_code))
+      setPlans(tables); setSites(unique)
+      setCriteria(current => ({ ...current, sold_to: '', supplier_code: '' }))
+    }).catch((e: unknown) => { if (active) setError(e instanceof Error ? e.message : '거래처 조회 실패') })
+    return () => { active = false }
+  }, [accountId])
+
+  useEffect(() => {
+    if (!criteria.table_id || criteria.source !== 'PLAN') return
+    let active = true
+    void getPlanDates(accountId, criteria.table_id).then(dates => {
+      if (!active || !dates.length) return
+      setCriteria(current => ({ ...current, date_from: dates[0], date_to: dates[dates.length - 1], delivery_date: dates[0] < day() ? day() : dates[0] }))
+    }).catch((e: unknown) => { if (active) setError(e instanceof Error ? e.message : '식단 기간 조회 실패') })
+    return () => { active = false }
+  }, [accountId, criteria.table_id, criteria.source])
+
+  useEffect(() => {
+    if (!criteria.account_id) return
+    const controller = new AbortController()
+    setLoading(true); setError(''); setPreview(null)
+    void getShortages(criteria, controller.signal).then(data => {
+      if (controller.signal.aborted) return
+      setResult(data)
+      setSelected(current => Object.fromEntries(Object.entries(current).filter(([id, selection]) => {
+        const offer = data.ingredients.find(row => row.ingredient_id === id)?.offers.find(candidate => candidate.supplier_offer_id === selection.supplier_offer_id)
+        return offer?.orderable && selection.order_qty > 0 && selection.order_qty <= (offer.quantity_basis === 'MANUAL' ? MANUAL_MAX_ORDER_QTY : offer.recommended_qty)
+      })))
+    }).catch((e: unknown) => {
+      if (!controller.signal.aborted) { setResult(null); setSelected({}); setError(e instanceof Error ? e.message : '부족재고 조회 실패') }
+    }).finally(() => { if (!controller.signal.aborted) setLoading(false) })
+    return () => controller.abort()
+  }, [criteria, revision])
+
+  useEffect(() => {
+    if (!autoRefresh || preview || submitting || previewing) return
+    const timer = window.setInterval(() => setRevision(value => value + 1), 60_000)
+    return () => window.clearInterval(timer)
+  }, [autoRefresh, preview, submitting, previewing])
+
+  const update = (patch: Partial<ShortageCriteria>) => {
+    setSelected({}); setPreview(null); setMessage(''); setCriteria(current => ({ ...current, ...patch }))
   }
-
-  const addShortageBasket = async () => {
-    const items = await getAccountInventoryList(effectiveAccountId)
-    const selected = items.filter((item) => item.stock_status === 'RED' || item.stock_status === 'ORANGE').map(inventoryToIngredient)
-    mergeBasketItems(selected, `부족품목 ${selected.length}건을 담았습니다.`)
+  const stockCounts = useMemo(() => {
+    const all = result?.ingredients || []
+    return { '': all.length, RED: all.filter(row => matchesStockFilter(row, 'RED')).length,
+      YELLOW: all.filter(row => matchesStockFilter(row, 'YELLOW')).length, CHECK: all.filter(row => matchesStockFilter(row, 'CHECK')).length }
+  }, [result])
+  // 빨강(필요량 부족) → 노랑(안전재고 미달) → 이름순. 집중 식재료는 맨 위.
+  const rows = useMemo(() => [...(result?.ingredients || [])].filter(row =>
+    matchesStockFilter(row, stockFilter) && (!keyword || `${row.ingredient_name} ${row.ingredient_id}`.toLowerCase().includes(keyword.toLowerCase())),
+  ).sort((a, b) => Number(b.ingredient_id === focusIngredient) - Number(a.ingredient_id === focusIngredient)
+    || statusRank[shortageStockStatus(a)] - statusRank[shortageStockStatus(b)] || a.ingredient_name.localeCompare(b.ingredient_name, 'ko')), [result, keyword, focusIngredient, stockFilter])
+  const selectionCount = Object.keys(selected).length
+  const selectedAmount = Object.values(selected).reduce((sum, selection) => {
+    const offer = result?.ingredients.find(row => row.ingredient_id === selection.ingredient_id)?.offers.find(item => item.supplier_offer_id === selection.supplier_offer_id)
+    return sum + (offer ? offer.purchase_price * selection.order_qty : 0)
+  }, 0)
+  const selectedSuppliers = [...new Set(Object.values(selected).flatMap(selection => {
+    const offer = result?.ingredients.find(row => row.ingredient_id === selection.ingredient_id)?.offers.find(item => item.supplier_offer_id === selection.supplier_offer_id)
+    return offer ? [offer.supplier_name] : []
+  }))]
+  const makePreview = async () => {
+    setPreviewing(true); setError(''); setMessage(''); setCompleted(false); setBatchResult(null)
+    try { setPreview(await previewShortageOrder(criteria, Object.values(selected))) }
+    catch (e) { setError(e instanceof Error ? e.message : '발주서 확인 실패'); setRevision(value => value + 1) }
+    finally { setPreviewing(false) }
   }
-
-  const addFavoriteBasket = async () => {
-    const [inventory, favorites] = await Promise.all([getAccountInventoryList(effectiveAccountId), getLikeIngredientOptions(effectiveAccountId)])
-    const ids = new Set(favorites.map((item) => item.ingredient_id))
-    const selected = inventory.filter((item) => ids.has(item.ingredient_id)).map(inventoryToIngredient)
-    mergeBasketItems(selected, `즐겨찾기 ${selected.length}건을 담았습니다.`)
-  }
-
-  const addSearchedIngredient = async () => {
-    const keyword = basketSearch.trim().toLowerCase()
-    if (!keyword) return
-    const inventory = await getAccountInventoryList(effectiveAccountId)
-    const matched = inventory.find((item) => item.ingredient_name.toLowerCase().includes(keyword) || item.ingredient_id.toLowerCase() === keyword)
-    if (!matched) {
-      setBasketMessage('거래처 재고에서 일치하는 식자재를 찾지 못했습니다.')
-      return
-    }
-    mergeBasketItems([inventoryToIngredient(matched)], `${matched.ingredient_name}을(를) 담았습니다.`)
-    setBasketSearch('')
-  }
-
-  const removeBasketIngredient = (ingredientId: string) => {
-    setBasketIngredients(orderIngredients.filter((item) => item.ingredient_id !== ingredientId))
-  }
-
-  const handleItemSearch = async (event: React.FormEvent) => {
-    event.preventDefault()
-    const request = {
-      soldTo: soldTo.trim(),
-      itemCode: itemCode.trim(),
-      reqDeliveryDate: reqDeliveryDate.trim(),
-    }
-    const validationError = validateItemLookupRequest(request)
-    if (validationError) {
-      setLookupError(validationError)
-      return
-    }
-    localStorage.setItem('sold_to', request.soldTo)
-    setIsLookupLoading(true)
-    setLookupError('')
+  const submit = async () => {
+    if (!preview || submitting || completed) return
+    setSubmitting(true); setMessage('')
     try {
-      const items = await lookupItem(request)
-      setLookupItems(items)
-      if (items.length === 0) setLookupError('해당 입고일에 주문 가능한 품목 정보가 없습니다.')
-    } catch (error) {
-      setLookupItems([])
-      setLookupError(error instanceof Error ? error.message : '품목 조회에 실패했습니다.')
-    } finally {
-      setIsLookupLoading(false)
-    }
+      const response = await submitMixedProcurement({
+        account_id: accountId, shortage_criteria: preview.criteria,
+        items: preview.items.map(row => ({ source_ingredient_id: row.ingredient_id, supplier_offer_id: row.offer.supplier_offer_id,
+          delivery_terms_confirmed: row.delivery_terms_confirmed, delivery_date: preview.criteria.delivery_date, order_qty: row.order_qty, expected_price: row.offer.purchase_price })),
+      })
+      setBatchResult(response); setCompleted(true); setSelected({}); clearDeadlineAlertCache()
+      setMessage('공급사별 발주 결과를 확인해주세요.')
+    } catch (e) { setMessage(e instanceof Error ? e.message : '발주 결과를 확인하지 못했습니다.') }
+    finally { setSubmitting(false) }
   }
+  const closePreview = () => { if (submitting) return; setPreview(null); setRevision(value => value + 1) }
 
-  const handleWorkplaceLookup = async () => {
-    setIsWorkplaceLoading(true)
-    setWorkplaceError('')
-    try {
-      const items = await lookupWorkplaces()
-      setWorkplaces(withDefaultWorkplace(items))
-      if (items.length === 0) setWorkplaceError('조회된 사업장이 없어 기본 사업장을 표시합니다.')
-    } catch (error) {
-      setWorkplaces([DEFAULT_WORKPLACE])
-      setWorkplaceError(error instanceof Error ? error.message : '사업장 조회에 실패했습니다.')
-    } finally {
-      setIsWorkplaceLoading(false)
-    }
-  }
-
-  const handleWorkplaceChange = (value: string) => {
-    setSoldTo(value)
-    localStorage.setItem('sold_to', value)
-    setLookupItems([])
-    setLookupError('')
-  }
-
-  const selectedOrders = useMemo<SelectedOrder[]>(() => {
-    if (!activeMenu) {
-      return []
-    }
-
-    return orderIngredients.flatMap((ingredient) =>
-      ingredient.suppliers
-        .filter((supplier) => selectedSuppliers[`${ingredient.ingredient_id}-${supplier.menu_id}`])
-        .map((supplier) => ({
-          ingredientmenu_id: ingredient.ingredient_id,
-          ingredientmenu_name: ingredient.ingredient_name,
-          unit: ingredient.order_unit || ingredient.base_unit,
-          requiredQuantity: ingredient.required_qty,
-          stockQuantity: ingredient.current_qty,
-          suppliermenu_id: supplier.menu_id,
-          suppliermenu_name: supplier.menu_name,
-          price: supplier.price,
-          recommendedQuantity: ingredient.order_needed_qty || supplier.recommendedQuantity,
-        })),
-    )
-  }, [activeMenu, orderIngredients, selectedSuppliers])
-
-  const orderSheetRows = useMemo(
-    () =>
-      selectedOrders.map((order, index) => {
-        const shortageQuantity = Math.max(order.requiredQuantity - order.stockQuantity, 0)
-        const supplyAmount = order.price * order.recommendedQuantity
-        const taxAmount = Math.round(supplyAmount * 0.1)
-        const totalAmount = supplyAmount + taxAmount
-
-        return {
-          ...order,
-          index: index + 1,
-          requiredQuantityText: formatQuantity(order.requiredQuantity, order.unit),
-          stockQuantityText: formatQuantity(order.stockQuantity, order.unit),
-          shortageQuantityText: formatQuantity(shortageQuantity, order.unit),
-          orderQuantityText: formatQuantity(order.recommendedQuantity, order.unit),
-          unitPriceText: `${formatNumber(order.price)}원 / 1${order.unit}`,
-          supplyAmount,
-          taxAmount,
-          totalAmount,
-        }
-      }),
-    [selectedOrders],
-  )
-
-  const orderSummary = useMemo(() => {
-    const supplyAmount = orderSheetRows.reduce((sum, row) => sum + row.supplyAmount, 0)
-    const taxAmount = orderSheetRows.reduce((sum, row) => sum + row.taxAmount, 0)
-    const totalAmount = orderSheetRows.reduce((sum, row) => sum + row.totalAmount, 0)
-    return { supplyAmount, taxAmount, totalAmount }
-  }, [orderSheetRows])
-
-  const toggleSupplier = (ingredientId: string, supplierId: string) => {
-    const key = `${ingredientId}-${supplierId}`
-    setSelectedSuppliers((current) => ({
-      ...current,
-      [key]: !current[key],
-    }))
-  }
-
-  const handleServingQtyChange = (menuId: string, value: string) => {
-    setServingQtyByMenuId((current) => ({
-      ...current,
-      [menuId]: sanitizeServingQty(Number(value)),
-    }))
-  }
-
-  const closeModal = () => setIsOrderModalOpen(false)
-
-  const submitOrder = () => {
-    setSelectedSuppliers({})
-    setIsOrderModalOpen(false)
-  }
-
-  const printOrderSheet = () => {
-    if (typeof window !== 'undefined') {
-      window.print()
-    }
-  }
-
-  return (
-    <div className="food-order-page">
-      <main className="food-order-content">
-        <SideMenuLayout
-          header={
-            <HeaderBar
-              title="식자재 발주"
-              breadcrumbs={[
-                { label: 'Home', to: '/home' },
-                { label: '발주 관리', to: '/order_manager' },
-                { label: '식자재 발주' },
-              ]}
-            />
-          }
-        >
-          <section className="food-order-filters">
-            <div className="food-order-field">
-              <label htmlFor="category">식사 분류</label>
-              <select
-                id="category"
-                value={selectedCategory}
-                onChange={(event) => setSelectedCategory(event.target.value as MenuCategory)}
-              >
-                {categoryOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {getCategoryLabel(option)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <form className="food-order-item-search" onSubmit={handleItemSearch}>
-              <label>사업장
-                <select value={soldTo} onChange={(event) => handleWorkplaceChange(event.target.value)} disabled={isWorkplaceLoading}>
-                  <option value="">사업장을 선택하세요</option>
-                  {workplaces.map((workplace) => (
-                    <option key={workplace.solTo} value={workplace.solTo}>
-                      {workplace.solTo}({workplace.soldToNm || '사업장명 없음'})
-                    </option>
-                  ))}
-                  {soldTo && !workplaces.some((workplace) => workplace.solTo === soldTo) ? (
-                    <option value={soldTo}>저장된 사업장 ({soldTo})</option>
-                  ) : null}
-                </select>
-              </label>
-              <button type="button" onClick={handleWorkplaceLookup} disabled={isWorkplaceLoading}>
-                {isWorkplaceLoading ? '조회 중…' : '사업장 조회'}
-              </button>
-              <label>품목코드<input value={itemCode} maxLength={18} autoComplete="off" onChange={(event) => setItemCode(event.target.value.trimStart())} placeholder="최대 18자리" /></label>
-              <label>입고일자<input value={reqDeliveryDate} maxLength={8} inputMode="numeric" autoComplete="off" onChange={(event) => setReqDeliveryDate(event.target.value.replace(/\D/g, ''))} placeholder="YYYYMMDD" /></label>
-              <button type="submit" disabled={isLookupLoading}>품목 조회</button>
-              <label>식자재 추가
-                <input
-                  value={basketSearch}
-                  onChange={(event) => setBasketSearch(event.target.value)}
-                  placeholder="식자재명 또는 ID"
-                />
-              </label>
-              <button type="button" onClick={() => void addSearchedIngredient()}>추가</button>
-              <button
-                type="button"
-                className="food-order-basket-button is-shortage"
-                onClick={() => void addShortageBasket()}
-              >
-                부족품목🧺
-              </button>
-              <button
-                type="button"
-                className="food-order-basket-button is-favorite"
-                onClick={() => void addFavoriteBasket()}
-              >
-                즐겨찾기🧺
-              </button>
-              {basketMessage ? (
-                <span className={basketMessage === '거래처 재고에서 일치하는 식자재를 찾지 못했습니다.' ? 'food-order-basket-message is-error' : 'food-order-basket-message'}>
-                  {basketMessage}
-                </span>
-              ) : null}
-              {workplaceError ? <span className="food-order-item-search__error">{workplaceError}</span> : null}
-            </form>
-          </section>
-
-          <section className="food-order-layout">
-            <aside className="food-order-panel food-order-panel--menu">
-              <div className="food-order-panel__header">
-                <h2>조회 메뉴</h2>
-                <span>{filteredMenus.length}건</span>
-              </div>
-              <div className="food-order-menu-list">
-                {isMenuListLoading ? <LoadingScreen compact message="메뉴 목록을 불러오는 중입니다." /> : null}
-                {!isMenuListLoading && menuListError ? (
-                  <div className="food-order-empty">API 호출에 실패하여 임시 메뉴를 표시합니다.</div>
-                ) : null}
-                {!isMenuListLoading && filteredMenus.length > 0
-                  ? filteredMenus.map((menu) => (
-                      <div
-                        key={menu.menu_id}
-                        className={`food-order-menu-card${activeMenuSummary?.menu_id === menu.menu_id ? ' is-active' : ''}`}
-                      >
-                        <button
-                          type="button"
-                          className="food-order-menu-item"
-                          onClick={() => setSelectedMenuId(menu.menu_id)}
-                        >
-                          <strong>{menu.menu_name}</strong>
-                          <span>{menu.created_at || '등록일 정보 없음'}</span>
-                        </button>
-                        <label className="food-order-menu-serving" htmlFor={`servingQty-${menu.menu_id}`}>
-                          <input
-                            id={`servingQty-${menu.menu_id}`}
-                            type="number"
-                            min="1"
-                            step="1"
-                            value={servingQtyByMenuId[menu.menu_id] ?? 1}
-                            onChange={(event) => handleServingQtyChange(menu.menu_id, event.target.value)}
-                          />
-                          <span>인분</span>
-                        </label>
-                      </div>
-                    ))
-                  : null}
-                {!isMenuListLoading && filteredMenus.length === 0 ? (
-                  <div className="food-order-empty">선택한 분류에 해당하는 메뉴가 없습니다.</div>
-                ) : null}
-              </div>
-            </aside>
-
-            <section className="food-order-panel food-order-panel--ingredients">
-              <div className="food-order-panel__header">
-                <h2>식자재 상세</h2>
-                <span>{activeMenu ? `${activeMenu.menu_name} / ${activeServingQty}인분` : '메뉴를 선택하세요.'}</span>
-              </div>
-              {isDetailLoading ? <LoadingScreen compact message="식자재 상세 목록을 불러오는 중입니다." /> : null}
-              {!isDetailLoading && detailError ? (
-                <div className="food-order-empty">API 호출에 실패하여 임시 식자재 데이터를 표시합니다.</div>
-              ) : null}
-              {activeMenu ? (
-                orderIngredients.length > 0 ? (
-                  <div className="food-order-table-scroll">
-                    <table className="food-order-table">
-                      <thead>
-                        <tr>
-                          <th style={{ display: 'none' }}>메뉴 ID</th>
-                          <th style={{ display: 'none' }}>식자재 ID</th>
-                          <th>식자재명</th>
-                          <th>필요 수량/단위</th>
-                          <th>현재고</th>
-                          <th>부족재고</th>
-                          <th>발주 필요 수량</th>
-                          <th style={{ display: 'none' }}>기본 단위</th>
-                          <th>발주 단위</th>
-                          <th>환산값</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {orderIngredients.map((ingredient) => (
-                          <tr key={`${ingredient.menu_id}-${ingredient.ingredient_id}`}>
-                            <td style={{ display: 'none' }}>{ingredient.menu_id}</td>
-                            <td style={{ display: 'none' }}>{ingredient.ingredient_id}</td>
-                            <td title={getIngredientStockStatus(ingredient).label}>
-                              <button
-                                type="button"
-                                className="food-order-remove-ingredient"
-                                onClick={() => removeBasketIngredient(ingredient.ingredient_id)}
-                                aria-label={`${ingredient.ingredient_name} 삭제`}
-                              >
-                                삭제
-                              </button>{' '}
-                              {getIngredientStockStatus(ingredient).emoji} {ingredient.ingredient_name}
-                            </td>
-                            <td>{formatQuantity(ingredient.required_qty, ingredient.base_unit)}</td>
-                            <td>
-                              {formatQuantity(ingredient.current_qty, ingredient.base_unit)}
-                              {getAverageUsage(ingredient) > 0 ? ` (평균 ${formatQuantity(getAverageUsage(ingredient), ingredient.base_unit)})` : ''}
-                            </td>
-                            <td>{formatQuantity(ingredient.shortage_qty, ingredient.base_unit)}</td>
-                            <td>{formatQuantity(ingredient.order_needed_qty, ingredient.base_unit)}</td>
-                            <td style={{ display: 'none' }}>{ingredient.base_unit}</td>
-                            <td>{ingredient.order_unit}</td>
-                            <td>{ingredient.convert_value}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="food-order-empty">선택한 메뉴의 식자재 상세 정보가 없습니다.</div>
-                )
-              ) : (
-                <div className="food-order-empty">왼쪽 목록에서 메뉴를 선택하면 식자재를 확인할 수 있습니다.</div>
-              )}
-              <div className="food-order-lookup">
-                <div className="food-order-lookup__title">
-                  <strong>제휴사 품목 조회 결과</strong>
-                  <span>{isLookupLoading ? '통신 중…' : `${lookupItems.length}건`}</span>
-                </div>
-                {lookupError ? <div className="food-order-lookup__error">{lookupError}</div> : null}
-                {lookupItems.length > 0 ? (
-                  <div className="food-order-table-scroll">
-                    <table className="food-order-table">
-                      <thead><tr><th>품목코드</th><th>품목명</th><th>규격</th><th>단위</th><th>가격</th><th>리드타임</th><th>최소발주</th><th>원산지</th><th>STOP</th></tr></thead>
-                      <tbody>{lookupItems.map((item, index) => (
-                        <tr key={`${item.itemCode}-${index}`}>
-                          <td>{item.itemCode}</td><td>{item.itemName || '-'}</td><td>{item.standard || '-'}</td>
-                          <td>{item.unit || '-'}</td><td>{formatNumber(item.price)}</td><td>{item.leadTime}</td>
-                          <td>{item.minQntty}</td><td>{item.origin || '-'}</td><td>{item.stopType || '-'}</td>
-                        </tr>
-                      ))}</tbody>
-                    </table>
-                  </div>
-                ) : !isLookupLoading ? <div className="food-order-empty">조회된 제휴사 품목이 없습니다.</div> : null}
-              </div>
-            </section>
-
-            <aside className="food-order-panel food-order-panel--suppliers">
-              <div className="food-order-panel__header">
-                <h2>주문 가능한 업체</h2>
-                <span>체크 후 발주서를 생성합니다.</span>
-              </div>
-              {activeMenu ? (
-                <>
-                  <div className="supplier-list">
-                    {orderIngredients.length === 0 ? (
-                      <div className="food-order-empty">업체 정보가 연결된 식자재가 없습니다.</div>
-                    ) : null}
-                    {orderIngredients.map((ingredient) => {
-                      const shortage = ingredient.shortage_qty
-
-                      return (
-                        <article key={ingredient.ingredient_id} className="supplier-card">
-                          <div className="supplier-card__title">
-                            <strong>{ingredient.ingredient_name}</strong>
-                            <span>
-                              필요 {formatQuantity(ingredient.required_qty, ingredient.base_unit)} / 재고{' '}
-                              {formatQuantity(ingredient.current_qty, ingredient.base_unit)} / 부족{' '}
-                              {formatQuantity(shortage, ingredient.base_unit)}
-                            </span>
-                          </div>
-                          <div className="supplier-card__rows">
-                            {ingredient.suppliers.length > 0 ? (
-                              ingredient.suppliers.map((supplier) => {
-                                const checkboxId = `supplier-${ingredient.ingredient_id}-${supplier.menu_id}`
-
-                                return (
-                                  <label
-                                    key={supplier.menu_id}
-                                    className="supplier-row supplier-row--detail"
-                                    htmlFor={checkboxId}
-                                  >
-                                    <input
-                                      id={checkboxId}
-                                      type="checkbox"
-                                      checked={Boolean(selectedSuppliers[`${ingredient.ingredient_id}-${supplier.menu_id}`])}
-                                      onChange={() => toggleSupplier(ingredient.ingredient_id, supplier.menu_id)}
-                                    />
-                                    <div className="supplier-row__main">
-                                      <strong>{supplier.menu_name}</strong>
-                                      <span>
-                                        {formatNumber(supplier.price)}원 / 1{ingredient.order_unit || ingredient.base_unit}
-                                      </span>
-                                    </div>
-                                    <div className="supplier-row__meta">
-                                      <span>필요량 {formatQuantity(ingredient.required_qty, ingredient.base_unit)}</span>
-                                      <span>재고량 {formatQuantity(ingredient.current_qty, ingredient.base_unit)}</span>
-                                      <span>부족수량 {formatQuantity(shortage, ingredient.base_unit)}</span>
-                                      <span>
-                                        권장발주{' '}
-                                        {formatQuantity(
-                                          ingredient.order_needed_qty || supplier.recommendedQuantity,
-                                          ingredient.order_unit || ingredient.base_unit,
-                                        )}
-                                      </span>
-                                    </div>
-                                  </label>
-                                )
-                              })
-                            ) : (
-                              <div className="food-order-empty">등록된 공급업체가 없습니다.</div>
-                            )}
-                          </div>
-                        </article>
-                      )
-                    })}
-                  </div>
-                  <div className="supplier-action-bar">
-                    <div className="supplier-action-bar__summary">선택 업체 {selectedOrders.length}건</div>
-                    <button
-                      type="button"
-                      className="supplier-action-bar__button"
-                      disabled={selectedOrders.length === 0}
-                      onClick={() => setIsOrderModalOpen(true)}
-                    >
-                      발주하기
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div className="food-order-empty">메뉴를 선택하면 주문 가능한 업체를 확인할 수 있습니다.</div>
-              )}
-            </aside>
-          </section>
-        </SideMenuLayout>
-      </main>
-
-      {isOrderModalOpen ? (
-        <div className="order-modal-backdrop" role="presentation" onClick={closeModal}>
-          <section
-            className="order-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="order-modal-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="order-modal__header no-print">
-              <div>
-                <p className="order-modal__eyebrow">Transaction Statement Style</p>
-                <h2 id="order-modal-title">발주서</h2>
-              </div>
-              <span>{activeMenu?.menu_name}</span>
-            </div>
-
-            <div className="order-sheet">
-              <header className="order-sheet__top">
-                <div>
-                  <p className="order-sheet__label">발주일자</p>
-                  <strong>{getCurrentDate()}</strong>
-                </div>
-                <div className="order-sheet__title-wrap">
-                  <h3>발주서</h3>
-                  <p>거래명세서 형식</p>
-                </div>
-                <div>
-                  <p className="order-sheet__label">문서번호</p>
-                  <strong>FO-{activeMenu?.menu_id ?? '0'}-{selectedOrders.length}</strong>
-                </div>
-              </header>
-
-              <section className="order-sheet__parties">
-                <div className="order-sheet__party">
-                  <h4>공급받는 곳</h4>
-                  <dl>
-                    <div><dt>상호</dt><dd>더풀 급식 운영팀</dd></div>
-                    <div><dt>담당</dt><dd>영양 운영 파트</dd></div>
-                    <div><dt>연락처</dt><dd>02-3456-7890</dd></div>
-                    <div><dt>주문 메뉴</dt><dd>{activeMenu?.menu_name}</dd></div>
-                  </dl>
-                </div>
-                <div className="order-sheet__party">
-                  <h4>공급 정보</h4>
-                  <dl>
-                    <div><dt>업체 수</dt><dd>{selectedOrders.length}건 선택</dd></div>
-                    <div><dt>식사분류</dt><dd>{getCategoryLabel(selectedCategory)}</dd></div>
-                    <div><dt>식사구분</dt><dd>{activeMenu?.mealType ?? '-'}</dd></div>
-                    <div><dt>인분기준</dt><dd>{activeMenu?.servings ? `${activeMenu.servings}인분` : '-'}</dd></div>
-                  </dl>
-                </div>
-              </section>
-
-              <div className="order-sheet__body">
-                <table className="order-sheet__table">
-                  <thead>
-                    <tr>
-                      <th>No</th>
-                      <th>품목명</th>
-                      <th>업체명</th>
-                      <th>단가</th>
-                      <th>필요수량</th>
-                      <th>재고수량</th>
-                      <th>부족수량</th>
-                      <th>발주수량</th>
-                      <th>공급가액</th>
-                      <th>부가세</th>
-                      <th>합계</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orderSheetRows.map((row) => (
-                      <tr key={`${row.ingredientmenu_id}-${row.suppliermenu_id}`}>
-                        <td>{row.index}</td>
-                        <td>{row.ingredientmenu_name}</td>
-                        <td>{row.suppliermenu_name}</td>
-                        <td>{row.unitPriceText}</td>
-                        <td>{row.requiredQuantityText}</td>
-                        <td>{row.stockQuantityText}</td>
-                        <td>{row.shortageQuantityText}</td>
-                        <td>{row.orderQuantityText}</td>
-                        <td>{formatNumber(row.supplyAmount)}원</td>
-                        <td>{formatNumber(row.taxAmount)}원</td>
-                        <td>{formatNumber(row.totalAmount)}원</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <section className="order-sheet__summary">
-                <div className="order-sheet__summary-card">
-                  <span>공급가액</span>
-                  <strong>{formatNumber(orderSummary.supplyAmount)}원</strong>
-                </div>
-                <div className="order-sheet__summary-card">
-                  <span>부가세</span>
-                  <strong>{formatNumber(orderSummary.taxAmount)}원</strong>
-                </div>
-                <div className="order-sheet__summary-card is-total">
-                  <span>총 합계</span>
-                  <strong>{formatNumber(orderSummary.totalAmount)}원</strong>
-                </div>
-              </section>
-
-              <section className="order-sheet__memo">
-                <div>
-                  <span>비고</span>
-                  <p>현재고를 반영한 임시 발주서입니다. 실제 운영 데이터와 공급 일정 연동은 추가 구현이 필요합니다.</p>
-                </div>
-                <div className="order-sheet__sign">
-                  <span>확인</span>
-                  <div>영양팀 / 운영담당</div>
-                </div>
-              </section>
-            </div>
-
-            <div className="order-modal__actions no-print">
-              <button type="button" className="order-modal__button is-secondary" onClick={printOrderSheet}>
-                인쇄
-              </button>
-              <button type="button" className="order-modal__button is-secondary" onClick={closeModal}>
-                취소
-              </button>
-              <button type="button" className="order-modal__button is-primary" onClick={submitOrder}>
-                발주
-              </button>
-            </div>
-          </section>
-        </div>
-      ) : null}
+  const body = <>
+    {!fixedSource && <><div className="shortage-source-tabs" role="group" aria-label="발주 기준">
+      {([['PLAN', '식단표 기준 부족량', '저장된 식단의 필요량으로 계산'], ['STOCK', '현재 부족 재고 바로 주문', '현재고가 없거나 안전재고보다 적은 식자재'], ['INVENTORY', '최근 사용량 기준 부족 예상', '최근 평균 사용량 × 확보일수 + 안전재고']] as const).map(([value, label, hint]) =>
+        <button key={value} type="button" aria-pressed={criteria.source === value} className={criteria.source === value ? 'is-active' : ''} title={hint}
+          onClick={() => update({ source: value, table_id: '' })}>{label}</button>)}
     </div>
-  )
+    <p className="shortage-source-hint">{criteria.source === 'PLAN' ? '저장된 식단의 필요량으로 계산합니다.' : criteria.source === 'STOCK' ? '현재고가 없거나 안전재고보다 적은 식자재를 바로 주문합니다.' : criteria.source === 'INVENTORY' ? '최근 평균 사용량 × 확보일수 + 안전재고로 앞으로 부족할 식자재를 찾습니다.' : '구성 중인 식단의 메뉴·식수로 계산합니다.'}</p></>}
+    <div className="shortage-compact-bar">
+    {/* 조회 조건은 항상 펼쳐 둔다(사용자 요청) */}
+    <div className="shortage-order-options">
+    <section className="shortage-order-filters" aria-label="부족재고 조회 기준">
+      {!fixedSource && <label>조회 기준<select value={criteria.source} onChange={e => update({ source: e.target.value as ShortageCriteria['source'], table_id: '' })}>{criteria.source === 'DRAFT' ? <option value="DRAFT">구성 중인 식단 필요량</option> : null}<option value="PLAN">식단표 기준 부족량</option><option value="STOCK">현재 부족 재고 바로 주문</option><option value="INVENTORY">최근 사용량 기준 부족 예상</option></select></label>}
+      {criteria.source === 'DRAFT' ? <span className="shortage-order-basis"><em>조회 기준</em><b>저장 전 식단의 메뉴·식수 기준</b></span> : criteria.source === 'STOCK' ? <span className="shortage-order-basis"><em>조회 기준</em><b>현재고·입고예정·안전재고 기준</b></span> : criteria.source === 'PLAN' ? <label>식단표<select value={criteria.table_id} onChange={e => update({ table_id: e.target.value })}><option value="">기간 내 모든 식단표</option>{plans.map(plan => <option key={plan.table_id} value={plan.table_id}>{plan.table_name}</option>)}</select></label> : <><label>사용량 조회일수<input type="number" min="1" max="365" value={criteria.average_days} onChange={e => update({ average_days: Number(e.target.value) })} /></label><label>확보일수<input type="number" min="1" max="30" value={criteria.coverage_days} onChange={e => update({ coverage_days: Number(e.target.value) })} /></label></>}
+      <label>조회 시작일<input type="date" value={criteria.date_from} onChange={e => update({ date_from: e.target.value })} /></label>
+      <label>조회 종료일<input type="date" value={criteria.date_to} onChange={e => update({ date_to: e.target.value })} /></label>
+      <label>납품일<input type="date" min={day()} max={criteria.date_to} aria-describedby="delivery-guidance" value={criteria.delivery_date} onChange={e => update({ delivery_date: e.target.value })} /></label>
+      <label>공급사 사업장<select className="workplace-select" value={criteria.sold_to ? (criteria.supplier_code || 'WELSTORY') + ':' + criteria.sold_to : ''} onChange={e => { const [supplier_code = '', sold_to = ''] = e.target.value.split(':'); update({ sold_to, supplier_code }) }}><option value="">전체 공급사·사업장</option>{sites.map(site => <option key={site.supplier_account_site_id} value={site.supplier_code + ':' + site.external_site_code}>{site.supplier_name} · {site.external_site_name} ({site.external_site_code})</option>)}</select></label>
+      <button type="button" className="is-query" disabled={loading || previewing} onClick={() => setRevision(value => value + 1)}>{loading ? '조회 중…' : '부족재고 조회'}</button>
+      <label className="shortage-order-check"><input type="checkbox" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} />60초마다 다시 조회</label>
+    </section></div>
+    <Link to={`/order_manager/order?${new URLSearchParams({ tab: 'products', account_id: accountId })}`}>새 상품·미연결 식자재 발주</Link>
+    <details id="delivery-guidance" className="shortage-delivery-guidance" aria-label="납품일과 발주 마감 안내">
+      <summary>납품일·발주 마감 안내</summary>
+      <p>상품별 리드타임과 주문 마감시간을 확인한 후 납품일을 선택해주세요. 리드타임 1일 상품은 당일 납품을 요청할 수 없습니다.</p>
+      <p>표시 시간은 한국시간입니다. 평일 마감 기준은 토·일요일과 공휴일에 그대로 적용되지 않으며, 물류센터·사업장 배송일과 공급사 공지에 따라 달라집니다. 상품 조회 성공이 주문 접수를 보장하지는 않습니다.</p>
+      {criteria.delivery_date === guidanceNow.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }) ? <p className="shortage-order-error" role="status">당일 납품을 선택했습니다. 리드타임이 1일 이상인 상품은 납품일을 변경해주세요.</p> : null}
+    </details>
+    </div>
+    {/* 표 위 안내: 한 문단 안에서 항목별로 줄을 나눈다(줄 간격 최소). 줄 앞 이름표로 무슨 내용인지 바로 보이게 */}
+    <p className="shortage-info-line">
+      <span><em>기준</em>{criteria.source === 'DRAFT' ? <><strong className="is-source">구성 중인 식단 기준</strong> 저장하지 않은 식단의 메뉴·예정 식수로 계산 (<a href={`/operations/table-meals?account_id=${encodeURIComponent(accountId)}`}>식단 구성으로 돌아가기</a>)</>
+        : criteria.source === 'STOCK' ? <><strong className="is-source">현재 부족 재고 바로 주문</strong> 현재고가 없거나 안전재고보다 적은 식자재. 안전재고·사용 이력이 없으면 <b>수량 직접 입력</b>(일괄 선택 시 최소 발주수량)</>
+        : criteria.source === 'INVENTORY' ? <><strong className="is-source">최근 사용량 기준 부족 예상</strong> 최근 평균 사용량 × 확보일수 + 안전재고. <b>사용 확정 이력이 없으면 필요량 0</b></>
+        : <><strong className="is-source">식단표 기준 부족량</strong> 저장된 식단 필요량 + 안전재고 − 현재고 − 입고예정</>}</span>
+      <span><em>상품 준비</em><CatalogPreparation inline key={accountId + criteria.delivery_date} accountId={accountId} date={criteria.delivery_date} onReady={() => setRevision(n => n + 1)} /></span>
+      <span><em>일괄 선택</em><b className="is-warn">납품·마감 확인 필요 상품은 제외</b> · 발주 가능 표시는 접수 보장이 아니며 발주 확정 때 다시 검증</span>
+    </p>
+    {error ? <p className="shortage-order-error" role="alert">{error}</p> : null}
+    <div className="procurement-order-layout"><section className="procurement-order-items" aria-label="부족 식재료와 공급상품">
+    <div className="shortage-table-controls"><div className="shortage-stock-filter" role="group" aria-label="재고 상태 필터">{([['', '전체'], ['RED', '🔴 필요량 부족'], ['YELLOW', '🟡 안전재고 미달'], ['CHECK', '⚪ 확인 필요']] as const).map(([value, label]) =>
+      <button key={value} type="button" aria-pressed={stockFilter === value} className={stockFilter === value ? 'is-active' : ''} onClick={() => setStockFilter(value)}>{label} {stockCounts[value]}</button>)}</div>
+    <div className="shortage-order-toolbar"><input aria-label="부족 식재료 검색" placeholder="부족 식재료 검색" value={keyword} onChange={e => setKeyword(e.target.value)} /><span>부족·확인 {result?.ingredients.length || 0}건{stockFilter ? ` · 표시 ${rows.length}건` : ''} · 선택 {selectionCount}건</span><button disabled={loading} title="지금 표시된 품목(필터·검색 중이면 보이는 품목만) 중 납품·마감 조건이 확인된 상품을 선택합니다. 수량 직접 입력 품목은 최소 발주수량으로 담기니 수량을 확인하세요." onClick={() => setSelected(current => ({ ...(stockFilter || keyword ? current : {}), ...Object.fromEntries(rows.flatMap(row => { const offer = row.offers.find(o => o.orderable && o.orderability_status === 'AVAILABLE'); return offer ? [[row.ingredient_id, { ingredient_id: row.ingredient_id, supplier_offer_id: offer.supplier_offer_id, order_qty: offer.recommended_qty }]] : [] })) }))}>조건 만족 품목 선택</button><button onClick={() => setSelected({})}>선택 해제</button></div></div>
+    <div className="shortage-order-table-wrap"><table className="shortage-order-table"><thead><tr><th>선택</th><th>식재료 / 필요 메뉴</th><th>필요량</th><th>안전재고</th><th>현재고</th><th>기발주 미입고</th><th>부족량</th><th>공급상품 / 상태</th><th>발주수량</th><th>예상 상품금액</th></tr></thead><tbody>
+      {rows.map(row => {
+        const selection = selected[row.ingredient_id]
+        const offer = row.offers.find(o => o.supplier_offer_id === selection?.supplier_offer_id) || row.offers.find(o => o.orderable)
+        const choose = (id: number) => { const next = row.offers.find(o => o.supplier_offer_id === id && o.orderable); if (next && (next.orderability_status === 'AVAILABLE' || window.confirm(next.product_name + ' · ' + criteria.delivery_date + '\n공급사에 납품 가능일과 마감 조건을 직접 확인하셨습니까? 확인한 경우에만 선택하세요.'))) setSelected(current => ({ ...current, [row.ingredient_id]: { ingredient_id: row.ingredient_id, supplier_offer_id: next.supplier_offer_id, order_qty: next.recommended_qty, delivery_terms_confirmed: next.orderability_status !== 'AVAILABLE' } })) }
+        const qty = selection?.order_qty ?? offer?.recommended_qty ?? 0
+        return <tr key={row.ingredient_id} className={row.ingredient_id === focusIngredient ? 'is-focused' : ''}><td><input aria-label={`${row.ingredient_name} 선택`} type="checkbox" checked={Boolean(selection)} disabled={!offer || loading} onChange={e => { if (e.target.checked && offer) choose(offer.supplier_offer_id); else setSelected(current => { const next = { ...current }; delete next[row.ingredient_id]; return next }) }} /></td><td><strong>{row.ingredient_name}</strong>{row.quantity_basis === 'MANUAL' ? <span className="shortage-stock-badge is-red">현재고 없음 · 수량 직접 입력</span> : shortageStockStatus(row) !== 'GREEN' ? <span className={`shortage-stock-badge is-${shortageStockStatus(row).toLowerCase()}`}>{SHORTAGE_STOCK_LABELS[shortageStockStatus(row)]}</span> : null}<small>{row.menu_names.filter(Boolean).join(', ')}</small>{row.issues.map(issue => <small className="shortage-order-error" key={issue}>{issue}</small>)}</td>
+          {[row.required_qty, row.safe_stock_qty, row.current_qty, row.incoming_qty, row.shortage_qty].map((value, i) => <td key={i}>{number(value)} {row.base_unit}</td>)}
+          <td><select aria-label={`${row.ingredient_name} 공급상품`} value={offer?.supplier_offer_id || ''} disabled={loading || !row.offers.some(o => o.orderable)} onChange={e => choose(Number(e.target.value))}><option value="">발주 가능한 상품 없음</option>{row.offers.map(o => <option key={o.supplier_offer_id} value={o.supplier_offer_id} disabled={!o.orderable}>{o.supplier_name} · {o.external_site_name || o.external_site_code} · {o.product_name} · {o.orderable ? `${money(o.purchase_price)}원/${o.order_unit}` : o.availability_reason || '발주 불가'}</option>)}</select>{offer ? <small>1 {offer.order_unit} = {number(offer.package_base_qty)} {row.base_unit} · {taxLabel(offer.tax_type)}</small> : <small className="shortage-order-error">{row.offers.map(o => o.availability_reason).filter(Boolean).join(' / ') || '선택한 사업장·납품일의 공급상품 연결을 확인해주세요.'}</small>}{offer ? <><small className="shortage-delivery-terms">{deliveryTerms(offer)}</small>{deliveryWarning(offer, criteria.delivery_date, guidanceNow) ? <small className="shortage-order-error" role="status">{deliveryWarning(offer, criteria.delivery_date, guidanceNow)}</small> : null}</> : row.offers.map(candidate => <small key={candidate.supplier_offer_id}>{candidate.product_name} · {deliveryTerms(candidate)}</small>)}</td>
+          <td>{offer ? <><input aria-label={`${row.ingredient_name} 발주수량`} type="number" min={offer.minimum_order_qty} step={offer.order_increment_qty} max={offer.quantity_basis === 'MANUAL' ? MANUAL_MAX_ORDER_QTY : offer.recommended_qty} disabled={!selection || loading} value={qty} onChange={e => setSelected(current => ({ ...current, [row.ingredient_id]: { ingredient_id: row.ingredient_id, supplier_offer_id: offer.supplier_offer_id, delivery_terms_confirmed: selection?.delivery_terms_confirmed, order_qty: Number(e.target.value) } }))} /> {offer.order_unit}<small>{offer.quantity_basis === 'MANUAL' ? `수량 직접 입력 (기본 ${number(offer.recommended_qty)} ${offer.order_unit})` : `권장 ${number(offer.recommended_qty)} ${offer.order_unit}`}</small></> : '—'}</td><td>{offer ? `${money(qty * offer.purchase_price)}원` : '—'}</td></tr>
+      })}
+      {!rows.length ? <tr><td colSpan={10}>{loading ? '부족량을 조회하고 있습니다.' : stockFilter && result?.ingredients.length ? '선택한 재고 상태에 해당하는 식재료가 없습니다.' : '선택한 기준에 해당하는 부족 식재료가 없습니다.'}</td></tr> : null}
+    </tbody></table></div>
+    <div className="shortage-order-footer"><span>조회 시각 {result?.checked_at.replace('T', ' ').slice(0, 19) || '—'}{result?.unconfigured_count ? ` · 필요량 기준 없는 품목 ${result.unconfigured_count}건` : ''}</span></div>
+    </section><aside className="procurement-summary" aria-label="발주 요약">
+      <h2>발주 요약</h2><button disabled={submitting || previewing} onClick={() => { try { startNewMixedProcurement(accountId); setBatchResult(null); setCompleted(false); setSelected({}); setPreview(null); setRevision(value => value + 1); setError('') } catch (e) { setError(e instanceof Error ? e.message : '기존 발주 확인 필요') } }}>새 발주 작성</button><p>공급사·사업장·납품일별로 발주서가 나뉩니다.</p><button disabled={submitting} onClick={() => { setSubmitting(true); void recoverMixedProcurement(accountId).then(setBatchResult).catch(e => setError(e.message)).finally(() => setSubmitting(false)) }}>이전 요청 결과 확인</button><BatchOrderResults result={preview ? null : batchResult} accountId={accountId} /><p>{selectedSuppliers.join(' · ') || '상품을 선택해주세요'}</p>
+      <dl><div><dt>선택 품목</dt><dd>{selectionCount}개</dd></div><div><dt>납품일</dt><dd>{criteria.delivery_date || '미선택'}</dd></div><div><dt>공급사 사업장</dt><dd>{sites.find(site => site.external_site_code === criteria.sold_to)?.external_site_name || criteria.sold_to || '전체 공급사·사업장'}</dd></div></dl>
+      <div className="procurement-summary__total"><span>예상 상품금액</span><strong>{loading ? '조회 중…' : `${money(selectedAmount)}원`}</strong></div>
+      <p className="procurement-summary__hint">선택한 상품의 판가 × 발주수량입니다. 최종 금액과 발주 가능 여부는 발주서 확인 시 검증합니다.</p>
+      <button className="is-primary" disabled={!selectionCount || loading || previewing} onClick={() => void makePreview()}>{previewing ? '서버 검증 중…' : '발주서 확인'}</button>
+      <div className="procurement-summary__formula"><strong>부족량 계산 기준</strong><p>필요량 + 안전재고 − 현재고 − 기발주 미입고량</p><span>같은 식재료는 메뉴와 창고에 걸쳐 합산하고 현재고는 한 번만 차감합니다.</span></div>
+    </aside></div>
+    {preview ? createPortal(<div className="shortage-order-page shortage-order-overlay"><section className="shortage-order-sheet" role="dialog" aria-modal="true" aria-labelledby="shortage-sheet-title"><h2 id="shortage-sheet-title">부족 식재료 발주 미리보기</h2><p>납품일 {preview.criteria.delivery_date} · 발주서 {new Set(preview.items.map(row => row.offer.supplier_code + ':' + row.offer.external_site_code)).size}건 (공급사·사업장별 분리)</p><div className="shortage-order-table-wrap"><table className="shortage-order-table"><thead><tr><th>식재료 / 공급상품</th><th>필요량</th><th>안전재고</th><th>현재고</th><th>기발주 미입고</th><th>부족량</th><th>발주수량</th><th>포장당 판가</th><th>상품금액</th><th>공급가액 / 부가세</th></tr></thead><tbody>{preview.items.map(row => <tr key={row.ingredient_id}><td><strong>{row.ingredient_name}</strong><small>{row.offer.supplier_name} · {row.offer.external_site_name || row.offer.external_site_code} · {row.offer.supplier_item_code}</small><small className="shortage-delivery-terms">{deliveryTerms(row.offer)}</small>{deliveryWarning(row.offer, preview.criteria.delivery_date, guidanceNow) ? <small className="shortage-order-error" role="status">{deliveryWarning(row.offer, preview.criteria.delivery_date, guidanceNow)}</small> : null}</td>{[row.required_qty, row.safe_stock_qty, row.current_qty, row.incoming_qty, row.shortage_qty].map((value, i) => <td key={i}>{number(value)} {row.base_unit}</td>)}<td>{number(row.order_qty)} {row.offer.order_unit}<small>{number(row.ordered_base_qty)} {row.base_unit}</small></td><td>{money(row.offer.purchase_price)}원/{row.offer.order_unit}</td><td>{money(row.item_amount)}원</td><td>{row.supply_amount !== null ? `${money(row.supply_amount)}원 / 0원 (면세)` : taxLabel(row.tax_type)}</td></tr>)}</tbody></table></div><p className="shortage-order-total">상품금액 합계 {money(preview.item_amount)}원</p><p>상품금액은 공급사 판가 × 발주수량입니다. 과세 품목은 판가의 부가세 포함 여부가 확인되지 않아 세액을 임의로 더하지 않습니다. 공급가액·부가세는 공급사 정산 기준 확인이 필요합니다.</p><p className="shortage-delivery-guidance">납품일·리드타임·마감시간을 다시 확인해주세요. 평일 일반 마감과 주말·공휴일 마감은 다를 수 있으며, 사업장 배송일과 공급사 공지가 우선합니다. 발주 접수 후 실제 입고가 확정될 때 현재고에 반영됩니다.</p><p>주문 직전에 판매상태·실시간 가격·최소수량·발주배수와 최신 부족량을 다시 검증합니다.</p>{message ? <p role="status">{message}</p> : null}<BatchOrderResults result={batchResult} accountId={accountId} /><div className="shortage-order-actions"><button className="print-button" disabled={submitting} onClick={() => window.print()}><PrintIcon />미리보기 인쇄</button><button disabled={submitting} onClick={closePreview}>닫기</button><button className="is-primary" disabled={submitting || completed} onClick={() => void submit()}>{submitting ? '검증·발주 중…' : completed ? '발주 결과 확인됨' : '공급사 API 발주'}</button></div></section>{submitting ? <LoadingScreen overlay message={'공급사에 발주를 보내고 있습니다.\n창을 닫거나 새로고침하지 마세요.'} /> : null}</div>, document.body) : null}
+  </>
+  if (embedded) return <div className="shortage-order-page procurement-refresh">{body}</div>
+  return <div className="shortage-order-page procurement-refresh"><SideMenuLayout header={<HeaderBar title="부족 식재료 발주" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주 관리', to: '/order_manager' }, { label: '부족 식재료 발주' }]} />}>{body}</SideMenuLayout></div>
 }
-
 export default FoodOrder

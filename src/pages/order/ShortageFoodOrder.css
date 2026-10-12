@@ -1,0 +1,62 @@
+.shortage-order-page{color:#253449}.shortage-order-intro h2{margin:0 0 8px;font-size:22px}.shortage-order-intro p,.shortage-order-note{color:#64748b;line-height:1.7}.shortage-order-filters{display:flex;flex-wrap:wrap;gap:14px;align-items:end;padding:20px;background:#f6f8fb;border:1px solid #e2e8f0;border-radius:12px}.shortage-order-filters label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600}.shortage-order-page input,.shortage-order-page select{border:1px solid #cbd5e1;border-radius:6px;padding:9px;background:white;max-width:100%;color:#253449}.shortage-order-page input[type=number]{width:94px}.shortage-order-page button{border:1px solid #cbd5e1;border-radius:7px;background:white;color:#253449;padding:10px 15px;cursor:pointer}.shortage-order-page button:disabled{opacity:.45;cursor:not-allowed}.shortage-order-page .is-primary{background:#2563eb;color:white;border-color:#2563eb}.shortage-order-page .is-query{background:#15803d;color:white;border-color:#15803d}.shortage-order-filters .shortage-order-check{flex-direction:row;align-items:center;padding:10px 0}.shortage-order-toolbar,.shortage-order-footer{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:2px 0}.shortage-order-table-wrap{overflow:auto;border:1px solid #e2e8f0;border-radius:9px}.shortage-order-table{width:100%;min-width:1120px;border-collapse:collapse;font-size:13px}.shortage-order-table th{background:#f1f5f9;padding:12px;text-align:left;white-space:nowrap}.shortage-order-table td{padding:13px 10px;border-top:1px solid #e2e8f0;vertical-align:top}.shortage-order-table td:nth-child(2){min-width:200px}.shortage-order-table select{min-width:220px;max-width:320px}.shortage-order-table small{display:block;font-size:11px;color:#64748b;line-height:1.6;margin-top:5px}.shortage-order-page .shortage-order-error{color:#b91c1c}.shortage-order-table .is-focused{background:#eff6ff}.shortage-order-overlay{position:fixed;inset:0;background:#0f172a99;display:flex;justify-content:center;align-items:center;padding:24px;z-index:1500}.shortage-order-sheet{background:white;border-radius:14px;padding:24px;max-width:1500px;width:100%;max-height:92vh;overflow:auto}.shortage-order-sheet p{font-size:13px;line-height:1.7}.shortage-order-sheet .shortage-order-total{text-align:right;font-size:20px;font-weight:700}.shortage-order-actions{display:flex;justify-content:flex-end;gap:10px}.shortage-order-footer span{font-size:12px;color:#64748b}@media(max-width:700px){.shortage-order-overlay{padding:8px}.shortage-order-sheet{padding:12px}.shortage-order-filters label{width:calc(50% - 8px)}}@media print{body:where(:has(.shortage-order-sheet)) *{visibility:hidden}.shortage-order-overlay,.shortage-order-sheet,.shortage-order-sheet *{visibility:visible}.shortage-order-overlay{position:absolute;inset:0;background:white;padding:0;display:block}.shortage-order-sheet{max-height:none;overflow:visible;max-width:none;padding:0}.shortage-order-sheet .shortage-order-table-wrap{overflow:visible}.shortage-order-sheet .shortage-order-table{min-width:0;font-size:9px}.shortage-order-sheet .shortage-order-table td{min-width:0;padding:5px}.shortage-order-actions{display:none}@page{size:A4 landscape;margin:10mm}}
+
+.shortage-order-page select,.shortage-order-page input:not([type=checkbox]){height:36px!important;padding:6px 8px!important;line-height:normal}.shortage-order-page .is-query{--button-bg:#15803d;--button-text:#fff}.shortage-order-page .is-primary{--button-bg:#2563eb;--button-text:#fff}.shortage-order-sheet h2{font-size:22px}
+
+.shortage-order-page .shortage-delivery-guidance{font-weight: 700; margin:2px 0;padding:5px 16px;border:1px solid #d6a953;border-radius:8px;background:#fff9eb;color:#684616;line-height:1.7}.shortage-delivery-guidance p{margin:4px 0}.shortage-order-table .shortage-delivery-terms{color:#684616;font-weight:600}
+
+/* Keep the order workspace full-height regardless of ingredient count. */
+@media screen {
+  #root > .shortage-order-page { height: 100dvh; min-height: 0; overflow: hidden; }
+  #root > .shortage-order-page > .side-layout { height: 100%; min-height: 0; }
+}
+
+.shortage-order-options { background: #fff; border: 1px solid #dbe5e2; border-radius: 8px; padding: 12px; margin: 12px 0; }
+.shortage-order-options summary, .shortage-delivery-guidance summary { cursor: pointer; font-weight: 600; }
+
+/* 재고 상태 필터(빨강: 필요량 부족, 노랑: 안전재고 미달). 색과 문구를 함께 보여준다. */
+.shortage-stock-filter { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.shortage-stock-filter button { border: 1px solid #c9d6ce; background: #fff; color: #253b32; border-radius: 16px; padding: 4px 12px; font-size: 13px; cursor: pointer; }
+.shortage-stock-filter button.is-active { border-color: #1d5585; background: #1d5585; color: #fff; }
+.shortage-stock-badge { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 8px; font-size: 11px; font-weight: 600; vertical-align: middle; }
+.shortage-stock-badge.is-red { background: #fde4e1; color: #a1261b; }
+.shortage-stock-badge.is-yellow { background: #fff4d6; color: #7a5a00; }
+
+/* 발주 기준 선택(식단표 / 현재 부족 재고 / 최근 사용량). 앱 공통 버튼 높이가 고정이라 버튼에는 이름만 둔다. */
+.shortage-source-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 10px 0 4px; }
+.shortage-source-tabs button { width: 100%; }
+.shortage-source-tabs button.is-active { box-shadow: inset 0 0 0 2px #1d5585; font-weight: 700; }
+.shortage-source-hint { margin: 0 0 8px; font-size: 13px; color: #4b5d54; }
+@media (max-width: 700px) { .shortage-source-tabs { grid-template-columns: 1fr; } }
+/* 발주서 확인(미리보기) 모달 표: 칸 위아래 여백 없이 좌우 10px (공통 표 9px 10px보다 우선) */
+@media screen{.shortage-order-sheet .shortage-order-table td{padding:0 10px}}
+/* 발주하기 기준 탭: 표 위 영역을 줄여 상품 표가 최대한 많이 보이게 */
+.shortage-compact-bar{display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px 12px;margin:4px 0}
+.shortage-compact-bar>details{margin:0;padding:4px 10px}
+.shortage-compact-bar>details[open]{flex-basis:100%}
+.shortage-compact-bar>a{align-self:center;font-size:13px}
+.shortage-info-line{margin:4px 0 6px;font-size:13px;line-height:1.35;color:#475569}
+.shortage-info-line>span{display:block}
+.shortage-info-line em{display:inline-block;min-width:64px;margin-right:6px;font-style:normal;font-weight:700;color:#334155}
+.shortage-info-line .is-source{color:#1d5585}
+.shortage-info-line b,.catalog-preparation-inline b{font-weight:700}
+.shortage-info-line .is-warn,.catalog-preparation-inline .is-warn{color:#b45309}
+.catalog-preparation-inline .is-ok{color:#15803d}
+.catalog-preparation-inline__retry{margin-left:6px;padding:0 6px;font-size:12px}
+.shortage-table-controls{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:0 0 6px}
+.shortage-table-controls .shortage-stock-filter{margin:0}
+.shortage-table-controls .shortage-order-toolbar{flex:1 1 auto;gap:6px 8px;margin:0;padding:0}
+.shortage-table-controls .shortage-order-toolbar input{width:140px}
+.shortage-table-controls .shortage-order-toolbar>span{margin-right:auto;font-size:12px}
+/* 식재료 발주 미리보기: 모달은 스크롤 없이 화면 높이에 맞추고 표만 스크롤. 표 아래 문구는 줄 간격 최소(인쇄 규칙은 그대로) */
+@media screen{
+.shortage-order-sheet{display:flex;flex-direction:column;max-height:94vh;overflow:hidden;padding:14px 18px}
+.shortage-order-sheet>*{flex:0 0 auto}
+.shortage-order-sheet h2{margin:0 0 2px;font-size:18px}
+.shortage-order-sheet p{margin:2px 0;font-size:12px;line-height:1.35}
+.shortage-order-sheet .shortage-order-table-wrap{flex:1 1 auto;min-height:120px;overflow:auto;margin:6px 0}
+.shortage-order-sheet .shortage-order-table thead th{position:sticky;top:0;z-index:1}
+.shortage-order-sheet .shortage-order-total{margin:2px 0;font-size:16px}
+.shortage-order-sheet .shortage-delivery-guidance{padding:4px 10px;line-height:1.35}
+.shortage-order-sheet .batch-results{max-height:30vh;overflow:auto}
+.shortage-order-sheet .shortage-order-actions{margin-top:6px}
+}

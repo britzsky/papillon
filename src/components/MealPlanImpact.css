@@ -1,0 +1,37 @@
+/* 저장 전 기존 식단 대비 변경(MealPlanImpact): 식재료별 한 줄, 늘어남 주황·줄어듦 파랑 */
+.plan-impact { margin-top: 18px; padding-top: 14px; border-top: 1px solid #e0e8e3; }
+.plan-impact h3 { margin: 0 0 8px; color: #192e25; }
+.plan-impact__alert { margin: 0 0 8px; padding: 8px 12px; border-radius: 6px; background: #fff5f5; color: #b42318; font-weight: 600; }
+.plan-impact__empty { margin: 0; color: #4e5e56; }
+.plan-impact__summary { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 8px; }
+.plan-impact__summary span { padding: 2px 8px; border-radius: 10px; background: #edf1ef; color: #34483f; font-weight: 700; }
+.plan-impact__summary span.is-up { background: #fff2d9; color: #865b13; }
+.plan-impact__summary span.is-down { background: #e8f0f8; color: #1d5585; }
+.plan-impact__summary small { color: #4e5e56; margin-left: 4px; }
+.plan-impact__scroll { max-height: 320px; border: 1px solid #e0e8e3; border-radius: 8px; }
+body.workspace-ui .plan-impact__table { margin: 0; }
+body.workspace-ui .plan-impact__table :is(th, td) { padding: 7px 10px; vertical-align: top; }
+.plan-impact__table td:first-child strong { display: block; color: #192e25; }
+.plan-impact__table td:first-child small { color: #6f7d76; }
+.plan-impact__delta { display: inline-block; padding: 1px 8px; border-radius: 10px; font-weight: 800; white-space: nowrap; }
+.plan-impact__delta.is-up { background: #fff2d9; color: #865b13; }
+.plan-impact__delta.is-down { background: #e8f0f8; color: #1d5585; }
+.plan-impact__delta.is-same { background: #edf1ef; color: #5f6d66; }
+body.workspace-ui .plan-impact__table td.plan-impact__totals { white-space: nowrap !important; color: #4e5e56; }
+.plan-impact__totals b { color: #192e25; }
+.plan-impact__days { color: #34483f; }
+.plan-impact__days span { display: block; margin-top: 4px; }
+body.workspace-ui > :is(#root, :not(#root)) .plan-impact__days button { min-height: 22px; height: 22px !important; padding: 0 8px; }
+.plan-impact__orders span { display: block; color: #34483f; }
+.plan-impact__orders em { display: block; margin-top: 2px; font-style: normal; font-weight: 700; color: #b45309; }
+.plan-impact__none { color: #9aa6a0; }
+body.workspace-ui .plan-impact__table tr.is-over-order td { background: #fffaf0; }
+.plan-impact__unmatched h4 { margin: 12px 0 4px; }
+.plan-impact__unmatched p { margin: 2px 0; }
+.plan-impact__notice { margin: 8px 0 0; color: #4e5e56; line-height: 1.5; }
+/* 좁은 화면에서는 칸을 짜부라뜨리지 않고 표를 가로로 스크롤(공통 규칙 table{min-width:0 !important}보다 우선) */
+body.workspace-ui .plan-impact__scroll table.plan-impact__table { min-width: 720px !important; }
+body.workspace-ui .plan-impact__table td.plan-impact__orders { min-width: 200px; }
+/* 가로로 넘겨도 어떤 식재료 줄인지 보이게 식재료 칸 고정 */
+body.workspace-ui .plan-impact__table :is(td, th):first-child { position: sticky; left: 0; z-index: 1; box-shadow: 1px 0 0 #e0e8e3; }
+body.workspace-ui > :is(#root, :not(#root)) .plan-impact__table thead th:first-child { z-index: 4 !important; }

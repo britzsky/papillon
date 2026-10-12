@@ -1,4 +1,5 @@
 export type IngredientStockSnapshot = {
+  stock_status?: string
   required_qty?: number
   current_qty?: number
   shortage_qty?: number
@@ -9,11 +10,11 @@ export type IngredientStockSnapshot = {
   safe_stock_qty?: number
 }
 
-export type IngredientStockLevel = 'urgent' | 'forecast' | 'low-unused' | 'normal'
+export type IngredientStockLevel = 'urgent' | 'forecast' | 'low-unused' | 'normal' | 'unknown'
 
 export type IngredientStockStatus = {
   level: IngredientStockLevel
-  emoji: '🔴' | '🟠' | '🟡' | '🟢'
+  emoji: '🔴' | '🟠' | '🟡' | '🟢' | '⚪'
   label: string
   needsOrder: boolean
 }
@@ -23,6 +24,9 @@ function positive(value: number | undefined) {
 }
 
 export function getIngredientStockStatus(item: IngredientStockSnapshot): IngredientStockStatus {
+  if (item.stock_status === 'RED' || item.stock_status === 'ORANGE') return { level: 'urgent', emoji: '🔴', label: '안전재고·입고예정량 반영 후 부족', needsOrder: true }
+  if (item.stock_status === 'GREEN') return { level: 'normal', emoji: '🟢', label: '안전재고·입고예정량 반영 후 충족', needsOrder: false }
+  if (item.stock_status === 'UNKNOWN' || item.stock_status === 'EMPTY') return { level: 'unknown', emoji: '⚪', label: '필요량·단위 확인 필요', needsOrder: false }
   const current = Math.max(0, item.current_qty ?? 0)
   const required = positive(item.required_qty)
   const shortage = positive(item.shortage_qty)

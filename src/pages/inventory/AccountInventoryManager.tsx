@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import HeaderBar from '../../components/HeaderBar'
+import ProductImage from '../../components/ProductImage'
 import LoadingScreen from '../../components/LoadingScreen'
 import SideMenuLayout from '../../components/SideMenuLayout'
 import AppAlert, { type AppAlertState } from '../../components/AppAlert'
@@ -8,6 +9,9 @@ import { getAccountInventoryList, saveAccountInventory, type AccountInventoryIte
 import { getIngredientOptions, type IngredientOption } from '../../api/operations'
 import IngredientSearchSelect from '../operations/IngredientSearchSelect'
 import { MENU_PAGE_SIZE, parseNumber, qtyUnitOptions } from '../operations/menuManagerShared'
+import { stockInputUnits } from '../../utils/quantityUnits'
+import OpeningStockModal from './OpeningStockModal'
+import DirectPurchaseModal from './DirectPurchaseModal'
 import '../operations/MenuManager.css'
 import { getIngredientStockStatus } from '../../utils/ingredientStockStatus'
 
@@ -61,9 +65,11 @@ function getLocationName(locationId?: string) {
 
 function getInventoryStockStatus(item: AccountInventoryItem) {
   if (item.stock_status === 'RED') return { emoji: '🔴', label: '즉시 재고 부족', needsOrder: true }
-  if (item.stock_status === 'ORANGE') return { emoji: '🟠', label: '평균 사용량 대비 부족 예상', needsOrder: true }
+  if (item.stock_status === 'ORANGE') return { emoji: '🟠', label: '안전재고·입고예정량 반영 후 부족', needsOrder: true }
   if (item.stock_status === 'YELLOW') return { emoji: '🟡', label: '최근 사용 이력 없음 · 총용량 대비 재고 30% 이하', needsOrder: false }
-  if (item.stock_status === 'GREEN') return { emoji: '🟢', label: '정상', needsOrder: false }
+  if (item.stock_status === 'EMPTY') return { emoji: '⚪', label: '재고 없음 · 필요량 미산정', needsOrder: false }
+  if (item.stock_status === 'UNKNOWN') return { emoji: '⚪', label: '사용 이력 없음 · 적정재고 판단 불가', needsOrder: false }
+  if (item.stock_status === 'GREEN') return { emoji: '🟢', label: '안전재고·입고예정량 반영 후 충족', needsOrder: false }
   return getIngredientStockStatus(item)
 }
 
@@ -152,11 +158,15 @@ function AccountInventoryManager() {
   const [ingredientOptions, setIngredientOptions] = useState<IngredientOption[]>([])
   const [ingredientError, setIngredientError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [reloadVersion, setReloadVersion] = useState(0)
   const [keyword, setKeyword] = useState(initialKeyword)
   const [selectedLocationId, setSelectedLocationId] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [isSaving, setIsSaving] = useState(false)
   const [alert, setAlert] = useState<AppAlertState | null>(null)
+  const [isOpeningOpen, setIsOpeningOpen] = useState(false)
+  // 식단 사용 확정에서 재고 부족 시 '직접 구매 입력'으로 바로 열 수 있게 한다(?direct_purchase=1).
+  const [isDirectPurchaseOpen, setIsDirectPurchaseOpen] = useState(() => searchParams.get('direct_purchase') === '1')
 
   useEffect(() => {
     let isMounted = true
@@ -185,7 +195,7 @@ function AccountInventoryManager() {
     return () => {
       isMounted = false
     }
-  }, [targetAccountId])
+  }, [targetAccountId, reloadVersion])
 
   useEffect(() => {
     let isMounted = true
@@ -213,10 +223,13 @@ function AccountInventoryManager() {
 
   const filteredItems = useMemo(() => {
     const normalizedKeyword = keyword.trim().toLowerCase()
-    if (!normalizedKeyword) return items
+    // 재고가 있는 상품을 먼저(같은 그룹 안에서는 서버의 위험도 순서 유지). 연결만 되고 입고 전인 0 재고 상품이 많으면
+    // 방금 입고한 상품이 뒤 페이지로 밀려 '반영 안 됨'처럼 보였다.
+    const ordered = [...items].sort((a, b) => Number(Number(b.current_base_qty) > 0) - Number(Number(a.current_base_qty) > 0))
+    if (!normalizedKeyword) return ordered
 
-    return items.filter((item) =>
-      [item.menu_name, item.ingredient_name, item.category_name, item.location_id, getLocationName(item.location_id)]
+    return ordered.filter((item) =>
+      [item.menu_name, item.ingredient_name, item.product_name, item.supplier_item_code, item.category_name, item.location_id, getLocationName(item.location_id)]
         .filter(Boolean)
         .some((value) => value?.toLowerCase().includes(normalizedKeyword)),
     )
@@ -332,12 +345,13 @@ function AccountInventoryManager() {
     if (item.account_ingredient_product_id) {
       params.set('account_ingredient_product_id', String(item.account_ingredient_product_id))
     }
-    const menuPath = item.menu_id ? `/${encodeURIComponent(item.menu_id)}` : ''
-    navigate(`/order_manager/food_order${menuPath}?${params.toString()}`)
+    params.set('source', 'INVENTORY')
+    navigate(`/order_manager/food_order?${params.toString()}`)
   }
 
   return (
     <div className="menu-manager-page">
+      {isSaving ? <LoadingScreen overlay message="거래처 재고를 저장하고 있습니다." /> : null}
       <main className="menu-manager-content">
         <SideMenuLayout
           header={
@@ -359,7 +373,7 @@ function AccountInventoryManager() {
                   id="account-inventory-keyword"
                   className="menu-manager-cell-input"
                   value={keyword}
-                  placeholder="식자재, 카테고리, 위치"
+                  placeholder="식자재, 상품명, 카테고리, 위치"
                   onChange={(event) => setKeyword(event.target.value)}
                 />
               </div>
@@ -380,8 +394,38 @@ function AccountInventoryManager() {
               </div>
             </div>
             <div className="menu-manager-filters__actions">
+              <button type="button" className="action-query-button" disabled={isLoading || isSaving}
+                onClick={() => {
+                  if (items.some((item) => isInventoryItemChanged(item, originalItemsByRowId))
+                    && !window.confirm('저장하지 않은 변경사항을 버리고 최신 재고를 조회할까요?')) return
+                  setReloadVersion((current) => current + 1)
+                }}>
+                재고 새로고침
+              </button>
               <button type="button" className="menu-manager-add-button" onClick={handleAddRow}>
                 행 추가
+              </button>
+              <button type="button" className="menu-manager-add-button" disabled={isLoading || isSaving}
+                title="도입 전부터 보유한 재고를 수량과 단가로 등록합니다"
+                onClick={() => {
+                  if (items.some((item) => isInventoryItemChanged(item, originalItemsByRowId))) {
+                    setAlert({ type: 'error', title: '저장 필요', message: '저장하지 않은 변경사항을 먼저 저장하거나 새로고침한 뒤 기초재고를 등록해주세요.' })
+                    return
+                  }
+                  setIsOpeningOpen(true)
+                }}>
+                기초재고 등록
+              </button>
+              <button type="button" className="menu-manager-add-button" disabled={isLoading || isSaving || !targetAccountId}
+                title="마트·쿠팡 등에서 직접 산 식재료를 재고에 넣습니다"
+                onClick={() => {
+                  if (items.some((item) => isInventoryItemChanged(item, originalItemsByRowId))) {
+                    setAlert({ type: 'error', title: '저장 필요', message: '저장하지 않은 변경사항을 먼저 저장하거나 새로고침한 뒤 직접구매를 등록해주세요.' })
+                    return
+                  }
+                  setIsDirectPurchaseOpen(true)
+                }}>
+                직접구매 등록
               </button>
               <button type="button" className="menu-manager-save-button" onClick={() => void handleSave()} disabled={isSaving}>
                 {isSaving ? '저장 중...' : '저장'}
@@ -411,6 +455,8 @@ function AccountInventoryManager() {
                         <th>공급상품</th>
                         <th>포장가격</th>
                         <th>기준단가</th>
+                        <th>재고평균단가</th>
+                        <th>재고금액</th>
                         <th>보관위치</th>
                         <th>예상필요수량</th>
                         <th>현재고</th>
@@ -458,7 +504,7 @@ function AccountInventoryManager() {
                             </div>
                           </td>
                           <td title={`${item.supplier_name ?? ''} ${item.product_name ?? ''}`}>
-                            {item.product_name || '상품 미연결'}
+                            <div className="product-name-with-image"><ProductImage compact src={item.image_url} name={item.product_name || item.ingredient_name} /><span>{item.product_name || '상품 미연결'}{item.supplier_code === 'DIRECT' && <small className="account-inventory-tag"> 직접구매</small>}{item.account_ingredient_product_id ? <Link className="account-inventory-history-link" to={`/inventory/history?${new URLSearchParams({ account_id: targetAccountId, account_ingredient_product_id: String(item.account_ingredient_product_id) })}`}>변동 이력</Link> : null}</span></div>
                           </td>
                           <td>
                             {(item.purchase_price ?? 0) > 0
@@ -470,6 +516,9 @@ function AccountInventoryManager() {
                               ? `${((item.purchase_price ?? 0) / (item.package_base_qty ?? 1)).toLocaleString('ko-KR', { maximumFractionDigits: 2 })}원/${item.base_unit}`
                               : '미산정'}
                           </td>
+                          <td>{(item.average_unit_cost ?? 0) > 0 ? `${(item.average_unit_cost ?? 0).toLocaleString('ko-KR', { maximumFractionDigits: 2 })}원/${item.base_unit}` : '입고 전'}
+                            {item.opening_cost_estimated && <small className="account-inventory-tag" title="기초재고를 공급가 기반 추정 단가로 등록했습니다. 입고·사용이 쌓이면 실제 단가로 평균이 바뀝니다."> 추정</small>}</td>
+                          <td>{Math.round(item.inventory_amount ?? 0).toLocaleString('ko-KR')}원</td>
                           <td>
                             <select
                               className={getCellInputClass(item, originalItemsByRowId, 'location_id')}
@@ -503,9 +552,12 @@ function AccountInventoryManager() {
                                 onChange={(event) => handleTextChange(item, 'current_unit', event.target.value)}
                               >
                                 <option value="">단위</option>
-                                {qtyUnitOptions.map((option) => (
+                                {/* 저장 가능한 단위만: 기준단위, kg/L, 상품 발주단위(규격이 있을 때). 신규 행은 전체 목록 */}
+                                {(stockInputUnits(item.base_unit, item.order_unit, item.package_base_qty) ?? qtyUnitOptions).map((option) => (
                                   <option key={option} value={option}>
-                                    {option}
+                                    {option === item.order_unit && item.package_base_qty
+                                      ? `${option} (${item.package_base_qty.toLocaleString()}${item.base_unit})`
+                                      : option}
                                   </option>
                                 ))}
                               </select>
@@ -521,8 +573,8 @@ function AccountInventoryManager() {
                             {item.order_needed_qty} {item.base_unit}
                           </td>
                           <td>
-                            <span title={getInventoryStockStatus(item).label}>
-                              {getInventoryStockStatus(item).emoji} {getInventoryStockStatus(item).label}
+                            <span className={`workspace-status workspace-status--${getInventoryStockStatus(item).needsOrder ? "danger" : Number(item.current_qty) <= 0 ? "warning" : "neutral"}`} title={getInventoryStockStatus(item).label}>
+                              {getInventoryStockStatus(item).label}
                             </span>
                           </td>
                           <td>
@@ -591,6 +643,33 @@ function AccountInventoryManager() {
         </SideMenuLayout>
       </main>
       <AppAlert alert={alert} onClose={() => setAlert(null)} />
+      {isDirectPurchaseOpen && (
+        <DirectPurchaseModal
+          accountId={targetAccountId}
+          items={items}
+          onClose={() => setIsDirectPurchaseOpen(false)}
+          onDone={(result) => {
+            setIsDirectPurchaseOpen(false)
+            setReloadVersion((current) => current + 1)
+            setAlert({ type: 'success', title: '직접구매 등록', message: result.replayed
+              ? '이미 기록된 직접구매입니다. 재고에 다시 더하지 않았습니다.'
+              : `${result.product_name} ${Number(result.base_qty).toLocaleString('ko-KR')}${result.base_unit}를 재고에 반영했습니다.${result.product_created ? ' (직접구매 상품 새로 등록)' : ''}` })
+          }}
+        />
+      )}
+      {isOpeningOpen && (
+        <OpeningStockModal
+          items={items}
+          onClose={() => setIsOpeningOpen(false)}
+          onDone={(saved, failed) => {
+            if (saved) setReloadVersion((current) => current + 1)
+            setAlert(failed
+              ? { type: 'error', title: '일부 실패', message: `${saved}건 등록, ${failed}건 실패. 실패 사유는 목록에서 확인해주세요.` }
+              : { type: 'success', title: '기초재고 등록', message: `${saved}건을 등록했습니다.` })
+            if (!failed) setIsOpeningOpen(false)
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -10,6 +10,15 @@
   padding: 18px;
 }
 
+.loading-screen.is-overlay {
+  position: fixed;
+  z-index: 10000;
+  inset: 0;
+  min-height: 100vh;
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(3px);
+}
+
 .loading-screen__panel {
   display: flex;
   flex-direction: column;
@@ -31,25 +40,37 @@
   animation: loading-screen-float 1.6s ease-in-out infinite;
 }
 
-.loading-screen__dots {
-  display: inline-flex;
-  gap: 8px;
+.loading-screen__progress-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
 }
 
-.loading-screen__dots span {
-  width: 8px;
-  height: 8px;
+.loading-screen__progress {
+  flex: 1;
+  height: 10px;
+  overflow: hidden;
   border-radius: 999px;
-  background: #0f766e;
-  animation: loading-screen-bounce 0.9s ease-in-out infinite;
+  background: #dbeafe;
+  box-shadow: inset 0 1px 2px rgba(30, 64, 175, 0.12);
 }
 
-.loading-screen__dots span:nth-child(2) {
-  animation-delay: 0.12s;
+.loading-screen__progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2563eb, #60a5fa);
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.45);
+  transition: width 0.45s ease-out;
 }
 
-.loading-screen__dots span:nth-child(3) {
-  animation-delay: 0.24s;
+.loading-screen__progress-row strong {
+  min-width: 42px;
+  color: #2563eb;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .loading-screen__panel p {
@@ -58,6 +79,11 @@
   font-size: 14px;
   font-weight: 600;
   text-align: center;
+}
+
+.loading-screen__panel small {
+  color: #94a3b8;
+  font-size: 12px;
 }
 
 @keyframes loading-screen-float {
@@ -71,16 +97,16 @@
   }
 }
 
-@keyframes loading-screen-bounce {
-  0%,
-  80%,
-  100% {
-    transform: scale(0.75);
-    opacity: 0.45;
+@media (prefers-reduced-motion: reduce) {
+  .loading-screen__logo {
+    animation: none;
   }
 
-  40% {
-    transform: scale(1);
-    opacity: 1;
+  .loading-screen__progress span {
+    transition: none;
   }
 }
+
+/* 문구 안의 줄바꿈(
+)을 그대로 보여준다 */
+.loading-screen__panel p { white-space: pre-line; }

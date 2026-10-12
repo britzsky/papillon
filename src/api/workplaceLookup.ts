@@ -34,7 +34,7 @@ export async function lookupWorkplaces(signal?: AbortSignal): Promise<Workplace[
   const configured = import.meta.env.VITE_WORKPLACE_LOOKUP_API_URL?.trim()
   const endpoint = configured || buildApiUrl('/Order/Welstory/SoldToList')
   const workplaces: Workplace[] = []
-  let contYn = 'N'
+  let contYn = 'Y'
   let nextKey = ''
 
   do {

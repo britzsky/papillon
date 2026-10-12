@@ -1,5 +1,9 @@
-import type { MouseEvent, PointerEvent } from 'react'
+import { useId, type MouseEvent, type PointerEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { logout } from '../api/auth'
+import userIcon from '../assets/image/user.png'
+import signOutIcon from '../assets/image/exit.png'
+import HeaderAlerts from './HeaderAlerts'
 import './HeaderBar.css'
 
 type BreadcrumbItem = {
@@ -14,6 +18,13 @@ type HeaderBarProps = {
 
 function HeaderBar({ title = 'Home', breadcrumbs = [] }: HeaderBarProps) {
   const navigate = useNavigate()
+  const userInfoId = useId()
+  const userInfo = [
+    ['이름', localStorage.getItem('user_name')],
+    ['아이디', localStorage.getItem('user_id')],
+    ['거래처명', localStorage.getItem('account_name')],
+    ['거래처 ID', localStorage.getItem('account_id')],
+  ]
 
   const blurActiveElement = () => {
     if (document.activeElement instanceof HTMLElement) {
@@ -57,7 +68,40 @@ function HeaderBar({ title = 'Home', breadcrumbs = [] }: HeaderBarProps) {
         <div className="header-bar__brand">
           {/* <img src={logo} alt="The Full logo" /> */}
         </div>
-        <div className="header-bar__status">{title}</div>
+        <h1 className="header-bar__status">{title}</h1>
+        <div className="header-bar__actions">
+          <HeaderAlerts />
+          <button
+            type="button"
+            className="header-bar__icon-button"
+            popoverTarget={userInfoId}
+            aria-label="사용자 정보"
+            title="사용자 정보"
+          >
+            <img src={userIcon} width="32" height="32" alt="" aria-hidden="true" />
+          </button>
+          <section id={userInfoId} popover="auto" className="header-bar__user-info" aria-label="사용자 정보">
+            <div className="header-bar__user-info-heading">
+              <h2>사용자 정보</h2>
+              <button type="button" className="header-bar__icon-button" popoverTarget={userInfoId} popoverTargetAction="hide" aria-label="사용자 정보 닫기" title="닫기">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true">
+                  <path d="m6 6 12 12M18 6 6 18" />
+                </svg>
+              </button>
+            </div>
+            <dl>
+              {userInfo.map(([label, value]) => (
+                <div key={label}>
+                  <dt>{label}</dt>
+                  <dd>{value?.trim() || '등록된 정보 없음'}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+          <button type="button" className="header-bar__icon-button header-bar__icon-button--logout" onClick={logout} aria-label="로그아웃" title="로그아웃">
+            <img src={signOutIcon} width="32" height="32" alt="" aria-hidden="true" />
+          </button>
+        </div>
       </header>
 
       {breadcrumbs.length > 0 ? (

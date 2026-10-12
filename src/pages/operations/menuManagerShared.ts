@@ -1,6 +1,7 @@
+import { convertQuantity } from "../../utils/quantityUnits"
 import type { MenuIngredientItem, MenuManagerItem } from '../../api/operations'
 
-export const qtyUnitOptions = ['g', 'L', 'kg', 'ea', 'k', '박스', '캔', '병', '판', '개', '봉', '팩'] as const
+export const qtyUnitOptions = ['g', 'ml', 'L', 'kg', 'EA', 'PAC', 'BOX', 'ea', '박스', '캔', '병', '판', '개', '봉', '팩'] as const
 
 const localizedQtyUnits = new Set(['박스', '캔', '병', '판', '개', '봉', '팩'])
 
@@ -113,7 +114,7 @@ export function matchesMenuFilters(
     return true
   }
 
-  return normalizeSearchText(`${item.menu_name} ${item.food_type_reason ?? ''}`).includes(normalizedKeyword)
+  return normalizeSearchText(`${item.menu_name} ${item.food_type_reason ?? ''} ${item.recipe_ingredient_names ?? ''}`).includes(normalizedKeyword)
 }
 
 export function parseNumber(value: string) {
@@ -122,10 +123,11 @@ export function parseNumber(value: string) {
 }
 
 export function recalculateQuantities(item: EditableMenuIngredientItem) {
-  const shortageQty = Math.max(item.required_qty - item.current_qty, 0)
+  const shortageQty = Math.max(item.required_qty + (item.safe_stock_qty ?? 0) - item.current_qty - (item.incoming_qty ?? 0), 0)
 
   return {
     ...item,
+    stock_status: shortageQty > 0 ? 'RED' : 'GREEN',
     shortage_qty: shortageQty,
     order_needed_qty: shortageQty,
   }
@@ -228,22 +230,7 @@ export function formatQtyRaw(qtyNum: number, qtyUnit: string) {
   return `${qtyNum}${qtyUnit}`
 }
 
-function normalizeUnit(unit: string) {
-  return unit.trim().toLowerCase()
-}
-
-export function toBaseQuantity(qty: number, qtyUnit: string, baseUnit: string) {
-  const sourceUnit = normalizeUnit(qtyUnit)
-  const targetUnit = normalizeUnit(baseUnit)
-
-  if (!sourceUnit || !targetUnit || sourceUnit === targetUnit) return qty
-  if (sourceUnit === 'kg' && targetUnit === 'g') return qty * 1000
-  if (sourceUnit === 'g' && targetUnit === 'kg') return qty / 1000
-  if (sourceUnit === 'l' && targetUnit === 'ml') return qty * 1000
-  if (sourceUnit === 'ml' && targetUnit === 'l') return qty / 1000
-
-  return qty
-}
+export const toBaseQuantity = convertQuantity
 
 export function getReviewFlag(qtyUnit: string) {
   return localizedQtyUnits.has(qtyUnit) ? 'text_qty' : ''
@@ -360,6 +347,8 @@ export function buildMenuSavePayload(
       .map(({ detail, sort_order }) => {
         const qtyNum = detail.required_qty
         const qtyUnit = detail.qty_unit ?? ''
+		const baseUnit = detail.base_unit || qtyUnit
+		const qtyBase = toBaseQuantity(qtyNum, qtyUnit, baseUnit)
 
         return {
           recipe_id: detail.recipe_id ?? '',
@@ -371,11 +360,14 @@ export function buildMenuSavePayload(
           qty_num: qtyNum,
           qty_unit: qtyUnit,
           qty_raw: formatQtyRaw(qtyNum, qtyUnit),
+		  recipe_yield_servings: 1,
+		  qty_base: qtyBase,
+		  base_unit: baseUnit,
+		  qty_per_person: qtyBase,
           review_flag: getReviewFlag(qtyUnit),
           current_qty: detail.current_qty,
           shortage_qty: detail.shortage_qty,
           order_needed_qty: detail.order_needed_qty,
-          base_unit: detail.base_unit,
           order_unit: detail.order_unit,
           convert_value: detail.convert_value,
           menu_usage_count: detail.menu_usage_count ?? 0,
@@ -394,6 +386,7 @@ export function buildMenuSavePayload(
       menu_gubun: item.menu_gubun,
       meal_plan_type: item.meal_plan_type,
       calories_per_serving: item.calories_per_serving,
+      del_yn: 'N',
       created_at: item.created_at ?? '',
       menu_img: item.menu_img instanceof File ? item.menu_img : item.menu_img ?? item.image_url ?? '',
       image_file_id: item.image_file_id ?? '',
@@ -411,7 +404,6 @@ export function buildAccountMenuSavePayload(
   detailItemsByMenuId: Record<string, EditableMenuIngredientItem[]>,
   originalAssignedMenuIds: string[],
   originalMenusById: Record<string, MenuManagerItem>,
-  _originalDetailsByMenuId: Record<string, Record<string, EditableMenuIngredientItem>>,
 ) {
   const originalAssignedMenuIdSet = new Set(originalAssignedMenuIds)
   const assignedMenuIdSet = new Set(assignedMenus.map((item) => item.menu_id))
@@ -489,13 +481,6 @@ export function buildAccountMenuSavePayload(
         ingredient_name_std: detail.ingredient_name_std || detail.ingredient_name,
         category_name: detail.category_name ?? '',
         storage_type: detail.storage_type ?? '',
-        supplier_id: detail.supplier_id ?? 0,
-        supplier_item_code: detail.supplier_item_code ?? '',
-        product_name: detail.product_name ?? '',
-        order_unit: detail.order_unit || baseUnit,
-        package_qty: detail.package_qty ?? 1,
-        package_unit: detail.package_unit || baseUnit,
-        base_qty: detail.base_qty ?? detail.convert_value ?? 1,
       }
     }),
   )

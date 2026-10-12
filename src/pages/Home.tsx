@@ -1,62 +1,18 @@
+import DailyWork from '../components/DailyWork'
+import { buildApiUrl } from '../config/api'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import HeaderBar from '../components/HeaderBar'
 import SideMenuLayout from '../components/SideMenuLayout'
+import WorkspaceIcon from '../components/WorkspaceIcon'
 import {
   getAccountOptions,
-  getIngredientOptions,
-  getMenuManagerList,
   type AccountOption,
   type IngredientOption,
   type MenuManagerItem,
 } from '../api/operations'
+import { trackSearchSelection, trackSearch, getPopularSearches, type SearchEntity } from '../api/analytics'
 import './Home.css'
-import order from '../assets/image/icons8-order-100-Photoroom.png'
-import hygiene from '../assets/image/icons8-hygiene-64-Photoroom.png'
-import operation from '../assets/image/icons8-capability-64-Photoroom.png'
-import basket from '../assets/image/3.png'
-
-const menus = [
-  {
-    key: 'order',
-    title: '발주 관리',
-    description: '주문 현황과 발주서를 한눈에 확인',
-    badge: '오늘 12건',
-    icon: <img src={order} alt="" />,
-    path: '/order_manager',
-  },
-  {
-    key: 'food-order',
-    title: '식자재 발주',
-    description: '자주 쓰는 품목을 빠르게 재주문',
-    badge: '추천',
-    icon: <img src={operation} alt="" />,
-    path: '/order_manager/food_order',
-  },
-  {
-    key: 'inventory',
-    title: '재고 관리',
-    description: '부족 품목과 재고 흐름 체크',
-    badge: '준비중',
-    icon: <img src={hygiene} alt="" />,
-  },
-  {
-    key: 'hygiene',
-    title: '위생 관리',
-    description: '거래처별 점검 상태 관리',
-    badge: '안전',
-    icon: <img src={hygiene} alt="" />,
-    path: '/sanitation/vendor',
-  },
-  {
-    key: 'operation',
-    title: '운영 관리',
-    description: '메뉴와 식단표 운영 도구',
-    badge: '3개 도구',
-    icon: <img src={operation} alt="" />,
-    path: '/operations/menu',
-  },
-]
 
 type SearchIntent = 'ingredient' | 'vendor' | 'menu'
 
@@ -74,10 +30,13 @@ type SearchAction = {
   path: string
 }
 
+type SearchMenuItem = MenuManagerItem & { matched_ingredients?: string }
+
 type SearchMatch = {
   intent: SearchIntent
   id: string
   name: string
+  matchedIngredients?: string
 }
 
 const searchActions: SearchAction[] = [
@@ -173,7 +132,7 @@ const findMatches = (
   query: string,
   ingredients: IngredientOption[],
   accounts: AccountOption[],
-  menus: MenuManagerItem[],
+  menus: SearchMenuItem[],
 ): SearchMatch[] => {
   const normalizedQuery = normalizeSearchValue(query)
 
@@ -207,26 +166,33 @@ const findMatches = (
     .slice(0, 2)
 
   const menuMatches = menus
-    .filter((menu) => matchesName(menu.menu_name))
-    .map((menu) => toMatch('menu', menu.menu_id, menu.menu_name))
-    .sort(sortByRelevance)
-    .slice(0, 2)
+    .filter((menu) => matchesName(menu.menu_name) || Boolean(menu.matched_ingredients))
+    .map((menu) => ({ ...toMatch('menu', menu.menu_id, menu.menu_name), matchedIngredients: menu.matched_ingredients }))
+    .sort((a, b) => Number(!matchesName(a.name)) - Number(!matchesName(b.name)) || sortByRelevance(a, b))
+    .slice(0, 6)
 
   return [...ingredientMatches, ...accountMatches, ...menuMatches]
 }
 
-const insightCards = [
-  { label: '오늘 마감 발주', value: '12', unit: '건', tone: 'mint' },
-  { label: '검수 대기 거래처', value: '4', unit: '곳', tone: 'coral' },
-  { label: '이번 주 식단표', value: '7', unit: '개', tone: 'lime' },
+/** 자주 쓰는 화면. 홈에서 화면 입구는 '오늘 할 일'과 여기 두 곳뿐(왼쪽 메뉴에 전체 목록). */
+const shortcuts = [
+  { title: '발주하기', description: '추천 발주안·부족량·상품 검색', path: '/order_manager/order', icon: 'order' as const },
+  { title: '발주서·입고', description: '접수 결과 확인·입고 확정·인쇄', path: '/order_manager/orders', icon: 'product' as const },
+  { title: '재고 조정', description: '현재고·직접구매·기초재고', path: '/inventory/account', icon: 'inventory' as const },
+  { title: '식단표', description: '식단 작성·주간 사용 확정', path: '/operations/table-meals', icon: 'operations' as const },
+  { title: '거래처 메뉴', description: '메뉴 레시피·원가', path: '/operations/account-menu', icon: 'headquarters' as const },
+  { title: '위생 점검', description: '거래처별 점검 상태', path: '/sanitation/vendor', icon: 'sanitation' as const },
 ]
 
 function Home() {
   const navigate = useNavigate()
-  const [searchText, setSearchText] = useState('')
+  const [searchText, setSearchText] = useState(() => new URLSearchParams(window.location.search).get('q') || '')
+  const [popular, setPopular] = useState<Array<{ query: string; search_count: number }>>([])
+  const [recent, setRecent] = useState<string[]>([])
+  const recentKey = 'recent-search:' + (localStorage.getItem('account_id') || '') + ':' + (localStorage.getItem('user_id') || '')
   const [ingredients, setIngredients] = useState<IngredientOption[]>([])
   const [accounts, setAccounts] = useState<AccountOption[]>([])
-  const [menuItems, setMenuItems] = useState<MenuManagerItem[]>([])
+  const [menuItems, setMenuItems] = useState<SearchMenuItem[]>([])
   const [isSearchDataLoading, setIsSearchDataLoading] = useState(false)
   const [searchDataError, setSearchDataError] = useState('')
 
@@ -239,54 +205,39 @@ function Home() {
   const suggestedActions = primaryMatch ? searchActions.filter((action) => action.intent === primaryMatch.intent) : []
 
   useEffect(() => {
-    let isMounted = true
+    let active = true
+    void getAccountOptions().then(rows => { if (active) setAccounts(rows) }).catch(() => {})
+    void getPopularSearches().then(rows => { if (active) setPopular(rows) }).catch(() => {})
+    try { setRecent(JSON.parse(localStorage.getItem(recentKey) || '[]')) } catch { setRecent([]) }
+    return () => { active = false }
+  }, [recentKey])
 
-    const loadSearchData = async () => {
-      setIsSearchDataLoading(true)
-      setSearchDataError('')
-
-      const [ingredientResult, accountResult, menuResult] = await Promise.allSettled([
-        getIngredientOptions(),
-        getAccountOptions(),
-        getMenuManagerList(),
-      ])
-
-      if (!isMounted) {
-        return
-      }
-
-      if (ingredientResult.status === 'fulfilled') {
-        setIngredients(ingredientResult.value)
-      }
-
-      if (accountResult.status === 'fulfilled') {
-        setAccounts(accountResult.value)
-      }
-
-      if (menuResult.status === 'fulfilled') {
-        setMenuItems(menuResult.value)
-      }
-
-      if ([ingredientResult, accountResult, menuResult].some((result) => result.status === 'rejected')) {
-        setSearchDataError('일부 검색 데이터를 불러오지 못했습니다.')
-      }
-
-      setIsSearchDataLoading(false)
-    }
-
-    void loadSearchData()
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
+  useEffect(() => {
+    const controller = new AbortController()
+    if (!normalizedSearchText) { setIngredients([]); setMenuItems([]); setIsSearchDataLoading(false); return }
+    const timer = window.setTimeout(async () => {
+      setIsSearchDataLoading(true); setSearchDataError('')
+      try {
+        const query = new URLSearchParams({ q: normalizedSearchText, account_id: localStorage.getItem('account_id') || '' })
+        const response = await fetch(buildApiUrl(`/v2/discovery/search?${query}`), { signal: controller.signal })
+        if (!response.ok) throw new Error('검색 결과를 불러오지 못했습니다.')
+        const rows = await response.json() as Array<{ entity_type: string; entity_id: string; title: string; matched_ingredients?: string }>
+        if (controller.signal.aborted) return
+        setIngredients(rows.filter(row => row.entity_type === 'INGREDIENT').map(row => ({ ingredient_id: row.entity_id, ingredient_name: row.title })) as IngredientOption[])
+        setMenuItems(rows.filter(row => row.entity_type === 'MENU').map(row => ({ menu_id: row.entity_id, menu_name: row.title, matched_ingredients: row.matched_ingredients })) as SearchMenuItem[])
+      } catch (error) {
+        if (!controller.signal.aborted) setSearchDataError(error instanceof Error ? error.message : '검색 실패')
+      } finally { if (!controller.signal.aborted) setIsSearchDataLoading(false) }
+    }, 250)
+    return () => { clearTimeout(timer); controller.abort() }
+  }, [normalizedSearchText])
 
   const navigateWithSearch = (path: string, match = primaryMatch) => {
     const query = normalizedSearchText
     const params = new URLSearchParams()
 
     if (query) {
-      params.set('q', query)
+      params.set('q', match?.intent === 'menu' ? match.name : query)
     }
 
     if (match) {
@@ -300,48 +251,52 @@ function Home() {
     }
 
     const queryString = params.toString()
+
+    if (query && match) {
+      const entityTypeByIntent: Record<SearchIntent, SearchEntity['entity_type']> = {
+        ingredient: 'INGREDIENT',
+        vendor: 'VENDOR',
+        menu: 'MENU',
+      }
+      const results = searchMatches.map((item, index) => ({
+        entity_type: entityTypeByIntent[item.intent],
+        entity_id: item.id,
+        position_no: index + 1,
+      }))
+      const selectedIndex = searchMatches.findIndex((item) => item.intent === match.intent && item.id === match.id)
+      void trackSearchSelection({
+        query,
+        intent: `${match.intent.toUpperCase()}_SEARCH`,
+        screen: 'HOME',
+        results,
+        selected: {
+          entity_type: entityTypeByIntent[match.intent],
+          entity_id: match.id,
+          position_no: selectedIndex >= 0 ? selectedIndex + 1 : undefined,
+        },
+        context: { destination: path, matched_name: match.name },
+      })
+    }
+
     navigate(queryString ? `${path}?${queryString}` : path)
   }
 
   const handleSearchSubmit = () => {
-    const [firstAction] = suggestedActions
-
-    if (firstAction && primaryMatch) {
-      navigateWithSearch(firstAction.path, primaryMatch)
-    }
+    if (!normalizedSearchText || isSearchDataLoading || searchDataError) return
+    const next = [normalizedSearchText, ...recent.filter(value => value !== normalizedSearchText)].slice(0, 8)
+    setRecent(next); localStorage.setItem(recentKey, JSON.stringify(next))
+    const entities: Record<SearchIntent, SearchEntity['entity_type']> = { menu: 'MENU', ingredient: 'INGREDIENT', vendor: 'VENDOR' }
+    void trackSearch({ query: normalizedSearchText, intent: 'INTEGRATED_SEARCH', screen: 'HOME', results: searchMatches.map((match, index) => ({ entity_type: entities[match.intent], entity_id: match.id, position_no: index + 1 })) }).catch(() => {})
   }
 
   return (
-    <div className="home-page">
+    <div className="home-page procurement-refresh">
       <main className="home-content">
         <SideMenuLayout header={<HeaderBar title="오늘의 운영" breadcrumbs={[{ label: '홈' }]} />}>
           <div className="home-dashboard">
-            <section className="home-hero" aria-labelledby="home-hero-title">
-              <img className="home-hero__background" src={basket} alt="" aria-hidden="true" />
-              <div className="home-hero__copy">
-                <p className="home-hero__eyebrow">THE FULL PICK</p>
-                <h1 id="home-hero-title">오늘 필요한 운영 업무를 먼저 챙겨보세요</h1>
-                <p>발주, 위생, 메뉴 관리를 쇼핑하듯 가볍게 둘러보고 바로 처리할 수 있게 정리했습니다.</p>
-                <div className="home-hero__actions">
-                  <button type="button" className="home-hero__primary" onClick={() => navigate('/order_manager/food_order')}>
-                    식자재 발주
-                  </button>
-                  <button type="button" className="home-hero__primary" onClick={() => navigate('/operations/menu')}>
-                    메뉴관리
-                  </button>
-                  <button type="button" className="home-hero__primary" onClick={() => navigate('/operations/account-menu')}>
-                    일터 메뉴관리
-                  </button>
-                  <button type="button" className="home-hero__primary" onClick={() => navigate('/operations/table-meals')}>
-                    식단표 보기
-                  </button>
-                </div>
-              </div>
-              <div className="home-hero__visual" aria-hidden="true">
-                {/* <span className="home-hero__deal">신선식품 추천</span> */}
-              </div>
-            </section>
-
+            <div className="home-top">
+              {/* 화면 제목은 머리글 '오늘의 운영' 하나만 두고 여기에는 날짜만 */}
+              <p className="home-top__title">{new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}</p>
             <section className="home-search" aria-label="업무 검색">
               <label className="home-search__box">
                 <span aria-hidden="true">⌕</span>
@@ -357,6 +312,9 @@ function Home() {
                   }}
                 />
               </label>
+              <button type="button" className="home-search__assistant" onClick={handleSearchSubmit} disabled={!normalizedSearchText || isSearchDataLoading || Boolean(searchDataError)}>
+                🔍 통합 추천 검색
+              </button>
               {normalizedSearchText ? (
                 <div className="home-search__results" aria-live="polite">
                   {isSearchDataLoading ? <p className="home-search__summary">검색 데이터를 불러오는 중입니다.</p> : null}
@@ -364,6 +322,7 @@ function Home() {
                     <>
                       <p className="home-search__summary">
                         <strong>{primaryMatch.name}</strong> 항목을 {searchIntentLabels[primaryMatch.intent]}로 찾았습니다.
+                        {primaryMatch.matchedIngredients && <span> 레시피 식재료: {primaryMatch.matchedIngredients}</span>}
                       </p>
                       {searchMatches.length > 1 ? (
                         <div className="home-search__matches" aria-label="다른 검색 결과">
@@ -375,6 +334,7 @@ function Home() {
                               onClick={() => navigateWithSearch(searchActions.find((action) => action.intent === match.intent)?.path ?? '/home', match)}
                             >
                               {searchIntentLabels[match.intent]} · {match.name}
+                              {match.matchedIngredients && <small> · 레시피 식재료: {match.matchedIngredients}</small>}
                             </button>
                           ))}
                         </div>
@@ -406,44 +366,23 @@ function Home() {
                   ) : null}
                 </div>
               ) : null}
+              {recent.length || popular.length ? <div className="home-search__keywords">
+                {recent.length ? <span><b>최근</b>{recent.map(value => <button key={value} type="button" onClick={() => setSearchText(value)}>{value}</button>)}</span> : null}
+                {popular.length ? <span><b>많이 찾는</b>{popular.map(item => <button key={item.query} type="button" onClick={() => setSearchText(item.query)}>{item.query}</button>)}</span> : null}
+              </div> : null}
             </section>
+            </div>
 
-            <section className="menu-section" aria-labelledby="home-menu-title">
-              <div className="home-section-heading">
-                <p>카테고리</p>
-                <h2 id="home-menu-title">어떤 업무를 처리할까요?</h2>
-              </div>
-              <div className="menu-grid">
-                {menus.map((menu) => (
-                  <button
-                    key={menu.key}
-                    type="button"
-                    className="menu-card"
-                    onClick={() => menu.path && navigate(menu.path)}
-                  >
-                    <span className="menu-card__badge">{menu.badge}</span>
-                    <span className="menu-card__icon" aria-hidden="true">
-                      {menu.icon}
-                    </span>
-                    <span className="menu-card__text">
-                      <span className="menu-card__title">{menu.title}</span>
-                      <span className="menu-card__description">{menu.description}</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </section>
+            <DailyWork />
 
-            <section className="home-insights" aria-label="운영 요약">
-              {insightCards.map((card) => (
-                <article key={card.label} className={`home-insight home-insight--${card.tone}`}>
-                  <p>{card.label}</p>
-                  <strong>
-                    {card.value}
-                    <span>{card.unit}</span>
-                  </strong>
-                </article>
-              ))}
+            <section className="home-shortcuts" aria-labelledby="home-shortcuts-title">
+              <h2 id="home-shortcuts-title">자주 쓰는 화면</h2>
+              <div className="home-shortcuts__grid">
+                {shortcuts.map(card => <button key={card.path} type="button" className="home-shortcut" onClick={() => navigate(card.path)}>
+                  <span className="home-shortcut__icon"><WorkspaceIcon name={card.icon} /></span>
+                  <span className="home-shortcut__text"><strong>{card.title}</strong><small>{card.description}</small></span>
+                </button>)}
+              </div>
             </section>
           </div>
         </SideMenuLayout>

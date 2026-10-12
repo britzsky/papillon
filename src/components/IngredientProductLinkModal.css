@@ -1,0 +1,40 @@
+.ingredient-link-overlay { position:fixed; inset:0; z-index:1500; display:flex; align-items:center; justify-content:center; padding:20px; background:#102b2466; }
+.ingredient-link-dialog { background:#fff; color:#253b32; border-radius:12px; padding:22px; width:min(1440px,100%); max-height:92vh; overflow:auto; box-shadow:0 12px 48px #102b2433; }
+.ingredient-link-dialog header,.ingredient-link-dialog footer,.ingredient-link-dialog nav { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.ingredient-link-dialog h2 { margin:0; }
+.ingredient-link-dialog p { line-height:1.6; }
+.ingredient-link-filters { display:flex; flex-wrap:wrap; gap:12px; align-items:end; }
+.ingredient-link-filters label { display:grid; gap:5px; flex:1; min-width:160px; }
+.ingredient-link-filters input,.ingredient-link-filters select { width:100%; min-height:32px; box-sizing:border-box; }
+.ingredient-link-table { overflow:auto; margin:16px 0; }
+.ingredient-link-table table { width:100%; border-collapse:collapse; }
+.ingredient-link-table th,.ingredient-link-table td { text-align:left; padding:10px; border-bottom:1px solid #dce7df; }
+.ingredient-link-table th { background:#f0f6f2; }
+.ingredient-link-table small { display:block; color:#66796f; margin-top:5px; }
+.ingredient-link-selection { padding:14px; border:1px solid #b6d4c3; background:#f4faf6; margin:16px 0; }
+.ingredient-link-selection label { display:flex; gap:8px; align-items:center; }
+.ingredient-link-error { color:#af3029; }
+.ingredient-link-current { border:1px solid #dce7df; padding:12px; margin:12px 0; }
+.ingredient-link-current-row { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 0; border-top:1px solid #e4ece6; }
+.ingredient-link-current-row small { display:block; color:#66796f; margin-top:5px; }
+.ingredient-link-current-row button { margin-left:5px; }
+.ingredient-link-success { color:#176343; }
+@media(max-width:700px) { .ingredient-link-overlay {padding:8px} .ingredient-link-dialog {padding:14px} .ingredient-link-table table {min-width:650px} }
+/* 추천 상품: 근거와 함께 한 번 클릭 연결 */
+.ingredient-link-suggestions { border:1px solid #b6d4c3; background:#f4faf6; padding:12px; margin:12px 0; }
+.ingredient-link-suggestions h3 { margin:0 0 8px; font-size:15px; }
+.ingredient-link-suggestions ul { list-style:none; margin:0; padding:0; display:grid; gap:8px; }
+.ingredient-link-suggestions li { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 0; border-top:1px solid #dce7df; }
+.ingredient-link-suggestions li:first-child { border-top:0; }
+.ingredient-link-suggestions small { display:block; color:#66796f; margin-top:3px; }
+.ingredient-link-suggestions .ingredient-link-reasons { color:#176343; }
+@media(max-width:700px) { .ingredient-link-suggestions li { flex-direction:column; align-items:stretch; } }
+/* 넓은 화면: 왼쪽 추천 상품, 오른쪽 상품 선택(검색·목록·확인) */
+.ingredient-link-columns { display:grid; grid-template-columns:minmax(300px,400px) minmax(0,1fr); gap:16px; align-items:start; }
+.ingredient-link-columns.is-single { grid-template-columns:minmax(0,1fr); }
+.ingredient-link-columns > .ingredient-link-suggestions { margin:0; position:sticky; top:0; max-height:calc(92vh - 120px); overflow:auto; }
+.ingredient-link-picker { min-width:0; }
+.ingredient-link-picker h3 { margin:0 0 8px; font-size:15px; }
+.ingredient-link-picker .ingredient-link-table { margin:12px 0; }
+.ingredient-link-notice { margin:8px 0 0; padding:8px 12px; border:1px solid #b6d4c3; background:#f4faf6; }
+@media(max-width:1000px) { .ingredient-link-columns { grid-template-columns:minmax(0,1fr); } .ingredient-link-columns > .ingredient-link-suggestions { position:static; max-height:none; } }

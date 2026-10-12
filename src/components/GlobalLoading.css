@@ -1,0 +1,4 @@
+/* 조회 중 상단 진행률 막대: 모달(최대 z-index 1500)과 로딩 화면(10000) 위에도 보이게 둔다 */
+.global-loading-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 20000; height: 3px; background: transparent; pointer-events: none; }
+.global-loading-bar span { display: block; height: 100%; background: linear-gradient(90deg, #1d5585, #2f9e6e); box-shadow: 0 0 6px #2f9e6e88; transition: width 0.2s ease-out; }
+@media print { .global-loading-bar, .global-loading-overlay { display: none !important; } }

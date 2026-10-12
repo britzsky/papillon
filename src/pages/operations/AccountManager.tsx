@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type DragEvent } from 'react'
 import HeaderBar from '../../components/HeaderBar'
+import LoadingScreen from '../../components/LoadingScreen'
 import SideMenuLayout from '../../components/SideMenuLayout'
 import {
   getAccountMealConfiguration,
@@ -132,7 +133,8 @@ function AccountManager() {
   }
 
   return (
-    <SideMenuLayout header={<HeaderBar />}>
+    <SideMenuLayout header={<HeaderBar title="고객사 관리" breadcrumbs={[{ label: "홈", to: "/home" }, { label: "본사관리" }, { label: "고객사 관리" }]} />}>
+      {saving ? <LoadingScreen overlay message="거래처 식사 설정을 저장하고 있습니다." /> : null}
       <main className="account-manager-page">
         <section className="account-manager-toolbar">
           <div className="account-manager-toolbar__field">

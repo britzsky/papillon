@@ -1,0 +1,5 @@
+.product-image { box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; width: 40px; min-width: 40px; max-width: 40px; height: 40px; flex: 0 0 40px; overflow: hidden; border: 1px solid #e1e9e4; border-radius: 5px; background: #f5f8f6; color: #81968a; }
+.product-image img { display: block; width: 100%; height: 100%; object-fit: contain; background: white; }
+.product-image > span { display: flex; align-items: center; justify-content: center; }
+.product-image--compact { width: 40px; height: 40px; flex-basis: 40px; border-radius: 5px; }
+.product-name-with-image { display: flex; align-items: center; gap: 10px; min-width: 0; }

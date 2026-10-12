@@ -52,7 +52,7 @@
 
 .home-hero__background {
   position: absolute;
-  top: 30px;
+  top: 10px;
   right: 25px;
   bottom: 0px;
   z-index: 0;
@@ -79,10 +79,14 @@
   font-weight: 800;
 }
 
+.home-hero .home-hero__eyebrow {
+  font-size: 18px !important;
+}
+
 .home-hero h1 {
   margin: 0;
   color: #243036;
-  font-size: 38px;
+  font-size: 35px !important;
   line-height: 1.18;
   letter-spacing: 0;
 }
@@ -91,7 +95,7 @@
   max-width: 590px;
   margin: 14px 0 0;
   color: #60717a;
-  font-size: 16px;
+  font-size: 14px !important;
 }
 
 .home-hero__actions {
@@ -150,6 +154,7 @@
 }
 
 .home-search {
+  position: relative;
   padding: 12px;
   border: 1px solid #e5ecef;
   border-radius: 8px;
@@ -159,6 +164,22 @@
   gap: 8px;
   align-items: center;
 }
+
+.home-search__assistant {
+  position: absolute;
+  top: 13px;
+  right: 14px;
+  height: 38px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 9px;
+  background: #e98851;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.home-search__box input { padding-right: 150px; }
 
 .home-search__results {
   grid-column: 1 / -1;
@@ -283,7 +304,7 @@
 }
 
 .home-search__box input {
-  width: 100%;
+  width: 90%;
   border: 0;
   outline: 0;
   background: transparent;
@@ -339,7 +360,7 @@
 }
 
 .menu-card {
-  min-height: 190px;
+  min-height: 186.2px;
   padding: 16px;
   border: 1px solid #e2eaed;
   border-radius: 8px;
@@ -353,6 +374,38 @@
   text-align: left;
   box-shadow: 0 10px 26px rgba(50, 64, 70, 0.06);
   transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.menu-grid .menu-card {
+  border-color: #758b6d !important;
+  background: #869B7E !important;
+  color: #ffffff !important;
+}
+
+.menu-grid .menu-card :is(.menu-card__title,.menu-card__description,.menu-card__badge) {
+  color: #ffffff !important;
+}
+
+.menu-grid .menu-card:hover {
+  border-color: #687d61 !important;
+  background: #758b6d !important;
+}
+
+.menu-grid .menu-card .menu-card__badge {
+  background: var(--action-warning) !important;
+  color: #ffffff !important;
+}
+
+.home-hero__primary {
+  border-color: var(--action-warning-border) !important;
+  background: var(--action-warning) !important;
+  color: #ffffff !important;
+}
+
+.home-hero__primary:not(:disabled):hover {
+  border-color: var(--action-warning-border) !important;
+  background: var(--action-warning-hover) !important;
+  color: #ffffff !important;
 }
 
 .menu-card:hover {
@@ -471,7 +524,7 @@
   }
 
   .home-hero h1 {
-    font-size: 31px;
+    font-size: 35px !important;
   }
 
   .home-search__filters {
@@ -493,7 +546,7 @@
   }
 
   .home-hero h1 {
-    font-size: 27px;
+    font-size: 35px !important;
   }
 
   .menu-grid,
@@ -502,7 +555,7 @@
   }
 
   .menu-card {
-    min-height: 164px;
+    min-height: 160.72px;
   }
 }
 
@@ -569,4 +622,86 @@
 
 .home-search__result:hover {
   border-color: var(--theme-color-strong);
+}
+
+.home-search-keywords {display:flex;flex-wrap:wrap;gap:16px;padding:12px 0;}
+.home-search-keywords div {display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
+.home-search-keywords button {min-width:0!important;height:auto!important;padding:6px 12px;border-radius:18px;background:#eef6ff!important;color:#1e40af!important;border:1px solid #bfdbfe!important;}
+
+/* Home is the single search entry; align the action with the search box. */
+body.workspace-ui .home-search { grid-template-columns: minmax(0, 1fr) max-content; align-items: stretch; }
+body.workspace-ui .home-search__box { min-width: 0; grid-column: 1; grid-row: 1; }
+body.workspace-ui .home-search__box input { width: 100%; min-width: 0; padding-right: 10px; }
+body.workspace-ui .home-search .home-search__assistant { position: static; grid-column: 2; grid-row: 1; height: auto !important; min-height: 0; align-self: stretch; margin: 0; padding: 0 16px; white-space: nowrap; }
+@media (max-width: 480px) { body.workspace-ui .home-search { gap: 6px; padding: 8px; } body.workspace-ui .home-search .home-search__assistant { padding: 0 8px; } }
+
+/* ── 홈 재구성(2026-10-08): 제목·검색 한 줄 → 오늘 할 일 → 자주 쓰는 화면.
+ * 공통 글자 크기 규칙(UserTypography·ResponsiveWorkspace, #root 포함 !important)을 숫자·제목에서만 넘도록 #root를 붙인다. */
+body.workspace-ui .home-dashboard { gap: 16px; }
+body.workspace-ui .home-top { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 24px; }
+body.workspace-ui .home-top { align-items: center; }
+body.workspace-ui > #root .home-top .home-top__title { flex: 0 0 auto; margin: 0; color: #192e25; font-size: 14px !important; font-weight: 700; }
+body.workspace-ui .home-top .home-search { flex: 1 1 420px; max-width: 760px; margin: 0; padding: 12px; }
+body.workspace-ui .home-search__keywords { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; }
+body.workspace-ui .home-search__keywords span { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+body.workspace-ui .home-search__keywords b { color: #4e5e56; margin-right: 2px; }
+body.workspace-ui > #root .home-search__keywords button { min-height: 22px; height: 22px !important; padding: 0 8px; border-radius: 11px !important; }
+
+body.workspace-ui .home-tasks { background: #fff; border: 1px solid #e0e8e3; border-radius: 10px; padding: 16px; display: grid; gap: 12px; }
+body.workspace-ui .home-tasks__heading { display: flex; align-items: center; gap: 10px; }
+body.workspace-ui .home-tasks__heading h2 { margin: 0; color: #192e25; }
+body.workspace-ui .home-tasks__heading h2 span { color: #14634d; }
+body.workspace-ui .home-tasks__heading small { color: #4e5e56; }
+body.workspace-ui .home-tasks__heading button { margin-left: auto; }
+body.workspace-ui .home-tasks__tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+body.workspace-ui .home-tasks__tile { display: grid; gap: 2px; padding: 12px 14px; border: 1px solid #e0e8e3; border-left-width: 4px; border-radius: 8px; background: #f8faf9; color: #1f2d27; text-decoration: none; }
+body.workspace-ui a.home-tasks__tile:hover { background: #eef6f1; border-color: #9ebbac; }
+body.workspace-ui .home-tasks__label { font-weight: 700; color: #34483f; }
+body.workspace-ui > #root .home-tasks .home-tasks__count { font-size: 22px !important; font-weight: 800; line-height: 1.25; }
+body.workspace-ui .home-tasks__hint { color: #4e5e56; }
+body.workspace-ui .home-tasks__tile.is-primary { border-left-color: #14634d; background: #eef7f1; }
+body.workspace-ui .home-tasks__tile.is-primary .home-tasks__count { color: #14634d; }
+body.workspace-ui .home-tasks__tile.is-warn { border-left-color: #d97706; background: #fffaf0; }
+body.workspace-ui .home-tasks__tile.is-warn .home-tasks__count { color: #b45309; }
+body.workspace-ui .home-tasks__tile.is-info { border-left-color: #1d5585; background: #f4f8fc; }
+body.workspace-ui .home-tasks__tile.is-info .home-tasks__count { color: #1d5585; }
+body.workspace-ui .home-tasks__tile.is-done { border-left-color: #c9d6ce; }
+body.workspace-ui .home-tasks__tile.is-urgent { border-left-color: #dc2626; background: #fff5f5; }
+body.workspace-ui .home-tasks__tile.is-urgent .home-tasks__count { color: #b42318; }
+body.workspace-ui .home-tasks__tile.is-done .home-tasks__count { color: #5f6d66; }
+body.workspace-ui .home-tasks__table { max-height: 360px; border: 1px solid #e0e8e3; border-radius: 8px; }
+body.workspace-ui .home-tasks__table table { margin: 0; }
+body.workspace-ui .home-tasks__table td:not(:first-child), body.workspace-ui .home-tasks__table th:not(:first-child) { text-align: center; }
+body.workspace-ui > #root .home-tasks__table td button { min-height: 24px; height: 24px !important; padding: 0 10px; }
+body.workspace-ui .home-tasks__num { display: inline-block; min-width: 44px; padding: 2px 8px; border-radius: 12px; font-weight: 700; text-decoration: none; }
+body.workspace-ui .home-tasks__num.is-warn { background: #fff2d9; color: #865b13; }
+body.workspace-ui .home-tasks__num.is-info { background: #e8f0f8; color: #1d5585; }
+body.workspace-ui .home-tasks__num:hover { text-decoration: underline; }
+body.workspace-ui .home-tasks__zero { color: #6f7d76; }
+body.workspace-ui .home-tasks__go { display: inline-flex; align-items: center; padding: 2px 9px; border: 1px solid #c7d4e2; border-radius: 6px; background: #f8fafc; color: #1d5585; font-weight: 600; text-decoration: none; white-space: nowrap; }
+body.workspace-ui .home-tasks__go::after { content: '›'; margin-left: 3px; font-weight: 700; }
+body.workspace-ui .home-tasks__go:hover { border-color: #1d5585; background: #eaf1f8; }
+body.workspace-ui .home-tasks__notice-row td { background: #f8faf9; text-align: left !important; }
+body.workspace-ui .home-tasks__all-clear { margin: 0; color: #23744b; font-weight: 600; }
+body.workspace-ui .home-tasks__idle summary { cursor: pointer; color: #34483f; font-weight: 600; }
+body.workspace-ui .home-tasks__idle > div { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 8px; }
+
+body.workspace-ui .home-shortcuts h2 { margin: 0 0 8px; color: #192e25; }
+body.workspace-ui .home-shortcuts__grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+body.workspace-ui > #root .home-shortcuts button.home-shortcut {
+  display: flex; align-items: center; gap: 10px; height: auto !important; min-height: 64px; padding: 12px;
+  text-align: left; background: #fff !important; border: 1px solid #e0e8e3 !important; border-radius: 10px !important; color: #1f2d27 !important;
+}
+body.workspace-ui > #root .home-shortcuts button.home-shortcut:hover { border-color: #9ebbac !important; background: #f3f9f5 !important; }
+body.workspace-ui .home-shortcut__icon { display: grid; place-items: center; flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; background: #eaf5ee; color: #14634d; }
+body.workspace-ui .home-shortcut__text { display: grid; gap: 2px; min-width: 0; }
+body.workspace-ui > #root .home-shortcuts .home-shortcut strong { font-size: 12px !important; font-weight: 700 !important; color: #14634d; }
+body.workspace-ui > #root .home-shortcuts .home-shortcut small { color: #4e5e56; }
+
+@media (max-width: 1200px) {
+  body.workspace-ui .home-shortcuts__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+  body.workspace-ui .home-tasks__tiles, body.workspace-ui .home-shortcuts__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  body.workspace-ui .home-top .home-search { flex-basis: 100%; }
 }

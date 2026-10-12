@@ -1,5 +1,8 @@
+import { planningCostSourceLabels } from '../../utils/planningCost'
+import { createPortal } from 'react-dom'
+import { useAccountMenuCache } from './useAccountMenuCache'
 import { useEffect, useId, useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import HeaderBar from '../../components/HeaderBar'
 import AppAlert, { type AppAlertState } from '../../components/AppAlert'
 import LoadingScreen from '../../components/LoadingScreen'
@@ -13,8 +16,8 @@ import FavoriteListModal from './FavoriteListModal'
 import IngredientSearchSelect from './IngredientSearchSelect'
 import IngredientLikeConfirmModal from './IngredientLikeConfirmModal'
 import MenuLikeButton from './MenuLikeButton'
-import MenuLikeConfirmModal from './MenuLikeConfirmModal'
 import MenuThumbnail from './MenuThumbnail'
+import MenuLikeConfirmModal from './MenuLikeConfirmModal'
 import {
   getAccountOptions,
   getAccountMenuManagerList,
@@ -32,7 +35,6 @@ import {
   type MenuManagerItem,
 } from '../../api/operations'
 import type { RecipeRequest } from '../../api/recipe'
-import { getSupplierProducts, type SupplierProductOption } from '../../api/supplierCatalog'
 import {
   MENU_PAGE_SIZE,
   buildAccountMenuSavePayload,
@@ -56,6 +58,7 @@ import {
   type EditableMenuIngredientItem,
 } from './menuManagerShared'
 import './MenuManager.css'
+import MenuAliasList from '../../components/MenuAliasList'
 
 type AccountSearchSelectProps = {
   id: string
@@ -66,23 +69,39 @@ type AccountSearchSelectProps = {
 }
 
 function AccountSearchSelect({ id, options, placeholder, value, onChange }: AccountSearchSelectProps) {
+  const [isOpen, setIsOpen] = useState(false)
   const searchInputId = useId()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const searchInputRef = useRef<HTMLInputElement | null>(null)
-  const [isOpen, setIsOpen] = useState(false)
-  const [query, setQuery] = useState('')
+  const dropdownRef = useRef<HTMLDivElement | null>(null)
+  const [dropdownStyle, setDropdownStyle] = useState({ top: 0, left: 0, width: 240, maxHeight: 300 })
 
   useEffect(() => {
-    if (!isOpen) {
-      setQuery('')
+    if (!isOpen) return
+    const position = () => {
+      const rect = containerRef.current?.getBoundingClientRect()
+      if (!rect) return
+      const width = Math.min(Math.max(rect.width, 240), window.innerWidth - 16)
+      const below = window.innerHeight - rect.bottom - 12
+      const above = rect.top - 12
+      const upward = below < 180 && above > below
+      const maxHeight = Math.max(80, Math.min(300, upward ? above : below))
+      setDropdownStyle({ top: upward ? rect.top - maxHeight - 4 : rect.bottom + 4,
+        left: Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)), width, maxHeight })
     }
-  }, [isOpen, value])
+    position()
+    window.addEventListener('resize', position)
+    window.addEventListener('scroll', position, true)
+    return () => { window.removeEventListener('resize', position); window.removeEventListener('scroll', position, true) }
+  }, [isOpen])
+  const [query, setQuery] = useState('')
+
 
   useEffect(() => {
     if (!isOpen) return
 
     const handlePointerDown = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) {
+      if (!containerRef.current?.contains(event.target as Node) && !dropdownRef.current?.contains(event.target as Node)) {
         setIsOpen(false)
       }
     }
@@ -130,13 +149,14 @@ function AccountSearchSelect({ id, options, placeholder, value, onChange }: Acco
         className="menu-manager-cell-input menu-manager-search-select__trigger menu-manager-account-select__trigger"
         aria-controls={searchInputId}
         aria-expanded={isOpen}
-        onClick={() => setIsOpen((current) => !current)}
+        onClick={() => { setQuery(''); setIsOpen((current) => !current) }}
       >
         <span>{selectedOption?.text || placeholder}</span>
       </button>
 
-      {isOpen ? (
-        <div className="menu-manager-search-select__dropdown menu-manager-account-select__dropdown">
+      {isOpen ? createPortal(
+        <div ref={dropdownRef} className="menu-manager-search-select__dropdown menu-manager-account-select__dropdown"
+          style={{ ...dropdownStyle, position: 'fixed', right: 'auto', zIndex: 10000, overflow: 'auto' }} onKeyDown={handleKeyDown}>
           <input
             id={searchInputId}
             ref={searchInputRef}
@@ -168,18 +188,26 @@ function AccountSearchSelect({ id, options, placeholder, value, onChange }: Acco
               <div className="menu-manager-search-select__empty">검색 결과 없음</div>
             )}
           </div>
-        </div>
+        </div>, document.body
       ) : null}
     </div>
   )
 }
+
+function accountIngredientCost(item: EditableMenuIngredientItem): number | null {
+  const qty = toBaseQuantity(item.qty_num ?? item.required_qty, item.qty_unit ?? '', item.cost_base_unit ?? '')
+  if (!item.supplier_product_id || !item.ingredient_id || !Number.isFinite(qty) || qty <= 0
+      || !(item.cost_unit_cost != null && item.cost_unit_cost > 0) || (item.review_flag && item.review_flag !== '0')) return null
+  return qty * item.cost_unit_cost
+}
+
 
 function AccountMenuManager() {
   const [searchParams] = useSearchParams()
   const initialSearchType = searchParams.get('type')
   const initialSearchId = searchParams.get('account_id') ?? searchParams.get('id') ?? ''
   const initialKeywordFilter = initialSearchType === 'vendor' ? '' : searchParams.get('q') ?? ''
-  const initialAccountId = initialSearchType === 'vendor' ? initialSearchId : ''
+  const initialAccountId = initialSearchType === 'vendor' ? initialSearchId : searchParams.get('account_id') || localStorage.getItem('account_id') || ''
   const [selectedMealCategory, setSelectedMealCategory] = useState('')
   const [keywordFilter, setKeywordFilter] = useState(initialKeywordFilter)
   const [selectedMenuType, setSelectedMenuType] = useState('')
@@ -188,7 +216,6 @@ function AccountMenuManager() {
   const [accountOptions, setAccountOptions] = useState<AccountOption[]>([])
   const [accountError, setAccountError] = useState('')
   const [ingredientOptions, setIngredientOptions] = useState<IngredientOption[]>([])
-  const [supplierProducts, setSupplierProducts] = useState<SupplierProductOption[]>([])
   const [ingredientError, setIngredientError] = useState('')
   const [menuItems, setMenuItems] = useState<MenuManagerItem[]>([])
   const [originalMenusById, setOriginalMenusById] = useState<Record<string, MenuManagerItem>>({})
@@ -202,11 +229,9 @@ function AccountMenuManager() {
   const [isFavoriteIngredientLoading, setIsFavoriteIngredientLoading] = useState(false)
   const [selectedMenuId, setSelectedMenuId] = useState<string | null>(null)
   const [selectedAvailableMenuIds, setSelectedAvailableMenuIds] = useState<string[]>([])
-  const [detailItemsByMenuId, setDetailItemsByMenuId] = useState<Record<string, EditableMenuIngredientItem[]>>({})
-  const [originalDetailsByMenuId, setOriginalDetailsByMenuId] = useState<
-    Record<string, Record<string, EditableMenuIngredientItem>>
-  >({})
-  const [detailLoadedByMenuId, setDetailLoadedByMenuId] = useState<Record<string, boolean>>({})
+  const [detailItemsByMenuId, setDetailItemsByMenuId] = useAccountMenuCache<EditableMenuIngredientItem[]>(selectedAccountId)
+  const [originalDetailsByMenuId, setOriginalDetailsByMenuId] = useAccountMenuCache<Record<string, EditableMenuIngredientItem>>(selectedAccountId)
+  const [detailLoadedByMenuId, setDetailLoadedByMenuId] = useAccountMenuCache<boolean>(selectedAccountId)
   const [detailError, setDetailError] = useState('')
   const [isDetailLoading, setIsDetailLoading] = useState(false)
   const [assignedMenuIdsByAccount, setAssignedMenuIdsByAccount] = useState<Record<string, string[]>>({})
@@ -396,43 +421,8 @@ function AccountMenuManager() {
     }
   }, [])
 
-  useEffect(() => {
-    let isMounted = true
-    getSupplierProducts()
-      .then((items) => {
-        if (isMounted) setSupplierProducts(items)
-      })
-      .catch((error) => {
-        if (isMounted) setIngredientError(error instanceof Error ? error.message : '공급처 상품 목록을 불러오지 못했습니다.')
-      })
-    return () => {
-      isMounted = false
-    }
-  }, [])
 
-  useEffect(() => {
-    if (supplierProducts.length === 0) return
-    setDetailItemsByMenuId((current) => Object.fromEntries(
-      Object.entries(current).map(([menuId, details]) => [menuId, details.map((detail) => {
-        if (detail.supplier_id) return detail
-        const products = supplierProducts.filter((product) => product.ingredient_id === detail.ingredient_id)
-        const product = products.find((item) => item.supplier_code.includes('WELSTORY')) ?? products[0]
-        return product ? {
-          ...detail,
-          supplier_product_id: product.supplier_product_id,
-          supplier_id: product.supplier_id,
-          supplier_name: product.supplier_name,
-          supplier_item_code: product.supplier_item_code,
-          product_name: product.product_name,
-          order_unit: product.order_unit,
-          package_qty: product.package_qty,
-          package_unit: product.package_unit,
-          base_qty: product.base_qty,
-          base_unit: product.base_unit || detail.base_unit,
-        } : detail
-      })]),
-    ))
-  }, [supplierProducts])
+
 
   const filteredMenuItems = useMemo(
     () =>
@@ -591,32 +581,23 @@ function AccountMenuManager() {
     let total = 0
     let missingCount = 0
     activeDetailItems.forEach((item) => {
-      const product = supplierProducts.find((candidate) => candidate.supplier_product_id === item.supplier_product_id)
-      const qtyBase = toBaseQuantity(item.qty_num ?? item.required_qty, item.qty_unit ?? '', item.base_unit)
-      if (!item.ingredient_id || qtyBase <= 0 || !product || product.base_qty <= 0 || product.current_price <= 0) {
-        missingCount += 1
-        return
-      }
-      total += qtyBase * product.current_price / product.base_qty
+      const cost = accountIngredientCost(item)
+      if (cost == null) missingCount += 1
+      else total += cost
     })
     return { total, missingCount }
-  }, [activeDetailItems, supplierProducts])
+  }, [activeDetailItems])
 
   const toAccountEditableDetailItems = (items: Awaited<ReturnType<typeof getMenuDetailList>>) =>
     items.map((detail) => {
       const matchedOption = ingredientOptions.find((option) => option.ingredient_id === detail.ingredient_id)
-      const matchedProducts = supplierProducts.filter((product) => product.ingredient_id === detail.ingredient_id)
-      const defaultProduct = detail.supplier_id
-        ? undefined
-        : matchedProducts.find((product) => product.supplier_code.includes('WELSTORY')) ?? matchedProducts[0]
-
       return toEditableDetailItem({
         ...detail,
         category_name: detail.category_name || matchedOption?.category_name || '',
         ingredient_name: detail.ingredient_name || matchedOption?.ingredient_name || '',
         ingredient_name_raw: detail.ingredient_name_raw || detail.ingredient_name || matchedOption?.ingredient_name || '',
         ingredient_name_std: detail.ingredient_name_std || matchedOption?.ingredient_name_std || detail.ingredient_name || matchedOption?.ingredient_name || '',
-        base_unit: detail.base_unit || defaultProduct?.base_unit || matchedOption?.base_unit || '',
+        base_unit: detail.base_unit || matchedOption?.base_unit || '',
         convert_value: detail.convert_value || matchedOption?.convert_value || 1,
         storage_type: detail.storage_type || matchedOption?.storage_type || '',
         menu_usage_count: detail.menu_usage_count ?? matchedOption?.menu_usage_count ?? 0,
@@ -624,15 +605,15 @@ function AccountMenuManager() {
         note: detail.note ?? matchedOption?.note ?? '',
         safe_stock_qty: detail.safe_stock_qty ?? matchedOption?.safe_stock_qty ?? 0,
         like: detail.like ?? matchedOption?.like ?? 'N',
-        supplier_product_id: detail.supplier_product_id || defaultProduct?.supplier_product_id,
-        supplier_id: detail.supplier_id || defaultProduct?.supplier_id,
-        supplier_name: detail.supplier_name || defaultProduct?.supplier_name || '',
-        supplier_item_code: detail.supplier_item_code || defaultProduct?.supplier_item_code || '',
-        product_name: detail.product_name || defaultProduct?.product_name || '',
-        order_unit: detail.order_unit || defaultProduct?.order_unit || matchedOption?.order_unit || matchedOption?.base_unit || '',
-        package_qty: detail.package_qty || defaultProduct?.package_qty,
-        package_unit: detail.package_unit || defaultProduct?.package_unit || '',
-        base_qty: detail.base_qty || defaultProduct?.base_qty,
+        supplier_product_id: detail.supplier_product_id,
+        supplier_id: detail.supplier_id,
+        supplier_name: detail.supplier_name || '',
+        supplier_item_code: detail.supplier_item_code || '',
+        product_name: detail.product_name || '',
+        order_unit: detail.order_unit || matchedOption?.order_unit || matchedOption?.base_unit || '',
+        package_qty: detail.package_qty,
+        package_unit: detail.package_unit || '',
+        base_qty: detail.base_qty,
       })
     })
 
@@ -640,6 +621,7 @@ function AccountMenuManager() {
     let isMounted = true
 
     const loadDetails = async () => {
+      if (isAccountMenuLoading) return
       if (!activeMenu?.menu_id) {
         setDetailError('')
         setIsDetailLoading(false)
@@ -658,7 +640,7 @@ function AccountMenuManager() {
         const accountItems = isExistingAccountMenu
           ? await getAccountMenuDetailList(activeMenu.menu_id, selectedAccountId)
           : []
-        const items = accountItems.length > 0 ? accountItems : await getMenuDetailList(activeMenu.menu_id)
+        const items = isExistingAccountMenu ? accountItems : await getMenuDetailList(activeMenu.menu_id)
         if (!isMounted) return
 
         const editableItems = toAccountEditableDetailItems(items)
@@ -683,7 +665,7 @@ function AccountMenuManager() {
     return () => {
       isMounted = false
     }
-  }, [activeMenu?.menu_id, detailLoadedByMenuId, ingredientOptions, originalAssignedMenuIds, selectedAccountId, supplierProducts])
+  }, [activeMenu?.menu_id, isAccountMenuLoading, detailLoadedByMenuId, ingredientOptions, originalAssignedMenuIds, selectedAccountId, setDetailItemsByMenuId, setDetailLoadedByMenuId, setOriginalDetailsByMenuId])
 
   const handleAssignMenus = (menuIds: string[]) => {
     if (!selectedAccountId) return
@@ -957,6 +939,7 @@ function AccountMenuManager() {
           note: matchedIngredient?.note ?? item.note ?? '',
           safe_stock_qty: matchedIngredient?.safe_stock_qty ?? item.safe_stock_qty ?? 0,
           like: matchedIngredient?.like ?? item.like ?? 'N',
+          cost_unit_cost: undefined, cost_base_unit: '', cost_source: '', cost_source_date: '', cost_reason: '상품 단가 재조회 필요',
           supplier_product_id: undefined,
           supplier_id: undefined,
           supplier_name: '',
@@ -966,26 +949,6 @@ function AccountMenuManager() {
           package_unit: '',
           base_qty: undefined,
         }
-      }),
-    }))
-  }
-
-  const handleSupplierProductSelect = (menuId: string, rowId: string, supplierProductId: string) => {
-    const product = supplierProducts.find((item) => item.supplier_product_id === Number(supplierProductId))
-    setDetailItemsByMenuId((current) => ({
-      ...current,
-      [menuId]: (current[menuId] ?? []).map((item) => item.row_id !== rowId || !product ? item : {
-        ...item,
-        supplier_product_id: product.supplier_product_id,
-        supplier_id: product.supplier_id,
-        supplier_name: product.supplier_name,
-        supplier_item_code: product.supplier_item_code,
-        product_name: product.product_name,
-        order_unit: product.order_unit,
-        package_qty: product.package_qty,
-        package_unit: product.package_unit,
-        base_qty: product.base_qty,
-        base_unit: product.base_unit || item.base_unit,
       }),
     }))
   }
@@ -1023,6 +986,30 @@ function AccountMenuManager() {
     }))
   }
 
+  const [isRefreshingProducts, setIsRefreshingProducts] = useState(false)
+  const refreshLinkedProducts = async () => {
+    if (!activeMenu || !selectedAccountId || isRefreshingProducts) return
+    const menuId = activeMenu.menu_id
+    setIsRefreshingProducts(true)
+    try {
+      const latest = await getAccountMenuDetailList(menuId, selectedAccountId)
+      const mergeProduct = (item: EditableMenuIngredientItem) => {
+        const row = latest.find(candidate => candidate.ingredient_id === item.ingredient_id)
+        if (!row) return item
+        return { ...item, supplier_product_id: row.supplier_product_id, supplier_id: row.supplier_id,
+          supplier_name: row.supplier_name, supplier_item_code: row.supplier_item_code,
+          product_name: row.product_name, package_qty: row.package_qty, package_unit: row.package_unit,
+          base_qty: row.base_qty, purchase_price: row.purchase_price, current_qty: row.current_qty,
+          cost_unit_cost: row.cost_unit_cost, cost_base_unit: row.cost_base_unit, cost_source: row.cost_source, cost_source_date: row.cost_source_date, cost_reason: row.cost_reason, cost_per_person: row.cost_per_person }
+      }
+      setDetailItemsByMenuId(current => ({ ...current, [menuId]: (current[menuId] ?? []).map(mergeProduct) }))
+      setOriginalDetailsByMenuId(current => ({ ...current,
+        [menuId]: Object.fromEntries(Object.entries(current[menuId] ?? {}).map(([key, item]) => [key, mergeProduct(item)])) }))
+    } catch (error) {
+      setAlert({ type: 'error', title: '사용상품 조회 실패', message: error instanceof Error ? error.message : '사용상품을 불러오지 못했습니다.' })
+    } finally { setIsRefreshingProducts(false) }
+  }
+
   const handleSave = async () => {
     setAlert(null)
 
@@ -1047,7 +1034,9 @@ function AccountMenuManager() {
       if (unloadedMenus.length > 0) {
         const loadedEntries = await Promise.all(
           unloadedMenus.map(async (menu) => {
-            const items = await getMenuDetailList(menu.menu_id)
+            const items = originalAssignedMenuIds.includes(menu.menu_id)
+              ? await getAccountMenuDetailList(menu.menu_id, selectedAccountId)
+              : await getMenuDetailList(menu.menu_id)
             return [menu.menu_id, toAccountEditableDetailItems(items)] as const
           }),
         )
@@ -1069,13 +1058,6 @@ function AccountMenuManager() {
         }))
       }
 
-      const missingSupplierProduct = assignedMenus
-        .flatMap((menu) => nextDetailItemsByMenuId[menu.menu_id] ?? [])
-        .find((item) => item.ingredient_id && !item.supplier_id)
-      if (missingSupplierProduct) {
-        throw new Error(`${missingSupplierProduct.ingredient_name || '식자재'}의 공급처 상품을 선택해주세요.`)
-      }
-
       const payload = buildAccountMenuSavePayload(
         selectedAccountId,
         selectedAccountName,
@@ -1085,7 +1067,6 @@ function AccountMenuManager() {
         nextDetailItemsByMenuId,
         originalAssignedMenuIds,
         originalAssignedMenusById,
-        nextOriginalDetailsByMenuId,
       )
       await saveAccountMenuManager(payload)
       setOriginalAssignedMenuIdsByAccount((current) => ({
@@ -1132,6 +1113,9 @@ function AccountMenuManager() {
 
   return (
     <div className="menu-manager-page">
+      {(isSaving || isSavingLike) ? (
+        <LoadingScreen overlay message={isSavingLike ? '즐겨찾기를 저장하고 있습니다.' : '거래처 메뉴를 저장하고 있습니다.'} />
+      ) : null}
       <main className="menu-manager-content">
         <SideMenuLayout
           header={
@@ -1178,7 +1162,7 @@ function AccountMenuManager() {
                   id="account-menu-keyword"
                   type="search"
                   value={keywordFilter}
-                  placeholder="메뉴명, 키워드"
+                  placeholder="메뉴명, 키워드, 레시피 식재료"
                   onChange={(event) => setKeywordFilter(event.target.value)}
                 />
               </div>
@@ -1294,18 +1278,17 @@ function AccountMenuManager() {
                         <th>메뉴구분</th>
                         <th>식단 유형</th>
                         <th>칼로리(kcal)</th>
-                        <th>원가 비교</th>
+                        <th>거래처 1인 예상 원가</th>
                         <th>관리</th>
                       </tr>
                     </thead>
                     <tbody>
                       {assignedMenus.map((item) => {
-                        const masterCost = menuItems.find((menu) => menu.menu_id === item.menu_id)?.menu_cost_per_person ?? 0
                         const accountCost = item.menu_id === activeMenu?.menu_id
                           ? activeMenuCost.total
                           : item.menu_cost_per_person ?? 0
                         const isAccountCostComplete = item.menu_id === activeMenu?.menu_id
-                          ? activeMenuCost.missingCount === 0
+                          ? !isDetailLoading && activeDetailItems.length > 0 && activeMenuCost.missingCount === 0
                           : item.menu_cost_complete !== false && accountCost > 0
                         return (
                         <tr
@@ -1315,12 +1298,12 @@ function AccountMenuManager() {
                         >
                           <td>
                             <div className="menu-manager-readonly-cell">
+                              <MenuThumbnail zoomable src={item.image_url} name={item.menu_name} />
                               <MenuLikeButton
                                 isLiked={item.like === 'Y'}
                                 menuName={item.menu_name}
                                 onClick={() => setLikeTargetMenuId(item.menu_id)}
                               />
-                              <MenuThumbnail src={item.image_url} name={item.menu_name} />
                               <span
                                 title="우클릭 또는 길게 터치하면 AI 레시피를 볼 수 있습니다."
                                 {...createAiRecipeGestureHandlers(buildRecipeRequest(item), setRecipeMenuState)}
@@ -1383,19 +1366,15 @@ function AccountMenuManager() {
                           </td>
                           <td>
                             <div className="account-menu-cost-compare">
-                              <span>본사 {masterCost > 0 ? `${Math.round(masterCost).toLocaleString('ko-KR')}원` : '미산정'}</span>
-                              <strong>{isAccountCostComplete ? `거래처 ${Math.round(accountCost).toLocaleString('ko-KR')}원` : '거래처 미산정'}</strong>
-                              {masterCost > 0 && isAccountCostComplete ? (
-                                <small className={accountCost - masterCost > 0 ? 'is-higher' : 'is-lower'}>
-                                  차이 {accountCost - masterCost >= 0 ? '+' : ''}{Math.round(accountCost - masterCost).toLocaleString('ko-KR')}원
-                                </small>
-                              ) : null}
+                              <strong>{isAccountCostComplete ? `${Math.round(accountCost).toLocaleString('ko-KR')}원` : '미산정'}</strong>
+                              {!isAccountCostComplete && <small>{item.menu_cost_reason || '식자재 상세의 단가·사용량을 확인해주세요.'}</small>}
+
                             </div>
                           </td>
                           <td>
                             <button
                               type="button"
-                              className="menu-manager-select-button"
+                              className="menu-manager-select-button account-menu-placement-manage-button"
                               onClick={(event) => {
                                 event.stopPropagation()
                                 handleRemoveAssignedMenu(item.menu_id)
@@ -1490,6 +1469,7 @@ function AccountMenuManager() {
                               </td>
                               <td>
                                 <div className="menu-manager-readonly-cell">
+                                  <MenuThumbnail zoomable src={item.image_url} name={item.menu_name} />
                                   <span
                                     className="menu-manager-row-handle"
                                     draggable={Boolean(selectedAccountId)}
@@ -1504,7 +1484,6 @@ function AccountMenuManager() {
                                     menuName={item.menu_name}
                                     onClick={() => setLikeTargetMenuId(item.menu_id)}
                                   />
-                                  <MenuThumbnail src={item.image_url} name={item.menu_name} />
                                   <span
                                     title="우클릭 또는 길게 터치하면 AI 레시피를 볼 수 있습니다."
                                     {...createAiRecipeGestureHandlers(buildRecipeRequest(item), setRecipeMenuState)}
@@ -1552,7 +1531,7 @@ function AccountMenuManager() {
                               <td>
                                 <button
                                   type="button"
-                                  className="menu-manager-select-button"
+                                  className="menu-manager-select-button account-menu-list-select-button"
                                   disabled={!selectedAccountId || isAssigned}
                                   onClick={(event) => {
                                     event.stopPropagation()
@@ -1627,12 +1606,14 @@ function AccountMenuManager() {
                       <small>{activeMenuCost.missingCount > 0 ? `미산정 ${activeMenuCost.missingCount}개` : '산정 완료'}</small>
                     </div>
                   ) : null}
+                  <button type="button" className="menu-manager-add-button" onClick={() => void refreshLinkedProducts()} disabled={!activeMenu || isDetailLoading || isRefreshingProducts}>사용상품 새로고침</button>
                   <button type="button" className="menu-manager-add-button" onClick={handleAddIngredient} disabled={!activeMenu}>
                   식자재 추가
                   </button>
                 </div>
               </div>
               {ingredientError ? <div className="menu-manager-notice">{ingredientError}</div> : null}
+              {activeMenu && selectedAccountId ? <MenuAliasList accountId={selectedAccountId} menuId={activeMenu.menu_id} /> : null}
               <div className="menu-manager-table-scroll">
                 {isDetailLoading ? <LoadingScreen compact message="식자재 상세 목록을 불러오는 중입니다." /> : null}
                 {!isDetailLoading && detailError ? <div className="menu-manager-empty">{detailError}</div> : null}
@@ -1643,7 +1624,7 @@ function AccountMenuManager() {
                         <tr>
                           <th>카테고리</th>
                           <th>식자재 선택</th>
-                          <th>공급처 상품</th>
+                          <th>거래처 사용상품</th>
                           <th>필요 수량</th>
                           <th>1인 원가</th>
                         </tr>
@@ -1653,13 +1634,7 @@ function AccountMenuManager() {
                           const filteredIngredientOptions = ingredientOptions.filter(
                             (option) => item.category_name === '' || option.category_name === item.category_name,
                           )
-                          const selectedProduct = supplierProducts.find(
-                            (product) => product.supplier_product_id === item.supplier_product_id,
-                          )
-                          const qtyBase = toBaseQuantity(item.qty_num ?? item.required_qty, item.qty_unit ?? '', item.base_unit)
-                          const ingredientCost = selectedProduct && selectedProduct.base_qty > 0 && selectedProduct.current_price > 0 && qtyBase > 0
-                            ? qtyBase * selectedProduct.current_price / selectedProduct.base_qty
-                            : null
+                          const ingredientCost = accountIngredientCost(item)
 
                           return (
                             <tr key={item.row_id}>
@@ -1697,23 +1672,7 @@ function AccountMenuManager() {
                                 </div>
                               </td>
                               <td>
-                                <select
-                                  className="menu-manager-cell-input"
-                                  value={item.supplier_product_id ?? ''}
-                                  onChange={(event) =>
-                                    handleSupplierProductSelect(activeMenu.menu_id, item.row_id, event.target.value)
-                                  }
-                                  disabled={!item.ingredient_id}
-                                >
-                                  <option value="">공급처 상품 선택</option>
-                                  {supplierProducts
-                                    .filter((product) => product.ingredient_id === item.ingredient_id)
-                                    .map((product) => (
-                                      <option key={product.supplier_product_id} value={product.supplier_product_id}>
-                                        {product.supplier_name} · {product.product_name} ({product.supplier_item_code})
-                                      </option>
-                                    ))}
-                                </select>
+<span>{item.product_name || '상품 연결 필요'}</span><br /><small>{item.supplier_name || ''} · {item.package_qty || ''}{item.package_unit || ''} / {item.order_unit || ''} · 참고 포장원가 {item.purchase_price == null ? '가격 미확인' : `${item.purchase_price.toLocaleString('ko-KR')}원`} · {item.origin_name || '원산지 미확인'}</small><br /><Link to={`/inventory/account-ingredients?account_id=${encodeURIComponent(selectedAccountId)}`}>거래처 식자재 설정</Link>
                               </td>
                               <td>
                                 <div className="menu-manager-qty-editor">
@@ -1744,7 +1703,8 @@ function AccountMenuManager() {
                                 </div>
                               </td>
                               <td className={`account-menu-ingredient-cost${ingredientCost == null ? ' is-missing' : ''}`}>
-                                {ingredientCost == null ? '가격 확인 필요' : `${Math.round(ingredientCost).toLocaleString('ko-KR')}원`}
+                                {ingredientCost == null ? item.cost_reason || '단가·단위·사용량 확인 필요' : `${Math.round(ingredientCost).toLocaleString('ko-KR')}원`}
+                                <small style={{ display: 'block' }}>{item.cost_source ? `${planningCostSourceLabels[item.cost_source] ?? item.cost_source}${item.cost_source_date ? ` · ${item.cost_source_date}` : ''}` : ''}</small>
                               </td>
                             </tr>
                           )

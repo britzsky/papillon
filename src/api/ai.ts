@@ -197,7 +197,7 @@ export async function requestAiRecipe(request: AiRecipeRequest): Promise<AiRecip
 }
 
 export async function saveAiRecipe(recipe: AiRecipe, request: AiRecipeRequest) {
-  const response = await fetch(buildApiUrl('/AI/RecipeSave'), {
+  const response = await fetch(buildApiUrl('/Menu/RecipeSave'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -209,7 +209,7 @@ export async function saveAiRecipe(recipe: AiRecipe, request: AiRecipeRequest) {
       account_id: request.account_id ?? '',
       account_name: request.account_name ?? '',
       source: request.source,
-      ingredients: request.ingredients,
+      source_ingredients: request.ingredients,
       user_id: getLocalUserId(),
     }),
   })
@@ -218,7 +218,9 @@ export async function saveAiRecipe(recipe: AiRecipe, request: AiRecipeRequest) {
     throw new Error('AI 레시피를 저장하지 못했습니다.')
   }
 
-  return parseResponseBody(response)
+  const result = await parseResponseBody(response) as { code?: number; message?: string }
+  if (result.code && result.code !== 200) throw new Error(result.message || '레시피 저장에 실패했습니다.')
+  return result
 }
 
 export async function requestAiSanitationNote(request: AiSanitationNoteRequest): Promise<AiSanitationNoteResponse> {

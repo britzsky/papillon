@@ -1,0 +1,10 @@
+/* 발주하기 탭: 앱 공통 버튼 높이가 고정이라 버튼에는 이름만 두고 설명은 아래 한 줄 */
+.order-workspace__tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin: 4px 0; }
+.order-workspace__tabs button { width: 100%; }
+.order-workspace__tabs button.is-active { box-shadow: inset 0 0 0 2px #1d5585; font-weight: 700; }
+.order-workspace__hint { margin: 0 0 6px; font-size: 13px; color: #4b5d54; }
+@media (max-width: 1100px) { .order-workspace__tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .order-workspace__tabs { grid-template-columns: 1fr; } }
+/* 선택된 기준 탭: 업무 화면 테마(body.workspace-ui button {... !important})가 모든 버튼을 흰색·hover 초록으로 덮으므로 같은 방식으로 더 구체적으로 지정 */
+body.workspace-ui .order-workspace .order-workspace__tabs button.is-active,
+body.workspace-ui .order-workspace .order-workspace__tabs button.is-active:hover:not(:disabled) { background: #1d5585 !important; border-color: #1d5585 !important; color: #fff !important; font-weight: 700; }

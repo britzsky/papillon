@@ -1,0 +1,206 @@
+/* Application-wide design: Tabler-inspired shell and Ant-inspired data/forms. */
+.workspace-ui {
+  --theme-color: #206bc4; --theme-color-strong: #1856a0;
+  --theme-color-soft: #eaf2fc; --theme-color-softer: #f6f8fb;
+  --theme-text: #182433; --theme-muted: #667382;
+  --button-bg: #206bc4; --button-hover-bg: #1856a0;
+  --button-disabled-bg: #e3e9e7; --button-text: #fff;
+  --form-control-height: 30px; --form-control-width: 190px;
+  --form-control-gap: 8px; --button-height: 30px;
+  color: #182433; background: #f6f8fb;
+}
+.workspace-ui .side-layout__main, .workspace-ui .side-layout__main * { font-size: 14px !important; }
+.workspace-ui .side-layout { gap: 0; background: #f6f8fb; }
+.workspace-ui .side-layout__sidebar { border: 0; border-right: 1px solid #dce1e7; border-radius: 0; box-shadow: none; background: white; }
+.workspace-ui .side-layout__sidebar * { font-size: 13px !important; }
+.workspace-ui .side-layout__sidebar-top { background: #206bc4; padding: 22px 12px; }
+.workspace-ui .side-layout__group { border-color: #e7edea; border-radius: 8px; box-shadow: none; }
+.workspace-ui .side-layout__major-button { background: white !important; color: #344256 !important; }
+.workspace-ui .side-layout__sublink { color: #526176; padding-top: 10px; padding-bottom: 10px; }
+.workspace-ui .side-layout__sublink.is-active,
+.workspace-ui .side-layout__major-button.is-active,
+.workspace-ui .side-layout__home-link.is-active { color: #1856a0 !important; background: #eaf2fc !important; font-weight: 700; }
+.workspace-ui .header-shell { background: white; border-bottom: 1px solid #dce1e7; display: flex; flex-direction: column; padding: 5px 24px 0px; }
+.workspace-ui .header-bar { position: static; min-height: 0; height: auto; padding: 0; background: white; box-shadow: none; justify-content: flex-start; }
+.workspace-ui .header-bar__brand { display: none; }
+.workspace-ui .header-bar__status { background: transparent; border: 0; padding: 0; color: #182433; font-size: 16px !important; font-weight: 750; letter-spacing: -.6px; }
+.workspace-ui .header-breadcrumbs { order: -1; padding: 0 0 10px; background: transparent; border: 0; }
+.workspace-ui .header-breadcrumbs * { color: #667382; font-size: 12px !important; }
+.workspace-ui .side-layout__content { padding: 20px; gap: 5px; overflow: auto; }
+.workspace-ui .menu-manager-page, .workspace-ui .table-meals-page, .workspace-ui .shortage-order-page, .workspace-ui .purchase-orders { background: #f6f8fb; }
+.workspace-ui .menu-manager-content, .workspace-ui .table-meals-content { padding: 0; width: 100%; max-width: none; min-height: 0; height: auto; overflow: visible; }
+.workspace-ui .table-meals-content { height: 100%; overflow: hidden; }
+.workspace-ui :is(h2, .shortage-order-intro h2) { font-size: 18px !important; color: #182433; }
+.workspace-ui h3 { font-size: 16px !important; }
+.workspace-ui p { line-height: 1.66; }
+.workspace-ui :is(.menu-manager-filters, .table-meals-toolbar, .shortage-order-filters, .purchase-orders__filters) {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px;
+  padding: 8px; margin: 0 0 5px; background: white; border: 1px solid #dce1e7; border-radius: 10px; box-shadow: none;
+}
+.workspace-ui :is(.menu-manager-field, .table-meals-field) { min-width: 0; flex: 0 1 auto; gap: 1px; }
+.workspace-ui :is(.menu-manager-field, .table-meals-field) > label {
+  display: block; width: auto !important; min-width: 0 !important; height: auto !important;
+  background: transparent !important; color: #526176 !important; border: 0; padding: 0 !important;
+  text-align: left; font-weight: 600; font-size: 13px !important; box-shadow: none;
+}
+.workspace-ui :is(.shortage-order-filters, .purchase-orders__filters) label { color: #526176; font-weight: 600; gap: 7px; }
+.workspace-ui input:not([type=checkbox]):not([type=radio]), .workspace-ui select, .workspace-ui textarea {
+  border: 1px solid #cbd3dd !important; border-radius: 6px !important; background: white; color: #182433;
+  min-height: 36px; padding: 2px 10px; box-sizing: border-box; max-width: 100%; box-shadow: none;
+}
+.workspace-ui input[type=checkbox], .workspace-ui input[type=radio] { accent-color: #206bc4; width: 16px; height: 16px; }
+.workspace-ui :is(input, select, textarea, button, a):focus-visible { outline: 3px solid #71bfb2 !important; outline-offset: 2px; }
+.workspace-ui button {
+  background: white !important; color: #344256 !important; border: 1px solid #cbd3dd !important;
+  border-radius: 6px !important; min-height: 30px; padding: 7px 14px; font-weight: 600; box-shadow: none !important;
+  white-space: normal;
+}
+.workspace-ui button:hover:not(:disabled) { background: #e98738 !important; border-color: #8daed7 !important; }
+.workspace-ui button:is(.is-primary, .is-query, .action-query-button, .action-save-button, .menu-manager-save-button, .menu-manager-add-button),
+.workspace-ui .table-meals-toolbar button[type=submit] { background: #206bc4 !important; border-color: #206bc4 !important; color: white !important; }
+.workspace-ui button:is(.is-primary, .is-query, .action-query-button, .action-save-button, .menu-manager-save-button, .menu-manager-add-button):hover:not(:disabled) { background: #1856a0 !important; }
+.workspace-ui button:disabled { background: #edf1ef !important; color: #8a9892 !important; border-color: #e0e7e3 !important; cursor: not-allowed; opacity: 1; }
+.workspace-ui :is(.menu-manager-panel, .table-meals-panel, .purchase-orders__layout > section, .shortage-order-table-wrap) { border: 1px solid #dce1e7; border-radius: 10px; background: white; box-shadow: none; min-width: 0; }
+.workspace-ui :is(.menu-manager-panel-header, .table-meals-panel-header) { background: white; border-bottom: 1px solid #e2e7ee; padding: 16px; }
+.workspace-ui table { width: 100%; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; }
+.workspace-ui table :is(th, td) { font-size: 13px !important; padding: 12px 10px; border-bottom: 1px solid #e6eaf0; line-height: 1.5; }
+.workspace-ui table th { background: #f4f6fa; color: #526176; font-weight: 650; position: sticky; top: 0; z-index: 1; }
+.workspace-ui table td { color: #25344a; background: white; }
+.workspace-ui table tbody tr:hover td { background: #f7f9fc; }
+.workspace-ui table tr:is(.is-selected, .is-focused) td { background: #eaf2fc; }
+.workspace-ui table input[type=number] { text-align: right; font-variant-numeric: tabular-nums; }
+.workspace-ui table small { font-size: 12px !important; color: #667382; line-height: 1.6; }
+.workspace-ui .account-inventory-table { min-width: 1720px; }
+.workspace-ui :is(.menu-manager-table-wrap, .shortage-order-table-wrap) { overflow: auto; }
+.workspace-ui .shortage-order-table td:nth-child(n+3):nth-child(-n+7),
+.workspace-ui .shortage-order-table td:nth-child(n+9),
+.workspace-ui .purchase-orders__layout td:last-child { text-align: right; }
+.workspace-ui .shortage-order-intro { padding: 0; }
+.workspace-ui .shortage-order-intro h2 { margin: 0 0 6px; }
+.workspace-ui .shortage-order-intro p { color: #667382; margin: 0; }
+.workspace-ui :is(.shortage-order-toolbar, .shortage-order-footer, .table-meals-toolbar__actions) { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.workspace-ui .shortage-order-footer { padding: 16px; background: white; border: 1px solid #dce1e7; border-radius: 10px; }
+.workspace-ui .shortage-order-note { border: 1px solid #cce4dc; border-radius: 8px; background: #eff8f4; color: #356557; padding: 12px 16px; font-weight: 600;}
+.workspace-ui .shortage-order-error { color: #b23b36 !important; }
+.workspace-ui .purchase-orders__layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px; }
+.workspace-ui .purchase-orders__layout > section { overflow: auto; padding: 20px; }
+.workspace-ui .purchase-orders__select { color: #1856a0 !important; border: 0 !important; background: transparent !important; min-width: 0; text-align: left; padding: 4px 0; }
+.workspace-ui .workspace-status { display: inline-block; border-radius: 5px; padding: 3px 8px; white-space: nowrap; font-size: 12px !important; font-weight: 650; }
+.workspace-ui .workspace-status--danger { background: #fcebea; color: #ac3934; }
+.workspace-ui .workspace-status--warning { background: #fff2d9; color: #865b13; }
+.workspace-ui .workspace-status--success { background: #e5f4eb; color: #23744b; }
+.workspace-ui .workspace-status--neutral { background: #edf1ef; color: #596d63; }
+.workspace-ui .shortage-order-overlay { background: rgb(20 39 31 / 45%); }
+.workspace-ui .shortage-order-sheet { background: white; border-radius: 14px; padding: 28px; }
+@media (max-width: 1200px) {
+  .workspace-ui .purchase-orders__layout { grid-template-columns: minmax(0, 1fr); }
+  .workspace-ui .side-layout__content { padding: 14px; }
+}
+@media (max-width: 960px) {
+  .workspace-ui .side-layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .workspace-ui .side-layout__sidebar { max-height: 200px; overflow: auto; }
+  .workspace-ui .side-layout.is-collapsed { grid-template-rows: minmax(0, 1fr); }
+  .workspace-ui .header-shell { padding: 12px 16px; }
+}
+@media print {
+  .workspace-ui .shortage-order-sheet { padding: 0; border-radius: 0; }
+  .workspace-ui table th { position: static; }
+}
+
+.workspace-ui .menu-manager-panel__header { background: white; padding: 16px; border-bottom: 1px solid #e2e7ee; }
+.workspace-ui .menu-manager-table-scroll { overflow: auto; min-height: 0; }
+.workspace-ui .account-inventory-table td:nth-child(n+4):nth-child(-n+7),
+.workspace-ui .account-inventory-table td:nth-child(n+9):nth-child(-n+13) { text-align: right; }
+.workspace-ui .shortage-order-sheet, .workspace-ui .shortage-order-sheet p { font-size: 14px; }
+
+/* Shared shell and typography, including dialogs rendered outside the route. */
+.workspace-ui { --theme-accent: #206bc4; --theme-accent-soft: #eaf2fc; --action-summary: #206bc4; --action-summary-hover: #1856a0; --action-summary-border: #206bc4; --table-border-mid: #e2e7ee; --table-border-strong: #cbd3dd; --button-bg-hover: #1856a0; --button-bg-disabled: #e3e8ef; font-size: 14px; }
+.workspace-ui .side-layout { grid-template-columns: 232px minmax(0, 1fr); }
+.workspace-ui .side-layout.is-collapsed { grid-template-columns: minmax(0, 1fr); }
+.workspace-ui .side-layout__sidebar { background: #182433; color: #d4dce7; padding: 16px 12px; }
+.workspace-ui .side-layout__sidebar-top { background: #182433; border-bottom: 1px solid #324155; margin: -16px -12px 18px; padding: 24px 16px; }
+.workspace-ui .side-layout__group { background: transparent; border: 0; margin-bottom: 8px; }
+.workspace-ui .side-layout__home-link, .workspace-ui .side-layout__sublink { color: #c7d2e0; border: 0; border-radius: 6px; }
+.workspace-ui .side-layout__major-button { background: transparent !important; color: #d4dce7 !important; border: 0 !important; text-align: left; }
+.workspace-ui .side-layout__sublink.is-active, .workspace-ui .side-layout__major-button.is-active, .workspace-ui .side-layout__home-link.is-active { background: #263d5b !important; color: #fff !important; }
+.workspace-ui .side-layout__sublink:hover, .workspace-ui .side-layout__home-link:hover, .workspace-ui .side-layout__major-button:hover:not(:disabled) { background: #22334a !important; color: white !important; }
+.workspace-ui .side-layout__sublink--disabled { background: transparent !important; color: #8190a3 !important; border: 0 !important; }
+.workspace-ui .side-layout__toggle { color: #dbe5f1 !important; background: #263d5b !important; border: 0 !important; }
+.workspace-ui .header-bar__status { margin: 0; line-height: 1.4; }
+.workspace-ui .side-layout__content { scrollbar-gutter: stable; }
+.workspace-ui :is(.login-page, .payment-page, .result-page), .workspace-ui :is(.login-page, .payment-page, .result-page) * { font-size: 14px !important; }
+.workspace-ui :is(h1, .login-panel h1, .payment-hero h1, .result-card h1) { font-size: 24px !important; line-height: 1.35; letter-spacing: -.5px; }
+.workspace-ui :is(h2, .alert-dialog h2, .payment-card h2) { font-size: 18px !important; }
+.workspace-ui :is(h3, .menu-card__title) { font-size: 16px !important; }
+.workspace-ui :is(small, .help-text) { font-size: 12px; }
+.workspace-ui :is(.home-content, .order-manager-content, .vendor-sanitation-content) { padding: 0; }
+.workspace-ui :is(.account-manager-page, .supplier-integration-page, .search-admin-page, .welstory-page, .vendor-sanitation-page, .order-manager-page, .home-page) { height: 100%; min-height: 0; padding: 0; background: #f6f8fb; }
+.workspace-ui :is(.account-manager-page, .supplier-integration-page, .search-admin-page, .welstory-page) .side-layout__content { padding: 20px; }
+.workspace-ui :is(.search-admin-content, .home-dashboard) { padding: 0; height: auto; min-height: 0; overflow: visible; }
+.workspace-ui :is(.vendor-sanitation-filters, .account-manager-toolbar, .welstory-toolbar, .supplier-integration-toolbar, .search-admin-toolbar, .food-order-filters) { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px !important; padding: 18px; margin: 0 0 16px; border: 1px solid #dce1e7; border-radius: 8px; background: white; box-shadow: none; }
+.workspace-ui :is(.food-order-control-label, .vendor-sanitation-field>label, .account-manager-toolbar label, .account-manager-config-row label>span, .account-manager-config-row__budget>span, .search-admin-toolbar label>span, .table-meals-modal__field>label) { display: block; width: auto !important; height: auto !important; min-height: 0; padding: 0 !important; background: transparent !important; color: #526176 !important; font-size: 13px !important; text-align: left; border-radius: 0; }
+.workspace-ui :is(.vendor-sanitation-field, .account-manager-toolbar__field, .table-meals-modal__field) { gap: 7px; min-width: 0; }
+.workspace-ui :is(.account-manager-panel, .account-manager-config, .supplier-integration-grid section, .supplier-integration-summary article, .search-admin-kpis article, .search-admin-charts article, .search-admin-grid article, .vendor-sanitation-card, .welstory-panel, .food-order-panel) { background: white; border: 1px solid #dce1e7; border-radius: 8px; box-shadow: 0 1px 2px rgb(24 36 51 / 3%); min-width: 0; }
+.workspace-ui :is(.account-manager-panel__header, .account-manager-config__heading, .vendor-sanitation-card__header, .welstory-panel__header, .menu-manager-panel__header, .table-meals-panel__header) { background: white; border-bottom: 1px solid #e2e7ee; padding: 10px 20px; }
+.workspace-ui :is(.account-manager-slot, .menu-card, .order-manager-card) { height: auto !important; min-height: 104px; border: 1px solid #dce1e7 !important; border-radius: 8px; background: white !important; padding: 20px; text-align: left; box-shadow: 0 1px 2px rgb(24 36 51 / 3%) !important; }
+.workspace-ui .account-manager-slot.is-selected { border-color: #206bc4 !important; background: #eaf2fc !important; }
+.workspace-ui .account-manager-slot.is-selected .account-manager-slot__check { background: #206bc4; border-color: #206bc4; }
+.workspace-ui :is(.account-manager-toolbar button, .home-hero__primary, .home-search__assistant, .login-form button[type=submit], .payment-button, .result-button, .alert-button):not(.is-secondary) { background: #206bc4 !important; color: white !important; border-color: #206bc4 !important; }
+.workspace-ui button.is-danger { background: #fff0ee !important; color: #b42318 !important; border-color: #f1c4bf !important; }
+.workspace-ui button[aria-pressed=true] { border-color: #206bc4 !important; background: #eaf2fc !important; color: #1856a0 !important; }
+.workspace-ui :is(.menu-manager-like-button, .menu-manager-thumbnail-button, .vendor-sanitation-photo) { min-width: 18px !important; padding: 0; height: auto !important; }
+.workspace-ui :is(.menu-manager-table-scroll, .supplier-integration-table-wrap, .welstory-table-wrap) { max-width: 100%; overflow: auto; }
+.workspace-ui :is(.supplier-integration-summary strong, .search-admin-kpis strong, .home-insight strong) { font-size: 28px !important; letter-spacing: -.7px; color: #182433; }
+.workspace-ui .search-chart__row i { background: #206bc4; }
+.workspace-ui .home-hero { min-height: 210px; padding: 28px; background: #fff; border: 1px solid #dce1e7; border-radius: 8px; }
+.workspace-ui .home-hero::after { background: linear-gradient(90deg, white 45%, transparent); }
+.workspace-ui .home-hero__background { opacity: .35; }
+.workspace-ui .home-hero h1 { font-size: 28px !important; }
+.workspace-ui .home-hero__eyebrow { color: #667382; font-size: 12px !important; letter-spacing: 1.2px; }
+.workspace-ui .home-hero__actions { flex-wrap: wrap; gap: 8px; }
+.workspace-ui .menu-card__badge { background: #eaf2fc; color: #1856a0; }
+.workspace-ui :is(.home-insight, .home-search, .home-search-keywords) { background: white; border: 1px solid #dce1e7; border-radius: 8px; box-shadow: none; }
+.workspace-ui :is(.login-page, .payment-page, .result-page) { height: 100%; min-height: 0; overflow: auto; background: #f6f8fb; padding: 32px 20px; }
+.workspace-ui .login-panel { padding: 36px; border: 1px solid #dce1e7; border-radius: 12px; box-shadow: 0 4px 24px rgb(24 36 51 / 6%); }
+.workspace-ui .login-form { gap: 18px; }
+.workspace-ui .login-form input:not([type=checkbox]) { height: 42px; }
+.workspace-ui .login-form button[type=submit] { height: 42px !important; }
+.workspace-ui :is(.payment-shell, .payment-card, .result-card) { background: white; border: 1px solid #dce1e7; border-radius: 12px; box-shadow: 0 4px 24px rgb(24 36 51 / 4%); }
+.workspace-ui .payment-hero { background: #eaf2fc; color: #182433; }
+.workspace-ui :is(.alert-dialog, .app-alert__dialog, .table-meals-modal, .menu-manager-modal) { border-radius: 12px; background: white; border: 1px solid #dce1e7; }
+.workspace-ui :is(.menu-manager-empty, .account-manager-empty) { color: #667382; line-height: 1.6; padding: 32px 20px; }
+@media (max-width: 1200px) {
+  .workspace-ui :is(.supplier-integration-grid, .search-admin-charts, .search-admin-grid) { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 960px) {
+  .workspace-ui .side-layout { grid-template-columns: minmax(0, 1fr); }
+  .workspace-ui .side-layout__sidebar { max-height: 190px; }
+  .workspace-ui .home-hero { grid-template-columns: minmax(0, 1fr); }
+  .workspace-ui :is(.account-manager-page, .supplier-integration-page, .search-admin-page, .welstory-page) .side-layout__content { padding: 14px; }
+}
+@media (max-width: 640px) {
+  .workspace-ui :is(.supplier-integration-summary, .search-admin-kpis, .menu-grid, .order-manager-grid, .vendor-sanitation-grid, .home-insights) { grid-template-columns: minmax(0, 1fr); }
+  .workspace-ui .home-hero { padding: 20px; }
+  .workspace-ui :is(.login-panel, .result-card) { padding: 24px; }
+  .workspace-ui .account-manager-config-row { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Preserve content-driven sizing for navigation and selectable cards. */
+.workspace-ui .side-layout__submenu { background: transparent; border: 0; padding: 4px 0 8px 10px; }
+.workspace-ui .side-layout__sublink { color: #c7d2e0 !important; }
+.workspace-ui .side-layout__sublink.is-active { color: white !important; }
+.workspace-ui .menu-manager-page > .menu-manager-content { height: 100%; }
+.workspace-ui .home-dashboard > * { flex-shrink: 0; }
+.workspace-ui .home-hero { height: auto; min-height: 240px; overflow: visible; }
+.workspace-ui .home-hero__copy { max-width: 850px; }
+.workspace-ui .menu-grid .menu-card :is(.menu-card__title,.menu-card__description) { color: #25344a !important; }
+.workspace-ui .menu-grid .menu-card .menu-card__badge { background: #eaf2fc !important; color: #1856a0 !important; font-size: 12px !important; }
+.workspace-ui .home-search-keywords { padding: 14px 18px; }
+.workspace-ui .method-card { height: auto !important; min-height: 120px; padding: 18px; text-align: left; }
+.workspace-ui .method-card.is-selected { background: #eaf2fc !important; border-color: #206bc4 !important; box-shadow: inset 0 0 0 1px #206bc4 !important; }
+.workspace-ui .method-card p { color: #667382; font-weight: 400; margin-bottom: 0; }
+.workspace-ui .vendor-sanitation-gallery-shell { border: 0; background: transparent; padding: 0; height: auto; overflow: visible; }
+.workspace-ui .vendor-sanitation-grid { height: auto; grid-auto-rows: auto; }
+.workspace-ui .vendor-sanitation-card { height: auto; max-height: none; overflow: visible; }
+.workspace-ui .vendor-sanitation-button:is(.is-primary,.is-summary) { background: #206bc4 !important; color: white !important; border-color: #206bc4 !important; }
+.workspace-ui .payment-hero { border-radius: 12px; }

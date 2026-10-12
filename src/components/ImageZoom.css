@@ -1,0 +1,15 @@
+.image-zoom-trigger { display: inline-flex; flex: 0 0 auto; vertical-align: middle; cursor: zoom-in; border-radius: 5px; }
+/* Image triggers retain thumbnail dimensions instead of the global 90px button minimum. */
+body .image-zoom-trigger[role='button'],
+body .image-zoom-trigger[role='button']:hover { box-sizing: border-box; flex: 0 0 40px; width: 40px; min-width: 40px !important; max-width: 40px; height: 40px !important; padding: 0; border: 0; background-color: transparent !important; }
+.image-zoom-trigger:focus-visible { outline: 2px solid #287bb4; outline-offset: 3px; }
+.image-zoom-panel { position: fixed; z-index: 20000; box-sizing: content-box; overflow: hidden; border-radius: 10px; background: #fff; box-shadow: 0 12px 48px #12294055; outline: 1px solid #cbd6e2; }
+.image-zoom-panel > header { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 44px; padding: 0 10px; box-sizing: border-box; background: #f3f6fa; }
+.image-zoom-panel > header > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: #213047; }
+.image-zoom-panel > header > button { flex: 0 0 30px; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 5px; background: #fff; color: #213047; font-size: 24px; line-height: 1; cursor: pointer; }
+.image-zoom-panel > img { display: block; width: 100%; object-fit: contain; background: white; }
+.image-zoom-error { display: flex; align-items: center; justify-content: center; color: #64748b; }
+.menu-manager-image-actions { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+.menu-manager-image-edit { padding: 3px 5px; border: 1px solid #cbd6e2; border-radius: 4px; background: #fff; color: #40556c; font-size: 11px; cursor: pointer; white-space: nowrap; }
+body .menu-manager-image-edit { min-width: 0 !important; }
+body .image-zoom-panel > header > button { min-width: 30px !important; height: 30px !important; }

@@ -1,0 +1,26 @@
+/* Query controls and scrollable data lists. */
+body.workspace-ui { --query-control-font-size: 11px; }
+body.workspace-ui > :is(#root, :not(#root)) :is(.food-order-filters,.food-order-item-search,.menu-manager-filters,.vendor-sanitation-filters,.table-meals-toolbar,.table-meals-manual__filters,.account-manager-toolbar,.welstory-toolbar,.supplier-integration-toolbar,.search-admin-toolbar,.shortage-order-filters,.shortage-order-toolbar,.purchase-orders__filters,.welstory-panel__head,.home-search__box),
+body.workspace-ui > :is(#root, :not(#root)) :is(.food-order-filters,.food-order-item-search,.menu-manager-filters,.vendor-sanitation-filters,.table-meals-toolbar,.table-meals-manual__filters,.account-manager-toolbar,.welstory-toolbar,.supplier-integration-toolbar,.search-admin-toolbar,.shortage-order-filters,.shortage-order-toolbar,.purchase-orders__filters,.welstory-panel__head,.home-search__box) * { font-size: 11px !important; font-weight: 500 !important; }
+body.workspace-ui > :is(#root, :not(#root)) :is(.food-order-filters,.food-order-item-search,.menu-manager-filters,.vendor-sanitation-filters,.table-meals-toolbar,.table-meals-manual__filters,.account-manager-toolbar,.welstory-toolbar,.supplier-integration-toolbar,.search-admin-toolbar,.shortage-order-filters,.shortage-order-toolbar,.purchase-orders__filters,.welstory-panel__head,.home-search__box) :is(input:not([type=checkbox]):not([type=radio]):not([type=hidden]),select,.menu-manager-search-select__trigger) {
+  height: 30px !important;
+  min-height: 30px !important;
+  box-sizing: border-box; line-height: normal;
+}
+/* Custom select triggers use the same height as native controls. */
+body.workspace-ui > :is(#root, :not(#root)) :is(.food-order-filters,.food-order-item-search,.menu-manager-filters,.vendor-sanitation-filters,.table-meals-toolbar,.table-meals-manual__filters,.account-manager-toolbar,.welstory-toolbar,.supplier-integration-toolbar,.search-admin-toolbar,.shortage-order-filters,.shortage-order-toolbar,.purchase-orders__filters,.welstory-panel__head,.home-search__box) .menu-manager-search-select__trigger {
+  height: 30px !important;
+  min-height: 30px !important;
+}
+@media screen {
+  body.workspace-ui > :is(#root, :not(#root)) :is(.workspace-table-scroll,.menu-manager-table-scroll,.menu-manager-table-wrap,.table-meals-table-scroll,.table-meals-weekly-settings__scroll,.shortage-order-table-wrap,.supplier-integration-table-wrap,.welstory-table-wrap,.food-order-table-wrap) {
+    max-height: min(560px, 60vh); min-height: 0; min-width: 0; max-width: 100%;
+    overflow: auto !important; scrollbar-gutter: stable;
+  }
+  body.workspace-ui > :is(#root, :not(#root)) :is(.workspace-table-scroll,.menu-manager-table-scroll,.menu-manager-table-wrap,.table-meals-table-scroll,.table-meals-weekly-settings__scroll,.shortage-order-table-wrap,.supplier-integration-table-wrap,.welstory-table-wrap,.food-order-table-wrap) > table { margin-top: 0; }
+  body.workspace-ui > :is(#root, :not(#root)) :is(.workspace-table-scroll,.menu-manager-table-scroll,.menu-manager-table-wrap,.table-meals-table-scroll,.table-meals-weekly-settings__scroll,.shortage-order-table-wrap,.supplier-integration-table-wrap,.welstory-table-wrap,.food-order-table-wrap) thead th { position: sticky !important; top: 0; z-index: 2; }
+}
+@media print {
+  body.workspace-ui > :is(#root, :not(#root)) :is(.workspace-table-scroll,.menu-manager-table-scroll,.menu-manager-table-wrap,.table-meals-table-scroll,.table-meals-weekly-settings__scroll,.shortage-order-table-wrap,.supplier-integration-table-wrap,.welstory-table-wrap,.food-order-table-wrap) { max-height: none !important; height: auto !important; overflow: visible !important; scrollbar-gutter: auto; }
+  body.workspace-ui > :is(#root, :not(#root)) :is(.workspace-table-scroll,.menu-manager-table-scroll,.menu-manager-table-wrap,.table-meals-table-scroll,.table-meals-weekly-settings__scroll,.shortage-order-table-wrap,.supplier-integration-table-wrap,.welstory-table-wrap,.food-order-table-wrap) thead th { position: static !important; }
+}

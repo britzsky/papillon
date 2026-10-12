@@ -1,0 +1,262 @@
+/* Presentation layer for the approved procurement mockups. */
+body.workspace-ui {
+  --theme-color: #14634d;
+  --theme-color-strong: #0d4d3b;
+  --theme-color-soft: #eaf5ef;
+  --theme-color-softer: #f6f9f7;
+  --theme-accent: #14634d;
+  --theme-accent-soft: #eaf5ef;
+  --button-bg: #14634d;
+  --button-hover-bg: #0d4d3b;
+  --button-bg-hover: #0d4d3b;
+  --action-summary: #14634d;
+  --action-summary-hover: #0d4d3b;
+  --action-summary-border: #14634d;
+}
+
+/* Keep all existing menu destinations and the mobile drawer behavior. */
+body.workspace-ui .side-layout { background: #f6f9f7; }
+body.workspace-ui .side-layout__sidebar {
+  display: flex; flex-direction: column; background: #fff; color: #263e35;
+  border-right: 1px solid #e0e8e3; padding: 18px 12px;
+}
+body.workspace-ui .side-layout__sidebar-top {
+  background: #fff; margin: -18px -12px 18px; padding: 20px 18px;
+  border-bottom: 1px solid #edf1ee;
+}
+body.workspace-ui .side-layout__brand { display: flex; align-items: center; gap: 9px; }
+body.workspace-ui .side-layout__brand img { width: 130px; height: auto; max-height: 54px; object-fit: contain; }
+body.workspace-ui .side-layout__nav { gap: 8px; }
+body.workspace-ui .side-layout__home-link,
+body.workspace-ui .side-layout__major-button {
+  display: flex; align-items: center; gap: 12px; min-height: 46px;
+  padding: 12px !important; color: #34483f !important; background: transparent !important;
+  border: 0 !important; border-radius: 8px !important; text-align: left;
+}
+body.workspace-ui .workspace-icon { flex-shrink: 0; }
+body.workspace-ui .side-layout__chevron { margin-left: auto; color: #829389; }
+body.workspace-ui .side-layout__group { margin: 0; }
+body.workspace-ui .side-layout__submenu { padding: 4px 0 6px 30px; }
+body.workspace-ui .side-layout__sublink { color: #66796f !important; padding: 10px 12px; }
+body.workspace-ui .side-layout__sublink.is-active,
+body.workspace-ui .side-layout__major-button.is-active,
+body.workspace-ui .side-layout__home-link.is-active {
+  background: #e8f4ee !important; color: #14634d !important;
+}
+body.workspace-ui .side-layout__sublink:hover,
+body.workspace-ui .side-layout__home-link:hover,
+body.workspace-ui .side-layout__major-button:hover:not(:disabled) {
+  background: #f0f6f2 !important; color: #14634d !important;
+}
+body.workspace-ui .side-layout__sublink--disabled { color: #97a69e !important; }
+body.workspace-ui .side-layout__toggle {
+  color: #66796f !important; background: #f3f7f4 !important; width: 28px; min-height: 28px;
+}
+body.workspace-ui .side-layout__account {
+  display: flex; gap: 12px; align-items: center; margin-top: auto;
+  padding: 22px 8px 4px; border-top: 1px solid #e9eeeb;
+}
+body.workspace-ui .side-layout__account div { display: grid; gap: 6px; min-width: 0; overflow-wrap: anywhere; }
+body.workspace-ui .side-layout__account span { color: #78867e; }
+body.workspace-ui .header-shell { border-bottom-color: #e0e8e3; padding: 12px 24px; }
+body.workspace-ui .header-breadcrumbs { padding-bottom: 8px; }
+body.workspace-ui button:hover:not(:disabled) { background: #edf5f0 !important; border-color: #9ebbac !important; }
+body.workspace-ui button:is(.is-primary,.is-query,.action-query-button,.action-save-button,.menu-manager-save-button,.menu-manager-add-button),
+body.workspace-ui .table-meals-toolbar button[type=submit],
+body.workspace-ui :is(.home-hero__primary,.home-search__assistant,.welstory-panel button.primary):not(:disabled) {
+  background: #14634d !important; border-color: #14634d !important; color: #fff !important;
+}
+body.workspace-ui button:is(.is-primary,.is-query,.action-query-button,.action-save-button,.menu-manager-save-button,.menu-manager-add-button,.home-hero__primary,.home-search__assistant,.primary):hover:not(:disabled) {
+  background: #0d4d3b !important; border-color: #0d4d3b !important; color: #fff !important;
+}
+body.workspace-ui button:disabled { background: #edf1ef !important; color: #8a9892 !important; border-color: #e0e7e3 !important; }
+body.workspace-ui .home-search__assistant:disabled { background: #edf1ef !important; color: #8a9892 !important; border-color: #e0e7e3 !important; }
+body.workspace-ui input:is([type=checkbox],[type=radio]) { accent-color: #14634d; }
+
+/* Font sizes are shared with purchase-order management in UserTypography.css. */
+body.workspace-ui > :is(#root,:not(#root)) .procurement-refresh .side-layout__content {
+  background: #f6f9f7; padding: 24px; gap: 16px;
+}
+body.workspace-ui > :is(#root,:not(#root)) .procurement-refresh :is(.procurement-page-heading,.shortage-order-intro) h2,
+body.workspace-ui > :is(#root,:not(#root)) .procurement-refresh .home-hero h1 {
+  line-height: 1.35; letter-spacing: 0; color: #192e25;
+}
+body.workspace-ui .procurement-eyebrow { color: #14634d; font-weight: 650; display: block; margin-bottom: 7px; }
+body.workspace-ui .procurement-page-heading h2 { margin: 0; }
+body.workspace-ui .procurement-page-heading p { margin: 8px 0 0; color: #718078; }
+body.workspace-ui .procurement-flow {
+  display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); margin: 0; padding: 18px 12px;
+  list-style: none; background: #fff; border: 1px solid #e0e8e3; border-radius: 10px; flex-shrink: 0;
+}
+body.workspace-ui .procurement-flow li { display: grid; justify-items: center; gap: 8px; position: relative; color: #4b6055; }
+body.workspace-ui .procurement-flow li:not(:last-child)::after { content: '›'; position: absolute; top: 12px; right: -4px; color: #91aa9c; }
+body.workspace-ui .procurement-flow__icon { display: grid; place-items: center; width: 38px; height: 38px; background: #edf6f0; border-radius: 50%; color: #14634d; }
+body.workspace-ui .procurement-flow .is-current { color: #14634d; font-weight: 700; }
+body.workspace-ui .procurement-flow .is-current .procurement-flow__icon { background: #14634d; color: #fff; }
+
+/* Home: work overview, search, and existing operational entry points. */
+body.workspace-ui .procurement-refresh .home-dashboard { gap: 22px; }
+body.workspace-ui .procurement-refresh .home-hero {
+  display: block; padding: 4px 0; min-height: 0; border: 0; background: transparent; overflow: visible;
+}
+body.workspace-ui .procurement-refresh .home-hero::after { display: none; }
+body.workspace-ui .procurement-refresh .home-hero__copy { max-width: none; }
+body.workspace-ui > :is(#root,:not(#root)) .procurement-refresh .home-hero .home-hero__eyebrow {
+  color: #60746a; margin: 0 0 12px; letter-spacing: 0;
+}
+body.workspace-ui .procurement-refresh .home-hero__actions { margin-top: 20px; }
+body.workspace-ui .procurement-refresh .home-hero__actions button { min-height: 38px; padding: 8px 18px; }
+body.workspace-ui .procurement-refresh .home-hero__actions button:not(:first-child) {
+  background: #fff !important; color: #37604f !important; border-color: #cfded5 !important;
+}
+body.workspace-ui .procurement-shortcuts { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; }
+body.workspace-ui button.procurement-shortcut {
+  display: flex; align-items: center; gap: 14px; padding: 20px 16px; min-height: 116px;
+  text-align: left; border-color: #e0e8e3 !important; border-radius: 10px !important;
+}
+body.workspace-ui > :is(#root,:not(#root)) .procurement-refresh button.procurement-shortcut {
+  height: auto !important; min-height: 116px !important;
+}
+body.workspace-ui .procurement-shortcut > span:nth-child(2) { display: grid; gap: 7px; flex: 1; }
+body.workspace-ui .procurement-shortcut__icon { display: grid; place-items: center; background: #eaf5ee; color: #14634d; width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; }
+body.workspace-ui .procurement-refresh .procurement-shortcut strong { font-weight: 750 !important; color: #14634d; }
+body.workspace-ui .procurement-shortcut small,
+body.workspace-ui .procurement-shortcut > span:nth-child(2) > span { color: #76877e; }
+body.workspace-ui .procurement-refresh .home-search { padding: 18px; border-color: #e0e8e3; border-radius: 10px; }
+body.workspace-ui .procurement-refresh .home-search-keywords { border-color: #e0e8e3; }
+body.workspace-ui .procurement-refresh .home-search__box { background: #f8faf9; border-color: #d8e4dc; }
+body.workspace-ui .procurement-refresh .home-search__assistant { min-height: 40px; }
+body.workspace-ui .procurement-refresh .home-section-heading p { color: #14634d; }
+body.workspace-ui .procurement-refresh .menu-grid { grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 14px; }
+body.workspace-ui .procurement-refresh .menu-card { padding: 20px; border-color: #e0e8e3 !important; border-radius: 10px; }
+body.workspace-ui .procurement-refresh .menu-card .menu-card__badge { background: #eaf5ee !important; color: #14634d !important; }
+body.workspace-ui .procurement-refresh .menu-card__icon { width: 38px; height: 38px; }
+
+/* Order: preserve every source field, quantity constraint, and verification action. */
+body.workspace-ui .procurement-refresh.shortage-order-page .side-layout__content { overflow: auto; }
+body.workspace-ui .procurement-refresh.shortage-order-page .side-layout__content > :is(section,div,aside,p) {
+  flex-shrink: 0; max-height: none; overflow: visible;
+}
+body.workspace-ui .procurement-refresh .shortage-order-filters { padding: 8px; border-color: #e0e8e3; gap: 14px; }
+body.workspace-ui .procurement-refresh .shortage-delivery-guidance { border-color: #eadbb8; background: #fffbf2; font-weight: 400; }
+body.workspace-ui .procurement-refresh .shortage-order-note { background: #edf6f0; border-color: #d8e8df; font-weight: 400; }
+body.workspace-ui .procurement-order-layout { display: grid; grid-template-columns: minmax(0,1fr) 280px; gap: 20px; align-items: start; }
+body.workspace-ui .procurement-order-items { min-width: 0; background: #fff; border: 1px solid #e0e8e3; border-radius: 10px; padding: 16px; }
+body.workspace-ui .procurement-refresh .shortage-order-toolbar { padding: 0 0 14px; justify-content: flex-start; }
+/* 다른 탭처럼 검색칸 바로 옆에 버튼을 두고 건수 문구는 맨 뒤(예전엔 문구가 버튼을 오른쪽 끝으로 밀었음) */
+body.workspace-ui .procurement-refresh .shortage-order-toolbar > span { order: 1; margin-left: 4px; color: #4e5e56; }
+body.workspace-ui .procurement-refresh .shortage-order-table-wrap { max-height: 560px; border-color: #e0e8e3; }
+body.workspace-ui .procurement-refresh .shortage-order-table th { background: #f3f7f5; color: #50675a; }
+body.workspace-ui .procurement-refresh .shortage-order-table td { padding: 18px 12px; vertical-align: middle; }
+body.workspace-ui > :is(#root,:not(#root)) .procurement-refresh .shortage-order-table {
+  min-width: 1240px !important; table-layout: auto !important;
+}
+body.workspace-ui > :is(#root,:not(#root)) .procurement-refresh .shortage-order-table th,
+body.workspace-ui > :is(#root,:not(#root)) .procurement-refresh .shortage-order-table td:nth-child(n+3):nth-child(-n+7),
+body.workspace-ui > :is(#root,:not(#root)) .procurement-refresh .shortage-order-table td:nth-child(n+9) { white-space: nowrap; word-break: normal; }
+body.workspace-ui > :is(#root,:not(#root)) .procurement-refresh .shortage-order-table td:nth-child(2) { min-width: 170px; word-break: keep-all; }
+body.workspace-ui .procurement-refresh .shortage-order-table td:nth-child(7) { color: #14634d; font-weight: 750; background: #f0f8f3; }
+body.workspace-ui .procurement-refresh .shortage-order-table tr.is-focused td { background: #e8f5ed; }
+body.workspace-ui .procurement-refresh .shortage-order-footer { border: 0; padding: 14px 0 0; }
+body.workspace-ui .procurement-summary { min-width: 0; padding: 22px; background: #fff; border: 1px solid #e0e8e3; border-radius: 10px; }
+body.workspace-ui .procurement-summary h2 { margin: 0 0 18px; }
+body.workspace-ui .procurement-summary > p { color: #496555; }
+body.workspace-ui .procurement-summary dl { display: grid; gap: 14px; padding: 18px 0; border-top: 1px solid #e7eee9; }
+body.workspace-ui .procurement-summary dl div { display: flex; justify-content: space-between; gap: 16px; }
+body.workspace-ui .procurement-summary dt { color: #7a897f; flex-shrink: 0; }
+body.workspace-ui .procurement-summary dd { text-align: right; margin: 0; overflow-wrap: anywhere; }
+body.workspace-ui .procurement-summary__total { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; background: #eef7f1; color: #14634d; border-radius: 8px; padding: 15px 12px; }
+body.workspace-ui .procurement-refresh .procurement-summary__total strong { font-weight: 750 !important; }
+body.workspace-ui .procurement-summary__hint { color: #7b8b82; line-height: 1.7; text-align: left; margin: 14px 0; }
+body.workspace-ui .procurement-summary > button { width: 100%; min-height: 44px; }
+body.workspace-ui .procurement-summary__formula { margin-top: 24px; border-top: 1px solid #e7eee9; padding-top: 18px; color: #718378; }
+body.workspace-ui .procurement-summary__formula strong { color: #405e4e; }
+body.workspace-ui .procurement-summary__formula p { margin: 8px 0; }
+
+/* Supplier catalog and cart share the same handlers as the former table. */
+body.workspace-ui .procurement-refresh .welstory-toolbar { margin: 0; padding: 16px; border-color: #e0e8e3; }
+body.workspace-ui .procurement-refresh .welstory-tabs { border: 0; border-bottom: 1px solid #dce6df; padding: 0; margin: 0; background: transparent; flex-shrink: 0; flex-wrap: wrap; }
+body.workspace-ui .procurement-refresh .welstory-tabs button { padding: 14px 20px; background: transparent !important; border: 0 !important; border-radius: 0 !important; border-bottom: 3px solid transparent !important; }
+body.workspace-ui .procurement-refresh .welstory-tabs button.active { color: #14634d !important; border-bottom-color: #14634d !important; }
+body.workspace-ui .procurement-refresh .welstory-grid { grid-template-columns: minmax(0,1fr) 360px; gap: 20px; }
+body.workspace-ui .procurement-refresh .welstory-panel { border-color: #e0e8e3; border-radius: 10px; }
+body.workspace-ui .procurement-refresh .welstory-panel__head { min-height: 70px; height: auto; padding: 16px; background: #fff; border-color: #e0e8e3; flex-wrap: wrap; }
+body.workspace-ui > :is(#root,:not(#root)) .procurement-refresh .welstory-panel__head input { width: min(320px,100%) !important; }
+body.workspace-ui .procurement-count { display: inline-block; background: #eaf5ee; color: #14634d; border-radius: 20px; padding: 4px 9px; margin-left: 7px; }
+body.workspace-ui .procurement-product-list { overflow: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+body.workspace-ui .procurement-product { display: flex; gap: 18px; align-items: center; padding: 22px 18px; border: 1px solid #e0e8e3; border-radius: 10px; }
+body.workspace-ui .procurement-product__icon { display: grid; place-items: center; width: 64px; height: 76px; flex-shrink: 0; background: #f1f6f3; color: #6b8476; border-radius: 8px; }
+body.workspace-ui .procurement-product__icon svg { width: 30px; height: 30px; }
+body.workspace-ui .procurement-product__info { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+body.workspace-ui .procurement-product__info h3 { margin: 0 0 10px; }
+body.workspace-ui .procurement-product__supplier { color: #14634d; font-weight: 650; }
+body.workspace-ui .procurement-product__info p { margin: 8px 0 4px; color: #6e8075; }
+body.workspace-ui .procurement-product__info small { display: block; color: #809086; margin-bottom: 10px; }
+body.workspace-ui .procurement-product__action { display: grid; gap: 5px; justify-items: end; flex-shrink: 0; }
+body.workspace-ui .procurement-refresh .procurement-product__action strong { font-weight: 750 !important; }
+body.workspace-ui .procurement-product__action small { color: #7c8d82; }
+body.workspace-ui .procurement-product__action button { margin-top: 14px; min-width: 90px; color: #14634d !important; border-color: #a9c6b6 !important; }
+body.workspace-ui .procurement-cart footer { margin-top: auto; border-top: 1px solid #e7eee9; padding: 18px; flex-shrink: 0; }
+body.workspace-ui .procurement-cart footer button { width: 100%; min-height: 44px; }
+body.workspace-ui .procurement-cart-list { padding: 0 18px; }
+body.workspace-ui .procurement-cart-line { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px 10px; align-items: center; padding: 22px 0; border-bottom: 1px solid #e7eee9; }
+body.workspace-ui .procurement-cart-line strong { line-height: 1.7; color: #263e32; }
+body.workspace-ui .procurement-cart-line small { display: block; color: #7c8d82; margin-top: 6px; }
+body.workspace-ui .procurement-cart-line label { display: flex; align-items: center; gap: 8px; color: #6f8075; }
+body.workspace-ui .procurement-cart-line input { width: 68px; text-align: right; }
+body.workspace-ui .procurement-cart-line__amount { color: #14634d; font-weight: 700; text-align: right; }
+body.workspace-ui .procurement-cart-line.is-deleted { text-decoration: line-through; opacity: .55; }
+body.workspace-ui .procurement-empty { text-align: center; color: #7c8c82; padding: 32px 16px; line-height: 1.8; }
+
+@media (max-width: 1400px) {
+  body.workspace-ui .procurement-shortcuts { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  body.workspace-ui .procurement-order-layout { grid-template-columns: minmax(0,1fr); }
+  body.workspace-ui .procurement-summary { display: grid; grid-template-columns: minmax(0,1fr) minmax(220px,1fr); gap: 12px 24px; }
+  body.workspace-ui .procurement-summary :is(h2,p,dl) { margin: 0; }
+  body.workspace-ui .procurement-summary dl { grid-column: 1; grid-row: 3 / span 3; }
+  body.workspace-ui .procurement-summary__total { grid-column: 2; grid-row: 1 / span 2; }
+  body.workspace-ui .procurement-summary__hint, body.workspace-ui .procurement-summary > button { grid-column: 2; }
+  body.workspace-ui .procurement-summary__formula { grid-column: 1 / -1; margin-top: 8px; }
+  body.workspace-ui .procurement-refresh .welstory-grid { grid-template-columns: minmax(0,1fr) 320px; }
+  body.workspace-ui .procurement-product__icon { display: none; }
+}
+@media (max-width: 1100px) {
+  body.workspace-ui .procurement-refresh.welstory-page .side-layout__content { overflow: auto; }
+  body.workspace-ui .procurement-refresh.welstory-page .side-layout__content > :is(section,div) { flex-shrink: 0; max-height: none; overflow: visible; }
+  body.workspace-ui .procurement-refresh .welstory-grid { display: grid; grid-template-columns: minmax(0,1fr); flex: none; overflow: visible; }
+  body.workspace-ui .procurement-refresh .welstory-grid > section { max-height: none; overflow: visible; }
+  body.workspace-ui .procurement-product-list { max-height: 540px; }
+  body.workspace-ui .procurement-refresh .welstory-toolbar { flex-direction: row; align-items: end; }
+}
+@media (max-width: 640px) {
+  body.workspace-ui .procurement-shortcuts { grid-template-columns: minmax(0,1fr); }
+  body.workspace-ui .procurement-flow { grid-template-columns: repeat(3,minmax(0,1fr)); row-gap: 18px; }
+  body.workspace-ui .procurement-flow li:nth-child(3)::after { display: none; }
+  body.workspace-ui .procurement-summary { display: block; }
+  body.workspace-ui .procurement-summary > * { margin-bottom: 16px !important; }
+  body.workspace-ui .procurement-product { padding: 16px 12px; gap: 12px; }
+  body.workspace-ui .procurement-product__action button { min-width: 64px; }
+  body.workspace-ui .procurement-order-items { padding: 10px; }
+}
+
+@media print {
+  body.workspace-ui .side-layout__sidebar { display: none !important; }
+}
+@media (max-width: 700px) {
+  /* 좁은 화면: 검색칸 한 줄, 두 버튼은 다음 줄에 반씩, 건수 문구는 그 아래 */
+  body.workspace-ui > :is(#root, :not(#root)) .procurement-refresh .shortage-order-toolbar input { flex: 1 1 100%; width: 100% !important; }
+  body.workspace-ui .procurement-refresh .shortage-order-toolbar > button { flex: 1 1 0; }
+  body.workspace-ui .procurement-refresh .shortage-order-toolbar > span { flex-basis: 100%; margin-left: 0; }
+}
+/* 필터 버튼과 같은 줄에 놓일 때 높이 맞춤: 위의 .shortage-order-toolbar 아래 여백(14px)이 이 묶음 안에서는 줄 가운데를 7px 끌어올렸다 */
+body.workspace-ui .procurement-refresh .shortage-table-controls .shortage-order-toolbar { padding: 0; align-items: center; }
+/* 조회 조건의 고정 기준 문구(저장 전 식단·현재 부족 재고): 옆 칸들처럼 왼쪽 이름표 + 입력칸 높이(30px) 상자 */
+body.workspace-ui .procurement-refresh .shortage-order-filters .shortage-order-basis { display: flex; flex-direction: row; align-items: center; gap: 7px; }
+body.workspace-ui .procurement-refresh .shortage-order-filters .shortage-order-basis em { font-style: normal; font-weight: 600; color: #526176; }
+body.workspace-ui .procurement-refresh .shortage-order-filters .shortage-order-basis b {
+  display: flex; align-items: center; height: 30px; padding: 0 10px; box-sizing: border-box;
+  border: 1px solid #e0e8e3; border-radius: 6px; background: #f6f9f7; color: #34483f; font-weight: 600; white-space: nowrap;
+}
+/* 조회 조건 항상 펼침: 조건 줄이 전체 폭, '새 상품 발주'·'납품일 안내'는 그 아래 줄 */
+body.workspace-ui .procurement-refresh .shortage-compact-bar > .shortage-order-options { flex-basis: 100%; margin: 0; padding: 0; border: 0; background: transparent; }
+body.workspace-ui .procurement-refresh .shortage-compact-bar > .shortage-order-options > .shortage-order-filters { margin: 0; }

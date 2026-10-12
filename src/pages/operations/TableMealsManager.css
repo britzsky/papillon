@@ -305,6 +305,36 @@
   color: #166534;
 }
 
+.table-meals-budget {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.table-meals-budget.is-over {
+  background: #fff1f2;
+  color: #dc2626;
+}
+
+.table-meals-budget.is-unpriced {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.table-meals-budget--cell {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: 7px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .table-meals-day-card dd {
   margin: 0;
   font-size: 12px;
@@ -320,6 +350,18 @@
 
 .table-meals-day-card__menus .table-meals-menu-text {
   line-height: 1.5;
+}
+
+.table-meals-menu-cost {
+  margin-left: 5px;
+  color: #2563eb;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.table-meals-menu-text.is-unmatched .table-meals-menu-cost {
+  color: #c2410c;
 }
 
 .table-meals-empty,
@@ -1364,13 +1406,15 @@
   }
 }
 
-@media print {
-  @page {
-    size: A4 landscape;
-    margin: 8mm;
-  }
+/* 인쇄 규칙은 식단표 인쇄 영역이 열려 있을 때만 적용한다(CSS는 앱 전체에 로드되므로 다른 화면 인쇄를 숨기지 않게). */
+@page meal-sheet {
+  size: A4 landscape;
+  margin: 8mm;
+}
 
-  body * {
+@media print {
+  /* :where로 감싸 우선순위를 body *와 같게 유지(아래 인쇄 영역 visible 규칙이 이기도록) */
+  body:where(:has(.table-meals-print-area)) * {
     visibility: hidden;
   }
 
@@ -1387,6 +1431,7 @@
   }
 
   .table-meals-print-area {
+    page: meal-sheet;
     position: absolute;
     inset: 0;
     width: 100%;
@@ -1435,3 +1480,306 @@
 .table-meals-weekly-settings__table td select { display: block; width: 100%; height: 30px; margin-bottom: 4px; border: 1px solid #b4c1cc; background: #fff; color: #283c50; font-size: 11px; }
 .table-meals-weekly-settings__table td small { display: block; color: #3d7454; font-size: 10px; text-align: right; }
 @media (max-width: 700px) { .table-meals-weekly-summary > div { align-items: flex-start; flex-direction: column; gap: 2px; } .table-meals-modal-backdrop--weekly { padding: 4px; } .table-meals-modal--weekly { max-height: calc(100vh - 8px); } }
+
+/* 주간 사용 확정: 식단표 상세 맨 위 패널과 확인 창(인쇄 제외) */
+.meal-usage-panel { margin: 10px 12px 0; padding: 12px 14px; border: 1px solid #cfe3d6; border-radius: 14px; background: #f4faf6; color: #1f3b2c; }
+.meal-usage-panel__summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.meal-usage-panel__summary > div:first-child { display: flex; flex-direction: column; gap: 3px; }
+.meal-usage-panel__summary strong { font-size: 15px; }
+.meal-usage-panel__summary span { font-size: 13px; color: #3c5a48; }
+.meal-usage-panel__warn { color: #9a3412 !important; font-weight: 600; }
+.meal-usage-panel__actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.meal-usage-panel__actions .table-meals-modal__button:disabled, .meal-usage-panel__days .table-meals-modal__button:disabled, .meal-usage-dialog .table-meals-modal__button:disabled { opacity: .45; cursor: not-allowed; }
+.meal-usage-panel__days { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.meal-usage-panel__hint { margin: 6px 0 0; font-size: 12px; color: #55705f; }
+.meal-usage-panel__error { margin: 8px 0 0; color: #b91c1c; font-size: 13px; }
+.meal-usage-panel__table { width: 100%; margin-top: 10px; border-collapse: collapse; background: #fff; font-size: 13px; }
+.meal-usage-panel__table th, .meal-usage-panel__table td { padding: 6px 8px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+.meal-usage-panel__table th { background: #eef4f0; color: #35503f; font-weight: 600; position: sticky; top: 0; }
+.meal-usage-panel__table td.is-warn { color: #9a3412; font-weight: 600; }
+.meal-usage-panel__table tr.is-short td { background: #fef2f2; color: #991b1b; }
+.meal-usage-panel__table input { width: 96px; height: 30px; padding: 0 6px; border: 1px solid #b4c1cc; border-radius: 6px; }
+.meal-usage-dialog-backdrop { z-index: 1300; }
+.meal-usage-dialog { width: min(860px, 100%); max-height: calc(100vh - 48px); display: flex; flex-direction: column; }
+.meal-usage-dialog__body { flex: 1; min-height: 0; overflow: auto; padding: 14px 20px; }
+.meal-usage-dialog__body h3 { margin: 14px 0 0; font-size: 14px; color: #1f3b2c; }
+.meal-usage-dialog__body h3:first-of-type { margin-top: 4px; }
+.meal-usage-dialog__scroll { max-height: 320px; overflow: auto; }
+.meal-usage-dialog__notice { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin-top: 10px; padding: 10px 12px; border-radius: 10px; font-size: 13px; }
+.meal-usage-dialog__notice ul { margin: 0; padding-left: 18px; }
+.meal-usage-dialog__notice a:not(.table-meals-modal__button) { color: inherit; text-decoration: underline; }
+.meal-usage-dialog__notice .table-meals-modal__button { display: inline-flex; align-items: center; text-decoration: none; }
+.meal-usage-dialog__notice.is-danger { background: #fef2f2; border: 1px solid #fecaca; color: #7f1d1d; }
+.meal-usage-dialog__notice.is-warn { background: #fff7ed; border: 1px solid #fed7aa; color: #7c2d12; }
+.meal-usage-dialog__notice.is-confirm { background: #ecfdf5; border: 1px solid #a7f3d0; color: #064e3b; }
+.meal-usage-dialog .table-meals-modal__actions { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid #e2e8f0; }
+@media (max-width: 700px) { .meal-usage-panel { margin: 8px 4px 0; } .meal-usage-dialog__body { padding: 12px; } }
+@media print { .meal-usage-panel, .meal-usage-dialog-backdrop { display: none !important; } }
+
+/* 원산지 카드: 식자재가 많아도 날짜별 식단 칸을 밀어내지 않도록 높이를 제한하고 안에서 스크롤 */
+.table-meals-origin-card__list {
+  max-height: 132px;
+  overflow: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 2px 14px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #475569;
+}
+
+.table-meals-origin-card__list span {
+  overflow-wrap: anywhere;
+}
+
+.table-meals-origin-card p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #475569;
+}
+
+/* 분석 영역의 카드·식단 칸은 줄어들지 않고, 넘치면 분석 영역 전체가 스크롤된다 */
+.table-meals-analysis > * {
+  flex-shrink: 0;
+}
+
+@media print {
+  .table-meals-origin-card__list {
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+/* 자동 제작 결과: 원산지는 절반 높이로, 날짜별 식사는 넓게 표시한다. */
+@media screen {
+  .table-meals-analysis--auto > .table-meals-origin-card {
+    box-sizing: border-box;
+    max-height: 96px;
+    padding: 7px 12px;
+    overflow: auto;
+  }
+
+  .table-meals-analysis--auto .table-meals-origin-card strong {
+    margin-bottom: 4px;
+  }
+
+  .table-meals-analysis--auto .table-meals-origin-card__list {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .table-meals-analysis--auto > .table-meals-week-grid {
+    flex: 1 0 auto;
+    min-height: 360px;
+  }
+
+  .table-meals-analysis--auto .table-meals-day-card header {
+    padding: 16px;
+  }
+
+  .table-meals-analysis--auto .table-meals-day-card header strong {
+    font-size: 16px;
+  }
+
+  .table-meals-analysis--auto .table-meals-day-card header span,
+  .table-meals-analysis--auto .table-meals-day-card dt {
+    font-size: 14px;
+  }
+
+  .table-meals-analysis--auto .table-meals-day-card dl {
+    padding: 16px;
+  }
+
+  .table-meals-analysis--auto .table-meals-day-card dl div + div {
+    margin-top: 16px;
+  }
+}
+
+/* 식단 편집 모달: 상단 보조 정보 / 주간표 + 메뉴 검색 / 고정 작업 바 */
+.table-meals-modal--manual {
+  width: calc(100vw - 24px);
+  height: calc(100dvh - 24px);
+  max-height: calc(100dvh - 24px);
+  overflow: hidden;
+}
+.table-meals-manual-header,
+.table-meals-manual__origins,
+.table-meals-manual__guide,
+.table-meals-manual__actions { flex-shrink: 0; }
+.table-meals-manual-header { padding: 12px 18px; }
+.table-meals-manual-header .table-meals-modal__eyebrow { display: none; }
+.table-meals-manual__origins { border-bottom: 1px solid var(--table-border-mid); }
+.table-meals-manual__origins summary,
+.table-meals-manual__recommendations summary {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+}
+.table-meals-manual__origins summary span { margin-left: 12px; color: #667980; font-weight: 400; }
+.table-meals-manual__origins .table-meals-origin-card {
+  max-height: 96px;
+  box-sizing: border-box;
+  padding: 8px 14px;
+  overflow: auto;
+  border: 0;
+  box-shadow: none;
+}
+.table-meals-manual__origins .table-meals-origin-card__list { max-height: none; overflow: visible; }
+.table-meals-manual__guide {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  padding: 10px 14px 0;
+  font-size: 12px;
+  color: #53636a;
+}
+.table-meals-manual__guide strong { font-size: 14px; color: #243036; }
+.table-meals-manual {
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px 14px;
+  overflow: hidden;
+}
+.table-meals-manual__grid { min-height: 0; scrollbar-gutter: stable; }
+.table-meals-manual__corner { z-index: 4; }
+.table-meals-manual__day-head { min-height: 52px; font-size: 14px; background: #f0f3e8; }
+.table-meals-manual__meal-head { font-size: 14px; background: #f0f3e8; }
+.table-meals-manual__cell { min-height: 160px; max-height: none; padding: 10px; vertical-align: top; }
+.table-meals-manual__cell ul { max-height: none; overflow: visible; gap: 8px; }
+.table-meals-manual__cell li { padding: 6px; font-size: 13px; align-items: start; }
+.table-meals-manual__cell .table-meals-menu-cost { display: block; padding: 2px 0 0; color: #667980; }
+.table-meals-manual__cell .table-meals-budget { white-space: normal; line-height: 1.6; }
+.table-meals-manual__cell.is-selected { outline: 3px solid var(--theme-color, #7c8a4b); outline-offset: -3px; }
+.table-meals-manual__cell:focus-visible,
+.table-meals-manual__remove:focus-visible { outline: 3px solid #2474a5; outline-offset: -3px; }
+.table-meals-manual__palette { min-height: 0; box-shadow: none; }
+.table-meals-manual__palette-title { margin: 0; padding: 12px 12px 0; font-size: 15px; }
+.table-meals-manual__target { flex-shrink: 0; flex-wrap: wrap; padding: 12px; }
+.table-meals-manual__target strong { line-height: 1.6; }
+.table-meals-manual__filters { grid-template-columns: 1fr 1fr; flex-shrink: 0; }
+.table-meals-manual__filters input { grid-column: 1 / -1; height: 38px; }
+.table-meals-manual__recommendations { flex-shrink: 0; border-bottom: 1px solid #e2e8f0; }
+.table-meals-manual__recommendations .meal-recommendations { max-height: 140px; overflow: auto; padding: 0 10px 10px; }
+.table-meals-manual__count { margin: 0; padding: 8px 10px; font-size: 11px; color: #667980; }
+.table-meals-manual__menu-list { min-height: 80px; }
+.table-meals-manual__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--table-border-mid);
+  background: #fff;
+}
+.table-meals-manual__actions .table-meals-servings-field { margin-right: auto; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+@media (max-width: 1000px) {
+  .table-meals-manual { grid-template-columns: minmax(0, 1fr) 260px; }
+  .table-meals-manual__actions .table-meals-servings-field { flex-basis: 100%; }
+}
+@media (max-width: 640px) {
+  .table-meals-modal--manual { width: calc(100vw - 8px); height: calc(100dvh - 8px); max-height: calc(100dvh - 8px); }
+  .table-meals-manual-header { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .table-meals-manual { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(220px, 1fr) 280px; overflow: auto; padding: 8px; }
+  .table-meals-manual__origins summary span { display: none; }
+  .table-meals-manual__guide { padding: 8px; }
+}
+
+/* 공통 30px 버튼 규칙보다 식단 편집 카드의 내용 높이를 우선한다. */
+body .table-meals-modal--manual .table-meals-manual__cell {
+  display: block;
+  height: auto !important;
+  min-height: 160px !important;
+  max-height: none !important;
+  padding: 10px !important;
+  white-space: normal !important;
+  align-self: stretch;
+}
+body .table-meals-modal--manual .table-meals-manual__menu {
+  display: block;
+  height: auto !important;
+  min-height: 62px !important;
+  padding: 10px !important;
+  white-space: normal !important;
+}
+body .table-meals-modal--manual .table-meals-manual__filters input { width: 100% !important; }
+body .table-meals-modal--manual .table-meals-manual__filters select { width: 100% !important; }body .table-meals-modal--manual .table-meals-manual__grid { grid-auto-rows: max-content; }
+body .table-meals-modal--manual .table-meals-manual__cell { min-height: max-content !important; }
+body .table-meals-modal--manual .table-meals-manual__remove {
+  width: auto !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 24px !important;
+  padding: 3px 5px !important;
+  background: #fff1f2 !important;
+  color: #b91c1c !important;
+  border: 1px solid #fecaca !important;
+  white-space: nowrap;
+}
+.table-meals-calories {
+  display: block;
+  margin: 6px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  line-height: 1.5;
+}
+.table-meals-calories small {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+/* 저장 전 부족재고 확인 창(① 부족 식재료): 확인 사항은 주황 작은 글씨, 부족량 굵게 */
+.draft-stock-check h3 { margin: 12px 0 4px; color: #192e25; }
+.draft-stock-check h3 small { margin-left: 6px; font-weight: 500; color: #4e5e56; }
+.draft-stock-check td strong { display: block; color: #192e25; }
+.draft-stock-check__issue { display: block; margin-top: 2px; color: #b45309; line-height: 1.4; }
+.draft-stock-check td.draft-stock-check__shortage { font-weight: 800; color: #b42318; }
+
+/* ── 식단표 인쇄 A4 가로 한 장 (2026-10-08) ──
+ * 업장 이름은 제목 아래 굵게. 원산지는 인쇄 때 카드 제목을 빼고 여러 열 작은 글씨로.
+ * meal-print-measure: 인쇄 직전 화면에서 인쇄 폭(1062px)·인쇄 글자로 잠깐 펼쳐 높이를 재는 상태(printTableMealDetail). */
+.table-meals-hangyeol__account { font-size: 14px; color: #111827; }
+body.meal-print-measure .table-meals-hangyeol { width: 1062px !important; max-width: none !important; }
+body.meal-print-measure .table-meals-hangyeol :is(.table-meals-hangyeol__table li, .table-meals-hangyeol__table td > span) { font-size: 10px; }
+:is(body.meal-print-measure) .table-meals-origin-card__list { max-height: none; overflow: visible; }
+@media print {
+  .table-meals-hangyeol { zoom: var(--meal-print-zoom, 1); }
+}
+:is(body.meal-print-measure) .table-meals-hangyeol__origin .table-meals-origin-card,
+.table-meals-print-area .table-meals-hangyeol__origin .table-meals-origin-card { border: 0; padding: 0; margin: 0; box-shadow: none; background: transparent; }
+@media print {
+  .table-meals-hangyeol__title { margin-bottom: 4px; }
+  .table-meals-hangyeol__origin .table-meals-origin-card > strong { display: none; }
+  .table-meals-hangyeol__origin .table-meals-origin-card__list { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0 10px; font-size: 8.5px; line-height: 1.25; }
+  .table-meals-hangyeol__origin .table-meals-origin-card p { font-size: 8.5px; margin: 2px 0 0; }
+  .table-meals-hangyeol__notice { margin: 4px 0 3px; font-size: 10px; }
+}
+body.meal-print-measure .table-meals-hangyeol__origin .table-meals-origin-card > strong { display: none; }
+body.meal-print-measure .table-meals-hangyeol__origin .table-meals-origin-card__list { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0 10px; font-size: 8.5px; line-height: 1.25; }
+body.meal-print-measure .table-meals-hangyeol__notice { margin: 4px 0 3px; font-size: 10px; }
+/* 왼쪽 '원산지' 이름표가 '원산/지'로 끊기지 않게 */
+.table-meals-hangyeol__origin { grid-template-columns: 58px minmax(0, 1fr); }
+.table-meals-hangyeol__origin > strong { white-space: nowrap; }
+@media print {
+  /* 화면 모달의 둥근 테두리·회색 바탕이 종이에 찍히지 않게 */
+  html:has(.table-meals-print-area), body:has(.table-meals-print-area) { background: #ffffff !important; }
+  body.workspace-ui .table-meals-print-area.table-meals-modal { border: 0 !important; border-radius: 0 !important; box-shadow: none !important; background: #ffffff !important; padding: 0 !important; }
+}
+
+/* 식단표 관리 조회 줄: 입력칸은 왼쪽, 버튼 묶음은 오른쪽 끝(좁으면 다음 줄 오른쪽) */
+body.workspace-ui .table-meals-toolbar > .table-meals-toolbar__actions { margin-left: auto; justify-content: flex-end; gap: 6px; }
+
+/* PDF 메뉴 연결: 저장된 연결 표시·이번만 제외·연결 기억 */
+.table-meals-pdf-transfer { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.table-meals-pdf-transfer label { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+.table-meals-pdf-transfer small { color: #475569; }
+.table-meals-alias-note { display: block; font-size: 11px; color: #64748b; }
+.table-meals-alias-note button, .table-meals-exclude-button, .table-meals-menu-excluded button { margin-left: 4px; padding: 0 6px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; color: #334155; cursor: pointer; }
+.table-meals-menu-excluded { color: #94a3b8; }
+@media print { .table-meals-alias-note, .table-meals-exclude-button, .table-meals-pdf-transfer { display: none !important; } }
