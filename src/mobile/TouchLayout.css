@@ -434,7 +434,7 @@ body.t-ui .t-section-title:first-child { margin-top: 0; }
   background: var(--t-surface-2);
 }
 
-.t-segment button { flex: 1; min-height: 44px; border: 0; border-radius: 10px; font-weight: 700; }
+.t-segment button { flex: 1; min-height: 44px; padding: 0 14px; border: 0; border-radius: 10px; font-weight: 700; white-space: nowrap; }
 
 /* 회색 합계 상자 */
 .t-summary {

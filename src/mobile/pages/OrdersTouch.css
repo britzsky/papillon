@@ -1,0 +1,68 @@
+/* 발주서·입고(터치). 공용 부품은 TouchLayout.css */
+.od-focus { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.od-done { margin-bottom: 12px; padding: 14px 16px; background: var(--t-accent-soft); color: var(--t-accent-strong); text-align: left; }
+.od-tab--alert::after { content: ''; position: absolute; top: 14px; right: 14px; width: 10px; height: 10px; border-radius: 50%; background: var(--t-danger); }
+
+/* 발주서 카드(레퍼런스 아래 줄의 주문 칸) */
+.od-list { display: grid; gap: 10px; margin: 8px 0 0; padding: 0; list-style: none; }
+
+.od-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: 'dot main date badge' 'dot main date amount';
+  align-items: center;
+  gap: 2px 16px;
+  width: 100%;
+  min-height: 76px;
+  padding: 12px 18px 12px 14px;
+  border: 0;
+  text-align: left;
+}
+
+.od-card .t-dot { grid-area: dot; }
+.od-card__main { grid-area: main; display: grid; min-width: 0; }
+.od-card__main strong { font-size: 16px; }
+.od-card__main small { overflow: hidden; color: var(--t-muted); font-size: 13px; white-space: nowrap; text-overflow: ellipsis; }
+.od-card__date { grid-area: date; display: grid; justify-items: center; padding: 6px 12px; border-radius: 12px; background: var(--t-surface-2); }
+.od-card__date small { color: var(--t-muted); font-size: 11px; }
+.od-card__date strong { font-size: 16px; }
+.od-card > .t-badge { grid-area: badge; justify-self: end; }
+.od-card__amount { grid-area: amount; justify-self: end; color: var(--t-accent-strong); font-weight: 800; }
+
+.od-pages { display: flex; gap: 10px; margin-top: 14px; }
+.od-pages .t-btn { flex: 1; }
+
+/* 오른쪽 패널 */
+.od-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.od-panel__head { display: grid; gap: 10px; padding: 22px 20px 14px; border-bottom: 1px solid var(--t-line); }
+.od-panel__head h2 { font-size: 22px; letter-spacing: -0.02em; }
+.od-panel__head p { margin-top: 2px; color: var(--t-muted); font-size: 13px; }
+.od-panel__title { display: flex; align-items: center; gap: 12px; }
+.od-panel__meta { display: flex; align-items: center; gap: 10px; color: var(--t-muted); font-size: 13px; font-weight: 600; }
+.od-panel__body { display: grid; align-content: start; gap: 12px; flex: 1; min-height: 0; overflow-y: auto; padding: 16px 20px; }
+.od-panel__actions { display: grid; gap: 14px; padding: 14px 20px 20px; }
+
+.od-uncertain { display: grid; gap: 6px; font-size: 13px; }
+.od-uncertain strong { font-size: 14px; }
+.od-uncertain .t-btn { justify-self: start; }
+
+.od-items { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.od-items li { display: grid; gap: 10px; padding: 12px 14px; border: 1px solid var(--t-line); border-radius: 14px; }
+.od-items li.is-done { background: var(--t-surface-2); }
+.od-items__name { display: grid; gap: 2px; }
+.od-items__name strong { font-size: 15px; }
+.od-items__name small { color: var(--t-muted); font-size: 12px; }
+.od-items__error { color: var(--t-danger) !important; }
+.od-items__qty { display: flex; align-items: center; gap: 10px; }
+.od-items__qty input { flex: 1; min-width: 0; min-height: 46px; border: 1.5px solid var(--t-line); border-radius: 12px; text-align: center; font-size: 20px; font-weight: 800; }
+.od-items li > .t-badge { justify-self: start; }
+
+.od-hint { color: var(--t-muted); font-size: 12px; line-height: 1.5; }
+.od-date { min-height: 36px; padding: 0 8px; border: 1px solid var(--t-line); border-radius: 8px; background: var(--t-surface); font-size: 15px; }
+.t-summary > div:has(.od-date) { align-items: center; }
+
+@media (max-width: 767px) {
+  .od-card { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: 'dot main badge' 'dot date amount'; }
+  .od-card__date { justify-self: start; grid-auto-flow: column; gap: 6px; padding: 2px 8px; }
+  .od-panel__body { overflow: visible; }
+}

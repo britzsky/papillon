@@ -30,6 +30,7 @@ import { DeviceRoute } from './mobile/deviceMode'
 import HomeTouch from './mobile/pages/HomeTouch'
 import TableMealsTouch from './mobile/pages/TableMealsTouch'
 import InventoryTouch from './mobile/pages/InventoryTouch'
+import OrdersTouch from './mobile/pages/OrdersTouch'
 
 import './styles/WorkspaceTheme.css'
 import './styles/UserTypography.css'
@@ -63,7 +64,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/search" element={<Navigate to={`/home${window.location.search}`} replace />} />
         <Route path="/home/sidebar" element={<Home />} />
         <Route path="/home/sidebar/food-order" element={<OrderWorkspace initialTab="shortage" />} />
-        <Route path="/order_manager/orders" element={<PurchaseOrderManager />} />
+        <Route path="/order_manager/orders" element={<DeviceRoute pc={<PurchaseOrderManager />} touch={<OrdersTouch />} />} />
         <Route path="/order_manager" element={<OrderManager />} />
         <Route path="/order_manager/product-order" element={<OrderWorkspace initialTab="products" />} />
         <Route path="/order_manager/food_order" element={<OrderWorkspace initialTab="shortage" />} />
