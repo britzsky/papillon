@@ -39,6 +39,7 @@ import SiteMappingTouch from './mobile/pages/SiteMappingTouch'
 import SupplierTouch from './mobile/pages/SupplierTouch'
 import AccountConfigTouch from './mobile/pages/AccountConfigTouch'
 import SearchAnalyticsTouch from './mobile/pages/SearchAnalyticsTouch'
+import MenuManagerTouch from './mobile/pages/MenuManagerTouch'
 
 import './styles/WorkspaceTheme.css'
 import './styles/UserTypography.css'
@@ -83,7 +84,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/inventory/account" element={<DeviceRoute pc={<AccountInventoryManager />} touch={<InventoryTouch />} />} />
         <Route path="/inventory/account-ingredients" element={<DeviceRoute pc={<AccountIngredientManager />} touch={<AccountIngredientsTouch />} />} />
         <Route path="/inventory/ingredients" element={<DeviceRoute pc={<IngredientMasterManager />} touch={<IngredientMasterTouch />} />} />
-        <Route path="/operations/menu" element={<MenuManager />} />
+        <Route path="/operations/menu" element={<DeviceRoute pc={<MenuManager />} touch={<MenuManagerTouch />} />} />
         <Route path="/operations/account" element={<DeviceRoute pc={<AccountManager />} touch={<AccountConfigTouch />} />} />
         <Route path="/operations/account-menu" element={<AccountMenuManager />} />
         <Route path="/operations/table-meals" element={<DeviceRoute pc={<TableMealsManager />} touch={<TableMealsTouch />} />} />
