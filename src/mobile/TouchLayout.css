@@ -554,3 +554,4 @@ body.t-ui .t-segment button { --button-bg: transparent; --button-bg-hover: trans
 body.t-ui .t-segment button.is-active { --button-bg: var(--t-accent-soft); --button-bg-hover: var(--t-accent-soft); --button-text: var(--t-accent-strong); }
 
 body.t-ui .t-round { --button-bg: var(--t-accent); --button-bg-hover: var(--t-accent); --button-bg-disabled: var(--t-accent); --button-text: #fff; }
+.t-summary .is-total:first-child { margin-top: 0; padding-top: 0; border-top: 0; }

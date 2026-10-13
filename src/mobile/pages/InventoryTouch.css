@@ -1,0 +1,127 @@
+/* 재고 현황(터치). 공용 부품은 TouchLayout.css */
+.iv-search { gap: 10px; min-width: 260px; padding: 0 16px; }
+.iv-search input { flex: 1; min-width: 0; min-height: 46px; border: 0; background: transparent; font-size: 16px; outline: none; }
+.iv-search--block { display: flex; width: 100%; margin-bottom: 14px; box-shadow: inset 0 0 0 1.5px var(--t-line); }
+
+.iv-toast { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 14px 16px; background: var(--t-accent-soft); color: var(--t-accent-strong); text-align: left; }
+
+/* 발주 필요 칸에 빨간 점 */
+.iv-tab--alert::after { content: ''; position: absolute; top: 14px; right: 14px; width: 10px; height: 10px; border-radius: 50%; background: var(--t-danger); }
+
+/* 상품 카드(레퍼런스의 상품 카드) */
+.iv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.iv-card {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 10px 14px;
+  border: 0;
+  text-align: left;
+}
+
+.iv-card__image { position: relative; display: block; }
+.iv-card__tag { position: absolute; top: 8px; left: 8px; }
+
+/* 상품 사진 칸을 카드 폭에 맞게 키운다(ProductImage 기본은 40px) */
+.iv-card .product-image,
+.iv-panel__image .product-image {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  height: 112px;
+  flex: none;
+  border: 0;
+  border-radius: 12px;
+  background: var(--t-surface-2);
+  color: var(--t-accent);
+}
+
+.iv-card .product-image svg { width: 36px; height: 36px; }
+.iv-card__name { padding: 0 4px; font-size: 16px; line-height: 1.3; }
+.iv-card__product { padding: 0 4px; overflow: hidden; color: var(--t-muted); font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
+
+.iv-card__qty { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px; padding: 0 4px; color: var(--t-muted); font-size: 13px; font-weight: 600; }
+.iv-card__qty b { color: var(--t-accent-strong); font-size: 20px; }
+.iv-card__qty small { margin-left: auto; }
+.iv-card > .t-badge { justify-self: start; margin: 2px 4px 0; }
+
+.iv-more { margin-top: 16px; }
+
+/* 오른쪽 패널 */
+.iv-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.iv-panel__head { padding: 26px 20px 14px; border-bottom: 1px solid var(--t-line); }
+.iv-panel__head h2 { font-size: 22px; letter-spacing: -0.02em; }
+.iv-panel__head p { margin-top: 4px; color: var(--t-muted); font-size: 13px; }
+.iv-panel__head--detail { display: flex; align-items: center; gap: 12px; padding-top: 20px; }
+.iv-panel__head--detail > div { flex: 1; min-width: 0; }
+.iv-panel__image { flex: none; width: 64px; }
+.iv-panel__image .product-image { height: 64px; }
+.iv-panel__body { display: grid; align-content: start; gap: 14px; flex: 1; min-height: 0; overflow-y: auto; padding: 16px 20px; }
+.iv-panel__hint { color: var(--t-muted); font-size: 13px; line-height: 1.5; }
+.iv-panel__actions { display: grid; gap: 10px; padding: 14px 20px 20px; }
+.iv-panel__row { display: flex; gap: 10px; }
+.iv-panel__row > * { flex: 1; }
+
+.iv-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.iv-stats > div { display: grid; gap: 2px; padding: 14px 12px; border-radius: 14px; background: var(--t-surface-2); }
+.iv-stats span { color: var(--t-muted); font-size: 12px; font-weight: 700; }
+.iv-stats strong { font-size: 20px; }
+.iv-stats .is-danger { background: var(--t-danger-soft); color: var(--t-danger); }
+.iv-stats .is-warn { background: var(--t-yellow-soft); color: var(--t-warn); }
+
+.iv-status { display: grid; gap: 2px; padding: 14px 16px; border-radius: 14px; font-size: 13px; }
+.iv-status strong { font-size: 16px; }
+.iv-status.is-danger { background: var(--t-danger-soft); color: var(--t-danger); }
+.iv-status.is-warn { background: var(--t-yellow-soft); color: var(--t-warn); }
+.iv-status.is-ok { background: var(--t-accent-soft); color: var(--t-accent-strong); }
+
+.iv-big { display: grid; gap: 2px; padding: 4px 2px; color: var(--t-muted); font-size: 13px; font-weight: 600; }
+.iv-big strong { color: var(--t-text); font-size: 34px; letter-spacing: -0.02em; }
+.iv-big strong small { color: var(--t-muted); font-size: 16px; }
+
+/* 입력 창 */
+.iv-form { display: grid; align-content: start; gap: 8px; }
+.iv-form__label { margin-top: 8px; color: var(--t-muted); font-size: 13px; font-weight: 700; }
+.iv-form__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 14px; margin-bottom: 8px; }
+@media (max-width: 560px) { .iv-form__grid { grid-template-columns: minmax(0, 1fr); } }
+.iv-wrap { flex-wrap: wrap; }
+.iv-wrap button { flex: 1 0 auto; padding: 0 14px; }
+.iv-inline { display: flex; gap: 8px; }
+.iv-inline .iv-input { flex: 1; min-width: 0; }
+
+.iv-input {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 1.5px solid var(--t-line);
+  border-radius: 12px;
+  background: var(--t-surface);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.iv-qty { display: flex; align-items: center; gap: 12px; }
+.iv-qty input { flex: 1; min-width: 0; min-height: 56px; border: 1.5px solid var(--t-line); border-radius: 14px; text-align: center; font-size: 26px; font-weight: 800; }
+
+.iv-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.iv-pick button { display: grid; gap: 2px; min-height: 60px; padding: 10px 14px; border: 0; border-radius: 12px; text-align: left; }
+.iv-pick small { color: var(--t-muted); font-size: 12px; }
+body.t-ui .iv-pick button { --button-bg: var(--t-surface-2); --button-bg-hover: var(--t-surface-2); }
+
+.iv-picked { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: var(--t-accent-soft); }
+.iv-picked > div { display: grid; flex: 1; }
+.iv-picked small { color: var(--t-muted); font-size: 12px; }
+
+@media (max-width: 767px) {
+  .iv-search { flex: 1; min-width: 0; }
+  .iv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .iv-card .product-image { height: 92px; }
+}
+.iv-inline .t-segment button { min-width: 56px; padding: 0 14px; }

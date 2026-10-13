@@ -29,6 +29,7 @@ import SearchAnalytics from './pages/operations/SearchAnalytics.tsx'
 import { DeviceRoute } from './mobile/deviceMode'
 import HomeTouch from './mobile/pages/HomeTouch'
 import TableMealsTouch from './mobile/pages/TableMealsTouch'
+import InventoryTouch from './mobile/pages/InventoryTouch'
 
 import './styles/WorkspaceTheme.css'
 import './styles/UserTypography.css'
@@ -70,7 +71,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/order_manager/welstory" element={<WelstoryOrder />} />
         <Route path="/order_manager/suppliers" element={<SupplierIntegrationDashboard />} />
         <Route path="/order_manager/supplier-sites" element={<SupplierSiteMapping />} />
-        <Route path="/inventory/account" element={<AccountInventoryManager />} />
+        <Route path="/inventory/account" element={<DeviceRoute pc={<AccountInventoryManager />} touch={<InventoryTouch />} />} />
         <Route path="/inventory/account-ingredients" element={<AccountIngredientManager />} />
         <Route path="/inventory/ingredients" element={<IngredientMasterManager />} />
         <Route path="/operations/menu" element={<MenuManager />} />
