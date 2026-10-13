@@ -98,6 +98,16 @@ export function syncWelstoryCatalog(accountId: string, soldTo: string, year: str
   })
 }
 
+/** 순기 번호 입력 없이: 오늘 순기·차순기를 웰스토리 응답 날짜로 찾아, 안 받은 순기는 전체 판가·받은 순기는 변경 판가를 받는다. */
+export type WelstoryCycleResult = { cycle?: string; from?: string; to?: string; status?: string; result?: Row }
+export type WelstoryAutoSiteResult = { sold_to: string; error?: string; current?: WelstoryCycleResult; next?: WelstoryCycleResult }
+export async function syncWelstoryAuto(accountId: string): Promise<WelstoryAutoSiteResult[]> {
+  const payload = await postCommand('/v2/supplier-integration/sync/welstory/auto', {
+    account_id: accountId, user_id: localStorage.getItem('user_id') || '',
+  })
+  return Array.isArray(payload.sites) ? payload.sites as WelstoryAutoSiteResult[] : []
+}
+
 export function syncWelstoryReceipts(accountId: string, soldTo: string, receiptDate: string) {
   return postCommand('/v2/supplier-integration/sync/welstory/receipts', {
     account_id: accountId,

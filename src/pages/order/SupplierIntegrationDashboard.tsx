@@ -5,8 +5,8 @@ import SideMenuLayout from '../../components/SideMenuLayout'
 import LoadingScreen from '../../components/LoadingScreen'
 import {
   getSupplierOffers, getSupplierSites, getSupplierSyncStatus,
-  syncWelstoryCatalog, syncWelstoryReceipts, syncWelstorySites,
-  type SupplierOffer, type SupplierSite, type SupplierSyncStatus,
+  syncWelstoryAuto, syncWelstoryCatalog, syncWelstoryReceipts, syncWelstorySites,
+  type SupplierOffer, type WelstoryCycleResult, type SupplierSite, type SupplierSyncStatus,
 } from '../../api/supplierIntegration'
 import OurhomeSitesPanel from './OurhomeSitesPanel'
 import './SupplierIntegrationDashboard.css'
@@ -77,6 +77,22 @@ function SupplierWorkspace({ accountId }: { accountId: string }) {
     finally { setLoading(false) }
   }
 
+  const runAutoSync = async () => {
+    if (!accountId) return setSyncMessage('로그인한 고객사 정보가 없습니다.')
+    setLoading(true); setSyncMessage(''); setError('')
+    const label = (name: string, cycle?: WelstoryCycleResult) => {
+      if (!cycle || cycle.status === 'NOT_OPEN') return `${name}: 아직 웰스토리가 판가를 열지 않음`
+      const kind = cycle.status === 'FULL' ? `전체 판가 ${Number(cycle.result?.saved_count) || 0}건` : cycle.status === 'CHANGED' ? `변경 판가 ${Number(cycle.result?.saved_count) || 0}건` : '최신 상태'
+      return `${name} ${cycle.cycle}(${cycle.from}~${cycle.to}): ${kind}`
+    }
+    try {
+      const results = await syncWelstoryAuto(accountId)
+      setSyncMessage(results.map(site => site.error ? `${site.sold_to} — ${site.error}` : `${site.sold_to} — ${label('현재 순기', site.current)} · ${label('다음 순기', site.next)}`).join('\n') || '처리할 웰스토리 사업장이 없습니다.')
+      setReloadKey((value) => value + 1)
+    } catch (reason) { setError(reason instanceof Error ? reason.message : '순기 자동 동기화에 실패했습니다.') }
+    finally { setLoading(false) }
+  }
+
   const runReceiptSync = async () => {
     if (!selectedSite) return setSyncMessage('먼저 웰스토리 사업장을 선택해 주세요.')
     setLoading(true); setSyncMessage(''); setError('')
@@ -124,10 +140,12 @@ function SupplierWorkspace({ accountId }: { accountId: string }) {
       {tab === 'products' && <label>상품 검색<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="상품명·코드" /></label>}
       {tab === 'products' && <button type="button" disabled={loading || !selectedSite || !deliveryDate} onClick={() => setReloadKey(value => value + 1)}>새로고침</button>}
       {tab === 'integration' && <>
+      <button type="button" onClick={() => void runAutoSync()} disabled={loading || !sites.length}>순기 자동 동기화</button>
+      <p>순기 번호를 몰라도 됩니다. 오늘이 속한 순기와 다음 순기를 웰스토리에서 확인해, 처음 받는 순기는 전체 판가를, 이미 받은 순기는 오늘 변경된 판가만 받습니다. 서버 설정 시 매일 새벽 3시 20분에도 자동 실행됩니다. 처음 받는 순기는 몇 분 걸릴 수 있습니다.</p>
       <label>판가 연도<input inputMode="numeric" maxLength={4} value={periodYear} onChange={(event) => setPeriodYear(event.target.value.replace(/\D/g, '').slice(0, 4))} /></label>
       <label>순기<input inputMode="numeric" maxLength={2} placeholder="예: 12" value={periodGroup} onChange={(event) => setPeriodGroup(event.target.value.replace(/\D/g, '').slice(0, 2))} /></label>
       <button type="button" onClick={() => void runCatalogSync()} disabled={loading || !selectedSite}>전체 판가 동기화</button>
-      <p>선택한 사업장의 상품과 가격을 지정한 판가 기간으로 갱신합니다.</p></>}
+      <p>직접 지정: 웰스토리에서 안내받은 연도·순기 번호로 선택한 사업장의 전체 판가를 받습니다.</p></>}
       {tab === 'receipts' && <><button type="button" onClick={() => void runReceiptSync()} disabled={loading || !selectedSite || !deliveryDate}>선택일 입고를 재고에 반영</button><p>선택한 사업장과 입고일의 입고 정보를 받아 재고에 반영합니다. 처리 건수와 주문 미연결 건수는 실행 후 표시됩니다.</p></>}
     </section>
     {syncMessage ? <div role="status" className="supplier-integration-message">{syncMessage}</div> : null}
