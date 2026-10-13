@@ -84,3 +84,44 @@ body.t-ui .ingredient-link-current { background: var(--t-surface-2); }
   body.t-ui :is(.ingredient-link-overlay) { align-items: flex-end; padding: 0; }
   body.t-ui :is(.ingredient-link-dialog) { max-height: 94dvh; border-radius: 22px 22px 0 0; }
 }
+
+/*
+ * 터치 화면 안에 PC 부품(패널)을 그대로 넣을 때: <div className="t-card t-pc-embed">…</div>
+ * 기능은 PC 부품 그대로, 버튼·입력칸·표만 손가락 크기와 초록 테마로.
+ */
+body.t-ui .t-pc-embed { color: var(--t-text); font-size: 15px; }
+body.t-ui .t-pc-embed :is(h2, h3) { margin: 0 0 10px; font-size: 17px; }
+body.t-ui .t-pc-embed p { margin: 6px 0; color: var(--t-muted); font-size: 14px; line-height: 1.55; }
+body.t-ui .t-pc-embed a { color: var(--t-accent-strong); font-weight: 700; }
+body.t-ui .t-pc-embed label { display: inline-grid; gap: 4px; color: var(--t-muted); font-size: 13px; font-weight: 700; }
+body.t-ui .t-pc-embed :is(input:not([type=checkbox]):not([type=radio]), select, textarea) {
+  min-height: 46px;
+  padding: 0 12px;
+  border: 1.5px solid var(--t-line);
+  border-radius: 12px;
+  background: var(--t-surface);
+  color: var(--t-text);
+  font-size: 16px;
+}
+body.t-ui .t-pc-embed :is(input[type=checkbox], input[type=radio]) { width: 22px; height: 22px; accent-color: var(--t-accent); }
+body.t-ui .t-pc-embed button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  --button-bg: var(--t-accent-soft);
+  --button-bg-hover: var(--t-accent-soft);
+  --button-bg-disabled: var(--t-surface-2);
+  --button-text: var(--t-accent-strong);
+}
+body.t-ui .t-pc-embed button[aria-pressed=true] { --button-bg: var(--t-accent); --button-bg-hover: var(--t-accent); --button-text: #fff; }
+body.t-ui .t-pc-embed :is(.menu-manager-save-button, .action-save-button) { --button-bg: var(--t-accent); --button-bg-hover: var(--t-accent); border-color: var(--t-accent) !important; background-color: var(--t-accent) !important; color: #fff !important; }
+body.t-ui .t-pc-embed table { width: 100%; border-collapse: collapse; font-size: 14px; }
+body.t-ui .t-pc-embed :is(th, td) { padding: 12px 10px; border-bottom: 1px solid var(--t-line); text-align: left; vertical-align: top; }
+body.t-ui .t-pc-embed th { background: var(--t-surface-2); color: var(--t-muted); font-size: 13px; }
+body.t-ui .t-pc-embed :is(.supplier-workspace) { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+body.t-ui .t-pc-embed :is(.supplier-site-options) { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+body.t-ui .t-pc-embed :is(.supplier-site-options) button { display: grid; justify-items: start; min-height: 56px; }
+body.t-ui .t-pc-embed :is(.supplier-integration-table-wrap) { overflow-x: auto; }

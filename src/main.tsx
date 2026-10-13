@@ -35,6 +35,8 @@ import OrdersTouch from './mobile/pages/OrdersTouch'
 import HistoryTouch from './mobile/pages/HistoryTouch'
 import AccountIngredientsTouch from './mobile/pages/AccountIngredientsTouch'
 import IngredientMasterTouch from './mobile/pages/IngredientMasterTouch'
+import SiteMappingTouch from './mobile/pages/SiteMappingTouch'
+import SupplierTouch from './mobile/pages/SupplierTouch'
 
 import './styles/WorkspaceTheme.css'
 import './styles/UserTypography.css'
@@ -74,8 +76,8 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/order_manager/food_order" element={<OrderWorkspace initialTab="shortage" />} />
         <Route path="/order_manager/food_order/:menuId" element={<OrderWorkspace initialTab="shortage" />} />
         <Route path="/order_manager/welstory" element={<WelstoryOrder />} />
-        <Route path="/order_manager/suppliers" element={<SupplierIntegrationDashboard />} />
-        <Route path="/order_manager/supplier-sites" element={<SupplierSiteMapping />} />
+        <Route path="/order_manager/suppliers" element={<DeviceRoute pc={<SupplierIntegrationDashboard />} touch={<SupplierTouch />} />} />
+        <Route path="/order_manager/supplier-sites" element={<DeviceRoute pc={<SupplierSiteMapping />} touch={<SiteMappingTouch />} />} />
         <Route path="/inventory/account" element={<DeviceRoute pc={<AccountInventoryManager />} touch={<InventoryTouch />} />} />
         <Route path="/inventory/account-ingredients" element={<DeviceRoute pc={<AccountIngredientManager />} touch={<AccountIngredientsTouch />} />} />
         <Route path="/inventory/ingredients" element={<DeviceRoute pc={<IngredientMasterManager />} touch={<IngredientMasterTouch />} />} />
