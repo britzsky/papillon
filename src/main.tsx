@@ -37,6 +37,8 @@ import AccountIngredientsTouch from './mobile/pages/AccountIngredientsTouch'
 import IngredientMasterTouch from './mobile/pages/IngredientMasterTouch'
 import SiteMappingTouch from './mobile/pages/SiteMappingTouch'
 import SupplierTouch from './mobile/pages/SupplierTouch'
+import AccountConfigTouch from './mobile/pages/AccountConfigTouch'
+import SearchAnalyticsTouch from './mobile/pages/SearchAnalyticsTouch'
 
 import './styles/WorkspaceTheme.css'
 import './styles/UserTypography.css'
@@ -82,10 +84,10 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/inventory/account-ingredients" element={<DeviceRoute pc={<AccountIngredientManager />} touch={<AccountIngredientsTouch />} />} />
         <Route path="/inventory/ingredients" element={<DeviceRoute pc={<IngredientMasterManager />} touch={<IngredientMasterTouch />} />} />
         <Route path="/operations/menu" element={<MenuManager />} />
-        <Route path="/operations/account" element={<AccountManager />} />
+        <Route path="/operations/account" element={<DeviceRoute pc={<AccountManager />} touch={<AccountConfigTouch />} />} />
         <Route path="/operations/account-menu" element={<AccountMenuManager />} />
         <Route path="/operations/table-meals" element={<DeviceRoute pc={<TableMealsManager />} touch={<TableMealsTouch />} />} />
-        <Route path="/operations/search-analytics" element={<SearchAnalytics />} />
+        <Route path="/operations/search-analytics" element={<DeviceRoute pc={<SearchAnalytics />} touch={<SearchAnalyticsTouch />} />} />
         <Route path="/sanitation/vendor" element={<VendorSanitation />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes></WorkspaceBoundary>

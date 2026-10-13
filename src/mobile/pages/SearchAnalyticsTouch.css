@@ -1,0 +1,29 @@
+/* 검색어 관리(터치) */
+.sa-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+.sa-kpi { display: grid; gap: 2px; }
+.sa-kpi__icon { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 8px; border-radius: 14px; background: var(--t-accent-soft); color: var(--t-accent); }
+.sa-kpi > span:not(.sa-kpi__icon) { color: var(--t-muted); font-size: 13px; font-weight: 700; }
+.sa-kpi strong { font-size: 28px; letter-spacing: -0.02em; }
+.sa-kpi.is-warn .sa-kpi__icon { background: var(--t-yellow); color: #3d2a00; }
+.sa-kpi.is-ok strong { color: var(--t-accent-strong); }
+
+.sa-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.sa-gap { margin-top: 22px !important; }
+.sa-empty { color: var(--t-muted); font-size: 13px; }
+
+.sa-bars { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.sa-bars li { display: grid; grid-template-columns: auto minmax(70px, 120px) 1fr auto; align-items: center; gap: 10px; font-size: 14px; }
+.sa-bars li:not(:has(b)) { grid-template-columns: minmax(70px, 120px) 1fr auto; }
+.sa-bars b { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--t-surface-2); color: var(--t-muted); font-size: 12px; }
+.sa-bars b.is-top { background: var(--t-yellow); color: #3d2a00; }
+.sa-bars span { overflow: hidden; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
+.sa-bars div { height: 12px; border-radius: 6px; background: var(--t-surface-2); overflow: hidden; }
+.sa-bars i { display: block; height: 100%; border-radius: 6px; background: var(--t-accent); }
+.sa-bars em { color: var(--t-muted); font-size: 12px; font-style: normal; font-weight: 700; }
+
+.sa-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.sa-chips li { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; background: var(--t-danger-soft); color: var(--t-danger); font-size: 14px; font-weight: 700; }
+.sa-chips em { padding: 1px 8px; border-radius: 999px; background: #fff; font-size: 12px; font-style: normal; }
+
+@media (max-width: 1023px) { .sa-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 767px) { .sa-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } }
