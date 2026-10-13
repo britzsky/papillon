@@ -31,6 +31,7 @@ import HomeTouch from './mobile/pages/HomeTouch'
 import TableMealsTouch from './mobile/pages/TableMealsTouch'
 import InventoryTouch from './mobile/pages/InventoryTouch'
 import OrdersTouch from './mobile/pages/OrdersTouch'
+import HistoryTouch from './mobile/pages/HistoryTouch'
 
 import './styles/WorkspaceTheme.css'
 import './styles/UserTypography.css'
@@ -53,7 +54,7 @@ createRoot(document.getElementById('root')!).render(
         {/* 발주 화면 통합: 예전 주소는 발주하기의 해당 탭으로 이동(쿼리 유지) */}
         <Route path="/order_manager/order" element={<OrderWorkspace />} />
         <Route path="/order_manager/recommended" element={<OrderWorkspace initialTab="recommended" />} />
-        <Route path="/inventory/history" element={<InventoryHistory />} />
+        <Route path="/inventory/history" element={<DeviceRoute pc={<InventoryHistory />} touch={<HistoryTouch />} />} />
         <Route path="/" element={<App />} />
         <Route path="/payment" element={<Payment />} />
         <Route path="/payment/success" element={<PaymentResult />} />
