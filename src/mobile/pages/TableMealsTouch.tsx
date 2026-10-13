@@ -6,6 +6,7 @@ import { useTableMealsView } from '../../features/tableMeals/useTableMealsView'
 import { parseMonthValue, type MealSlotRow, type TableMealsDetailDay } from '../../features/tableMeals/tableMealsView'
 import { dayLabel, qty, statusLabel, useMealUsage, type Meal } from '../../features/mealUsage/useMealUsage'
 import type { TableMealsItem } from '../../api/operations'
+import TableMealsCreateTouch from './TableMealsCreateTouch'
 import './TableMealsTouch.css'
 
 const SOURCE_LABEL: Record<string, string> = { auto: '자동', pdf: 'PDF', manual: '수기' }
@@ -19,17 +20,25 @@ type Usage = ReturnType<typeof useMealUsage>
  * 식단표(태블릿·휴대폰). POS 배치(레퍼런스 CHILI POS): 가운데 주차 → 요일 칸 → 식사 카드, 오른쪽 '사용 확정' 패널.
  * 요일은 칸을 누르거나 본문을 좌우로 밀어 바꾼다. 로직은 features(PC 식단표와 공용).
  */
+/** 식단표 화면 + 만들기 화면 전환. 만들기를 닫으면 조회 화면을 새로 열어 방금 저장한 식단표가 보이게 한다 */
 export default function TableMealsTouch() {
+  const [creating, setCreating] = useState(false)
+  const [revision, setRevision] = useState(0)
+  if (creating) return <TableMealsCreateTouch onClose={() => { setCreating(false); setRevision(v => v + 1) }} />
+  return <TableMealsView key={revision} onCreate={() => setCreating(true)} />
+}
+
+function TableMealsView({ onCreate }: { onCreate: () => void }) {
   const view = useTableMealsView()
   const { year, month } = parseMonthValue(view.month)
   const table = view.selectedTable
   const accountId = table?.account_id || view.accountId
 
-  const toolbar = <div className="t-chip tm-month" role="group" aria-label="조회 월">
+  const toolbar = <><button type="button" className="t-btn is-primary" onClick={onCreate}><span aria-hidden="true">＋</span>식단표 만들기</button><div className="t-chip tm-month" role="group" aria-label="조회 월">
     <button type="button" className="t-btn is-ghost is-icon" aria-label="이전 달" onClick={() => view.shiftMonth(-1)}><TouchIcon name="chevronLeft" /></button>
     <strong><TouchIcon name="calendar" size={20} />{year}년 {month}월</strong>
     <button type="button" className="t-btn is-ghost is-icon" aria-label="다음 달" onClick={() => view.shiftMonth(1)}><TouchIcon name="chevronRight" /></button>
-  </div>
+  </div></>
 
   const ready = Boolean(table && !view.isDetailLoading && !view.detailError && view.detailDays.length > 0)
 
