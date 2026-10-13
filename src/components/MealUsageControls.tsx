@@ -1,125 +1,24 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { buildApiUrl } from '../config/api'
-
-type Meal = {
-  meal_service_id: number; meal_date: string; meal_slot: string; status: string
-  planned_servings: number; actual_servings?: number; served: boolean; confirmable: boolean; needs_reconfirm: number | boolean
-}
-type PreviewIngredient = { ingredient_id: string; ingredient_name: string; base_unit: string; required_qty: number; stock_before: number; stock_after: number; shortage_qty: number }
-type Problem = { meal: string; message: string; ingredient_id?: string }
-type UnreceivedOrder = { purchase_order_id: string; supplier_name: string; delivery_date: string; status: string }
-type Preview = { ingredients: PreviewIngredient[]; problems: Problem[]; unreceived_orders: UnreceivedOrder[]; can_confirm: boolean }
-
-const statusLabel = (meal: Meal) => meal.status === 'COMPLETED' ? '사용 확정'
-  : meal.status === 'CANCELED' ? '취소'
-  : Number(meal.needs_reconfirm) ? '재확정 필요'
-  : meal.served ? '확정 대기' : '제공 전'
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
-const dayLabel = (date: string) => { const [, m, d] = date.split('-'); return `${WEEKDAYS[new Date(`${date}T00:00:00`).getDay()]} ${m}/${d}` }
-const qty = (value: number) => Number(value || 0).toLocaleString('ko-KR', { maximumFractionDigits: 3 })
-const userId = () => localStorage.getItem('user_id') || ''
-
-async function call<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(buildApiUrl(path), init)
-  const data = await response.json().catch(() => ({}))
-  if (!response.ok) throw new Error((data as { message?: string }).message || '요청을 처리하지 못했습니다.')
-  return data as T
-}
+import { qty, statusLabel, dayLabel, useMealUsage, type Meal } from '../features/mealUsage/useMealUsage'
 
 /**
- * 식단표(주) 사용 확정. 실제 식수 입력 → 차감 미리보기(서버가 실제 차감을 계산한 뒤 롤백) → 재확인 → 일괄 확정.
+ * 식단표(주) 사용 확정 — PC 화면. 로직은 features/mealUsage/useMealUsage(모바일과 공용).
  * 재고가 부족하면 확정하지 않고 직접 구매 입력·입고 확정으로 안내한다.
  */
 export default function MealUsageControls({ accountId, tableId, onChanged }: { accountId: string; tableId: string; onChanged: () => void }) {
-  const [meals, setMeals] = useState<Meal[]>([])
-  const [allowUnserved, setAllowUnserved] = useState(false)
-  const [targets, setTargets] = useState<Meal[]>([])
-  const [scopeLabel, setScopeLabel] = useState('주간')
-  const [revision, setRevision] = useState(0)
-  const [error, setError] = useState('')
+  const {
+    meals, allowUnserved, confirmable, completed, reconfirm, upcoming, days, error,
+    open, targets, scopeLabel, servings, preview, step, busy, modalError, shortageCount,
+    openDialog, closeDialog, changeServings, runPreview, confirmWeek, cancelMeal: cancelUsage, setStep,
+  } = useMealUsage(accountId, tableId, onChanged)
   const [showMeals, setShowMeals] = useState(false)
-  const [open, setOpen] = useState(false)
-  const [servings, setServings] = useState<Record<number, string>>({})
-  const [preview, setPreview] = useState<Preview | null>(null)
-  const [step, setStep] = useState<'input' | 'preview' | 'final'>('input')
-  const [busy, setBusy] = useState(false)
-  const [modalError, setModalError] = useState('')
-
-  useEffect(() => {
-    const controller = new AbortController()
-    setError('')
-    call<{ meals: Meal[]; allow_unserved?: boolean }>(`/v2/meal-plans/usage-week?${new URLSearchParams({ account_id: accountId, table_id: tableId })}`, { signal: controller.signal })
-      .then(data => { setMeals(data.meals); setAllowUnserved(Boolean(data.allow_unserved)) })
-      .catch(e => { if (e.name !== 'AbortError') setError(e.message) })
-    return () => controller.abort()
-  }, [accountId, tableId, revision])
-
-  const confirmable = useMemo(() => meals.filter(m => m.confirmable), [meals])
-  const completed = meals.filter(m => m.status === 'COMPLETED').length
-  const reconfirm = meals.filter(m => m.status !== 'COMPLETED' && m.status !== 'CANCELED' && Number(m.needs_reconfirm)).length
-  const upcoming = meals.filter(m => !m.confirmable && !m.served && m.status !== 'COMPLETED' && m.status !== 'CANCELED').length
-  const days = useMemo(() => {
-    const byDate = new Map<string, Meal[]>()
-    for (const meal of meals) byDate.set(meal.meal_date, [...(byDate.get(meal.meal_date) || []), meal])
-    return [...byDate.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, list]) => ({
-      date, confirmable: list.filter(m => m.confirmable), completed: list.filter(m => m.status === 'COMPLETED').length, total: list.length,
-    }))
-  }, [meals])
-
-  const requestMeals = () => targets.map(m => ({ meal_service_id: m.meal_service_id, actual_servings: Number(servings[m.meal_service_id]) }))
-
-  /** 주간 전체 또는 하루치 식사를 같은 절차(실제 식수 → 차감 내역 → 재확인 → 확정)로 확정한다. */
-  const openDialog = (list: Meal[], label: string) => {
-    setTargets(list); setScopeLabel(label)
-    setServings(Object.fromEntries(list.map(m => [m.meal_service_id, String(m.actual_servings || m.planned_servings)])))
-    setPreview(null); setStep('input'); setModalError(''); setOpen(true)
-  }
-
-  const runPreview = async () => {
-    const invalid = targets.find(m => { const v = Number(servings[m.meal_service_id]); return !Number.isInteger(v) || v <= 0 || v > 1000000 })
-    if (invalid) { setModalError(`${invalid.meal_date} ${invalid.meal_slot}: 실제 식수는 1~1000000 사이 정수로 입력하세요.`); return }
-    setBusy(true); setModalError('')
-    try {
-      const result = await call<Preview>('/v2/meal-plans/usage-preview', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ account_id: accountId, table_id: tableId, meals: requestMeals(), user_id: userId() }),
-      })
-      result.ingredients.sort((a, b) => Number(b.shortage_qty > 0) - Number(a.shortage_qty > 0) || a.ingredient_name.localeCompare(b.ingredient_name, 'ko'))
-      setPreview(result); setStep('preview')
-    } catch (e) { setModalError(e instanceof Error ? e.message : '차감 내역을 확인하지 못했습니다.') }
-    finally { setBusy(false) }
-  }
-
-  const confirmWeek = async () => {
-    setBusy(true); setModalError('')
-    try {
-      await call('/v2/meal-plans/complete-week', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ account_id: accountId, table_id: tableId, meals: requestMeals(), user_id: userId() }),
-      })
-      setOpen(false); setRevision(r => r + 1); onChanged()
-    } catch (e) {
-      // 그사이 재고·식단이 바뀌었을 수 있으므로 미리보기부터 다시 하게 한다.
-      setModalError(`${e instanceof Error ? e.message : '사용 확정에 실패했습니다.'} 차감 내역을 다시 확인해주세요.`)
-      setStep('input'); setPreview(null)
-    } finally { setBusy(false) }
-  }
 
   const cancelMeal = async (meal: Meal) => {
-    if (!window.confirm(`${meal.meal_date} ${meal.meal_slot}의 사용 확정을 취소할까요?\n차감했던 재고가 원래 상품·LOT로 복원되고, 이 식사는 다시 확정해야 합니다.`)) return
-    setBusy(true); setError('')
-    try {
-      await call('/v2/meal-plans/services', {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ account_id: accountId, meal_service_id: meal.meal_service_id, status: 'DRAFT', user_id: userId() }),
-      })
-      setRevision(r => r + 1); onChanged()
-    } catch (e) { setError(e instanceof Error ? e.message : '확정 취소에 실패했습니다.') }
-    finally { setBusy(false) }
+    if (!window.confirm(`${meal.meal_date} ${meal.meal_slot}의 사용 확정을 취소할까요?
+차감했던 재고가 원래 상품·LOT로 복원되고, 이 식사는 다시 확정해야 합니다.`)) return
+    await cancelUsage(meal)
   }
-
-  const shortageCount = preview?.ingredients.filter(i => i.shortage_qty > 0).length ?? 0
 
   return <section className="meal-usage-panel no-print" aria-label="주간 사용 확정">
     <div className="meal-usage-panel__summary">
@@ -153,7 +52,7 @@ export default function MealUsageControls({ accountId, tableId, onChanged }: { a
       </tr>)}
     </tbody></table>}
 
-    {open && <div className="table-meals-modal-backdrop meal-usage-dialog-backdrop" role="presentation" onClick={() => !busy && setOpen(false)}>
+    {open && <div className="table-meals-modal-backdrop meal-usage-dialog-backdrop" role="presentation" onClick={closeDialog}>
       <section className="table-meals-modal meal-usage-dialog" role="dialog" aria-modal="true" aria-labelledby="meal-usage-dialog-title" onClick={e => e.stopPropagation()}>
         <div className="table-meals-modal__header">
           <div><p className="table-meals-modal__eyebrow">Weekly Usage</p><h2 id="meal-usage-dialog-title">{scopeLabel} 사용 확정</h2></div>
@@ -168,7 +67,7 @@ export default function MealUsageControls({ accountId, tableId, onChanged }: { a
               <td>{qty(meal.planned_servings)}</td>
               <td><input aria-label={`${meal.meal_date} ${meal.meal_slot} 실제 식수`} type="number" min="1" max="1000000" step="1" disabled={busy || step === 'final'}
                 value={servings[meal.meal_service_id] || ''}
-                onChange={e => { setServings(s => ({ ...s, [meal.meal_service_id]: e.target.value })); setPreview(null); setStep('input') }} /></td>
+                onChange={e => changeServings(meal.meal_service_id, e.target.value)} /></td>
             </tr>)}
           </tbody></table>
           {upcoming > 0 && scopeLabel === '주간' && <p className="meal-usage-panel__hint">아직 제공하지 않은 식사 {upcoming}식는 제외됩니다. 제공한 뒤에 확정하세요.</p>}
@@ -203,7 +102,7 @@ export default function MealUsageControls({ accountId, tableId, onChanged }: { a
           </div>}
         </div>
         <div className="table-meals-modal__actions">
-          <button type="button" className="table-meals-modal__button is-secondary" disabled={busy} onClick={() => step === 'final' ? setStep('preview') : setOpen(false)}>{step === 'final' ? '돌아가기' : '닫기'}</button>
+          <button type="button" className="table-meals-modal__button is-secondary" disabled={busy} onClick={() => step === 'final' ? setStep('preview') : closeDialog()}>{step === 'final' ? '돌아가기' : '닫기'}</button>
           {step === 'input' && <button type="button" className="table-meals-modal__button is-primary" disabled={busy || targets.length === 0} onClick={() => void runPreview()}>{busy ? '확인 중…' : '차감 내역 확인'}</button>}
           {step === 'preview' && <>
             <button type="button" className="table-meals-modal__button is-secondary" disabled={busy} onClick={() => void runPreview()}>다시 확인</button>
