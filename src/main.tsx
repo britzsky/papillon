@@ -41,6 +41,9 @@ import AccountConfigTouch from './mobile/pages/AccountConfigTouch'
 import SearchAnalyticsTouch from './mobile/pages/SearchAnalyticsTouch'
 import MenuManagerTouch from './mobile/pages/MenuManagerTouch'
 import AccountMenuTouch from './mobile/pages/AccountMenuTouch'
+import LoginTouch from './mobile/pages/LoginTouch'
+import WelstoryRawTouch from './mobile/pages/WelstoryRawTouch'
+import SanitationTouch from './mobile/pages/SanitationTouch'
 
 import './styles/WorkspaceTheme.css'
 import './styles/UserTypography.css'
@@ -64,7 +67,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/order_manager/order" element={<DeviceRoute pc={<OrderWorkspace />} touch={<OrderWorkspaceTouch />} />} />
         <Route path="/order_manager/recommended" element={<DeviceRoute pc={<OrderWorkspace initialTab="recommended" />} touch={<OrderWorkspaceTouch initialTab="recommended" />} />} />
         <Route path="/inventory/history" element={<DeviceRoute pc={<InventoryHistory />} touch={<HistoryTouch />} />} />
-        <Route path="/" element={<App />} />
+        <Route path="/" element={<DeviceRoute pc={<App />} touch={<LoginTouch />} />} />
         <Route path="/payment" element={<Payment />} />
         <Route path="/payment/success" element={<PaymentResult />} />
         <Route path="/payment/fail" element={<PaymentResult />} />
@@ -72,14 +75,14 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/billing/fail" element={<PaymentResult />} />
         <Route path="/home" element={<DeviceRoute pc={<Home />} touch={<HomeTouch />} />} />
         <Route path="/search" element={<Navigate to={`/home${window.location.search}`} replace />} />
-        <Route path="/home/sidebar" element={<Home />} />
+        <Route path="/home/sidebar" element={<DeviceRoute pc={<Home />} touch={<HomeTouch />} />} />
         <Route path="/home/sidebar/food-order" element={<DeviceRoute pc={<OrderWorkspace initialTab="shortage" />} touch={<OrderWorkspaceTouch initialTab="shortage" />} />} />
         <Route path="/order_manager/orders" element={<DeviceRoute pc={<PurchaseOrderManager />} touch={<OrdersTouch />} />} />
-        <Route path="/order_manager" element={<OrderManager />} />
+        <Route path="/order_manager" element={<DeviceRoute pc={<OrderManager />} touch={<OrderWorkspaceTouch />} />} />
         <Route path="/order_manager/product-order" element={<DeviceRoute pc={<OrderWorkspace initialTab="products" />} touch={<OrderWorkspaceTouch initialTab="products" />} />} />
         <Route path="/order_manager/food_order" element={<DeviceRoute pc={<OrderWorkspace initialTab="shortage" />} touch={<OrderWorkspaceTouch initialTab="shortage" />} />} />
         <Route path="/order_manager/food_order/:menuId" element={<DeviceRoute pc={<OrderWorkspace initialTab="shortage" />} touch={<OrderWorkspaceTouch initialTab="shortage" />} />} />
-        <Route path="/order_manager/welstory" element={<WelstoryOrder />} />
+        <Route path="/order_manager/welstory" element={<DeviceRoute pc={<WelstoryOrder />} touch={<WelstoryRawTouch />} />} />
         <Route path="/order_manager/suppliers" element={<DeviceRoute pc={<SupplierIntegrationDashboard />} touch={<SupplierTouch />} />} />
         <Route path="/order_manager/supplier-sites" element={<DeviceRoute pc={<SupplierSiteMapping />} touch={<SiteMappingTouch />} />} />
         <Route path="/inventory/account" element={<DeviceRoute pc={<AccountInventoryManager />} touch={<InventoryTouch />} />} />
@@ -90,7 +93,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/operations/account-menu" element={<DeviceRoute pc={<AccountMenuManager />} touch={<AccountMenuTouch />} />} />
         <Route path="/operations/table-meals" element={<DeviceRoute pc={<TableMealsManager />} touch={<TableMealsTouch />} />} />
         <Route path="/operations/search-analytics" element={<DeviceRoute pc={<SearchAnalytics />} touch={<SearchAnalyticsTouch />} />} />
-        <Route path="/sanitation/vendor" element={<VendorSanitation />} />
+        <Route path="/sanitation/vendor" element={<DeviceRoute pc={<VendorSanitation />} touch={<SanitationTouch />} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes></WorkspaceBoundary>
     </BrowserRouter>

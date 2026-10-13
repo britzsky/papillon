@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { logout } from '../api/auth'
 import { getAccountOptions, type AccountOption } from '../api/operations'
 import TouchIcon, { type TouchIconName } from './TouchIcon'
+import { useTouchBody } from './useTouchBody'
 import logo from '../assets/logo/thefull.png'
 import './TouchLayout.css'
 import './TouchPcSkin.css'
@@ -69,16 +70,7 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, children,
   const accountId = searchParams.get('account_id') || localStorage.getItem('account_id') || ''
   const accountUser = isAccountUser()
 
-  useEffect(() => {
-    const body = document.body
-    const hadWorkspaceUi = body.classList.contains('workspace-ui')
-    body.classList.remove('workspace-ui')
-    body.classList.add('t-ui')
-    return () => {
-      body.classList.remove('t-ui')
-      if (hadWorkspaceUi) body.classList.add('workspace-ui')
-    }
-  }, [])
+  useTouchBody()
 
   useEffect(() => {
     if (accountUser) return

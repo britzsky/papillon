@@ -1,76 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
 import HeaderBar from '../../components/HeaderBar'
 import SideMenuLayout from '../../components/SideMenuLayout'
 import ProductImage from '../../components/ProductImage'
 import { Link } from 'react-router-dom'
-import { getAllItemPrice, getOrderList, getReceiveDetail, getSituationDetail, getSoldToList, type ApiRecord, type Product, type Workplace } from '../../api/welstory'
 import './WelstoryOrder.css'
-
-type Tab = 'products' | 'orders' | 'receives' | 'situations'
-const text = (value: unknown) => value == null ? '' : String(value)
-const compact = (value: string) => value.replaceAll('-', '')
-const today = () => new Date().toISOString().slice(0, 10)
-const money = (value: number) => new Intl.NumberFormat('ko-KR').format(value)
-const DEFAULT_WORKPLACE: Workplace = {
-  soldTo: 'A0199183',
-  soldToNm: '더채움',
-  payerNm: '',
-  pricingCode: '',
-  repSoldtoYn: '',
-}
-const withDefaultWorkplace = (items: Workplace[]) =>
-  items.some((item) => item.soldTo === DEFAULT_WORKPLACE.soldTo)
-    ? items
-    : [DEFAULT_WORKPLACE, ...items]
-const errorMessage = (error: unknown) => error instanceof Error ? error.message : '처리 중 오류가 발생했습니다.'
+import { useWelstoryRaw, text, money } from '../../features/order/useWelstoryRaw'
 
 function WelstoryOrder() {
-  const [tab, setTab] = useState<Tab>('products')
-  const [workplaces, setWorkplaces] = useState<Workplace[]>([DEFAULT_WORKPLACE])
-  const [soldTo, setSoldTo] = useState(DEFAULT_WORKPLACE.soldTo)
-  const [periodYear, setPeriodYear] = useState(() => localStorage.getItem('welstory_period_year') || String(new Date().getFullYear()))
-  const [periodGroup, setPeriodGroup] = useState(() => localStorage.getItem('welstory_period_group') || '')
-  const [deliveryDate, setDeliveryDate] = useState(today())
-  const [query, setQuery] = useState('')
-  const [products, setProducts] = useState<Product[]>([])
-  const [records, setRecords] = useState<ApiRecord[]>([])
-  const [busy, setBusy] = useState(false)
-  const [message, setMessage] = useState('')
-
-  useEffect(() => {
-    const controller = new AbortController()
-    setBusy(true)
-    getSoldToList(controller.signal).then((rows) => {
-      setWorkplaces(withDefaultWorkplace(rows))
-    }).catch((error) => setMessage(errorMessage(error))).finally(() => setBusy(false))
-    return () => controller.abort()
-  }, [])
-
-  const selectedWorkplace = workplaces.find((item) => item.soldTo === soldTo)
-  const filtered = useMemo(() => products.filter((item) => `${item.itemCode} ${item.itemName} ${item.standard}`.toLowerCase().includes(query.toLowerCase())), [products, query])
-  const saveSoldTo = (value: string) => { setSoldTo(value); localStorage.setItem('welstory_sold_to', value); setProducts([]); setRecords([]) }
-
-  const loadProducts = async () => {
-    if (!soldTo) return setMessage('사업장을 선택해 주세요.')
-    if (!/^\d{4}$/.test(periodYear)) return setMessage('판가 연도를 4자리로 입력해 주세요.')
-    if (!/^\d{2}$/.test(periodGroup)) return setMessage('웰스토리 순기를 2자리로 입력해 주세요. 예: 12')
-    setBusy(true); setMessage('')
-    try {
-      localStorage.setItem('welstory_period_year', periodYear)
-      localStorage.setItem('welstory_period_group', periodGroup)
-      setProducts(await getAllItemPrice(soldTo, periodYear, periodGroup))
-    }
-    catch (error) { setMessage(errorMessage(error)) } finally { setBusy(false) }
-  }
-  const loadRecords = async (nextTab: Tab) => {
-    if (!soldTo) return setMessage('사업장을 선택해 주세요.')
-    setBusy(true); setMessage(''); setTab(nextTab)
-    try {
-      const date = compact(deliveryDate)
-      setRecords(nextTab === 'orders' ? await getOrderList(soldTo, date) : nextTab === 'receives' ? await getReceiveDetail(soldTo, date) : await getSituationDetail(soldTo, date, date))
-    } catch (error) { setRecords([]); setMessage(errorMessage(error)) } finally { setBusy(false) }
-  }
-
+  const { tab, setTab, workplaces, soldTo, periodYear, setPeriodYear, periodGroup, setPeriodGroup, deliveryDate, setDeliveryDate, query, setQuery, products, records, busy, message, selectedWorkplace, filtered, saveSoldTo, loadProducts, loadRecords } = useWelstoryRaw()
   return <div className="welstory-page procurement-refresh"><SideMenuLayout header={<HeaderBar title="웰스토리 원문 조회" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '공급사 통합 연동', to: '/order_manager/suppliers' }, { label: '웰스토리 원문 조회' }]} />}>
     <section className="procurement-page-heading"><span className="procurement-eyebrow">삼성웰스토리</span><h2>{tab === 'products' ? '상품 선택' : tab === 'orders' ? '주문 내역' : tab === 'receives' ? '입고 내역' : '반품·교환'}</h2><p>사업장별 공급상품을 확인하고 필요한 품목을 담으세요.</p></section>
     <section className="welstory-toolbar">
