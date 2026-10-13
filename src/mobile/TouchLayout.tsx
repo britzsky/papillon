@@ -5,6 +5,7 @@ import { getAccountOptions, type AccountOption } from '../api/operations'
 import TouchIcon, { type TouchIconName } from './TouchIcon'
 import logo from '../assets/logo/thefull.png'
 import './TouchLayout.css'
+import './TouchPcSkin.css'
 
 type NavItem = { label: string; to: string; hint: string }
 type NavGroup = { key: string; label: string; icon: TouchIconName; items: NavItem[]; hqOnly?: boolean }
@@ -47,7 +48,7 @@ const todayLabel = () => new Date().toLocaleDateString('ko-KR', { month: 'long',
  * 휴대폰(768px 미만)은 메뉴가 아래 탭, 실행 패널은 본문 아래로 내려간다.
  * PC 전용 전역 스타일(body.workspace-ui)은 이 틀이 있는 동안 끈다.
  */
-export default function TouchLayout({ title, subtitle, toolbar, aside, children, onAccountChange }: {
+export default function TouchLayout({ title, subtitle, toolbar, aside, children, onAccountChange, hideAccount = false }: {
   title: string
   subtitle?: string
   /** 제목 옆 조회 조건(월 이동 등) */
@@ -57,6 +58,8 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, children,
   children: ReactNode
   /** 위 거래처 선택이 바뀔 때. 없으면 주소의 account_id만 바꾼다 */
   onAccountChange?: (accountId: string) => void
+  /** 거래처와 무관한 본사 화면(식자재 관리·고객사 관리 등)은 거래처 선택을 숨긴다 */
+  hideAccount?: boolean
 }) {
   const { pathname } = useLocation()
   const navigate = useNavigate()
@@ -174,7 +177,7 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, children,
           {subtitle && <span>{subtitle}</span>}
         </div>
         {toolbar && <div className="t-top__toolbar">{toolbar}</div>}
-        <div className="t-top__account">
+        {!hideAccount && <div className="t-top__account">
           {accountUser
             ? <span className="t-chip"><TouchIcon name="store" />{accountName || '내 거래처'}</span>
             : <label className="t-chip t-chip--select">
@@ -184,7 +187,7 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, children,
                 {accounts.map(option => <option key={option.value} value={option.value}>{option.text}</option>)}
               </select>
             </label>}
-        </div>
+        </div>}
       </header>
       <div className="t-body">
         <main className="t-main">{children}</main>

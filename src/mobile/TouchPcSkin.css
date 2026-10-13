@@ -1,0 +1,86 @@
+/*
+ * 터치 화면에서 PC 창(모달)을 그대로 쓸 때 입히는 손가락용 겉모양.
+ * 기능 코드는 PC 창 하나만 두고(연결·일괄 연결 등 복잡한 창), 여기서 크기·색만 터치 기준(48px, 16px, 초록 테마)으로 바꾼다.
+ * 대상 창이 늘면 아래 선택자 묶음(:is(...))에 창 바깥 클래스를 추가한다.
+ */
+body.t-ui :is(.ingredient-link-overlay) {
+  z-index: 950;
+  padding: 24px;
+  background: rgba(15, 23, 20, 0.45);
+}
+
+body.t-ui :is(.ingredient-link-dialog) {
+  padding: 24px;
+  border-radius: 22px;
+  color: var(--t-text);
+  font-size: 15px;
+  box-shadow: 0 20px 60px rgba(15, 23, 20, 0.25);
+}
+
+body.t-ui :is(.ingredient-link-dialog) h2 { font-size: 21px; }
+body.t-ui :is(.ingredient-link-dialog) h3 { font-size: 16px; }
+body.t-ui :is(.ingredient-link-dialog) p { color: var(--t-muted); font-size: 14px; }
+
+body.t-ui :is(.ingredient-link-dialog) :is(input:not([type=checkbox]):not([type=radio]), select) {
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1.5px solid var(--t-line);
+  border-radius: 12px;
+  background: var(--t-surface);
+  font-size: 16px;
+}
+
+body.t-ui :is(.ingredient-link-dialog) :is(input[type=checkbox], input[type=radio]) { width: 22px; height: 22px; accent-color: var(--t-accent); }
+
+body.t-ui :is(.ingredient-link-dialog) button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1.5px var(--t-line);
+  --button-bg: var(--t-surface);
+  --button-bg-hover: var(--t-surface);
+  --button-bg-disabled: var(--t-surface);
+  --button-text: var(--t-text);
+}
+
+/* PC 창의 실행 버튼(저장·연결·선택)은 초록 / 민트 */
+body.t-ui :is(.ingredient-link-dialog) :is(.menu-manager-save-button, .action-save-button) {
+  --button-bg: var(--t-accent);
+  --button-bg-hover: var(--t-accent);
+  --button-bg-disabled: var(--t-accent);
+  --button-text: #fff;
+  border-color: var(--t-accent) !important;
+  background-color: var(--t-accent) !important;
+  box-shadow: none;
+}
+
+body.t-ui :is(.ingredient-link-dialog) :is(.menu-manager-select-button, .action-query-button) {
+  --button-bg: var(--t-accent-soft);
+  --button-bg-hover: var(--t-accent-soft);
+  --button-bg-disabled: var(--t-accent-soft);
+  --button-text: var(--t-accent-strong);
+  border-color: var(--t-accent-soft) !important;
+  background-color: var(--t-accent-soft) !important;
+  color: var(--t-accent-strong) !important;
+  box-shadow: none;
+}
+
+body.t-ui :is(.ingredient-link-dialog) table { font-size: 14px; }
+body.t-ui :is(.ingredient-link-dialog) :is(th, td) { padding: 12px 10px; border-color: var(--t-line); }
+body.t-ui :is(.ingredient-link-dialog) th { background: var(--t-surface-2); color: var(--t-muted); font-size: 13px; }
+
+body.t-ui :is(.ingredient-link-selection, .ingredient-link-suggestions, .ingredient-link-current) {
+  border: 0;
+  border-radius: 14px;
+  background: var(--t-accent-softer);
+}
+
+body.t-ui .ingredient-link-current { background: var(--t-surface-2); }
+
+@media (max-width: 767px) {
+  body.t-ui :is(.ingredient-link-overlay) { align-items: flex-end; padding: 0; }
+  body.t-ui :is(.ingredient-link-dialog) { max-height: 94dvh; border-radius: 22px 22px 0 0; }
+}

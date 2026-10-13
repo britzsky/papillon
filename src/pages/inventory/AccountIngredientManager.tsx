@@ -1,22 +1,13 @@
 import { getAccountInventoryList, type AccountInventoryItem } from '../../api/inventory'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import HeaderBar from '../../components/HeaderBar'
 import SideMenuLayout from '../../components/SideMenuLayout'
 import IngredientProductLinkModal from '../../components/IngredientProductLinkModal'
 import BulkIngredientLinkModal from '../../components/BulkIngredientLinkModal'
 import { getAccountOptions, type AccountOption } from '../../api/operations'
-import { buildApiUrl } from '../../config/api'
+import { supplierInitial, useAccountIngredients, type AccountIngredient as Ingredient } from '../../features/inventory/useAccountIngredients'
 import '../operations/MenuManager.css'
-
-type Ingredient = { ingredient_id: string; ingredient_name: string; base_unit: string; category_name: string; product_name?: string; supplier_name?: string; menu_usage_count: number }
-
-function supplierInitial(name?: string) {
-  const supplier = name?.trim() || ''
-  if (supplier.includes('웰스토리')) return '삼'
-  if (supplier.includes('아워홈')) return '아'
-  return supplier.slice(0, 1) || '-'
-}
 
 export default function AccountIngredientManager() {
   const [params] = useSearchParams()
@@ -27,15 +18,10 @@ export default function AccountIngredientManager() {
 function AccountIngredientContent({ accountId }: { accountId: string }) {
   const [, setParams] = useSearchParams()
   const [accounts, setAccounts] = useState<AccountOption[]>([])
-  const [rows, setRows] = useState<Ingredient[]>([])
   const [inventory, setInventory] = useState<AccountInventoryItem[]>([])
   const [inventoryError, setInventoryError] = useState('')
-  const [keyword, setKeyword] = useState('')
-  const [missingOnly, setMissingOnly] = useState(false)
   const [page, setPage] = useState(1)
-  const [loading, setLoading] = useState(Boolean(accountId))
-  const [error, setError] = useState('')
-  const [revision, setRevision] = useState(0)
+  const { rows, filtered, loading, error, setError, keyword, setKeyword, missingOnly, setMissingOnly, nextUnlinked: findNextUnlinked, reload, revision } = useAccountIngredients(accountId)
   const [selected, setSelected] = useState<Ingredient | null>(null)
   const [bulkOpen, setBulkOpen] = useState(false)
   const [notice, setNotice] = useState('')
@@ -43,15 +29,7 @@ function AccountIngredientContent({ accountId }: { accountId: string }) {
     let active = true
     void getAccountOptions().then(data => { if (active) setAccounts(data) }).catch(e => { if (active) setError(e.message) })
     return () => { active = false }
-  }, [])
-  useEffect(() => {
-    let active = true
-    if (!accountId) return
-    void fetch(buildApiUrl(`/v2/menu-management/ingredients?${new URLSearchParams({ account_id: accountId })}`))
-      .then(async response => { const data = await response.json(); if (!response.ok || !Array.isArray(data)) throw new Error(data.message || '거래처 식자재 조회에 실패했습니다.'); return data as Ingredient[] })
-      .then(data => { if (active) setRows(data) }).catch(e => { if (active) setError(e.message) }).finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
-  }, [accountId, revision])
+  }, [setError])
   useEffect(() => {
     let active = true
     if (!accountId) return
@@ -59,16 +37,10 @@ function AccountIngredientContent({ accountId }: { accountId: string }) {
       .catch(e => { if (active) setInventoryError(e.message) })
     return () => { active = false }
   }, [accountId, revision])
-  const filtered = useMemo(() => rows.filter(row => (!missingOnly || !row.product_name) && `${row.ingredient_name} ${row.category_name || ''} ${row.product_name || ''}`.toLowerCase().includes(keyword.trim().toLowerCase())), [rows, keyword, missingOnly])
   const pages = Math.max(1, Math.ceil(filtered.length / 20))
   const [linkNotice, setLinkNotice] = useState('')
   // 현재 화면 목록(검색·필터 적용) 순서에서 지금 식재료 다음의 미연결 식재료(끝이면 처음부터)
-  const nextUnlinked = useMemo(() => {
-    if (!selected) return undefined
-    const index = filtered.findIndex(row => row.ingredient_id === selected.ingredient_id)
-    const ordered = index < 0 ? filtered : [...filtered.slice(index + 1), ...filtered.slice(0, index)]
-    return ordered.find(row => !row.product_name && row.ingredient_id !== selected.ingredient_id)
-  }, [filtered, selected])
+  const nextUnlinked = findNextUnlinked(selected)
   return <div className="menu-manager-page"><main className="menu-manager-content"><SideMenuLayout header={<HeaderBar title="거래처 재고 관리" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '재고관리' }, { label: '거래처 재고 관리' }]} />}>
     <section className="menu-manager-filters"><div className="menu-manager-filter-grid">
       <div className="menu-manager-field"><label htmlFor="ingredient-account">거래처</label><select id="ingredient-account" value={accountId} onChange={e => setParams({ account_id: e.target.value })}><option value="">거래처 선택</option>{accountId && !accounts.some(a => a.value === accountId) && <option value={accountId}>{accountId}</option>}{accounts.map(a => <option key={a.value} value={a.value}>{a.text}</option>)}</select></div>
@@ -90,13 +62,13 @@ function AccountIngredientContent({ accountId }: { accountId: string }) {
     </div>
   </SideMenuLayout></main>{selected && <IngredientProductLinkModal key={`${accountId}/${selected.ingredient_id}`} accountId={accountId} ingredient={selected} notice={linkNotice}
       nextIngredientName={nextUnlinked?.ingredient_name}
-      onClose={() => { setSelected(null); setLinkNotice('') }} onLinked={() => { setLoading(true); setError(''); setRevision(r => r + 1) }}
+      onClose={() => { setSelected(null); setLinkNotice('') }} onLinked={reload}
       onAdvance={message => {
         // 연결이 끝나면 지금 목록 순서대로 다음 미연결 식재료를 바로 연다. 없으면 닫는다.
         if (nextUnlinked) { setLinkNotice(`${message} 다음 미연결 식재료를 이어서 연결하세요.`); setSelected(nextUnlinked) }
         else { setSelected(null); setLinkNotice(''); setNotice(`${message} 이 목록의 미연결 식재료를 모두 확인했습니다.`) }
       }} />}
     {bulkOpen && <BulkIngredientLinkModal accountId={accountId} onClose={() => setBulkOpen(false)}
-      onDone={linked => { if (linked) { setNotice(`${linked}건을 연결했습니다.`); setLoading(true); setRevision(r => r + 1) } }}
+      onDone={linked => { if (linked) { setNotice(`${linked}건을 연결했습니다.`); reload() } }}
       onSearch={ingredient => { setBulkOpen(false); setSelected(rows.find(row => row.ingredient_id === ingredient.ingredient_id) ?? { ...ingredient, category_name: '', menu_usage_count: 0 }) }} />}</div>
 }

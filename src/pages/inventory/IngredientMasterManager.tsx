@@ -1,147 +1,28 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 import HeaderBar from '../../components/HeaderBar'
 import LoadingScreen from '../../components/LoadingScreen'
 import SideMenuLayout from '../../components/SideMenuLayout'
 import AppAlert, { type AppAlertState } from '../../components/AppAlert'
-import {
-  getIngredientMasterList,
-  saveIngredientMasters,
-  type IngredientMasterItem,
-} from '../../api/inventory'
+import { STORAGE_OPTIONS as storageOptions, isIngredientChanged as isChanged, useIngredientMaster } from '../../features/inventory/useIngredientMaster'
 import { MENU_PAGE_SIZE, qtyUnitOptions } from '../operations/menuManagerShared'
 import '../operations/MenuManager.css'
 
-type EditableIngredientMasterItem = IngredientMasterItem & { row_id: string }
-
-
-const storageOptions = [
-  { value: 'ROOM', text: '상온' },
-  { value: 'REFRIGERATED', text: '냉장' },
-  { value: 'FROZEN', text: '냉동' },
-  { value: 'OTHER', text: '기타' },
-] as const
-
-function toEditable(item: IngredientMasterItem): EditableIngredientMasterItem {
-  return { ...item, row_id: item.ingredient_id }
-}
-
-function snapshot(items: EditableIngredientMasterItem[]) {
-  return Object.fromEntries(items.map((item) => [item.row_id, { ...item }]))
-}
-
-function isChanged(item: EditableIngredientMasterItem, originals: Record<string, EditableIngredientMasterItem>) {
-  const original = originals[item.row_id]
-  if (!original) return true
-  return ['ingredient_name', 'category_name', 'storage_type', 'base_unit', 'note']
-    .some((field) => item[field as keyof EditableIngredientMasterItem] !== original[field as keyof EditableIngredientMasterItem])
-}
-
-function createRow(index: number): EditableIngredientMasterItem {
-  return {
-    row_id: `new-${Date.now()}-${index}`,
-    ingredient_id: `ING${Date.now()}${index}`,
-    ingredient_name: '',
-    category_name: '',
-    storage_type: 'ROOM',
-    base_unit: 'g',
-    order_unit: 'kg',
-    convert_value: 1,
-    safe_stock_qty: 0,
-    menu_usage_count: 0,
-    note: '',
-    supplier_name: '',
-    supplier_product_id: 0,
-    supplier_id: 0,
-    supplier_item_code: '',
-    product_name: '',
-    product_order_unit: '',
-    package_qty: 1,
-    package_unit: '',
-    purchase_price: 0,
-    package_base_qty: 0,
-    is_new: true,
-  }
-}
-
-
 function IngredientMasterManager() {
-  const [items, setItems] = useState<EditableIngredientMasterItem[]>([])
-  const [originals, setOriginals] = useState<Record<string, EditableIngredientMasterItem>>({})
-  const [keyword, setKeyword] = useState('')
-  const [category, setCategory] = useState('')
-  const [storageType, setStorageType] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
-  const [error, setError] = useState('')
+  const { originals, keyword, setKeyword, category, setCategory, storageType, setStorageType, categories, filteredItems, isLoading, isSaving, error, updateItem, save, addRow } = useIngredientMaster()
+  // 조회 조건이 바뀌면 1쪽부터, 건수가 줄면 마지막 쪽으로(상태를 effect로 되돌리지 않고 계산)
+  const filterKey = [keyword, category, storageType].join('|')
+  const [pageState, setPageState] = useState({ key: filterKey, page: 1 })
   const [alert, setAlert] = useState<AppAlertState | null>(null)
-  const loadItems = async () => {
-    const loaded = (await getIngredientMasterList()).map(toEditable)
-    setItems(loaded)
-    setOriginals(snapshot(loaded))
-  }
-
-  useEffect(() => {
-    let mounted = true
-    setIsLoading(true)
-    setError('')
-    void getIngredientMasterList()
-      .then((loaded) => {
-        if (!mounted) return
-        const editable = loaded.map(toEditable)
-        setItems(editable)
-        setOriginals(snapshot(editable))
-      })
-      .catch((loadError) => mounted && setError(loadError instanceof Error ? loadError.message : '식자재 마스터를 불러오지 못했습니다.'))
-      .finally(() => mounted && setIsLoading(false))
-    return () => { mounted = false }
-  }, [])
-
-
-  const categories = useMemo(
-    () => Array.from(new Set(items.map((item) => item.category_name).filter(Boolean))).sort(),
-    [items],
-  )
-  const filteredItems = useMemo(() => {
-    const query = keyword.trim().toLowerCase()
-    return items.filter((item) =>
-      (!query || [item.ingredient_id, item.ingredient_name, item.category_name]
-        .some((value) => value.toLowerCase().includes(query))) &&
-      (!category || item.category_name === category) &&
-      (!storageType || item.storage_type === storageType),
-    )
-  }, [category, items, keyword, storageType])
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / MENU_PAGE_SIZE))
+  const currentPage = pageState.key === filterKey ? Math.min(pageState.page, totalPages) : 1
+  const setCurrentPage = (next: number | ((page: number) => number)) => setPageState({ key: filterKey, page: typeof next === 'function' ? next(currentPage) : next })
   const pagedItems = filteredItems.slice((currentPage - 1) * MENU_PAGE_SIZE, currentPage * MENU_PAGE_SIZE)
 
-  useEffect(() => setCurrentPage(1), [keyword, category, storageType])
-  useEffect(() => setCurrentPage((page) => Math.min(page, totalPages)), [totalPages])
-
-  const updateItem = (rowId: string, patch: Partial<EditableIngredientMasterItem>) => {
-    setItems((current) => current.map((item) => item.row_id === rowId ? { ...item, ...patch } : item))
-  }
 
   const handleSave = async () => {
-    const changed = items.filter((item) => isChanged(item, originals))
-    if (changed.length === 0) {
-      setAlert({ type: 'success', title: '변경 없음', message: '저장할 변경 사항이 없습니다.' })
-      return
-    }
-    if (changed.some((item) => !item.ingredient_name.trim() || !item.base_unit)) {
-      setAlert({ type: 'error', title: '저장 불가', message: '식자재명과 기준단위를 확인해주세요.' })
-      return
-    }
-    try {
-      setIsSaving(true)
-      setAlert(null)
-      await saveIngredientMasters(changed)
-      await loadItems()
-      setAlert({ type: 'success', title: '저장 완료', message: '본사 식자재 마스터를 저장했습니다.' })
-    } catch (saveError) {
-      setAlert({ type: 'error', title: '저장 실패', message: saveError instanceof Error ? saveError.message : '저장에 실패했습니다.' })
-    } finally {
-      setIsSaving(false)
-    }
+    setAlert(null)
+    const result = await save()
+    setAlert({ type: result.ok ? 'success' : 'error', title: result.title, message: result.message })
   }
 
   return (
@@ -158,7 +39,7 @@ function IngredientMasterManager() {
               <div className="menu-manager-field"><label htmlFor="ingredient-master-storage">보관유형</label><select id="ingredient-master-storage" value={storageType} onChange={(event) => setStorageType(event.target.value)}><option value="">전체</option>{storageOptions.map((item) => <option key={item.value} value={item.value}>{item.text}</option>)}</select></div>
             </div>
             <div className="menu-manager-filters__actions">
-              <button type="button" className="menu-manager-add-button" onClick={() => { setItems((current) => [createRow(current.length + 1), ...current]); setCurrentPage(1) }}>행 추가</button>
+              <button type="button" className="menu-manager-add-button" onClick={() => { addRow(); setCurrentPage(1) }}>행 추가</button>
               <button type="button" className="menu-manager-save-button" disabled={isSaving} onClick={() => void handleSave()}>{isSaving ? '저장 중...' : '저장'}</button>
             </div>
           </section>
