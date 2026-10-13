@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
+import BatchResultList from '../BatchResultList'
 import { Link, useSearchParams } from 'react-router-dom'
 import TouchLayout from '../TouchLayout'
 import TouchIcon from '../TouchIcon'
@@ -8,8 +9,6 @@ import { preparationLabel, useCatalogPreparation } from '../../features/order/us
 import './OrderTouch.css'
 
 const qty = (value?: number) => Number(value || 0).toLocaleString('ko-KR', { maximumFractionDigits: 3 })
-const BATCH_LABELS: Record<string, string> = { ORDERED: '접수 완료', CONFIRMED: '접수 확인', FAILED: '접수 실패', VALIDATION_FAILED: '전송 전 확인 필요', UNKNOWN: '접수 여부 확인 필요', SENDING: '전송 결과 확인 중', PARTIAL_FAILED: '일부 품목 확인 필요' }
-const batchTone = (status: string) => ['ORDERED', 'CONFIRMED'].includes(status) ? 'is-ok' : ['FAILED', 'VALIDATION_FAILED'].includes(status) ? 'is-danger' : 'is-yellow'
 const dateTile = (offset: number) => {
   const value = orderDay(offset)
   const d = new Date(`${value}T00:00:00`)
@@ -20,7 +19,7 @@ const dateTile = (offset: number) => {
  * 발주하기(태블릿·휴대폰) = 추천 발주안. POS 배치: 위 납품일 칸 → 공급사별 품목 카드, 오른쪽 장바구니 패널에서 '공급사별 발주 확정'.
  * 로직은 PC 발주하기 첫 탭(QuickOrder)과 같은 useQuickOrder. 수량·상품 직접 조정과 상품 검색은 기존 상세 화면으로 간다.
  */
-export default function OrderTouch() {
+export function RecommendedOrder({ methodBar }: { methodBar: ReactNode }) {
   const [params] = useSearchParams()
   const [accountId, setAccountId] = useState(() => params.get('account_id') || localStorage.getItem('account_id') || '')
   const order = useQuickOrder(accountId)
@@ -43,6 +42,7 @@ export default function OrderTouch() {
 
   return <TouchLayout title="발주하기" subtitle="기존 사용상품으로 필요한 수량을 미리 골라 둔 발주안" toolbar={toolbar}
     aside={<CartPanel order={order} accountId={accountId} supplierCount={groups.length} />} onAccountChange={setAccountId}>
+    {methodBar}
     <div className="t-tabs" role="tablist" aria-label="납품일">
       {dates.map(d => <button key={d.value} type="button" role="tab" aria-selected={order.date === d.value}
         className={`t-tab ot-date${order.date === d.value ? ' is-active' : ''}`} disabled={order.busy || order.attempted} onClick={() => order.changeDate(d.value)}>
@@ -109,16 +109,7 @@ function CartPanel({ order, accountId, supplierCount }: { order: ReturnType<type
   if (order.batch) return <div className="ot-panel">
     <div className="ot-panel__head"><h2>발주 결과</h2><p>공급사별로 나눠 보냈습니다. 접수된 발주서는 다시 보내지 않습니다.</p></div>
     <div className="ot-panel__body">
-      <ul className="ot-results">{order.batch.orders.map((o, i) => <li key={o.purchase_order_id || i}>
-        <span className="t-dot">{o.supplier_name.slice(0, 1)}</span>
-        <div>
-          <strong>{o.supplier_name}</strong>
-          <small>납품 {o.delivery_date}</small>
-          {o.message && <small>{o.message}</small>}
-        </div>
-        <span className={`t-badge ${batchTone(o.status)}`}>{BATCH_LABELS[o.status] || o.status}</span>
-        {o.purchase_order_id && <Link className="t-btn is-small is-soft ot-results__link" to={`/order_manager/orders?${new URLSearchParams({ account_id: accountId, purchase_order_id: o.purchase_order_id })}`}>발주서 보기</Link>}
-      </li>)}</ul>
+      <BatchResultList result={order.batch} accountId={accountId} />
     </div>
     <div className="ot-panel__actions">
       <button type="button" className="t-btn is-primary is-large is-block" disabled={order.busy} onClick={order.refresh}>새 발주안 준비</button>

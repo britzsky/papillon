@@ -557,3 +557,20 @@ body.t-ui .t-round { --button-bg: var(--t-accent); --button-bg-hover: var(--t-ac
 .t-summary .is-total:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
 /* 위 조회 조건 줄의 탭 전환은 글자 폭만큼 늘어나게(잘림 방지) */
 .t-top__toolbar .t-segment button { flex: none; }
+
+/* 공급사별 발주 결과(BatchResultList) */
+.t-batch { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.t-batch li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px 12px; padding: 12px 14px; border: 1px solid var(--t-line); border-radius: 14px; }
+.t-batch li > div { display: grid; }
+.t-batch small { color: var(--t-muted); font-size: 12px; }
+.t-batch__link { grid-column: 2 / -1; justify-self: start; }
+
+/* 화면 맨 위의 방법 전환(발주하기 등) — 본문 폭 전체 */
+.t-method { display: flex; margin-bottom: 14px; overflow-x: auto; scrollbar-width: none; }
+.t-method button { flex: 1 0 auto; }
+
+/* index.css의 button[type=submit] 파란색(!important)을 터치 테마로 */
+body.t-ui button[type=submit].t-btn.is-primary,
+body.t-ui button[type=submit].t-btn.is-primary:not(:disabled):hover { border-color: var(--t-accent) !important; background-color: var(--t-accent) !important; color: #fff !important; }
+body.t-ui button[type=submit].t-btn:not(.is-primary),
+body.t-ui button[type=submit].t-btn:not(.is-primary):not(:disabled):hover { border-color: var(--button-bg) !important; background-color: var(--button-bg) !important; color: var(--button-text) !important; }

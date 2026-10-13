@@ -26,8 +26,8 @@ import WelstoryOrder from './pages/order/WelstoryOrder.tsx'
 import SupplierIntegrationDashboard from './pages/order/SupplierIntegrationDashboard.tsx'
 import SupplierSiteMapping from './pages/order/SupplierSiteMapping.tsx'
 import SearchAnalytics from './pages/operations/SearchAnalytics.tsx'
-import { DeviceRoute, DeviceTabRoute } from './mobile/deviceMode'
-import OrderTouch from './mobile/pages/OrderTouch'
+import { DeviceRoute } from './mobile/deviceMode'
+import OrderWorkspaceTouch from './mobile/pages/OrderWorkspaceTouch'
 import HomeTouch from './mobile/pages/HomeTouch'
 import TableMealsTouch from './mobile/pages/TableMealsTouch'
 import InventoryTouch from './mobile/pages/InventoryTouch'
@@ -57,8 +57,8 @@ createRoot(document.getElementById('root')!).render(
       <GlobalLoading />
       <WorkspaceBoundary><Routes>
         {/* 발주 화면 통합: 예전 주소는 발주하기의 해당 탭으로 이동(쿼리 유지) */}
-        <Route path="/order_manager/order" element={<DeviceTabRoute pc={<OrderWorkspace />} touch={<OrderTouch />} touchTabs={['recommended']} />} />
-        <Route path="/order_manager/recommended" element={<DeviceRoute pc={<OrderWorkspace initialTab="recommended" />} touch={<OrderTouch />} />} />
+        <Route path="/order_manager/order" element={<DeviceRoute pc={<OrderWorkspace />} touch={<OrderWorkspaceTouch />} />} />
+        <Route path="/order_manager/recommended" element={<DeviceRoute pc={<OrderWorkspace initialTab="recommended" />} touch={<OrderWorkspaceTouch initialTab="recommended" />} />} />
         <Route path="/inventory/history" element={<DeviceRoute pc={<InventoryHistory />} touch={<HistoryTouch />} />} />
         <Route path="/" element={<App />} />
         <Route path="/payment" element={<Payment />} />
@@ -69,12 +69,12 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/home" element={<DeviceRoute pc={<Home />} touch={<HomeTouch />} />} />
         <Route path="/search" element={<Navigate to={`/home${window.location.search}`} replace />} />
         <Route path="/home/sidebar" element={<Home />} />
-        <Route path="/home/sidebar/food-order" element={<OrderWorkspace initialTab="shortage" />} />
+        <Route path="/home/sidebar/food-order" element={<DeviceRoute pc={<OrderWorkspace initialTab="shortage" />} touch={<OrderWorkspaceTouch initialTab="shortage" />} />} />
         <Route path="/order_manager/orders" element={<DeviceRoute pc={<PurchaseOrderManager />} touch={<OrdersTouch />} />} />
         <Route path="/order_manager" element={<OrderManager />} />
-        <Route path="/order_manager/product-order" element={<OrderWorkspace initialTab="products" />} />
-        <Route path="/order_manager/food_order" element={<OrderWorkspace initialTab="shortage" />} />
-        <Route path="/order_manager/food_order/:menuId" element={<OrderWorkspace initialTab="shortage" />} />
+        <Route path="/order_manager/product-order" element={<DeviceRoute pc={<OrderWorkspace initialTab="products" />} touch={<OrderWorkspaceTouch initialTab="products" />} />} />
+        <Route path="/order_manager/food_order" element={<DeviceRoute pc={<OrderWorkspace initialTab="shortage" />} touch={<OrderWorkspaceTouch initialTab="shortage" />} />} />
+        <Route path="/order_manager/food_order/:menuId" element={<DeviceRoute pc={<OrderWorkspace initialTab="shortage" />} touch={<OrderWorkspaceTouch initialTab="shortage" />} />} />
         <Route path="/order_manager/welstory" element={<WelstoryOrder />} />
         <Route path="/order_manager/suppliers" element={<DeviceRoute pc={<SupplierIntegrationDashboard />} touch={<SupplierTouch />} />} />
         <Route path="/order_manager/supplier-sites" element={<DeviceRoute pc={<SupplierSiteMapping />} touch={<SiteMappingTouch />} />} />

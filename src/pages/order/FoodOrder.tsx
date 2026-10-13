@@ -1,40 +1,15 @@
 import CatalogPreparation from '../../components/CatalogPreparation'
 import LoadingScreen from '../../components/LoadingScreen'
 import BatchOrderResults from '../../components/BatchOrderResults'
-import { clearDeadlineAlertCache } from '../../api/deadlineAlerts'
-import { submitMixedProcurement, recoverMixedProcurement, startNewMixedProcurement, type BatchResult } from '../../api/mixedProcurement'
+import { recoverMixedProcurement, startNewMixedProcurement } from '../../api/mixedProcurement'
 import { createPortal } from 'react-dom'
-import { useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import HeaderBar from '../../components/HeaderBar'
 import SideMenuLayout from '../../components/SideMenuLayout'
-import { getTableMealsList, type TableMealsItem } from '../../api/operations'
-import { getSupplierSites, type SupplierSite } from '../../api/supplierIntegration'
-import { getPlanDates, getShortages, MANUAL_MAX_ORDER_QTY, matchesStockFilter, previewShortageOrder, shortageStockStatus, SHORTAGE_STOCK_LABELS, type OrderPreview, type OrderSelection, type ShortageCriteria, type ShortageResult, type ShortageOffer, type ShortageStockFilter } from '../../api/shortageProcurement'
+import { MANUAL_MAX_ORDER_QTY, shortageStockStatus, SHORTAGE_STOCK_LABELS, type ShortageCriteria } from '../../api/shortageProcurement'
+import { day, deliveryTerms, deliveryWarning, money, number, taxLabel, useShortageOrder } from '../../features/order/useShortageOrder'
 import { PrintIcon } from '../../components/ActionIcons'
 import './ShortageFoodOrder.css'
-
-const day = (offset = 0) => { const date = new Date(); date.setDate(date.getDate() + offset); return date.toLocaleDateString('sv-SE') }
-const number = (value: number) => value.toLocaleString('ko-KR', { maximumFractionDigits: 3 })
-const money = (value: number) => value.toLocaleString('ko-KR', { maximumFractionDigits: 2 })
-const taxLabel = (value: string) => value === 'No tax' ? '면세' : ['Full tax', 'CONS', 'CONS(소모품)'].includes(value) ? '과세 · 세액 확인 필요' : '과세정보 확인 필요'
-
-const statusRank = { RED: 0, YELLOW: 1, GREEN: 2 } as const
-
-function deliveryTerms(offer: ShortageOffer) {
-  const state = offer.orderability_status === 'AVAILABLE' ? '발주 가능' : offer.orderability_status === 'UNAVAILABLE' ? '발주 불가' : '확인 필요'
-  return state + ' · ' + (offer.orderability_reason || '납품·마감 조건 확인 필요')
-}
-
-function deliveryWarning(offer: ShortageOffer, deliveryDate: string, now: Date) {
-  const lead = Number(offer.lead_time_days)
-  if (offer.lead_time_days == null || !Number.isInteger(lead) || lead < 0 || !deliveryDate) return ''
-  const today = now.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })
-  const earliest = new Date(today + 'T00:00:00Z')
-  earliest.setUTCDate(earliest.getUTCDate() + lead)
-  if (deliveryDate < earliest.toISOString().slice(0, 10)) return '선택한 납품일은 리드타임 ' + lead + '일보다 빠릅니다. 납품일을 변경해주세요.'
-  return ''
-}
 
 /**
  * embedded: 발주하기(OrderWorkspace) 탭 안에서 레이아웃 없이 내용만 그린다.
@@ -42,143 +17,7 @@ function deliveryWarning(offer: ShortageOffer, deliveryDate: string, now: Date) 
  * 식단표 기준 탭은 식단 구성 화면에서 넘어온 '구성 중인 식단(DRAFT)'도 받는다.
  */
 function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY' }) {
-  const [params] = useSearchParams()
-  const accountId = params.get('account_id') || localStorage.getItem('account_id') || ''
-  const focusIngredient = params.get('ingredient_id') || ''
-  const [criteria, setCriteria] = useState<ShortageCriteria>(() => {
-    const resumeKey = !params.get('source') && !params.get('table_id') && !params.get('ingredient_id') && sessionStorage.getItem(`plan-editor:${accountId}`) ? `plan-procurement:${accountId}` : ''
-    const draftKey = !fixedSource || fixedSource === 'PLAN' ? params.get('draft_key') || (resumeKey && sessionStorage.getItem(resumeKey) ? resumeKey : '') : ''
-    if (draftKey) {
-      try {
-        const draft = JSON.parse(sessionStorage.getItem(draftKey) || 'null') as ShortageCriteria | null
-        if (draft?.account_id === accountId && draft.source === 'DRAFT') return draft
-      } catch { /* The API will explain that the draft must be reopened. */ }
-      return { account_id: accountId, source: 'DRAFT', draft_meals: [], table_id: '', date_from: day(), date_to: day(6), delivery_date: day(), sold_to: '', average_days: 30, coverage_days: 1 }
-    }
-    // 마감 알림의 '발주하기'는 해당 납품일(delivery_date)로 연다. 조회 기간은 납품일까지 포함하도록 늘린다.
-    const requestedDelivery = /^\d{4}-\d{2}-\d{2}$/.test(params.get('delivery_date') || '') && (params.get('delivery_date') as string) >= day() ? params.get('delivery_date') as string : ''
-    return ({
-    account_id: accountId, source: fixedSource ?? (params.get('source') === 'PLAN' || (!params.get('source') && params.get('table_id')) ? 'PLAN' : params.get('source') === 'STOCK' ? 'STOCK' : 'INVENTORY'),
-    table_id: params.get('table_id') || '', date_from: day(), date_to: requestedDelivery > day(6) ? requestedDelivery : day(6), delivery_date: requestedDelivery || day(1),
-    sold_to: '', average_days: 30, coverage_days: 1,
-  })})
-  const [guidanceNow, setGuidanceNow] = useState(() => new Date())
-  useEffect(() => {
-    const timer = window.setInterval(() => setGuidanceNow(new Date()), 60_000)
-    return () => window.clearInterval(timer)
-  }, [])
-  const [plans, setPlans] = useState<TableMealsItem[]>([])
-  const [sites, setSites] = useState<SupplierSite[]>([])
-  const [result, setResult] = useState<ShortageResult | null>(null)
-  const [selected, setSelected] = useState<Record<string, OrderSelection>>({})
-  const [keyword, setKeyword] = useState('')
-  // 재고 상태 필터: ?stock=RED|YELLOW|CHECK 로 바로 열 수 있다
-  const [stockFilter, setStockFilter] = useState<ShortageStockFilter>(() => {
-    const value = params.get('stock')?.toUpperCase()
-    return value === 'RED' || value === 'YELLOW' || value === 'CHECK' ? value : ''
-  })
-  const [autoRefresh, setAutoRefresh] = useState(false)
-  const [revision, setRevision] = useState(0)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [message, setMessage] = useState('')
-  const [batchResult, setBatchResult] = useState<BatchResult | null>(null)
-  const [preview, setPreview] = useState<OrderPreview | null>(null)
-  const [previewing, setPreviewing] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [completed, setCompleted] = useState(false)
-
-  useEffect(() => {
-    let active = true
-    setSelected({}); setResult(null)
-    setCriteria(current => ({ ...current, account_id: accountId, sold_to: '' }))
-    if (!accountId) { setError('로그인한 거래처 정보를 확인해주세요.'); return }
-    void Promise.all([getTableMealsList(accountId), getSupplierSites(accountId)]).then(([tables, rows]) => {
-      if (!active) return
-      const unique = rows.filter(site => ['WELSTORY', 'OURHOME'].includes(site.supplier_code))
-      setPlans(tables); setSites(unique)
-      setCriteria(current => ({ ...current, sold_to: '', supplier_code: '' }))
-    }).catch((e: unknown) => { if (active) setError(e instanceof Error ? e.message : '거래처 조회 실패') })
-    return () => { active = false }
-  }, [accountId])
-
-  useEffect(() => {
-    if (!criteria.table_id || criteria.source !== 'PLAN') return
-    let active = true
-    void getPlanDates(accountId, criteria.table_id).then(dates => {
-      if (!active || !dates.length) return
-      setCriteria(current => ({ ...current, date_from: dates[0], date_to: dates[dates.length - 1], delivery_date: dates[0] < day() ? day() : dates[0] }))
-    }).catch((e: unknown) => { if (active) setError(e instanceof Error ? e.message : '식단 기간 조회 실패') })
-    return () => { active = false }
-  }, [accountId, criteria.table_id, criteria.source])
-
-  useEffect(() => {
-    if (!criteria.account_id) return
-    const controller = new AbortController()
-    setLoading(true); setError(''); setPreview(null)
-    void getShortages(criteria, controller.signal).then(data => {
-      if (controller.signal.aborted) return
-      setResult(data)
-      setSelected(current => Object.fromEntries(Object.entries(current).filter(([id, selection]) => {
-        const offer = data.ingredients.find(row => row.ingredient_id === id)?.offers.find(candidate => candidate.supplier_offer_id === selection.supplier_offer_id)
-        return offer?.orderable && selection.order_qty > 0 && selection.order_qty <= (offer.quantity_basis === 'MANUAL' ? MANUAL_MAX_ORDER_QTY : offer.recommended_qty)
-      })))
-    }).catch((e: unknown) => {
-      if (!controller.signal.aborted) { setResult(null); setSelected({}); setError(e instanceof Error ? e.message : '부족재고 조회 실패') }
-    }).finally(() => { if (!controller.signal.aborted) setLoading(false) })
-    return () => controller.abort()
-  }, [criteria, revision])
-
-  useEffect(() => {
-    if (!autoRefresh || preview || submitting || previewing) return
-    const timer = window.setInterval(() => setRevision(value => value + 1), 60_000)
-    return () => window.clearInterval(timer)
-  }, [autoRefresh, preview, submitting, previewing])
-
-  const update = (patch: Partial<ShortageCriteria>) => {
-    setSelected({}); setPreview(null); setMessage(''); setCriteria(current => ({ ...current, ...patch }))
-  }
-  const stockCounts = useMemo(() => {
-    const all = result?.ingredients || []
-    return { '': all.length, RED: all.filter(row => matchesStockFilter(row, 'RED')).length,
-      YELLOW: all.filter(row => matchesStockFilter(row, 'YELLOW')).length, CHECK: all.filter(row => matchesStockFilter(row, 'CHECK')).length }
-  }, [result])
-  // 빨강(필요량 부족) → 노랑(안전재고 미달) → 이름순. 집중 식재료는 맨 위.
-  const rows = useMemo(() => [...(result?.ingredients || [])].filter(row =>
-    matchesStockFilter(row, stockFilter) && (!keyword || `${row.ingredient_name} ${row.ingredient_id}`.toLowerCase().includes(keyword.toLowerCase())),
-  ).sort((a, b) => Number(b.ingredient_id === focusIngredient) - Number(a.ingredient_id === focusIngredient)
-    || statusRank[shortageStockStatus(a)] - statusRank[shortageStockStatus(b)] || a.ingredient_name.localeCompare(b.ingredient_name, 'ko')), [result, keyword, focusIngredient, stockFilter])
-  const selectionCount = Object.keys(selected).length
-  const selectedAmount = Object.values(selected).reduce((sum, selection) => {
-    const offer = result?.ingredients.find(row => row.ingredient_id === selection.ingredient_id)?.offers.find(item => item.supplier_offer_id === selection.supplier_offer_id)
-    return sum + (offer ? offer.purchase_price * selection.order_qty : 0)
-  }, 0)
-  const selectedSuppliers = [...new Set(Object.values(selected).flatMap(selection => {
-    const offer = result?.ingredients.find(row => row.ingredient_id === selection.ingredient_id)?.offers.find(item => item.supplier_offer_id === selection.supplier_offer_id)
-    return offer ? [offer.supplier_name] : []
-  }))]
-  const makePreview = async () => {
-    setPreviewing(true); setError(''); setMessage(''); setCompleted(false); setBatchResult(null)
-    try { setPreview(await previewShortageOrder(criteria, Object.values(selected))) }
-    catch (e) { setError(e instanceof Error ? e.message : '발주서 확인 실패'); setRevision(value => value + 1) }
-    finally { setPreviewing(false) }
-  }
-  const submit = async () => {
-    if (!preview || submitting || completed) return
-    setSubmitting(true); setMessage('')
-    try {
-      const response = await submitMixedProcurement({
-        account_id: accountId, shortage_criteria: preview.criteria,
-        items: preview.items.map(row => ({ source_ingredient_id: row.ingredient_id, supplier_offer_id: row.offer.supplier_offer_id,
-          delivery_terms_confirmed: row.delivery_terms_confirmed, delivery_date: preview.criteria.delivery_date, order_qty: row.order_qty, expected_price: row.offer.purchase_price })),
-      })
-      setBatchResult(response); setCompleted(true); setSelected({}); clearDeadlineAlertCache()
-      setMessage('공급사별 발주 결과를 확인해주세요.')
-    } catch (e) { setMessage(e instanceof Error ? e.message : '발주 결과를 확인하지 못했습니다.') }
-    finally { setSubmitting(false) }
-  }
-  const closePreview = () => { if (submitting) return; setPreview(null); setRevision(value => value + 1) }
-
+  const { accountId, focusIngredient, criteria, guidanceNow, plans, sites, result, selected, setSelected, keyword, setKeyword, stockFilter, setStockFilter, autoRefresh, setAutoRefresh, setRevision, loading, error, setError, message, batchResult, setBatchResult, preview, setPreview, previewing, submitting, setSubmitting, completed, setCompleted, update, stockCounts, rows, selectionCount, selectedAmount, selectedSuppliers, makePreview, submit, closePreview } = useShortageOrder(fixedSource)
   const body = <>
     {!fixedSource && <><div className="shortage-source-tabs" role="group" aria-label="발주 기준">
       {([['PLAN', '식단표 기준 부족량', '저장된 식단의 필요량으로 계산'], ['STOCK', '현재 부족 재고 바로 주문', '현재고가 없거나 안전재고보다 적은 식자재'], ['INVENTORY', '최근 사용량 기준 부족 예상', '최근 평균 사용량 × 확보일수 + 안전재고']] as const).map(([value, label, hint]) =>
