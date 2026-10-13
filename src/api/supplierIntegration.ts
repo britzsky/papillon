@@ -1,5 +1,6 @@
 import type { ShortageCriteria } from './shortageProcurement'
 import { buildApiUrl } from '../config/api'
+import { newRequestKey } from '../utils/requestKey'
 
 type Row = Record<string, unknown>
 
@@ -183,7 +184,7 @@ export async function submitWelstoryProcurementOrder(input: {
   const storageKey = 'pending-supplier-order:' + input.accountId
   let pending: { signature: string; key: string } | null = null
   try { pending = JSON.parse(sessionStorage.getItem(storageKey) || 'null') } catch { pending = null }
-  if (pending?.signature !== signature) pending = { signature, key: crypto.randomUUID() }
+  if (pending?.signature !== signature) pending = { signature, key: newRequestKey() }
   sessionStorage.setItem(storageKey, JSON.stringify(pending))
   const response = await fetch(buildApiUrl('/Procurement/Order'), {
     method: 'POST',

@@ -1,4 +1,5 @@
 import { buildApiUrl } from '../config/api'
+import { newRequestKey } from '../utils/requestKey'
 
 export type SearchEntity = {
   entity_type: 'MENU' | 'INGREDIENT' | 'VENDOR' | 'HYGIENE_GUIDE'
@@ -10,10 +11,10 @@ export type SearchEntity = {
 const SESSION_KEY = 'analytics_search_session_id'
 
 function getSessionId() {
-  if (typeof window === 'undefined') return crypto.randomUUID()
+  if (typeof window === 'undefined') return newRequestKey()
   const existing = sessionStorage.getItem(SESSION_KEY)
   if (existing) return existing
-  const created = crypto.randomUUID()
+  const created = newRequestKey()
   sessionStorage.setItem(SESSION_KEY, created)
   return created
 }

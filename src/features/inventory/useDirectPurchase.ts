@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { buildApiUrl } from '../../config/api'
 import { recordDirectPurchase, type AccountInventoryItem, type DirectPurchaseResult } from '../../api/inventory'
 import { convertQuantity, normalizeQuantityUnit } from '../../utils/quantityUnits'
+import { newRequestKey } from '../../utils/requestKey'
 
 export type DirectPurchaseIngredient = { ingredient_id: string; ingredient_name: string; base_unit: string }
 type DirectProduct = { account_ingredient_product_id: number; product_name: string }
@@ -11,12 +12,6 @@ export const NEW_PRODUCT = 'NEW'
 export function todayValue() {
   const now = new Date()
   return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10)
-}
-
-/** 재시도해도 한 번만 반영되도록 요청마다 키를 만든다 (http 환경에서는 randomUUID가 없을 수 있음) */
-function newRequestKey() {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID()
-  return `DP-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`
 }
 
 /** 기준단위로 환산 가능한 입력 단위: g→g/kg, ml→ml/L, 그 외는 기준단위만 */

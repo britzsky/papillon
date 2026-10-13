@@ -1,5 +1,6 @@
 import { buildApiUrl } from '../config/api'
 import type { ShortageCriteria } from './shortageProcurement'
+import { newRequestKey } from '../utils/requestKey'
 
 export type BatchItem = { delivery_terms_confirmed?: boolean; supplier_offer_id: number; delivery_date: string; order_qty: number; expected_price: number; source_ingredient_id?: string }
 export type BatchInput = { account_id: string; items: BatchItem[]; shortage_criteria?: ShortageCriteria }
@@ -36,7 +37,7 @@ export async function submitMixedProcurement(input: BatchInput): Promise<BatchRe
   const signature = JSON.stringify(input)
   let entry = pending(input.account_id)
   if (entry && entry.signature !== signature && !entry.resolved) throw new Error('이전 발주 결과가 확인되지 않았습니다. 이전 요청 결과 확인 버튼으로 먼저 확인해주세요.')
-  if (!entry || entry.signature !== signature) entry = { signature, body: { ...input, request_key: crypto.randomUUID(), user_id: localStorage.getItem('user_id') || '' }, resolved: false }
+  if (!entry || entry.signature !== signature) entry = { signature, body: { ...input, request_key: newRequestKey(), user_id: localStorage.getItem('user_id') || '' }, resolved: false }
   sessionStorage.setItem(storageKey(input.account_id), JSON.stringify(entry))
   return send(entry)
 }

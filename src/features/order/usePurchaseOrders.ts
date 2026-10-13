@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { buildApiUrl } from '../../config/api'
 import type { PreferenceChange } from '../../api/mixedProcurement'
 import { getSupplierSites } from '../../api/supplierIntegration'
+import { newRequestKey } from '../../utils/requestKey'
 
 export type OrderItem = { unit_price_snapshot?: number; line_amount?: number; source_ingredient_id?: string; ingredient_link_status?: string; supplier_item_code?: string; client_ord_item: string; product_name: string; order_qty: number; received_order_qty: number; order_unit: string; item_status: string; supplier_result_code?: string; supplier_error_message?: string }
 export type PurchaseOrder = { supplier_id?: number | string; sold_to?: string; site_name?: string; account_name?: string; created_at?: string; client_note?: string; purchase_order_id: string; client_ord: string; supplier_name: string; status: string; requested_delivery_date: string; total_amount: number; items: OrderItem[]; supplier_result_code?: string; supplier_result_message?: string; preference_changes?: PreferenceChange[] }
@@ -14,12 +15,6 @@ export const UNCERTAIN_STATUSES = ['UNKNOWN', 'SENDING', 'PARTIAL_FAILED']
 
 const today = () => new Date().toLocaleDateString('sv-SE')
 export const daysAgo = (days: number) => { const date = new Date(); date.setDate(date.getDate() - days); return date.toLocaleDateString('sv-SE') }
-
-/** 재시도해도 한 번만 반영되도록 요청마다 키를 만든다. crypto.randomUUID는 https·localhost에서만 있어 http 운영 서버용 대체 키를 둔다 */
-function newReceiptKey() {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID()
-  return `RC-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`
-}
 
 async function request(path: string, body?: unknown) {
   const response = await fetch(buildApiUrl(path), body === undefined ? undefined : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
@@ -97,7 +92,7 @@ export function usePurchaseOrders(accountId: string, focusedId: string) {
     const items = selected.items.filter(item => Number(receiptQuantity(item)) > 0).map(item => ({ client_ord_item: item.client_ord_item, received_qty: Number(receiptQuantity(item)) }))
     if (!items.length) { setMessage('이번에 실제 입고된 수량을 입력해 주세요.'); return }
     const signature = JSON.stringify({ order: selected.purchase_order_id, receiptDate, items })
-    if (receiptRequest.current?.signature !== signature) receiptRequest.current = { signature, key: newReceiptKey() }
+    if (receiptRequest.current?.signature !== signature) receiptRequest.current = { signature, key: newRequestKey() }
     setBusy(true)
     try {
       await request('/Procurement/Receive', { account_id: accountId, purchase_order_id: selected.purchase_order_id, receipt_date: receiptDate, receipt_key: receiptRequest.current.key, user_id: localStorage.getItem('user_id') || '', items })
