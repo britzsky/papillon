@@ -26,7 +26,8 @@ import WelstoryOrder from './pages/order/WelstoryOrder.tsx'
 import SupplierIntegrationDashboard from './pages/order/SupplierIntegrationDashboard.tsx'
 import SupplierSiteMapping from './pages/order/SupplierSiteMapping.tsx'
 import SearchAnalytics from './pages/operations/SearchAnalytics.tsx'
-import { DeviceRoute } from './mobile/deviceMode'
+import { DeviceRoute, DeviceTabRoute } from './mobile/deviceMode'
+import OrderTouch from './mobile/pages/OrderTouch'
 import HomeTouch from './mobile/pages/HomeTouch'
 import TableMealsTouch from './mobile/pages/TableMealsTouch'
 import InventoryTouch from './mobile/pages/InventoryTouch'
@@ -52,8 +53,8 @@ createRoot(document.getElementById('root')!).render(
       <GlobalLoading />
       <WorkspaceBoundary><Routes>
         {/* 발주 화면 통합: 예전 주소는 발주하기의 해당 탭으로 이동(쿼리 유지) */}
-        <Route path="/order_manager/order" element={<OrderWorkspace />} />
-        <Route path="/order_manager/recommended" element={<OrderWorkspace initialTab="recommended" />} />
+        <Route path="/order_manager/order" element={<DeviceTabRoute pc={<OrderWorkspace />} touch={<OrderTouch />} touchTabs={['recommended']} />} />
+        <Route path="/order_manager/recommended" element={<DeviceRoute pc={<OrderWorkspace initialTab="recommended" />} touch={<OrderTouch />} />} />
         <Route path="/inventory/history" element={<DeviceRoute pc={<InventoryHistory />} touch={<HistoryTouch />} />} />
         <Route path="/" element={<App />} />
         <Route path="/payment" element={<Payment />} />

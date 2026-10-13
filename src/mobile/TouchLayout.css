@@ -555,3 +555,5 @@ body.t-ui .t-segment button.is-active { --button-bg: var(--t-accent-soft); --but
 
 body.t-ui .t-round { --button-bg: var(--t-accent); --button-bg-hover: var(--t-accent); --button-bg-disabled: var(--t-accent); --button-text: #fff; }
 .t-summary .is-total:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+/* 위 조회 조건 줄의 탭 전환은 글자 폭만큼 늘어나게(잘림 방지) */
+.t-top__toolbar .t-segment button { flex: none; }
