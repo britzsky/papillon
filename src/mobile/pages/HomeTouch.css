@@ -1,45 +1,50 @@
 .ht-checked { color: var(--t-muted); font-size: 13px; font-weight: 600; }
 
+/* 오늘 할 일 칸(레퍼런스의 카테고리 칸: 아이콘 위, 글자 아래) */
 .ht-tiles {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
 }
 
 .ht-tile {
   display: grid;
   align-content: start;
   gap: 4px;
-  min-height: 168px;
+  min-height: 176px;
   color: inherit;
   text-decoration: none;
-  border-top: 5px solid var(--t-line);
 }
 
 a.ht-tile:active { transform: scale(0.99); }
+
 .ht-tile__icon {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  margin-bottom: 6px;
+  width: 50px;
+  height: 50px;
+  margin-bottom: 10px;
   border-radius: 14px;
   background: var(--t-surface-2);
   color: var(--t-muted);
 }
 
-.ht-tile__label { color: var(--t-muted); font-size: 14px; font-weight: 800; }
+.ht-tile__label { color: var(--t-muted); font-size: 14px; font-weight: 700; }
 .ht-tile__value { font-size: 30px; line-height: 1.15; letter-spacing: -0.02em; }
 .ht-tile__hint { color: var(--t-muted); font-size: 13px; line-height: 1.45; }
 
-.ht-tile.is-urgent { border-top-color: var(--t-danger); }
-.ht-tile.is-urgent .ht-tile__icon { background: var(--t-danger-soft); color: var(--t-danger); }
+/* 할 일 있음: 민트 칸(레퍼런스의 선택된 카테고리) · 급함: 노랑 · 마감 임박: 빨강 · 없음: 흰 칸 */
+.ht-tile.is-info, .ht-tile.is-warn, .ht-tile.is-urgent { box-shadow: none; }
+.ht-tile.is-info { background: var(--t-accent-soft); }
+.ht-tile.is-info .ht-tile__icon { background: var(--t-surface); color: var(--t-accent); }
+.ht-tile.is-info .ht-tile__value { color: var(--t-accent-strong); }
+.ht-tile.is-warn { background: var(--t-yellow-soft); }
+.ht-tile.is-warn .ht-tile__icon { background: var(--t-yellow); color: #3d2a00; }
+.ht-tile.is-warn .ht-tile__value { color: var(--t-warn); }
+.ht-tile.is-urgent { background: var(--t-danger-soft); }
+.ht-tile.is-urgent .ht-tile__icon { background: var(--t-danger); color: #fff; }
 .ht-tile.is-urgent .ht-tile__value { color: var(--t-danger); }
-.ht-tile.is-warn { border-top-color: var(--t-accent); }
-.ht-tile.is-warn .ht-tile__icon { background: var(--t-accent-soft); color: var(--t-accent-strong); }
-.ht-tile.is-warn .ht-tile__value { color: var(--t-accent-strong); }
-.ht-tile.is-info { border-top-color: var(--t-info); }
-.ht-tile.is-info .ht-tile__icon { background: var(--t-info-soft); color: var(--t-info); }
+.ht-tile.is-done .ht-tile__icon { color: var(--t-accent); }
 .ht-tile.is-done .ht-tile__value { color: var(--t-muted); font-size: 22px; }
 
 .ht-accounts { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
@@ -47,49 +52,52 @@ a.ht-tile:active { transform: scale(0.99); }
 .ht-account {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   width: 100%;
-  min-height: 68px;
+  min-height: 72px;
+  padding: 12px 18px 12px 14px;
   border: 0;
   text-align: left;
 }
 
 .ht-account strong { flex: none; font-size: 16px; }
 .ht-account__chips { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
-.ht-account .t-icon { color: var(--t-muted); }
+.ht-account > .t-icon { color: var(--t-muted); }
 
+/* 바로 가기(레퍼런스의 상품 카드: 위 그림 칸 + 이름 + 민트 버튼) */
 .ht-quick {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 16px;
 }
 
 .ht-quick__item {
   display: grid;
   gap: 4px;
-  min-height: 140px;
+  padding: 12px 12px 14px;
   color: inherit;
   text-decoration: none;
 }
 
 .ht-quick__item:active { transform: scale(0.99); }
-.ht-quick__icon {
+
+.ht-quick__cover {
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 52px;
+  height: 96px;
   margin-bottom: 8px;
-  border-radius: 16px;
-  background: var(--t-accent-soft);
-  color: var(--t-accent-strong);
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--t-accent-softer), var(--t-accent-soft));
+  color: var(--t-accent);
 }
 
-.ht-quick__item strong { font-size: 16px; }
-.ht-quick__item small { color: var(--t-muted); font-size: 13px; }
+.ht-quick__item strong { padding: 0 4px; font-size: 16px; }
+.ht-quick__item small { padding: 0 4px; margin-bottom: 8px; color: var(--t-muted); font-size: 13px; }
 
 @media (max-width: 767px) {
   .ht-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .ht-tile { min-height: 140px; padding: 14px; }
+  .ht-tile { min-height: 150px; padding: 14px; }
   .ht-tile__value { font-size: 24px; }
   .ht-quick { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .ht-quick__cover { height: 72px; }
 }

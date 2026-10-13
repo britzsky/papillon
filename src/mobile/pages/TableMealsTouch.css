@@ -1,171 +1,131 @@
 /* 식단표(터치). 공용 부품은 TouchLayout.css */
-.t-month {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 0 4px;
-  background: var(--t-surface);
-  border-radius: 999px;
-  box-shadow: var(--t-shadow);
-}
+.tm-month { gap: 2px; padding: 0 4px; }
+.tm-month strong { display: inline-flex; align-items: center; gap: 8px; padding: 0 6px; font-size: 16px; }
 
-.t-month strong { display: inline-flex; align-items: center; gap: 8px; padding: 0 6px; font-size: 16px; }
-.t-month strong .t-icon { color: var(--t-accent); }
+.tm-weeks { display: inline-flex; margin-bottom: 14px; max-width: 100%; overflow-x: auto; }
+.tm-weeks button { display: inline-flex; align-items: center; gap: 6px; flex: none; padding: 0 18px; }
+.tm-weeks small { font-size: 12px; font-weight: 600; opacity: 0.7; }
 
-.tm-weeks { margin-bottom: 6px; }
-/* 주차는 요일보다 작은 알약 모양(제목 · 출처) */
-.tm-week { display: inline-flex; align-items: center; gap: 6px; min-width: 0; min-height: 44px; padding: 0 18px; border-radius: 999px; }
-.tm-week small { font-size: 12px; }
-
-.tm-days { margin-bottom: 8px; }
-.tm-day { min-width: 84px; min-height: 76px; }
-.tm-day__weekday { font-size: 18px; }
-.tm-day__done {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 11px;
-  background: var(--t-ok);
-  color: #fff;
-  box-shadow: 0 0 0 2px var(--t-bg);
-}
+/* 요일 칸(레퍼런스의 카테고리 칸) */
+.tm-days { margin-bottom: 6px; }
+.tm-day { min-width: 128px; }
+.tm-day strong { font-size: 16px; }
+.tm-day__today { position: absolute; top: 12px; right: 12px; }
 
 .tm-dayhead {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 12px;
-  margin: 12px 0 14px;
+  margin: 14px 0 14px;
 }
 
-.tm-dayhead h2 { font-size: 21px; letter-spacing: -0.01em; }
+.tm-dayhead h2 { font-size: 20px; letter-spacing: -0.01em; }
 .tm-dayhead__nav { display: flex; gap: 8px; margin-left: auto; }
 
 .tm-slots {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
 }
 
-.tm-slot { display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; }
+/* 식사 카드(레퍼런스의 상품 카드: 위 덮개 + 내용 + 아래 줄) */
+.tm-slot { display: flex; flex-direction: column; gap: 12px; padding: 12px; }
 
-.tm-slot header {
+.tm-slot__cover {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--t-accent-softer), var(--t-accent-soft));
 }
 
-.tm-slot h3 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 18px;
-}
-
-.tm-slot h3::before {
-  content: '';
-  width: 6px;
-  height: 20px;
-  border-radius: 3px;
-  background: var(--t-accent);
-}
-
-.tm-slot ol {
+.tm-slot__icon {
   display: grid;
-  gap: 2px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  counter-reset: menu;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--t-surface);
+  color: var(--t-accent);
 }
+
+.tm-slot__cover > div { flex: 1; min-width: 0; }
+.tm-slot__cover h3 { font-size: 18px; }
+.tm-slot__cover small { color: var(--t-muted); font-size: 13px; font-weight: 600; }
+
+.tm-slot ul { display: grid; margin: 0; padding: 0 6px; list-style: none; }
 
 .tm-slot li {
   display: flex;
   align-items: center;
   gap: 10px;
   min-height: 40px;
-  font-size: 17px;
+  border-bottom: 1px dashed var(--t-line);
+  font-size: 16px;
   font-weight: 600;
-  counter-increment: menu;
 }
 
-.tm-slot li::before {
-  content: counter(menu);
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 24px;
-  height: 24px;
-  border-radius: 8px;
-  background: var(--t-surface-2);
-  color: var(--t-muted);
-  font-size: 12px;
-  font-weight: 800;
-}
+.tm-slot li:last-child { border-bottom: 0; }
+.tm-slot li::before { content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--t-accent); }
 
 .tm-slot footer {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px 14px;
+  justify-content: space-between;
+  gap: 8px;
   margin-top: auto;
-  padding-top: 10px;
-  border-top: 1px dashed var(--t-line);
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--t-surface-2);
   color: var(--t-muted);
   font-size: 13px;
   font-weight: 600;
 }
 
-.tm-slot footer span { display: inline-flex; align-items: center; gap: 4px; }
+.tm-slot footer span { display: inline-flex; align-items: center; gap: 6px; }
+.tm-slot footer strong { color: var(--t-accent-strong); }
+
 .tm-swipe-hint { margin-top: 14px; color: var(--t-muted); font-size: 13px; text-align: center; }
 @media (hover: hover) { .tm-swipe-hint { display: none; } }
 
 /* 오른쪽 사용 확정 패널 */
 .tm-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; }
-.tm-panel__head { padding: 20px 20px 12px; }
-.tm-panel__head h2 { font-size: 20px; }
+.tm-panel__head { padding: 26px 20px 14px; border-bottom: 1px solid var(--t-line); }
+.tm-panel__head h2 { font-size: 24px; letter-spacing: -0.02em; }
 .tm-panel__head p { margin-top: 4px; color: var(--t-muted); font-size: 13px; }
-.tm-panel__body { display: grid; align-content: start; gap: 12px; flex: 1; min-height: 0; overflow-y: auto; padding: 0 20px 12px; }
-.tm-panel__day { margin-top: 6px; font-size: 16px; }
-.tm-panel__empty { color: var(--t-muted); }
+.tm-panel__body { display: grid; align-content: start; gap: 12px; flex: 1; min-height: 0; overflow-y: auto; padding: 16px 20px; }
+.tm-panel__empty { padding: 16px 0; color: var(--t-muted); text-align: center; }
 
-.tm-progress { padding: 14px; border-radius: 14px; background: var(--t-surface-2); }
-.tm-progress > div:first-child { display: flex; justify-content: space-between; font-size: 14px; }
-.tm-progress span { color: var(--t-muted); font-weight: 700; }
-.tm-progress__bar { height: 8px; margin-top: 10px; border-radius: 4px; background: var(--t-line); overflow: hidden; }
-.tm-progress__bar span { display: block; height: 100%; border-radius: 4px; background: var(--t-ok); }
-
-.tm-meals { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.tm-meals { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
 
 .tm-meals li {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 60px;
-  padding: 8px 12px;
+  gap: 12px;
+  min-height: 70px;
+  padding: 10px 14px 10px 10px;
   border: 1px solid var(--t-line);
   border-radius: 14px;
 }
 
+.tm-meals li.is-waiting { border-color: var(--t-accent); box-shadow: inset 0 0 0 1px var(--t-accent); }
 .tm-meals li > div { display: grid; flex: 1; min-width: 0; }
-.tm-meals strong { font-size: 16px; }
+.tm-meals strong { font-size: 15px; }
 .tm-meals small { color: var(--t-muted); font-size: 13px; }
 
 .tm-panel__actions {
   display: grid;
-  gap: 10px;
+  gap: 14px;
   padding: 14px 20px 20px;
-  border-top: 1px solid var(--t-line);
 }
 
 @media (max-width: 767px) {
   .tm-dayhead__nav { display: none; }
   .tm-panel__body { overflow: visible; }
   .tm-slots { grid-template-columns: minmax(0, 1fr); }
+  .tm-day { min-width: 112px; min-height: 100px; }
 }
 
 /* 확정 창 */
@@ -175,40 +135,34 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   padding: 12px 14px;
+  border: 1px solid var(--t-line);
   border-radius: 14px;
-  background: var(--t-surface-2);
 }
 
-.tm-servings li > div:first-child { display: grid; }
+.tm-servings__label { display: grid; flex: 1; min-width: 140px; }
 .tm-servings small { color: var(--t-muted); font-size: 13px; }
 
-.tm-stepper {
-  display: grid;
-  grid-template-columns: 56px 52px 96px 52px 56px;
-  overflow: hidden;
-  background: var(--t-surface);
-  border-radius: 14px;
-  box-shadow: inset 0 0 0 1.5px var(--t-line);
-}
-
-@media (max-width: 420px) { .tm-stepper { grid-template-columns: 48px 44px 1fr 44px 48px; width: 100%; } }
-
-.tm-stepper button { min-height: 52px; border: 0; font-size: 18px; font-weight: 800; touch-action: manipulation; }
+.tm-stepper { display: flex; align-items: center; gap: 8px; }
 .tm-stepper input {
-  width: 100%;
-  min-width: 0;
-  border: 0;
-  border-inline: 1.5px solid var(--t-line);
-  background: transparent;
+  width: 84px;
+  min-height: 48px;
+  border: 1.5px solid var(--t-line);
+  border-radius: 12px;
+  background: var(--t-surface);
   text-align: center;
   font-size: 20px;
   font-weight: 800;
 }
 
-body.t-ui .tm-stepper button { --button-bg: transparent; --button-bg-hover: transparent; --button-bg-disabled: transparent; --button-text: var(--t-accent-strong); }
+.tm-stepper__ten { min-height: 44px; padding: 0 10px; border: 0; border-radius: 10px; font-weight: 800; font-size: 14px; }
+body.t-ui .tm-stepper__ten { --button-bg: var(--t-accent-soft); --button-bg-hover: var(--t-accent-soft); --button-bg-disabled: var(--t-accent-soft); --button-text: var(--t-accent-strong); }
+
+@media (max-width: 420px) {
+  .tm-stepper { width: 100%; justify-content: space-between; }
+  .tm-stepper input { flex: 1; width: auto; }
+}
 
 .tm-note { margin-top: 10px; color: var(--t-muted); font-size: 13px; }
 .tm-subtitle { margin: 18px 0 10px; font-size: 16px; }
@@ -227,7 +181,7 @@ body.t-ui .tm-stepper button { --button-bg: transparent; --button-bg-hover: tran
 .tm-notice a:not(.t-btn) { color: inherit; font-weight: 700; }
 .tm-notice .t-btn { justify-self: start; }
 .tm-notice.is-danger { background: var(--t-danger-soft); color: var(--t-danger); }
-.tm-notice.is-warn { background: var(--t-warn-soft); color: var(--t-warn); }
+.tm-notice.is-warn { background: var(--t-yellow-soft); color: var(--t-warn); }
 .tm-notice.is-confirm { background: var(--t-accent-soft); color: var(--t-accent-strong); }
 
 .tm-ingredients {
@@ -254,5 +208,3 @@ body.t-ui .tm-stepper button { --button-bg: transparent; --button-bg-hover: tran
 .tm-ingredients__stock b { color: var(--t-text); }
 .tm-ingredients li.is-short { border-color: var(--t-danger); background: var(--t-danger-soft); }
 .tm-ingredients__short { grid-column: 1 / -1; color: var(--t-danger); font-size: 13px; font-weight: 800; }
-
-body.t-ui .tm-day.is-today:not(.is-active) { box-shadow: inset 0 0 0 2px var(--t-accent); --button-text: var(--t-accent-strong); }

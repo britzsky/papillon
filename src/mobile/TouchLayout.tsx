@@ -90,6 +90,9 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, children,
     .filter(group => group.items.length > 0)
   const activeGroup = groups.find(group => group.items.some(item => pathname === item.to || pathname.startsWith(`${item.to}/`)))?.key || ''
   const flyout = groups.find(group => group.key === openGroup)
+  // 넓은 메뉴(1100px 이상)에서 펼친 묶음. 처음엔 지금 화면이 든 묶음
+  const [expandedChoice, setExpandedChoice] = useState<string | null>(null)
+  const expanded = expandedChoice ?? activeGroup
 
   const go = (to: string) => {
     setOpenGroup('')
@@ -97,6 +100,7 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, children,
   }
   const pressGroup = (group: NavGroup) => {
     if (group.items.length === 1) go(group.items[0].to)
+    else if (window.matchMedia('(min-width: 1100px)').matches) setExpandedChoice(expanded === group.key ? '' : group.key)
     else setOpenGroup(current => current === group.key ? '' : group.key)
   }
   const changeAccount = (value: string) => {
@@ -111,22 +115,41 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, children,
   }
   const accountName = accounts.find(option => option.value === accountId)?.text || localStorage.getItem('account_name') || ''
 
+  const userName = localStorage.getItem('user_name') || ''
+
   return <div className={`t-app${aside ? ' has-aside' : ''}`}>
     <nav className="t-rail" aria-label="메뉴">
-      <img className="t-rail__logo" src={logo} alt="더채움" />
-      <div className="t-rail__items">
-        {groups.map(group => <button key={group.key} type="button"
-          className={`t-rail__item${activeGroup === group.key ? ' is-active' : ''}${openGroup === group.key ? ' is-open' : ''}`}
-          aria-expanded={group.items.length > 1 ? openGroup === group.key : undefined}
-          onClick={() => pressGroup(group)}>
-          <TouchIcon name={group.icon} />
-          <span>{group.label}</span>
-        </button>)}
+      <div className="t-rail__brand">
+        <img className="t-rail__logo" src={logo} alt="" />
+        <strong>더채움</strong>
       </div>
-      <button type="button" className="t-rail__item t-rail__logout" onClick={logout}>
-        <TouchIcon name="logout" />
-        <span>로그아웃</span>
-      </button>
+      <div className="t-rail__items">
+        {groups.map(group => {
+          const expandedHere = group.items.length > 1 && expanded === group.key
+          return <div key={group.key} className="t-rail__group">
+            <button type="button"
+              className={`t-rail__item${activeGroup === group.key ? ' is-active' : ''}${openGroup === group.key ? ' is-open' : ''}`}
+              aria-expanded={group.items.length > 1 ? expandedHere || openGroup === group.key : undefined}
+              onClick={() => pressGroup(group)}>
+              <TouchIcon name={group.icon} />
+              <span>{group.label}</span>
+            </button>
+            {/* 넓은 화면: 묶음 안 화면을 메뉴 아래에 펼친다(좁은 화면은 펼침 창) */}
+            {expandedHere && <ul className="t-rail__sub">
+              {group.items.map(item => <li key={item.to}>
+                <button type="button" className={pathname === item.to ? 'is-active' : ''} onClick={() => go(item.to)}>{item.label}</button>
+              </li>)}
+            </ul>}
+          </div>
+        })}
+      </div>
+      <div className="t-rail__foot">
+        {userName && <span className="t-rail__user"><i>{userName.slice(0, 1)}</i><span>{userName}</span></span>}
+        <button type="button" className="t-rail__item t-rail__logout" onClick={logout}>
+          <TouchIcon name="logout" />
+          <span>로그아웃</span>
+        </button>
+      </div>
     </nav>
 
     {flyout && <div className="t-flyout-backdrop" role="presentation" onClick={() => setOpenGroup('')}>

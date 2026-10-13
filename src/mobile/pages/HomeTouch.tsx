@@ -52,6 +52,7 @@ export default function HomeTouch() {
       <ul className="ht-accounts">
         {busy.map(row => <li key={row.account_id}>
           <button type="button" className="t-card ht-account" onClick={() => pickAccount(row.account_id, row.account_name)}>
+            <span className="t-dot">{row.account_name.slice(0, 1)}</span>
             <strong>{row.account_name}</strong>
             <span className="ht-account__chips">
               {needsSite(row) && <span className="t-badge is-warn">사업장 지정 필요</span>}
@@ -68,9 +69,10 @@ export default function HomeTouch() {
     <h2 className="t-section-title">바로 가기</h2>
     <div className="ht-quick">
       {QUICK.map(item => <Link key={item.to} className="t-card ht-quick__item" to={withAccount(item.to)}>
-        <span className="ht-quick__icon"><TouchIcon name={item.icon} size={28} /></span>
+        <span className="ht-quick__cover"><TouchIcon name={item.icon} size={34} /></span>
         <strong>{item.label}</strong>
         <small>{item.hint}</small>
+        <span className="t-btn is-soft is-small is-block">열기</span>
       </Link>)}
     </div>
   </TouchLayout>

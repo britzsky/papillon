@@ -12,11 +12,12 @@ const SOURCE_LABEL: Record<string, string> = { auto: '자동', pdf: 'PDF', manua
 const noop = () => {}
 const today = () => new Date().toLocaleDateString('sv-SE')
 const weekLabel = (table: TableMealsItem) => Number.isFinite(table.table_week) ? `${table.table_week}주차` : table.table_name
-const mealTone = (meal: Meal) => meal.status === 'COMPLETED' ? 'is-ok' : Number(meal.needs_reconfirm) ? 'is-warn' : meal.confirmable ? 'is-accent' : ''
+const mealTone = (meal: Meal) => meal.status === 'COMPLETED' ? 'is-ok' : Number(meal.needs_reconfirm) ? 'is-warn' : meal.confirmable ? 'is-yellow' : ''
+type Usage = ReturnType<typeof useMealUsage>
 
 /**
- * 식단표(태블릿·휴대폰). POS 배치: 가운데 주차·요일 탭과 식사 카드, 오른쪽 '사용 확정' 패널.
- * 요일은 탭을 누르거나 본문을 좌우로 밀어 바꾼다. 로직은 features(PC 식단표와 공용).
+ * 식단표(태블릿·휴대폰). POS 배치(레퍼런스 CHILI POS): 가운데 주차 → 요일 칸 → 식사 카드, 오른쪽 '사용 확정' 패널.
+ * 요일은 칸을 누르거나 본문을 좌우로 밀어 바꾼다. 로직은 features(PC 식단표와 공용).
  */
 export default function TableMealsTouch() {
   const view = useTableMealsView()
@@ -24,7 +25,7 @@ export default function TableMealsTouch() {
   const table = view.selectedTable
   const accountId = table?.account_id || view.accountId
 
-  const toolbar = <div className="t-month" role="group" aria-label="조회 월">
+  const toolbar = <div className="t-chip tm-month" role="group" aria-label="조회 월">
     <button type="button" className="t-btn is-ghost is-icon" aria-label="이전 달" onClick={() => view.shiftMonth(-1)}><TouchIcon name="chevronLeft" /></button>
     <strong><TouchIcon name="calendar" size={20} />{year}년 {month}월</strong>
     <button type="button" className="t-btn is-ghost is-icon" aria-label="다음 달" onClick={() => view.shiftMonth(1)}><TouchIcon name="chevronRight" /></button>
@@ -34,7 +35,7 @@ export default function TableMealsTouch() {
 
   if (!ready || !table) {
     return <TouchLayout title="식단표" toolbar={toolbar} onAccountChange={view.setAccountId}>
-      <WeekTabs tables={view.tables} selected={table} onSelect={view.setSelectedTable} />
+      <WeekSwitch tables={view.tables} selected={table} onSelect={view.setSelectedTable} />
       {view.accountError && <p className="t-msg is-error">{view.accountError}</p>}
       {!view.accountId && <p className="t-msg">위에서 거래처를 고르면 식단표가 나옵니다.</p>}
       {view.accountId && view.isTablesLoading && <p className="t-msg" role="status">식단표를 불러오는 중…</p>}
@@ -50,11 +51,12 @@ export default function TableMealsTouch() {
     days={view.detailDays} slotRows={view.slotRows} toolbar={toolbar} onAccountChange={view.setAccountId} />
 }
 
-function WeekTabs({ tables, selected, onSelect }: { tables: TableMealsItem[]; selected: TableMealsItem | null; onSelect: (table: TableMealsItem) => void }) {
+/** 주차 고르기(이 달에 저장된 식단표) */
+function WeekSwitch({ tables, selected, onSelect }: { tables: TableMealsItem[]; selected: TableMealsItem | null; onSelect: (table: TableMealsItem) => void }) {
   if (tables.length === 0) return null
-  return <div className="t-tabs tm-weeks" role="tablist" aria-label="주차">
+  return <div className="t-segment tm-weeks" role="tablist" aria-label="주차">
     {tables.map(table => <button key={table.table_id} type="button" role="tab" aria-selected={selected?.table_id === table.table_id}
-      className={`t-tab tm-week${selected?.table_id === table.table_id ? ' is-active' : ''}`} onClick={() => onSelect(table)}>
+      className={selected?.table_id === table.table_id ? 'is-active' : ''} onClick={() => onSelect(table)}>
       {weekLabel(table)}
       {table.source && <small>{SOURCE_LABEL[table.source] || table.source}</small>}
     </button>)}
@@ -95,32 +97,31 @@ function WeekView({ table, accountId, tables, onSelectTable, days, slotRows, too
     if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) move(dx < 0 ? 1 : -1)
   }
 
-  /** 식사 카드 머리의 상태: 사용 확정 목록에서 같은 이름의 식사를 찾는다(이름이 다르면 표시 안 함) */
+  /** 식사 카드의 상태: 사용 확정 목록에서 같은 이름의 식사를 찾는다(이름이 다르면 표시 안 함) */
   const slotMeal = (label: string) => dayUsage?.meals.find(meal => meal.meal_slot === label)
 
-  const aside = <UsagePanel day={day} dayUsage={dayUsage} usage={usage} />
-
-  return <TouchLayout title="식단표" subtitle={table.table_name} toolbar={toolbar} aside={aside} onAccountChange={onAccountChange}>
-    <WeekTabs tables={tables} selected={table} onSelect={onSelectTable} />
+  return <TouchLayout title="식단표" subtitle={table.table_name} toolbar={toolbar} aside={<UsagePanel day={day} dayUsage={dayUsage} usage={usage} />} onAccountChange={onAccountChange}>
+    <WeekSwitch tables={tables} selected={table} onSelect={onSelectTable} />
 
     <div className="t-tabs tm-days" ref={daysRef} role="tablist" aria-label="요일">
       {days.map((d, index) => {
         const u = usageByDate.get(d.date)
         const done = u && u.total > 0 && u.completed === u.total
+        const isToday = d.date === today()
         return <button key={d.key} type="button" role="tab" aria-selected={index === dayIndex}
-          className={`t-tab tm-day${index === dayIndex ? ' is-active' : ''}${d.date === today() ? ' is-today' : ''}`}
-          onClick={() => setDayIndex(index)}>
-          <span className="tm-day__weekday">{d.weekday || dayLabel(d.date).split(' ')[0]}</span>
-          <small>{d.date === today() ? '오늘' : d.date.slice(5).replace('-', '.')}</small>
-          {done && <i className="tm-day__done" aria-label="사용 확정됨"><TouchIcon name="check" size={14} /></i>}
+          className={`t-tab tm-day${index === dayIndex ? ' is-active' : ''}`} onClick={() => setDayIndex(index)}>
+          <TouchIcon name={done ? 'check' : 'calendar'} />
+          <strong>{d.weekday || dayLabel(d.date).split(' ')[0]}요일</strong>
+          <small>{d.date.slice(5).replace('-', '.')}{u ? ` · ${u.completed}/${u.total}식` : ''}</small>
+          {isToday && <span className="t-badge is-yellow tm-day__today">오늘</span>}
         </button>
       })}
     </div>
 
     <div className="tm-daybody" onTouchStart={e => { touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY } }} onTouchEnd={onTouchEnd}>
       <div className="tm-dayhead">
-        <h2>{dayLabel(day.date)}{day.date === today() ? ' · 오늘' : ''}</h2>
-        <span className="t-badge"><TouchIcon name="flame" size={14} />{Math.round(dayCalories).toLocaleString('ko-KR')} kcal</span>
+        <h2>{dayLabel(day.date)} 메뉴</h2>
+        <span className="t-badge is-accent"><TouchIcon name="flame" size={14} />{Math.round(dayCalories).toLocaleString('ko-KR')} kcal</span>
         <div className="tm-dayhead__nav">
           <button type="button" className="t-btn is-icon" aria-label="전날" disabled={dayIndex === 0} onClick={() => move(-1)}><TouchIcon name="chevronLeft" /></button>
           <button type="button" className="t-btn is-icon" aria-label="다음날" disabled={dayIndex >= days.length - 1} onClick={() => move(1)}><TouchIcon name="chevronRight" /></button>
@@ -133,19 +134,22 @@ function WeekView({ table, accountId, tables, onSelectTable, days, slotRows, too
           const menus = day.meals[row.key] || []
           const calories = menus.reduce((sum, menu) => sum + Number(menu.calories_per_serving || 0), 0)
           const meal = slotMeal(row.label)
-          return <article key={row.id} className="t-card tm-slot">
-            <header>
-              <h3>{row.label}</h3>
+          return <article key={row.id} className={`t-card tm-slot${meal?.confirmable ? ' is-selected' : ''}`}>
+            <header className="tm-slot__cover">
+              <span className="tm-slot__icon"><TouchIcon name="meals" size={26} /></span>
+              <div>
+                <h3>{row.label}</h3>
+                <small>{menus.length}가지{calories > 0 ? ` · ${Math.round(calories).toLocaleString('ko-KR')} kcal` : ''}</small>
+              </div>
               {meal && <span className={`t-badge ${mealTone(meal)}`}>{statusLabel(meal)}</span>}
             </header>
-            <ol>
+            <ul>
               {menus.map(menu => <li key={`${menu.sort_order}-${menu.menu_id || menu.menu_name}`}>{menu.menu_name || '-'}</li>)}
-            </ol>
-            <footer>
-              <span>{menus.length}가지</span>
-              {calories > 0 && <span>{Math.round(calories).toLocaleString('ko-KR')} kcal</span>}
-              {meal && <span><TouchIcon name="users" size={16} />{qty(meal.planned_servings)}명</span>}
-            </footer>
+            </ul>
+            {meal && <footer>
+              <span><TouchIcon name="users" size={16} />계획 {qty(meal.planned_servings)}명</span>
+              {meal.status === 'COMPLETED' && <strong>실제 {qty(meal.actual_servings || 0)}명</strong>}
+            </footer>}
           </article>
         })}
       </div>
@@ -156,62 +160,68 @@ function WeekView({ table, accountId, tables, onSelectTable, days, slotRows, too
   </TouchLayout>
 }
 
-function UsagePanel({ day, dayUsage, usage }: {
-  day: TableMealsDetailDay
-  dayUsage: ReturnType<typeof useMealUsage>['days'][number] | undefined
-  usage: ReturnType<typeof useMealUsage>
-}) {
+/** 오른쪽 패널(레퍼런스의 주문 패널): 제목 → 이 날/이번 주 → 식사 카드 목록 → 합계 상자 → 큰 확정 버튼 */
+function UsagePanel({ day, dayUsage, usage }: { day: TableMealsDetailDay; dayUsage: Usage['days'][number] | undefined; usage: Usage }) {
+  const [scope, setScope] = useState<'day' | 'week'>('day')
+  const list = scope === 'day' ? dayUsage?.meals || [] : usage.meals
+  const waiting = scope === 'day' ? dayUsage?.confirmable || [] : usage.confirmable
+  const done = list.filter(meal => meal.status === 'COMPLETED').length
+  const planned = list.reduce((sum, meal) => sum + Number(meal.planned_servings || 0), 0)
+  const scopeLabel = scope === 'day' ? dayLabel(day.date) : '주간'
+
   const cancelMeal = async (meal: Meal) => {
     if (!window.confirm(`${dayLabel(meal.meal_date)} ${meal.meal_slot} 사용 확정을 취소할까요?\n차감했던 재고가 복원되고, 다시 확정해야 합니다.`)) return
     await usage.cancelMeal(meal)
   }
-  const total = usage.meals.length
-  const percent = total ? Math.round((usage.completed / total) * 100) : 0
 
   return <div className="tm-panel">
     <div className="tm-panel__head">
-      <h2>사용 확정</h2>
-      <p>식사를 낸 뒤 실제 식수로 확정하면 재고가 차감됩니다.</p>
+      <div>
+        <h2>사용 확정</h2>
+        <p>식사를 낸 뒤 실제 식수로 확정하면 재고가 빠집니다.</p>
+      </div>
     </div>
 
     <div className="tm-panel__body">
-      <div className="tm-progress">
-        <div><strong>이번 주</strong><span>{usage.completed}/{total}식 확정</span></div>
-        <div className="tm-progress__bar"><span style={{ width: `${percent}%` }} /></div>
+      <div className="t-segment" role="tablist" aria-label="확정 범위">
+        <button type="button" role="tab" aria-selected={scope === 'day'} className={scope === 'day' ? 'is-active' : ''} onClick={() => setScope('day')}>{dayLabel(day.date)}</button>
+        <button type="button" role="tab" aria-selected={scope === 'week'} className={scope === 'week' ? 'is-active' : ''} onClick={() => setScope('week')}>이번 주 전체</button>
       </div>
 
       {usage.error && <p className="t-msg is-error" role="alert">{usage.error}</p>}
       {usage.allowUnserved && <p className="t-msg is-warn">테스트 모드: 제공 전 식사도 확정(재고 차감)할 수 있습니다.</p>}
       {usage.reconfirm > 0 && <p className="t-msg is-warn">식단 수정으로 확정이 풀린 식사 {usage.reconfirm}식 · 다시 확정해야 재고가 맞습니다.</p>}
 
-      <h3 className="tm-panel__day">{dayLabel(day.date)}</h3>
-      {!dayUsage && !usage.error && <p className="tm-panel__empty">이 날은 확정할 식사가 없습니다.</p>}
-      {dayUsage && <ul className="tm-meals">
-        {dayUsage.meals.map(meal => <li key={meal.meal_service_id}>
+      {list.length === 0 && !usage.error && <p className="tm-panel__empty">확정할 식사가 없습니다.</p>}
+      <ul className="tm-meals">
+        {list.map(meal => <li key={meal.meal_service_id} className={meal.confirmable ? 'is-waiting' : ''}>
+          <span className="t-dot">{meal.meal_slot.slice(0, 1)}</span>
           <div>
-            <strong>{meal.meal_slot}</strong>
+            <strong>{scope === 'week' ? `${dayLabel(meal.meal_date)} · ` : ''}{meal.meal_slot}</strong>
             <small>계획 {qty(meal.planned_servings)}명{meal.status === 'COMPLETED' ? ` · 실제 ${qty(meal.actual_servings || 0)}명` : ''}</small>
           </div>
-          <span className={`t-badge ${mealTone(meal)}`}>{statusLabel(meal)}</span>
-          {meal.status === 'COMPLETED' && <button type="button" className="t-btn is-small is-ghost" disabled={usage.busy} onClick={() => void cancelMeal(meal)}>취소</button>}
+          {meal.status === 'COMPLETED'
+            ? <button type="button" className="t-btn is-small is-ghost" disabled={usage.busy} onClick={() => void cancelMeal(meal)}>취소</button>
+            : <span className={`t-badge ${mealTone(meal)}`}>{statusLabel(meal)}</span>}
         </li>)}
-      </ul>}
+      </ul>
     </div>
 
     <div className="tm-panel__actions">
-      <button type="button" className="t-btn is-primary is-large is-block" disabled={usage.busy || !dayUsage || dayUsage.confirmable.length === 0}
-        onClick={() => dayUsage && usage.openDialog(dayUsage.confirmable, dayLabel(day.date))}>
-        {dayUsage && dayUsage.confirmable.length > 0 ? `${dayLabel(day.date)} 사용 확정 · ${dayUsage.confirmable.length}식`
-          : dayUsage && dayUsage.total > 0 && dayUsage.completed === dayUsage.total ? '이 날은 모두 확정됨' : '확정할 식사 없음'}
-      </button>
-      <button type="button" className="t-btn is-block" disabled={usage.busy || usage.confirmable.length === 0} onClick={() => usage.openDialog(usage.confirmable, '주간')}>
-        이번 주 대기 {usage.confirmable.length}식 한 번에 확정
+      <div className="t-summary">
+        <div><span>계획 식수</span><span>{qty(planned)}명</span></div>
+        <div><span>확정 완료</span><span>{done}/{list.length}식</span></div>
+        <div className="is-total"><span>확정 대기</span><span>{waiting.length}식</span></div>
+      </div>
+      <button type="button" className="t-btn is-primary is-large is-block" disabled={usage.busy || waiting.length === 0}
+        onClick={() => usage.openDialog(waiting, scopeLabel)}>
+        {waiting.length > 0 ? `${scopeLabel} 사용 확정` : list.length > 0 && done === list.length ? '모두 확정됨' : '확정할 식사 없음'}
       </button>
     </div>
   </div>
 }
 
-function UsageSheet({ usage, accountId }: { usage: ReturnType<typeof useMealUsage>; accountId: string }) {
+function UsageSheet({ usage, accountId }: { usage: Usage; accountId: string }) {
   const { targets, servings, preview, step, busy, modalError, shortageCount, scopeLabel } = usage
   const editable = !busy && step !== 'final'
   const stepIndex = step === 'input' ? 1 : step === 'preview' ? 2 : 3
@@ -232,18 +242,19 @@ function UsageSheet({ usage, accountId }: { usage: ReturnType<typeof useMealUsag
 
         <ul className="tm-servings">
           {targets.map(meal => <li key={meal.meal_service_id}>
-            <div>
+            <span className="t-dot">{meal.meal_slot.slice(0, 1)}</span>
+            <div className="tm-servings__label">
               <strong>{dayLabel(meal.meal_date)} · {meal.meal_slot}</strong>
               <small>계획 {qty(meal.planned_servings)}명{Number(meal.needs_reconfirm) ? ' · 재확정' : ''}</small>
             </div>
             <div className="tm-stepper">
-              <button type="button" aria-label="10명 줄이기" disabled={!editable} onClick={() => bump(meal, -10)}>−10</button>
-              <button type="button" aria-label="1명 줄이기" disabled={!editable} onClick={() => bump(meal, -1)}>−</button>
+              <button type="button" className="tm-stepper__ten" aria-label="10명 줄이기" disabled={!editable} onClick={() => bump(meal, -10)}>−10</button>
+              <button type="button" className="t-round" aria-label="1명 줄이기" disabled={!editable} onClick={() => bump(meal, -1)}>−</button>
               <input aria-label={`${meal.meal_date} ${meal.meal_slot} 실제 식수`} type="text" inputMode="numeric" pattern="[0-9]*" disabled={!editable}
                 value={servings[meal.meal_service_id] || ''}
                 onChange={e => usage.changeServings(meal.meal_service_id, e.target.value.replace(/[^0-9]/g, ''))} />
-              <button type="button" aria-label="1명 늘리기" disabled={!editable} onClick={() => bump(meal, 1)}>+</button>
-              <button type="button" aria-label="10명 늘리기" disabled={!editable} onClick={() => bump(meal, 10)}>+10</button>
+              <button type="button" className="t-round" aria-label="1명 늘리기" disabled={!editable} onClick={() => bump(meal, 1)}>+</button>
+              <button type="button" className="tm-stepper__ten" aria-label="10명 늘리기" disabled={!editable} onClick={() => bump(meal, 10)}>+10</button>
             </div>
           </li>)}
         </ul>
