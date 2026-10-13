@@ -67,19 +67,26 @@ export function useTableMealsView() {
     return () => { alive = false }
   }, [accountId, month, tablesKey])
 
-  const detailKey = selectedTable ? `${selectedTable.table_id}|${month}` : ''
+  const tablesReady = tablesKey !== '' && tablesResult.key === tablesKey
+  const tables = useMemo(() => tablesReady ? tablesResult.items : [], [tablesReady, tablesResult])
+  /** 고른 식단표가 지금 목록에 없으면 오늘이 든 주(없으면 첫 주)를 고른 것으로 본다 */
+  const effectiveTable = useMemo(() => {
+    if (selectedTable && tables.some(item => item.table_id === selectedTable.table_id)) return selectedTable
+    const today = new Date().toLocaleDateString('sv-SE')
+    return tables.find(item => { const period = getTableMealsQueryPeriod(item, month); return period.start_date <= today && today <= period.end_date }) || tables[0] || null
+  }, [tables, selectedTable, month])
+
+  const detailKey = effectiveTable ? `${effectiveTable.table_id}|${month}` : ''
   useEffect(() => {
-    if (!selectedTable) return
+    if (!effectiveTable) return
     let alive = true
-    getTableMealsDetailList(selectedTable.account_id || accountId, selectedTable.table_id, getTableMealsQueryPeriod(selectedTable, month))
+    getTableMealsDetailList(effectiveTable.account_id || accountId, effectiveTable.table_id, getTableMealsQueryPeriod(effectiveTable, month))
       .then(items => { if (alive) setDetailResult({ key: detailKey, items, error: '' }) })
       .catch(error => { if (alive) setDetailResult({ key: detailKey, items: [], error: error instanceof Error ? error.message : '식단표 상세를 불러오지 못했습니다.' }) })
     return () => { alive = false }
-  }, [accountId, month, selectedTable, detailKey])
+  }, [accountId, month, effectiveTable, detailKey])
 
   const mealSlots = useMemo(() => slotsResult.key === accountId ? slotsResult.items : [], [slotsResult, accountId])
-  const tablesReady = tablesKey !== '' && tablesResult.key === tablesKey
-  const tables = tablesReady ? tablesResult.items : []
   const tablesError = tablesReady ? tablesResult.error : ''
   const isTablesLoading = tablesKey !== '' && !tablesReady
   const detailReady = detailKey !== '' && detailResult.key === detailKey
@@ -113,6 +120,6 @@ export function useTableMealsView() {
   return {
     accountId, setAccountId, canChangeAccount: !isAccountUser(), accounts, accountError, accountName,
     month, shiftMonth, tables, tablesError, isTablesLoading,
-    selectedTable, setSelectedTable, detailDays, detailItems, slotRows, detailError, isDetailLoading,
+    selectedTable: effectiveTable, setSelectedTable, detailDays, detailItems, slotRows, detailError, isDetailLoading,
   }
 }

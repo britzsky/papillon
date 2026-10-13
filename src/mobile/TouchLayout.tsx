@@ -1,0 +1,172 @@
+import { useEffect, useState, type ReactNode } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { logout } from '../api/auth'
+import { getAccountOptions, type AccountOption } from '../api/operations'
+import TouchIcon, { type TouchIconName } from './TouchIcon'
+import logo from '../assets/logo/thefull.png'
+import './TouchLayout.css'
+
+type NavItem = { label: string; to: string; hint: string }
+type NavGroup = { key: string; label: string; icon: TouchIconName; items: NavItem[]; hqOnly?: boolean }
+
+/** 왼쪽 메뉴(휴대폰은 아래 탭). 화면이 하나인 묶음은 바로 이동, 여럿이면 펼쳐서 고른다. PC SideMenuLayout과 같은 주소를 쓴다. */
+const NAV: NavGroup[] = [
+  { key: 'home', label: '홈', icon: 'home', items: [{ label: '오늘 할 일', to: '/home', hint: '' }] },
+  { key: 'meals', label: '식단', icon: 'meals', items: [
+    { label: '식단표', to: '/operations/table-meals', hint: '요일별 메뉴 보기 · 사용 확정' },
+    { label: '거래처 메뉴', to: '/operations/account-menu', hint: '거래처에서 쓰는 메뉴와 식재료' },
+    { label: '메뉴 관리', to: '/operations/menu', hint: '본사 메뉴 등록' },
+  ] },
+  { key: 'order', label: '발주', icon: 'order', items: [
+    { label: '발주하기', to: '/order_manager/order', hint: '부족한 식재료 주문' },
+    { label: '발주서 · 입고', to: '/order_manager/orders', hint: '주문 결과 확인 · 입고 확정' },
+    { label: '공급사 연동', to: '/order_manager/suppliers', hint: '웰스토리 · 아워홈 연결 상태' },
+    { label: '사업장 매핑', to: '/order_manager/supplier-sites', hint: '거래처별 공급사 사업장' },
+  ] },
+  { key: 'inventory', label: '재고', icon: 'inventory', items: [
+    { label: '재고 현황', to: '/inventory/account', hint: '상품별 재고 · 직접 구매 · 조정' },
+    { label: '변동 이력', to: '/inventory/history', hint: '입고 · 사용 · 조정 기록' },
+    { label: '거래처 식재료', to: '/inventory/account-ingredients', hint: '거래처 식재료와 상품 연결' },
+    { label: '식자재 관리', to: '/inventory/ingredients', hint: '본사 식자재 목록' },
+  ] },
+  { key: 'sanitation', label: '위생', icon: 'sanitation', items: [{ label: '위생 점검', to: '/sanitation/vendor', hint: '' }] },
+  { key: 'hq', label: '본사', icon: 'hq', hqOnly: true, items: [
+    { label: '고객사 관리', to: '/operations/account', hint: '고객사 · 식사 설정' },
+    { label: '검색어 관리', to: '/operations/search-analytics', hint: '검색 기록 분석' },
+  ] },
+]
+
+/** 거래처 계정(user_type 3)에게 숨기는 본사 화면(WorkspaceBoundary의 hqOnly와 같은 목록) */
+const HQ_ONLY = ['/order_manager/suppliers', '/order_manager/supplier-sites', '/order_manager/welstory', '/inventory/ingredients', '/operations/menu', '/operations/account', '/operations/search-analytics']
+const isAccountUser = () => localStorage.getItem('user_type') === '3'
+
+const todayLabel = () => new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })
+
+/**
+ * 태블릿·휴대폰 공통 틀(POS 형태): 왼쪽 아이콘 메뉴 + 위 제목·거래처 + 본문 + 오른쪽 실행 패널(aside).
+ * 휴대폰(768px 미만)은 메뉴가 아래 탭, 실행 패널은 본문 아래로 내려간다.
+ * PC 전용 전역 스타일(body.workspace-ui)은 이 틀이 있는 동안 끈다.
+ */
+export default function TouchLayout({ title, subtitle, toolbar, aside, children, onAccountChange }: {
+  title: string
+  subtitle?: string
+  /** 제목 옆 조회 조건(월 이동 등) */
+  toolbar?: ReactNode
+  /** 오른쪽 실행 패널(요약·확정 버튼) */
+  aside?: ReactNode
+  children: ReactNode
+  /** 위 거래처 선택이 바뀔 때. 없으면 주소의 account_id만 바꾼다 */
+  onAccountChange?: (accountId: string) => void
+}) {
+  const { pathname } = useLocation()
+  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [openGroup, setOpenGroup] = useState('')
+  const [accounts, setAccounts] = useState<AccountOption[]>([])
+  const accountId = searchParams.get('account_id') || localStorage.getItem('account_id') || ''
+  const accountUser = isAccountUser()
+
+  useEffect(() => {
+    const body = document.body
+    const hadWorkspaceUi = body.classList.contains('workspace-ui')
+    body.classList.remove('workspace-ui')
+    body.classList.add('t-ui')
+    return () => {
+      body.classList.remove('t-ui')
+      if (hadWorkspaceUi) body.classList.add('workspace-ui')
+    }
+  }, [])
+
+  useEffect(() => {
+    if (accountUser) return
+    let alive = true
+    getAccountOptions().then(rows => { if (alive) setAccounts(rows) }).catch(() => { if (alive) setAccounts([]) })
+    return () => { alive = false }
+  }, [accountUser])
+
+  const groups = NAV
+    .filter(group => !(accountUser && group.hqOnly))
+    .map(group => ({ ...group, items: group.items.filter(item => !(accountUser && HQ_ONLY.includes(item.to))) }))
+    .filter(group => group.items.length > 0)
+  const activeGroup = groups.find(group => group.items.some(item => pathname === item.to || pathname.startsWith(`${item.to}/`)))?.key || ''
+  const flyout = groups.find(group => group.key === openGroup)
+
+  const go = (to: string) => {
+    setOpenGroup('')
+    navigate(accountId ? `${to}?${new URLSearchParams({ account_id: accountId })}` : to)
+  }
+  const pressGroup = (group: NavGroup) => {
+    if (group.items.length === 1) go(group.items[0].to)
+    else setOpenGroup(current => current === group.key ? '' : group.key)
+  }
+  const changeAccount = (value: string) => {
+    // 비우면(전체 거래처) 다른 화면이 예전 거래처로 돌아가지 않게 기억도 지운다
+    if (value) localStorage.setItem('account_id', value); else localStorage.removeItem('account_id')
+    const name = accounts.find(option => option.value === value)?.text
+    if (name) localStorage.setItem('account_name', name)
+    const next = new URLSearchParams(searchParams)
+    if (value) next.set('account_id', value); else next.delete('account_id')
+    setSearchParams(next, { replace: true })
+    onAccountChange?.(value)
+  }
+  const accountName = accounts.find(option => option.value === accountId)?.text || localStorage.getItem('account_name') || ''
+
+  return <div className={`t-app${aside ? ' has-aside' : ''}`}>
+    <nav className="t-rail" aria-label="메뉴">
+      <img className="t-rail__logo" src={logo} alt="더채움" />
+      <div className="t-rail__items">
+        {groups.map(group => <button key={group.key} type="button"
+          className={`t-rail__item${activeGroup === group.key ? ' is-active' : ''}${openGroup === group.key ? ' is-open' : ''}`}
+          aria-expanded={group.items.length > 1 ? openGroup === group.key : undefined}
+          onClick={() => pressGroup(group)}>
+          <TouchIcon name={group.icon} />
+          <span>{group.label}</span>
+        </button>)}
+      </div>
+      <button type="button" className="t-rail__item t-rail__logout" onClick={logout}>
+        <TouchIcon name="logout" />
+        <span>로그아웃</span>
+      </button>
+    </nav>
+
+    {flyout && <div className="t-flyout-backdrop" role="presentation" onClick={() => setOpenGroup('')}>
+      <section className="t-flyout" role="dialog" aria-label={`${flyout.label} 메뉴`} onClick={e => e.stopPropagation()}>
+        <h2>{flyout.label}</h2>
+        <ul>
+          {flyout.items.map(item => <li key={item.to}>
+            <button type="button" className={pathname === item.to ? 'is-active' : ''} onClick={() => go(item.to)}>
+              <strong>{item.label}</strong>
+              {item.hint && <small>{item.hint}</small>}
+            </button>
+          </li>)}
+        </ul>
+      </section>
+    </div>}
+
+    <div className="t-page">
+      <header className="t-top">
+        <div className="t-top__title">
+          <p>{todayLabel()}</p>
+          <h1>{title}</h1>
+          {subtitle && <span>{subtitle}</span>}
+        </div>
+        {toolbar && <div className="t-top__toolbar">{toolbar}</div>}
+        <div className="t-top__account">
+          {accountUser
+            ? <span className="t-chip"><TouchIcon name="store" />{accountName || '내 거래처'}</span>
+            : <label className="t-chip t-chip--select">
+              <TouchIcon name="store" />
+              <select aria-label="거래처" value={accountId} onChange={e => changeAccount(e.target.value)}>
+                <option value="">전체 거래처</option>
+                {accounts.map(option => <option key={option.value} value={option.value}>{option.text}</option>)}
+              </select>
+            </label>}
+        </div>
+      </header>
+      <div className="t-body">
+        <main className="t-main">{children}</main>
+        {aside && <aside className="t-aside">{aside}</aside>}
+      </div>
+    </div>
+  </div>
+}

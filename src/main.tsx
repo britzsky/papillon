@@ -26,8 +26,9 @@ import WelstoryOrder from './pages/order/WelstoryOrder.tsx'
 import SupplierIntegrationDashboard from './pages/order/SupplierIntegrationDashboard.tsx'
 import SupplierSiteMapping from './pages/order/SupplierSiteMapping.tsx'
 import SearchAnalytics from './pages/operations/SearchAnalytics.tsx'
-import MobileModeSwitch from './mobile/MobileModeSwitch'
-import MobileTableMeals from './mobile/pages/MobileTableMeals'
+import { DeviceRoute } from './mobile/deviceMode'
+import HomeTouch from './mobile/pages/HomeTouch'
+import TableMealsTouch from './mobile/pages/TableMealsTouch'
 
 import './styles/WorkspaceTheme.css'
 import './styles/UserTypography.css'
@@ -46,7 +47,6 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <GlobalLoading />
-      <MobileModeSwitch />
       <WorkspaceBoundary><Routes>
         {/* 발주 화면 통합: 예전 주소는 발주하기의 해당 탭으로 이동(쿼리 유지) */}
         <Route path="/order_manager/order" element={<OrderWorkspace />} />
@@ -58,7 +58,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/payment/fail" element={<PaymentResult />} />
         <Route path="/billing/success" element={<PaymentResult />} />
         <Route path="/billing/fail" element={<PaymentResult />} />
-        <Route path="/home" element={<Home />} />
+        <Route path="/home" element={<DeviceRoute pc={<Home />} touch={<HomeTouch />} />} />
         <Route path="/search" element={<Navigate to={`/home${window.location.search}`} replace />} />
         <Route path="/home/sidebar" element={<Home />} />
         <Route path="/home/sidebar/food-order" element={<OrderWorkspace initialTab="shortage" />} />
@@ -76,11 +76,8 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/operations/menu" element={<MenuManager />} />
         <Route path="/operations/account" element={<AccountManager />} />
         <Route path="/operations/account-menu" element={<AccountMenuManager />} />
-        <Route path="/operations/table-meals" element={<TableMealsManager />} />
+        <Route path="/operations/table-meals" element={<DeviceRoute pc={<TableMealsManager />} touch={<TableMealsTouch />} />} />
         <Route path="/operations/search-analytics" element={<SearchAnalytics />} />
-        {/* 모바일·태블릿 화면(src/mobile). 터치 기기는 MobileModeSwitch가 PC 주소에서 이리로 보낸다 */}
-        <Route path="/m" element={<Navigate to="/m/table-meals" replace />} />
-        <Route path="/m/table-meals" element={<MobileTableMeals />} />
         <Route path="/sanitation/vendor" element={<VendorSanitation />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes></WorkspaceBoundary>
