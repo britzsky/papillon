@@ -1,4 +1,4 @@
-import logo from './assets/image/thefull_sign_1.png'
+import logo from './assets/logo/thefull.png'
 import { useLogin } from './features/auth/useLogin'
 import './App.css'
 
@@ -46,7 +46,7 @@ function App() {
       ) : null}
 
       <section className="login-panel">
-        <img src={logo} alt="logo" className="logo" />
+        <img src={logo} alt="더채움" className="logo" />
 
         <form className="login-form" onSubmit={handleSubmit}>
           <input

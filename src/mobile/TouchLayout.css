@@ -60,8 +60,7 @@ body.t-ui h1, body.t-ui h2, body.t-ui h3, body.t-ui p { margin: 0; }
 }
 
 .t-rail__brand { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 18px; }
-.t-rail__logo { width: 52px; height: auto; }
-.t-rail__brand strong { display: none; font-size: 17px; }
+.t-rail__logo { width: 72px; height: auto; }
 .t-rail__items { display: grid; gap: 6px; }
 
 .t-rail__item {
@@ -125,8 +124,7 @@ body.t-ui h1, body.t-ui h2, body.t-ui h3, body.t-ui p { margin: 0; }
 @media (min-width: 1100px) {
   .t-rail { padding: 24px 16px calc(18px + env(safe-area-inset-bottom)); }
   .t-rail__brand { justify-content: flex-start; padding: 0 6px; margin-bottom: 26px; }
-  .t-rail__logo { width: 44px; }
-  .t-rail__brand strong { display: block; }
+  .t-rail__logo { width: 150px; }
   .t-rail__item {
     display: flex;
     align-items: center;

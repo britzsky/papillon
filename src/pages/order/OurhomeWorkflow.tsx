@@ -10,7 +10,7 @@ const money = (value: string) => value.trim() && Number.isFinite(Number(value)) 
 const flag = (value: string) => value === 'Y' ? '예' : value === 'N' ? '아니오' : value || '미제공'
 
 export default function OurhomeWorkflow({ accountId, siteCode, siteName, deliveryDates, disabled }: Props) {
-  const [tab, setTab] = useState<'products' | 'orders'>('products')
+  const [tab, setTab] = useState<'products' | 'orders' | 'integration'>('products')
   const [date, setDate] = useState(deliveryDates[0] || '')
   const [orderDate, setOrderDate] = useState(deliveryDates[0] || new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }))
   const [keyword, setKeyword] = useState('')
@@ -79,17 +79,23 @@ export default function OurhomeWorkflow({ accountId, siteCode, siteName, deliver
   return <div className="ourhome-workflow" aria-busy={busy}>
     {syncing ? <LoadingScreen overlay message={siteName + ' · ' + date + ' 아워홈 전체 상품을 저장하고 있습니다. 상품이 많아 몇 분 걸릴 수 있습니다.'} /> : null}
     {busy ? <LoadingScreen compact message="아워홈에서 조회하고 있습니다." /> : null}
-    <ol className="ourhome-progress" aria-label="아워홈 연동 순서"><li>1. 사업장 선택 완료</li><li>{products ? '2. 상품·판가 조회 완료' : '2. 납품일·상품 조회'}</li><li>3. 상품 저장·통합 발주</li><li>4. 주문·입고 확인</li></ol>
-    <div className="supplier-switch" aria-label="아워홈 업무"><button type="button" aria-pressed={tab === 'products'} onClick={() => { cancel(); setTab('products') }}>상품·판가</button><button type="button" aria-pressed={tab === 'orders'} onClick={() => { cancel(); setTab('orders') }}>주문·입고 내역</button></div>
+    <nav className="supplier-switch supplier-task-switch" aria-label="아워홈 업무 선택">{([['products', '상품·판가'], ['orders', '주문·입고'], ['integration', '연동 관리']] as const).map(([value, label]) =>
+      <button type="button" key={value} aria-pressed={tab === value} onClick={() => { cancel(); setTab(value) }}>{label}</button>)}</nav>
     {disabled && <p role="status">사업장 목록을 다시 조회한 후 계속해 주세요.</p>}
-    {tab === 'products' ? <>
+    {tab === 'integration' ? <>
+      <div className="supplier-integration-toolbar">
+        <label>납품일<select aria-label="아워홈 저장 납품일" value={date} disabled={disabled || syncing} onChange={event => { reset(); setDate(event.target.value) }}><option value="">선택</option>{deliveryDates.map(value => <option key={value} value={value}>{value}</option>)}</select></label>
+        <button type="button" disabled={busy || syncing || disabled || !date || !accountId} onClick={() => void syncCatalog()}>{syncing ? '전체 상품 저장 중…' : '이 사업장 연결·상품 저장'}</button>
+        <p>선택 납품일의 아워홈 전체 상품·판가를 이 거래처로 저장합니다(검색어·페이지와 무관). 발주 화면에서 납품일을 고르면 자동으로도 준비되며, 결과는 위 '동기화 상태'에 쌓입니다. <Link to={'/order_manager/product-order?account_id=' + encodeURIComponent(accountId)}>통합 상품발주로 이동</Link></p>
+      </div>
+      {syncMessage && <div role="status" className="supplier-integration-message">{syncMessage}</div>}
+    </> : tab === 'products' ? <>
       <div className="supplier-integration-toolbar">
         <label>납품일<select aria-label="아워홈 납품일" value={date} disabled={disabled || syncing} onChange={event => { reset(); setDate(event.target.value) }}><option value="">선택</option>{deliveryDates.map(value => <option key={value} value={value}>{value}</option>)}</select></label>
         <label>검색 구분<select value={searchType} onChange={event => { reset(); setSearchType(event.target.value) }}><option value="A">전체</option><option value="N">상품명</option><option value="G">상품코드</option></select></label>
         <label>상품 검색<input aria-label="아워홈 상품 검색" maxLength={100} value={keyword} onChange={event => { reset(); setKeyword(event.target.value) }} placeholder="검색어 없이 전체 조회" /></label>
         <button type="button" disabled={busy || disabled || !date} onClick={() => void loadProducts()}>{busy ? '조회 중…' : '상품·판가 조회'}</button>
       </div>
-      <section aria-label="아워홈 상품 저장"><p>선택 사업장을 현재 거래처에 연결하고, 선택 납품일의 전체 상품을 저장합니다. 검색어와 화면 페이지에 관계없이 전체 상품을 가져옵니다.</p><button disabled={busy || syncing || disabled || !date || !accountId} onClick={() => void syncCatalog()}>{syncing ? '전체 상품 저장 중…' : '이 사업장 연결·상품 저장'}</button><p role="status">{syncMessage}</p><Link to={'/order_manager/product-order?account_id=' + encodeURIComponent(accountId)}>통합 상품발주로 이동</Link></section>
       {!deliveryDates.length && <p>제공된 발주 가능일이 없어 상품을 조회할 수 없습니다.</p>}
       {products && <>
         <p role="status">{siteName} · 납품일 {products.deliveryDate} · 전체 {products.totalRow.toLocaleString()}건 · {page + 1}페이지 {products.products.length}건</p>

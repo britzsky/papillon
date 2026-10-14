@@ -11,9 +11,8 @@
 }
 
 .lg-card { display: grid; justify-items: center; gap: 6px; width: min(440px, 100%); padding: 36px 28px 24px; border-radius: 26px; background: var(--t-surface); box-shadow: 0 20px 60px rgba(16, 24, 20, 0.1); text-align: center; }
-.lg-logo { width: 120px; height: auto; margin-bottom: 8px; }
-.lg-card h1 { font-size: 24px; letter-spacing: -0.02em; }
-.lg-card > p { margin-bottom: 18px; color: var(--t-muted); font-size: 14px; }
+.lg-logo { width: 150px; height: auto; margin-bottom: 8px; }
+.lg-card > p { margin-bottom: 18px; color: var(--t-muted); font-size: 14px; font-weight: 500; }
 .lg-form { display: grid; gap: 14px; width: 100%; text-align: left; }
 .lg-field { display: grid; gap: 6px; color: var(--t-muted); font-size: 13px; font-weight: 700; }
 .lg-field input { min-height: 54px; padding: 0 16px; border: 1.5px solid var(--t-line); border-radius: 14px; background: var(--t-surface); color: var(--t-text); font-size: 17px; }

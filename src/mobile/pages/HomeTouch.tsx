@@ -2,6 +2,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import TouchLayout from '../TouchLayout'
 import TouchIcon, { type TouchIconName } from '../TouchIcon'
 import { TASKS, accountHref, needsSite, taskCount, useDailyWork, type TaskTile } from '../../features/workspace/useDailyWork'
+import HomeSearchTouch from './HomeSearchTouch'
 import './HomeTouch.css'
 
 const TILE_ICON: Record<string, TouchIconName> = { prepare: 'order', pending_orders: 'alert', due_receipts: 'truck', pending_meals: 'meals' }
@@ -16,7 +17,7 @@ const QUICK: { label: string; hint: string; to: string; icon: TouchIconName }[] 
 ]
 
 /**
- * 터치 홈: 오늘 할 일(큰 숫자 칸) + 자주 쓰는 일. 조회·계산은 PC 홈(DailyWork)과 같은 useDailyWork.
+ * 터치 홈: 통합 검색 + 오늘 할 일(큰 숫자 칸) + 자주 쓰는 일. 조회·계산은 PC 홈(DailyWork)과 같은 useDailyWork.
  * 거래처를 고르지 않은 본사 계정은 전체 합계와 일이 있는 거래처 목록을 본다.
  */
 export default function HomeTouch() {
@@ -37,6 +38,7 @@ export default function HomeTouch() {
   const toolbar = <button type="button" className="t-btn is-small" onClick={refresh}>새로고침</button>
 
   return <TouchLayout title={userName ? `${userName}님, 안녕하세요` : '오늘 할 일'} subtitle={single ? single.account_name : rows.length > 1 ? `거래처 ${rows.length}곳` : undefined} toolbar={toolbar}>
+    <HomeSearchTouch />
     <h2 className="t-section-title">
       오늘 할 일
       {data?.checked_at && <small className="ht-checked">{data.checked_at.slice(11, 16)} 기준</small>}

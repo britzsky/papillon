@@ -115,8 +115,7 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, children,
   return <div className={`t-app${aside ? ' has-aside' : ''}`}>
     <nav className="t-rail" aria-label="메뉴">
       <div className="t-rail__brand">
-        <img className="t-rail__logo" src={logo} alt="" />
-        <strong>더채움</strong>
+        <img className="t-rail__logo" src={logo} alt="더채움" />
       </div>
       <div className="t-rail__items">
         {groups.map(group => {

@@ -42,3 +42,74 @@ body.workspace-ui .supplier-integration-page .ourhome-products-scroll td button{
 .supplier-integration-page .ourhome-products-scroll--single-line :is(th,td),body.workspace-ui .supplier-integration-page .ourhome-products-scroll--single-line :is(th,td){white-space:nowrap !important;overflow-wrap:normal;max-width:none}
 .supplier-integration-page .ourhome-products-scroll--single-line td button,body.workspace-ui .supplier-integration-page .ourhome-products-scroll--single-line td button{display:inline-flex;max-width:none;white-space:nowrap;vertical-align:middle}
 body.workspace-ui .supplier-integration-page .supplier-site-options button{height:auto !important;min-height:64px !important;flex:0 0 auto;overflow:visible}
+
+/* 2026-10-14 배치: 상단 거래처·공급사 → 사업장 정보 줄 → 왼쪽 동기화 상태(4) / 오른쪽 업무(6). 웰스토리·아워홈 공통 */
+.supplier-topbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px 20px;padding:10px 16px;margin:0 0 10px;border:1px solid var(--theme-color);border-radius:10px;background:#fff}
+.supplier-account-picker{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.supplier-account-picker label{font-weight:700}
+.supplier-account-picker select{min-width:260px;max-width:100%;height:38px;padding:0 10px;border:1px solid #cbd5e1;border-radius:7px}
+.supplier-segment{display:inline-flex;padding:3px;margin-left:auto;border-radius:9px;background:#f1f5f9}
+.supplier-integration-page .supplier-segment button{width:auto;min-width:96px;height:34px;padding:0 16px;border:0;border-radius:7px;background:transparent;color:#475569;font-weight:700;box-shadow:none}
+.supplier-integration-page .supplier-segment button[aria-pressed=true]{background:#fff;color:#163b63;box-shadow:0 1px 3px rgba(15,23,42,.15)}
+
+.supplier-site-bar{padding:10px 16px;margin:0 0 10px;border:1px solid #dbe3ec;border-radius:10px;background:#fff}
+.supplier-site-bar__row{display:flex;align-items:center;flex-wrap:wrap;gap:10px 24px}
+.supplier-site-bar__site{display:flex;align-items:center;gap:10px;min-width:0}
+.supplier-site-bar__site>span{font-weight:700;white-space:nowrap}.supplier-site-bar__site>span small{color:#64748b;font-weight:400}
+.supplier-site-bar__site select{height:36px;min-width:220px;max-width:340px;padding:0 8px;border:1px solid #cbd5e1;border-radius:7px}
+.supplier-site-bar__site strong{font-size:16px;color:#0f172a}.supplier-site-bar__site em{font-style:normal;color:#b42318}
+.supplier-site-bar__facts{display:flex;flex-wrap:wrap;gap:6px 18px;margin:0}
+.supplier-site-bar__facts div{display:flex;gap:6px;align-items:baseline}
+.supplier-site-bar__facts dt{color:#64748b;font-size:13px}.supplier-site-bar__facts dd{margin:0;font-weight:600;color:#0f172a}
+.supplier-site-bar__actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;margin-left:auto}
+.supplier-site-bar__actions small{color:#64748b}
+.supplier-integration-page .supplier-site-bar__actions button{width:auto;min-width:0;height:34px;padding:0 12px}
+.supplier-site-bar .supplier-integration-error{margin:8px 0 0;padding:8px 12px}
+
+.supplier-split{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,6fr);gap:12px;align-items:stretch;min-height:420px}
+.supplier-sync-status,.supplier-work-panel{min-width:0;min-height:0;box-sizing:border-box;padding:14px 16px;border:1px solid var(--theme-color);border-radius:10px;background:#fff;overflow:auto}
+.supplier-sync-status>header{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.supplier-sync-status h2{margin:0;font-size:16px}.supplier-sync-status>header small{color:#64748b}
+.supplier-sync-filter{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.supplier-integration-page .supplier-sync-filter button{width:auto;min-width:0;height:30px;padding:0 12px;background:#fff;color:#334155;border:1px solid #cbd5e1;border-radius:999px;font-size:13px}
+.supplier-integration-page .supplier-sync-filter button.is-alert{color:#b42318;border-color:#fda29b}
+.supplier-sync-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+.supplier-sync-list li{padding:9px 10px;border:1px solid #e2e8f0;border-radius:8px;background:#fff}
+.supplier-sync-list li[data-state=bad]{border-color:#fda29b;background:#fffafa}
+.supplier-sync-list__head{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;min-width:0}
+.supplier-sync-list__head strong{flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.supplier-sync-list__head time{margin-left:auto;color:#64748b;font-size:12px;white-space:nowrap}
+.supplier-work-panel .supplier-integration-toolbar{margin:0 0 10px}
+.supplier-sync-list__meta{margin:4px 0 0;color:#64748b;font-size:12px}.supplier-sync-list__meta b{color:#b42318}
+.supplier-sync-list li p{margin:4px 0 0;font-size:12px;line-height:1.5;color:#475569}
+.supplier-sync-list li[data-state=bad] p{color:#b42318}
+.supplier-sync-list__empty{color:#64748b;text-align:center}
+.supplier-sync-badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+.supplier-sync-badge.is-ok{background:#ecfdf3;color:#067647}.supplier-sync-badge.is-bad{background:#fef3f2;color:#b42318}
+.supplier-sync-badge.is-running{background:#eff6ff;color:#1d4ed8}.supplier-sync-badge.is-idle{background:#f1f5f9;color:#64748b}
+
+.supplier-work-panel .supplier-task-switch{margin:0 0 10px}
+.supplier-work-panel .supplier-integration-message,.supplier-work-panel .supplier-integration-error{margin:0 0 10px}
+.supplier-manual-sync{flex-basis:100%;border-top:1px dashed #cbd5e1;padding-top:10px}
+.supplier-manual-sync summary{cursor:pointer;font-weight:700;color:#334155}
+.supplier-manual-sync>div{display:flex;flex-wrap:wrap;align-items:end;gap:14px;margin-top:10px}
+.supplier-work-result h3{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 10px;margin:0 0 8px;font-size:15px}
+.supplier-work-result h3 span{margin-left:auto;color:#64748b;font-size:12px;font-weight:400}
+.supplier-work-table{overflow-x:auto;border:1px solid var(--table-border-mid,#e2e8f0);border-radius:8px}
+.supplier-work-table table,.supplier-work-panel .ourhome-workflow table{width:100%;border-collapse:collapse}
+body.workspace-ui .supplier-integration-page .supplier-work-panel :is(.supplier-work-table,.ourhome-workflow) :is(th,td),.supplier-work-panel :is(.supplier-work-table,.ourhome-workflow) :is(th,td){padding:7px 9px;border-bottom:1px solid var(--table-border-mid,#e2e8f0);text-align:left;font-size:13px;white-space:nowrap}
+.supplier-work-panel :is(.supplier-work-table,.ourhome-workflow) th{position:sticky;top:0;z-index:1;background:var(--theme-color-soft,#eff6ff)}
+.supplier-work-panel .ourhome-workflow td small{display:block;color:#64748b;margin-top:2px;font-size:11px}
+body.workspace-ui .supplier-integration-page .supplier-work-panel td.supplier-work-empty{white-space:normal;color:#64748b;text-align:center;padding:24px}
+.supplier-work-panel .ourhome-products-scroll{border:1px solid var(--table-border-mid,#e2e8f0);border-radius:8px}
+.supplier-work-panel .ourhome-product-detail{margin-top:10px}
+.ourhome-sites-stack{display:grid;gap:14px}
+
+/* 넓은 화면: 위 두 줄 고정, 아래 좌우 패널이 남은 높이를 채우고 각자 스크롤 */
+@media(min-width:1101px){
+  .supplier-integration-page .side-layout__content{display:flex;flex-direction:column}
+  .supplier-integration-page .side-layout__content>.supplier-split{flex:1 1 0}
+}
+@media(max-width:1100px){.supplier-split{grid-template-columns:minmax(0,1fr)}.supplier-sync-status{max-height:360px}}
+@media(max-width:650px){.supplier-segment{margin-left:0;width:100%}.supplier-integration-page .supplier-segment button{flex:1}.supplier-account-picker select,.supplier-site-bar__site select{min-width:0;flex:1}.supplier-site-bar__actions{margin-left:0}}
+.supplier-site-bar__site strong{white-space:nowrap}

@@ -1,4 +1,4 @@
-import logo from '../../assets/image/thefull_sign_1.png'
+import logo from '../../assets/logo/thefull.png'
 import { useLogin } from '../../features/auth/useLogin'
 import { useTouchBody } from '../useTouchBody'
 import '../TouchLayout.css'
@@ -11,7 +11,6 @@ export default function LoginTouch() {
   return <main className="lg-page">
     <section className="lg-card">
       <img src={logo} alt="더채움" className="lg-logo" />
-      <h1>더채움 업무 공간</h1>
       <p>식단 · 발주 · 재고를 한 곳에서</p>
       <form className="lg-form" onSubmit={l.handleSubmit}>
         <label className="lg-field">아이디<input type="text" name="id" autoComplete="username" value={l.user_id} onChange={e => l.setUserId(e.target.value)} required /></label>
