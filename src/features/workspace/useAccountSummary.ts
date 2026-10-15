@@ -5,10 +5,9 @@ import { buildApiUrl } from '../../config/api'
 export type AccountSummary = {
   account_id: string; month: string; account_name: string | null; user_name: string | null
   manager_name: string | null; manager_tel: string | null
-  /** 기존 ERP 예산관리의 이번 달 실 예산 부여 합계(없으면 예산부여). 미등록이면 null */
-  budget: number | null; budget_source: string
-  /** 이번 달 납품분 접수·입고 품목 금액 + 직접구매 */
-  used: number; used_orders: number; used_direct: number; remaining: number | null
+  /** 기존 ERP 예산관리 API(서버가 대신 조회). status: OK / NONE(그 달 미등록) / ERROR(조회 실패) */
+  budget: { status: 'OK' | 'NONE' | 'ERROR'; food_budget?: number; food_used?: number; food_remaining?: number
+    supplies_budget?: number; supplies_used?: number; supplies_remaining?: number; note?: string }
 }
 
 export function useAccountSummary(accountId: string) {

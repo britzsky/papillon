@@ -6,6 +6,19 @@ import { useWorkspaceCalendar } from '../features/workspace/useWorkspaceCalendar
 import { useAccountSummary } from '../features/workspace/useAccountSummary'
 
 const won = (value: number) => Math.round(value).toLocaleString('ko-KR')
+/** 예산 묶음 하나(예산·사용·여유 + 사용 막대) */
+function budgetBlock(title: string, budget = 0, used = 0, remaining = 0) {
+  const pct = budget ? Math.round(used / budget * 100) : 0
+  return <div className="rd-budget">
+    <strong className="rd-budget__title">{title}</strong>
+    <dl className="rd-account__rows">
+      <div><dt>예산</dt><dd>{won(budget)}원</dd></div>
+      <div><dt>사용</dt><dd>{won(used)}원{budget ? <small className="rd-muted"> ({pct}%)</small> : null}</dd></div>
+      <div className="is-remaining"><dt>여유</dt><dd className={remaining < 0 ? 'rd-text-red' : 'rd-text-ok'}>{won(remaining)}원</dd></div>
+    </dl>
+    {budget ? <span className="rd-bar rd-account__bar" aria-hidden="true"><span className={used > budget ? 'is-over' : ''} style={{ width: `${Math.min(100, pct)}%` }} /></span> : null}
+  </div>
+}
 
 /**
  * PC 홈 본문(2026-10-15 개편, 시안 ① 홈). 조회·계산은 features/workspace/useDailyWork(터치 홈과 공용).
@@ -90,19 +103,21 @@ export default function DailyWork({ search, shortcuts }: { search: ReactNode; sh
 
       <aside className="rd-home__side" aria-label="거래처 정보와 달력">
       <section className="rd-card rd-account" aria-label="거래처 정보">
-        {/* 거래처명 바로 옆에 로그인한 사람 이름(서버 값, 없으면 로그인 때 저장한 이름 — 사이드 메뉴 카드와 같은 값) */}
+        {/* 거래처명 왼쪽 · 로그인한 사람 이름 오른쪽(서버 값, 없으면 로그인 때 저장한 이름 — 사이드 메뉴 카드와 같은 값) */}
         <div className="rd-account__who">
           <strong className="rd-fs-lg">{summary?.account_name || single.account_name}</strong>
           {userName ? <span className="rd-account__user">{userName} 님</span> : null}
         </div>
         <dl className="rd-account__rows">
           <div><dt>담당자</dt><dd>{summary?.manager_name ? `${summary.manager_name}${summary.manager_tel ? ` · ${summary.manager_tel}` : ''}` : '등록 안 됨'}</dd></div>
-          <div><dt>이달 예산</dt><dd>{summary ? summary.budget !== null ? `${won(summary.budget)}원` : '예산 미등록' : '확인 중'}</dd></div>
-          <div><dt>사용 예산</dt><dd>{summary ? <>{won(summary.used)}원{summary.budget ? <small className="rd-muted"> ({Math.round(summary.used / summary.budget * 100)}%)</small> : null}</> : '확인 중'}</dd></div>
-          <div className="is-remaining"><dt>여유 예산</dt><dd className={summary?.remaining !== null && summary?.remaining !== undefined && summary.remaining < 0 ? 'rd-text-red' : 'rd-text-ok'}>{summary?.remaining !== null && summary?.remaining !== undefined ? `${won(summary.remaining)}원` : '—'}</dd></div>
         </dl>
-        {summary?.budget ? <span className="rd-bar rd-account__bar" aria-hidden="true"><span className={summary.used > summary.budget ? 'is-over' : ''} style={{ width: `${Math.min(100, summary.used / summary.budget * 100)}%` }} /></span> : null}
-        <small className="rd-muted rd-fs-xs">{summary ? `${Number(summary.month.slice(5))}월 · 사용 = 이번 달 납품 발주(접수·입고) ${won(summary.used_orders)}원 + 직접구매 ${won(summary.used_direct)}원` : ''}</small>
+        {/* 예산: 기존 ERP 예산관리 값 그대로(식자재 budget_grant/day_use_amount, 소모품 supplies_budget/supplies_used) */}
+        {!summary ? <p className="rd-muted rd-fs-sm">예산을 확인하고 있어요.</p>
+          : summary.budget.status === 'ERROR' ? <p className="rd-text-warn rd-fs-sm">ERP 예산을 불러오지 못했어요. 잠시 후 새로고침해 주세요.</p>
+          : summary.budget.status === 'NONE' ? <p className="rd-muted rd-fs-sm">{Number(summary.month.slice(5))}월 예산이 아직 등록되지 않았어요.</p>
+          : <>{budgetBlock('식자재 예산', summary.budget.food_budget, summary.budget.food_used, summary.budget.food_remaining)}
+            {budgetBlock('소모품 예산', summary.budget.supplies_budget, summary.budget.supplies_used, summary.budget.supplies_remaining)}
+            <small className="rd-muted rd-fs-xs">{Number(summary.month.slice(5))}월 · ERP 예산관리 기준{summary.budget.note ? ` · ${summary.budget.note}` : ''}</small></>}
       </section>
 
       <section className="rd-card rd-cal" aria-label="발주·입고 달력">

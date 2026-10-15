@@ -158,7 +158,10 @@ a.rd-tile:hover { border-color: var(--rd-green); }
 .rd .rd-home__side { flex: 1 1 340px; max-width: 400px; display: flex; flex-direction: column; gap: 18px; }
 .rd .rd-home__side .rd-cal { flex: none; max-width: none; }
 .rd .rd-account { padding: 20px 22px; display: flex; flex-direction: column; gap: 12px; }
-.rd .rd-account__who { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; padding-bottom: 12px; border-bottom: 1px solid #E8ECE9; }
+.rd .rd-account__who { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 8px; padding-bottom: 12px; border-bottom: 1px solid #E8ECE9; }
+.rd .rd-account__user { margin-left: auto; }
+.rd .rd-budget { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: 12px; background: #F7F9F7; }
+.rd .rd-budget__title { --rd-fs: 14px; font-weight: 800; }
 .rd .rd-account__user { --rd-fs: 14px; font-weight: 700; color: var(--rd-green-dark); }
 .rd .rd-home__main .rd-shortcuts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .rd .rd-account__who strong { font-weight: 800; }
