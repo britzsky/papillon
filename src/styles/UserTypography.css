@@ -7,7 +7,7 @@ body.workspace-ui { --query-control-font-size: 12px; --query-control-font-weight
 body.workspace-ui > :is(#root, :not(#root)),
 body.workspace-ui > :is(#root, :not(#root)) * { font-size: 10px !important; }
 body.workspace-ui > :is(#root, :not(#root)) .side-layout__sidebar,
-body.workspace-ui > :is(#root, :not(#root)) .side-layout__sidebar * { font-size: 12px !important; }
+body.workspace-ui > :is(#root, :not(#root)) .side-layout__sidebar * { font-size: 13px !important; }
 body.workspace-ui > :is(#root, :not(#root)) :is(.food-order-filters,.menu-manager-filters,.vendor-sanitation-filters,.table-meals-toolbar,.account-manager-toolbar,.welstory-toolbar,.supplier-integration-toolbar,.search-admin-toolbar,.shortage-order-filters,.purchase-orders__filters),
 body.workspace-ui > :is(#root, :not(#root)) :is(.food-order-filters,.menu-manager-filters,.vendor-sanitation-filters,.table-meals-toolbar,.account-manager-toolbar,.welstory-toolbar,.supplier-integration-toolbar,.search-admin-toolbar,.shortage-order-filters,.purchase-orders__filters) *,
 body.workspace-ui > :is(#root, :not(#root)) button,
