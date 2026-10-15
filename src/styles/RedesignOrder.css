@@ -204,6 +204,20 @@ body.workspace-ui .rd.rd button:disabled { background: var(--rd-btn-disabled-bg,
 .rd .rd-preview__actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .rd .rd-preview__send { min-height: 52px; padding: 0 24px; --rd-fs: 15px; }
 
+/* ---- 상품 검색(시안 ⑤) — 카드 구조는 OrderPos.css(pos-*) 그대로, 글씨·태그·100g당 가격·수량 버튼만 ---- */
+.rd .pos-catalog__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.rd .pos-card__tag { margin-left: auto; }
+.rd .pos-card__price-row { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+.rd .pos-card__price { --rd-fs: 15px; }
+.rd .pos-card__price small { --rd-fs: 11px; font-weight: 500; color: var(--rd-muted); }
+.rd .pos-card__price-row > span { --rd-fs: 12px; }
+.rd .pos-card__foot { justify-content: flex-start; gap: 8px; }
+.rd .pos-card .pos-add { flex: 1; min-height: 34px; }
+body.workspace-ui .rd.rd .pos-card .pos-add { border-radius: 10px !important; }
+.rd .pos-card .rd-stepper button { --rd-fs: 15px; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.rd .pos-card .rd-stepper button { width: 32px !important; height: 34px !important; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.rd .pos-card .rd-stepper input { width: 40px !important; height: 34px !important; }
+
 /* ---- 추천 발주안(시안 ④) ---- */
 .rd .rd-quick__hero { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; padding: 18px 22px; }
 .rd .rd-quick__hero-text { flex: 1 1 380px; display: flex; flex-direction: column; gap: 4px; }

@@ -27,6 +27,9 @@ export function useProductOrder(accountId: string, initialSource: string) {
   const [message, setMessage] = useState('')
   const [result, setResult] = useState<BatchResult | null>(null)
   const [page, setPage] = useState(1)
+  // 발주하기 머리 줄 검색창에서 ?q= 로 들어오면 첫 화면에서 바로 한 번 조회한다
+  const initialQuery = useRef(new URLSearchParams(window.location.search).get('q') || '')
+  const [autoSearch, setAutoSearch] = useState(false)
   useEffect(() => {
     let active = true
     if (!accountId) return
@@ -35,7 +38,9 @@ export function useProductOrder(accountId: string, initialSource: string) {
     })]).then(([nextSites, nextIngredients]) => {
       if (!active) return
       setSites(nextSites); setIngredients(nextIngredients)
-      setQuery(nextIngredients.find(i => i.ingredient_id === initialSource)?.ingredient_name || '')
+      // 식재료를 지정해 들어온 경우만 검색어를 식재료명으로(머리 줄 검색어 ?q= 는 유지)
+      if (initialSource) setQuery(nextIngredients.find(i => i.ingredient_id === initialSource)?.ingredient_name || '')
+      else if (initialQuery.current) setAutoSearch(true)
     }).catch(e => { if (active) setMessage(e.message) })
     return () => { active = false }
   }, [accountId, initialSource])
@@ -47,6 +52,12 @@ export function useProductOrder(accountId: string, initialSource: string) {
     catch (e) { setMessage(e instanceof Error ? e.message : '상품 조회 실패') }
     finally { pending.current = false; setBusy(false) }
   }
+  useEffect(() => {
+    if (!autoSearch) return
+    setAutoSearch(false)
+    void search()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSearch])
   const order = async (recover = false) => {
     if (pending.current || (!recover && !cart.length)) return
     pending.current = true; setBusy(true); setLocked(true); setMessage('')
