@@ -35,6 +35,7 @@ export default function WorkspaceNotifications({ accountId, defaultOpen = false 
       <Link to={row.action_path + '?' + new URLSearchParams({ account_id: accountId })}>해당 업무 열기</Link>{' '}
       <button disabled={busy} onClick={() => void state(row, row.status === 'IN_PROGRESS' ? 'OPEN' : 'IN_PROGRESS')}>{row.status === 'IN_PROGRESS' ? '담당 해제' : '내가 확인 중'}</button>
       {row.event_type === 'MEAL_CHANGE' && <button disabled={busy} onClick={() => void state(row, 'RESOLVED')}>변경 확인 완료</button>}
+      {row.event_type === 'SUPPLIER_STATUS' && <button disabled={busy} onClick={() => void state(row, 'RESOLVED')}>확인 완료</button>}
     </article>)}{!rows.length && !error && <p>현재 확인할 알림이 없습니다.</p>}
   </>}</section>
 }
