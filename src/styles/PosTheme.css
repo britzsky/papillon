@@ -1,0 +1,124 @@
+/*
+ * 브라우저 버전 POS 분위기(2026-10-14). 레퍼런스: Muzli 'Restaurant POS Dashboard UI Design'(RestoDash).
+ * 옅은 회색 바탕 · 얇은 테두리 흰 카드(12px) · 아이콘 상자 지표 카드 · 알약 탭 · 주 실행 버튼만 진한 색.
+ * 글씨 크기는 건드리지 않는다(UserTypography.css 사용자 지정값 유지) — 이 파일에는 font-size가 없다.
+ * 색: 더채움 로고 — 초록(주 실행·선택), 파랑(정보·진행), 주황(확인 요망·마감).
+ * 되돌리기: main.tsx의 import 한 줄 삭제.
+ */
+body.workspace-ui {
+  --pos-accent: #508028; --pos-accent-strong: #3f6a1d; --pos-accent-soft: #eef5e6;
+  --pos-blue: #0e7fae; --pos-blue-soft: #e7f4fa;
+  --pos-orange: #b0650c; --pos-orange-soft: #fdf2e3;
+  --pos-bg: #f6f7f9; --pos-card: #ffffff; --pos-line: #e9ebef; --pos-line-strong: #dfe2e8;
+  --pos-text: #1f2430; --pos-muted: #6b7280;
+  --pos-radius: 12px; --pos-shadow: 0 1px 2px rgba(16, 24, 40, .04);
+  --theme-color: var(--pos-accent); --theme-color-strong: var(--pos-accent-strong);
+  --theme-color-soft: var(--pos-accent-soft); --theme-color-softer: #f8faf6;
+  --table-border-mid: var(--pos-line);
+  background: var(--pos-bg); color: var(--pos-text);
+}
+
+/* ── 바탕 ── */
+body.workspace-ui .side-layout,
+body.workspace-ui :is(.home-page, .menu-manager-page, .table-meals-page, .shortage-order-page, .purchase-orders, .supplier-integration-page, .order-workspace) { background: var(--pos-bg); }
+
+/* ── 왼쪽 메뉴: 흰 판, 아이콘+글자, 선택은 옅은 초록 알약 ── */
+body.workspace-ui .side-layout__sidebar { background: var(--pos-card); border-right: 1px solid var(--pos-line); box-shadow: none; }
+body.workspace-ui .side-layout__sidebar-top { background: var(--pos-card); border-bottom: 0; padding: 20px 16px 14px; }
+body.workspace-ui .side-layout__nav { gap: 2px; padding: 4px 12px; }
+body.workspace-ui .side-layout__group { border: 0; background: transparent; box-shadow: none; }
+body.workspace-ui :is(.side-layout__home-link, .side-layout__major-button) { border: 0 !important; border-radius: 10px !important; background: transparent !important; color: #4b5563 !important; }
+body.workspace-ui :is(.side-layout__home-link, .side-layout__major-button):hover { background: #f3f4f6 !important; }
+body.workspace-ui :is(.side-layout__home-link, .side-layout__major-button).is-active { background: var(--pos-accent-soft) !important; color: var(--pos-accent-strong) !important; font-weight: 700; }
+body.workspace-ui :is(.side-layout__home-link, .side-layout__major-button).is-active svg { color: var(--pos-accent); }
+body.workspace-ui .side-layout__submenu { border: 0; background: transparent; padding: 2px 0 6px 30px; }
+body.workspace-ui .side-layout__sublink { border-radius: 8px; color: #6b7280; background: transparent; }
+body.workspace-ui .side-layout__sublink:hover { background: #f3f4f6; color: var(--pos-text); }
+body.workspace-ui .side-layout__sublink.is-active { background: transparent !important; color: var(--pos-accent-strong) !important; font-weight: 700; }
+body.workspace-ui .side-layout__account { margin: 12px; padding: 12px; border: 1px solid var(--pos-line); border-radius: var(--pos-radius); background: #fafbfc; }
+
+/* ── 머리글: 흰 띠, 얇은 아래 선 ── */
+body.workspace-ui .header-shell { background: var(--pos-card); border-bottom: 1px solid var(--pos-line); }
+body.workspace-ui .header-bar__status { color: var(--pos-text); }
+body.workspace-ui .header-breadcrumbs * { color: #9ca3af; }
+body.workspace-ui .header-bar__icon-button { border-radius: 999px; }
+
+/* ── 버튼: 흰 바탕 얇은 테두리, 주 실행만 초록 ── */
+body.workspace-ui button { border-radius: 8px !important; border-color: var(--pos-line-strong) !important; background: var(--pos-card) !important; color: #374151 !important; }
+body.workspace-ui button:hover:not(:disabled) { background: #f3f4f6 !important; border-color: #d1d5db !important; }
+body.workspace-ui button:is(.is-primary, .is-query, .action-query-button, .action-save-button, .menu-manager-save-button, .menu-manager-add-button),
+body.workspace-ui .table-meals-toolbar button[type=submit] { background: var(--pos-accent) !important; border-color: var(--pos-accent) !important; color: #fff !important; }
+body.workspace-ui button:is(.is-primary, .is-query, .action-query-button, .action-save-button, .menu-manager-save-button, .menu-manager-add-button):hover:not(:disabled),
+body.workspace-ui .table-meals-toolbar button[type=submit]:hover:not(:disabled) { background: var(--pos-accent-strong) !important; }
+body.workspace-ui button:disabled { background: #f3f4f6 !important; color: #9ca3af !important; border-color: var(--pos-line) !important; }
+
+/* ── 입력: 8px 모서리, 포커스는 옅은 초록 테 ── */
+body.workspace-ui :is(input:not([type=checkbox]):not([type=radio]), select, textarea) { border-color: var(--pos-line-strong) !important; border-radius: 8px !important; background: var(--pos-card); }
+body.workspace-ui :is(input:not([type=checkbox]):not([type=radio]), select, textarea):focus { border-color: var(--pos-accent) !important; box-shadow: 0 0 0 3px var(--pos-accent-soft) !important; outline: 0; }
+body.workspace-ui :is(input, select, textarea, button, a):focus-visible { outline: 2px solid var(--pos-accent) !important; outline-offset: 2px; }
+body.workspace-ui input:is([type=checkbox], [type=radio]) { accent-color: var(--pos-accent); }
+
+/* ── 카드·검색조건 판·표 ── */
+body.workspace-ui :is(.menu-manager-panel, .table-meals-panel, .purchase-orders__layout > section, .shortage-order-table-wrap, .menu-manager-filters, .table-meals-toolbar, .shortage-order-filters, .purchase-orders__filters, .supplier-integration-toolbar) {
+  border: 1px solid var(--pos-line) !important; border-radius: var(--pos-radius) !important; background: var(--pos-card); box-shadow: var(--pos-shadow) !important;
+}
+body.workspace-ui :is(.menu-manager-panel-header, .table-meals-panel-header) { border-bottom-color: var(--pos-line); }
+body.workspace-ui table th { background: #f9fafb; color: var(--pos-muted); border-bottom-color: var(--pos-line); }
+body.workspace-ui table td { border-bottom-color: #f1f2f5; }
+body.workspace-ui table tbody tr:hover td { background: #fafbfc; }
+body.workspace-ui table tr:is(.is-selected, .is-focused) td { background: var(--pos-accent-soft); }
+body.workspace-ui .workspace-status { border-radius: 999px; }
+body.workspace-ui .workspace-status--success { background: var(--pos-accent-soft); color: var(--pos-accent-strong); }
+body.workspace-ui .workspace-status--warning { background: var(--pos-orange-soft); color: var(--pos-orange); }
+
+/* ── 탭: 레퍼런스 'All Items / Popular' 같은 알약 묶음 ── */
+body.workspace-ui .order-workspace .order-workspace__tabs { display: flex; flex-wrap: wrap; gap: 4px; width: fit-content; max-width: 100%; padding: 4px; border: 1px solid var(--pos-line); border-radius: 10px; background: var(--pos-card); }
+body.workspace-ui .order-workspace .order-workspace__tabs button { width: auto; border: 0 !important; border-radius: 8px !important; background: transparent !important; color: var(--pos-muted) !important; box-shadow: none !important; padding: 7px 16px; }
+body.workspace-ui .order-workspace .order-workspace__tabs button:hover:not(:disabled) { background: #f3f4f6 !important; color: var(--pos-text) !important; }
+body.workspace-ui .order-workspace .order-workspace__tabs button.is-active,
+body.workspace-ui .order-workspace .order-workspace__tabs button.is-active:hover:not(:disabled) { background: var(--pos-accent-soft) !important; color: var(--pos-accent-strong) !important; font-weight: 700; }
+body.workspace-ui .supplier-integration-page .supplier-switch button[aria-pressed=true],
+body.workspace-ui .supplier-integration-page button[aria-pressed=true] { background: var(--pos-accent-soft) !important; border-color: transparent !important; color: var(--pos-accent-strong) !important; box-shadow: none !important; }
+
+/* ════════════ 홈 ════════════ (Home.css의 #root 수준 규칙과 같은 강도) */
+body.workspace-ui > :is(#root, :not(#root)) .home-top .home-search { border: 1px solid var(--pos-line); border-radius: var(--pos-radius); background: var(--pos-card); box-shadow: var(--pos-shadow); }
+body.workspace-ui > :is(#root, :not(#root)) .home-search .home-search__box { border-radius: 8px !important; border-color: var(--pos-line-strong) !important; background: #fafbfc !important; }
+body.workspace-ui > :is(#root, :not(#root)) .home-search .home-search__box:focus-within { border-color: var(--pos-accent) !important; box-shadow: 0 0 0 3px var(--pos-accent-soft); background: #fff !important; }
+body.workspace-ui > :is(#root, :not(#root)) .home-search .home-search__box input { border: 0 !important; background: transparent !important; box-shadow: none !important; }
+body.workspace-ui > :is(#root, :not(#root)) .home-search .home-search__assistant { background: var(--pos-accent) !important; border-color: var(--pos-accent) !important; color: #fff !important; }
+body.workspace-ui > :is(#root, :not(#root)) .home-search .home-search__assistant:disabled { background: #b9cfa6 !important; border-color: #b9cfa6 !important; color: #fff !important; }
+body.workspace-ui > :is(#root, :not(#root)) .home-search .home-search__keywords button { border: 1px solid var(--pos-line) !important; background: #f9fafb !important; color: #4b5563 !important; }
+body.workspace-ui > :is(#root, :not(#root)) .home-search .home-search__keywords button:hover { border-color: var(--pos-accent) !important; color: var(--pos-accent-strong) !important; }
+
+/* 오늘 할 일 판 */
+body.workspace-ui > :is(#root, :not(#root)) .home-tasks { border: 1px solid var(--pos-line); border-radius: var(--pos-radius); background: var(--pos-card); box-shadow: var(--pos-shadow); }
+/* 칸: 레퍼런스 지표 카드처럼 왼쪽 아이콘 상자 + 오른쪽 이름·숫자·설명 */
+body.workspace-ui > :is(#root, :not(#root)) .home-tasks .home-tasks__tile {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto 1fr; column-gap: 14px; row-gap: 2px; align-items: start;
+  border: 1px solid var(--pos-line) !important; border-left-width: 1px !important; border-radius: var(--pos-radius) !important; background: var(--pos-card) !important; box-shadow: var(--pos-shadow); padding: 14px 16px;
+}
+body.workspace-ui > :is(#root, :not(#root)) .home-tasks a.home-tasks__tile:hover { border-color: #cfd6c8 !important; background: #fcfdfb !important; }
+body.workspace-ui > :is(#root, :not(#root)) .home-tasks .home-tasks__icon { grid-row: 1 / span 3; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 10px; background: var(--pos-accent-soft); color: var(--pos-accent-strong); }
+body.workspace-ui > :is(#root, :not(#root)) .home-tasks .is-info .home-tasks__icon { background: var(--pos-blue-soft); color: var(--pos-blue); }
+body.workspace-ui > :is(#root, :not(#root)) .home-tasks :is(.is-warn, .is-urgent) .home-tasks__icon { background: var(--pos-orange-soft); color: var(--pos-orange); }
+body.workspace-ui > :is(#root, :not(#root)) .home-tasks .home-tasks__label { color: var(--pos-muted); }
+body.workspace-ui > :is(#root, :not(#root)) .home-tasks .home-tasks__count { color: var(--pos-text); }
+body.workspace-ui > :is(#root, :not(#root)) .home-tasks .home-tasks__hint { color: #9ca3af; }
+body.workspace-ui > :is(#root, :not(#root)) .home-tasks :is(.is-warn, .is-urgent) .home-tasks__count { color: var(--pos-orange); }
+body.workspace-ui > :is(#root, :not(#root)) .home-tasks .is-info .home-tasks__count { color: var(--pos-blue); }
+body.workspace-ui > :is(#root, :not(#root)) .home-tasks .is-done .home-tasks__count { color: var(--pos-accent-strong); }
+
+/* 자주 쓰는 화면: 아이콘 상자 색을 로고 3색으로 돌려 칠함 */
+body.workspace-ui > :is(#root, :not(#root)) .home-shortcuts button.home-shortcut { border: 1px solid var(--pos-line) !important; border-radius: var(--pos-radius) !important; background: var(--pos-card) !important; box-shadow: var(--pos-shadow) !important; }
+body.workspace-ui > :is(#root, :not(#root)) .home-shortcuts button.home-shortcut:hover { border-color: #cfd6c8 !important; background: #fcfdfb !important; }
+body.workspace-ui > :is(#root, :not(#root)) .home-shortcuts .home-shortcut .home-shortcut__icon { border-radius: 10px; background: var(--pos-accent-soft); color: var(--pos-accent-strong); }
+body.workspace-ui > :is(#root, :not(#root)) .home-shortcuts button.home-shortcut:nth-child(3n+2) .home-shortcut__icon { background: var(--pos-blue-soft); color: var(--pos-blue); }
+body.workspace-ui > :is(#root, :not(#root)) .home-shortcuts button.home-shortcut:nth-child(3n) .home-shortcut__icon { background: var(--pos-orange-soft); color: var(--pos-orange); }
+body.workspace-ui > :is(#root, :not(#root)) .home-shortcuts .home-shortcut strong { color: var(--pos-text); }
+body.workspace-ui > :is(#root, :not(#root)) .home-shortcuts .home-shortcut small { color: var(--pos-muted); }
+
+/* 화면 이동 링크 버튼(Readability.css의 파란 테두리 → 중립 + 초록 글자) */
+body.workspace-ui > #root .side-layout__content a:not([class]),
+body.workspace-ui > :not(#root) a:not([class]) { border-color: var(--pos-line-strong) !important; border-radius: 8px; background: var(--pos-card); color: var(--pos-accent-strong) !important; }
+body.workspace-ui > #root .side-layout__content a:not([class]):hover,
+body.workspace-ui > :not(#root) a:not([class]):hover { border-color: var(--pos-accent); background: var(--pos-accent-soft); }

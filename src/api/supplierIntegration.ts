@@ -50,6 +50,11 @@ export type SupplierOffer = {
   last_synced_at: string
   stale: boolean
   suggested_order_qty: number
+  /** 상품 사진(공급사 동기화로 저장, 없으면 빈 값) */
+  image_url?: string
+  thumbnail_url?: string
+  /** 준비기간: 납품일 N일 전까지 주문(D-N). 모르면 null */
+  lead_time_days?: number | null
 }
 
 export type SupplierSyncStatus = {
@@ -157,6 +162,8 @@ export async function getSupplierOffers(accountId: string, deliveryDate: string,
     product_status: text(row.product_status), orderable_yn: text(row.orderable_yn),
     availability_reason: text(row.availability_reason), last_synced_at: text(row.last_synced_at), stale: Boolean(row.stale),
     suggested_order_qty: number(row.suggested_order_qty),
+    image_url: text(row.image_url), thumbnail_url: text(row.thumbnail_url),
+    lead_time_days: row.lead_time_days == null || row.lead_time_days === '' ? null : number(row.lead_time_days),
   }))
 }
 

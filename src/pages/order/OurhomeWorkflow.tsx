@@ -7,6 +7,9 @@ import { getOurhomeProducts, getOurhomeOrders, type OurhomeProduct, type Ourhome
 
 type Props = { accountId: string; siteCode: string; siteName: string; deliveryDates: string[]; disabled: boolean }
 const money = (value: string) => value.trim() && Number.isFinite(Number(value)) ? `${Number(value).toLocaleString('ko-KR')}원` : '미제공'
+/** 아워홈 마감정보(orderdtInfo "D-2 / 15:00", "D2")를 D-N 표기로, 마감시간(HHMM)을 HH:MM으로 */
+const dDay = (value: string) => value.trim() ? value.trim().replace(/^D\s*-?\s*(\d+)/i, 'D-$1') : '-'
+const hhmm = (value: string) => /^\d{4}$/.test(value.trim()) ? `${value.trim().slice(0, 2)}:${value.trim().slice(2)}` : value
 const flag = (value: string) => value === 'Y' ? '예' : value === 'N' ? '아니오' : value || '미제공'
 
 export default function OurhomeWorkflow({ accountId, siteCode, siteName, deliveryDates, disabled }: Props) {
@@ -102,7 +105,7 @@ export default function OurhomeWorkflow({ accountId, siteCode, siteName, deliver
         <div className="ourhome-products-scroll ourhome-products-scroll--single-line"><table><thead><tr><th>상품명 / 코드</th><th>규격 / 원산지</th><th>판매단가</th><th>발주단위</th><th>상품상태 (익일 기준)</th><th>마감정보</th></tr></thead><tbody>{products.products.map((product, index) => <tr key={`${product.goodcd}-${index}`}>
           <td><button type="button" aria-pressed={selected === product} onClick={() => setSelected(product)}>{product.goodnm || product.goodcd}</button><small>{product.goodcd}</small></td>
           <td>{product.goodsz || '-'}<small>{product.originPlaceNm || '원산지 미제공'}</small></td><td>{money(product.salsUcost)}<small>{product.taxYn === 'Y' ? '과세' : product.taxYn === 'N' ? '면세' : '과세정보 미제공'}</small></td>
-          <td>{product.odrUnit || '-'}</td><td>{product.goodStatusNm || product.goodStatus || '미제공'}</td><td>{product.orderdtInfo || '-'}<small>{product.ordTime}</small></td>
+          <td>{product.odrUnit || '-'}</td><td>{product.goodStatusNm || product.goodStatus || '미제공'}</td><td>{dDay(product.orderdtInfo)}<small>{hhmm(product.ordTime)}</small></td>
         </tr>)}{!products.products.length && <tr><td colSpan={6}>해당 조건의 상품이 없습니다.</td></tr>}</tbody></table></div>
         <div className="ourhome-page-controls"><button disabled={busy || disabled || page === 0} onClick={() => void loadProducts(page - 1, cursors[page - 1])}>이전 페이지</button><span>{page + 1}페이지</span><button disabled={busy || disabled || !products.hasNext} onClick={() => void loadProducts(page + 1, products.nextKey)}>다음 페이지</button></div>
         <p>상품상태는 공급사 명세의 익일 기준입니다. 선택한 납품일의 최종 주문 가능 여부는 발주 접수 시 확인됩니다.</p>

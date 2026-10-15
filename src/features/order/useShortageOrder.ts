@@ -15,7 +15,7 @@ const statusRank = { RED: 0, YELLOW: 1, GREEN: 2 } as const
 
 export function deliveryTerms(offer: ShortageOffer) {
   const state = offer.orderability_status === 'AVAILABLE' ? '발주 가능' : offer.orderability_status === 'UNAVAILABLE' ? '발주 불가' : '확인 필요'
-  return state + ' · ' + (offer.orderability_reason || '납품·마감 조건 확인 필요')
+  return state + ' · ' + (offer.orderability_reason || '납품일자·마감 조건 확인 요망')
 }
 
 
@@ -25,7 +25,7 @@ export function deliveryWarning(offer: ShortageOffer, deliveryDate: string, now:
   const today = now.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })
   const earliest = new Date(today + 'T00:00:00Z')
   earliest.setUTCDate(earliest.getUTCDate() + lead)
-  if (deliveryDate < earliest.toISOString().slice(0, 10)) return '선택한 납품일은 리드타임 ' + lead + '일보다 빠릅니다. 납품일을 변경해주세요.'
+  if (deliveryDate < earliest.toISOString().slice(0, 10)) return 'D-' + lead + ' 품목 · 준비기간 부족 · 납품일자 변경 요망'
   return ''
 }
 

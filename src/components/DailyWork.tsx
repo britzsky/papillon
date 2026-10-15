@@ -2,9 +2,13 @@ import WorkspaceNotifications from './WorkspaceNotifications'
 import { Fragment, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { TASKS, accountHref as href, needsSite, taskCount as count, useDailyWork, type TaskTile } from '../features/workspace/useDailyWork'
+import WorkspaceIcon, { type WorkspaceIconName } from './WorkspaceIcon'
 import './DailyWork.css'
 
 /** 오늘 할 일 칸(PC 홈). 조회·계산은 features/workspace/useDailyWork(터치 홈과 공용). 같은 화면으로 가는 입구는 홈에서 이 칸과 '자주 쓰는 화면' 두 곳뿐이다. */
+/** 칸 아이콘(터치 홈과 같은 뜻): 발주 준비=장바구니, 주문 결과=상품, 입고=재고, 사용 확정=식단 */
+const TILE_ICON: Record<string, WorkspaceIconName> = { prepare: 'order', pending_orders: 'product', due_receipts: 'inventory', pending_meals: 'operations' }
+
 export default function DailyWork() {
   const [params] = useSearchParams()
   const account = params.get('account_id') || (localStorage.getItem('user_type') === '3' ? localStorage.getItem('account_id') || '' : '')
@@ -12,7 +16,7 @@ export default function DailyWork() {
   const [noticeAccount, setNoticeAccount] = useState('')
 
   const tile = ({ key, label, value, hint, tone, to }: TaskTile) => {
-    const body = <><span className="home-tasks__label">{label}</span><strong className="home-tasks__count">{value}</strong><span className="home-tasks__hint">{hint}</span></>
+    const body = <><span className="home-tasks__icon"><WorkspaceIcon name={TILE_ICON[key] || 'order'} /></span><span className="home-tasks__label">{label}</span><strong className="home-tasks__count">{value}</strong><span className="home-tasks__hint">{hint}</span></>
     const className = `home-tasks__tile is-${tone}`
     return to ? <Link key={key} className={className} to={to}>{body}</Link> : <div key={key} className={className}>{body}</div>
   }

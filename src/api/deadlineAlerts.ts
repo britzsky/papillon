@@ -22,7 +22,7 @@ export type DeadlineAlert = {
   deadline: string
   delivery_date: string
   minutes_left: number
-  /** 예: "육류 11시 마감 (납품 1일 전)", "납품 2일 전 16:30" */
+  /** 예: "D-1 · 육류 11시 마감", "D-2 16:30" */
   rule: string
   items: DeadlineAlertItem[]
 }

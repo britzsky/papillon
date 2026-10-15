@@ -101,7 +101,7 @@ export default function ShortageOrderTouch({ methodBar, fixedSource, title }: { 
         {prep.result?.suppliers.map(s => <span key={s.supplier_code} className={`t-badge ${s.status === 'READY' ? 'is-ok' : 'is-warn'}`} title={s.message}>{s.supplier_name} {preparationLabel(s.status)}</span>)}
         {prep.result?.suppliers.length === 0 && <span className="t-badge is-warn">공급사 사업장 미지정</span>}
         {prep.needsRetry && <button type="button" className="t-btn is-small is-soft" onClick={prep.retry}>상품 준비 다시 확인</button>}
-        {c.delivery_date === o.guidanceNow.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }) && <span className="t-badge is-danger">당일 납품 · 리드타임 1일 이상 상품은 납품일을 바꿔주세요</span>}
+        {c.delivery_date === o.guidanceNow.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }) && <span className="t-badge is-danger">당일 납품 · D-1 이상 품목 납품일자 변경 요망</span>}
       </div>
     </section>
 

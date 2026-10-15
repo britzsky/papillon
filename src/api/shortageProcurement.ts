@@ -40,6 +40,9 @@ export type ShortageOffer = {
   orderable: boolean
   availability_reason: string
   tax_type: string
+  /** 공급사 상품 사진(백엔드 offers SQL이 함께 반환, 없으면 빈 값) */
+  image_url?: string | null
+  thumbnail_url?: string | null
   lead_time_days?: number | null
   cutoff_code?: string | null
   cutoff_time?: string | null

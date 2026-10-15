@@ -7,6 +7,7 @@ import FoodOrder from './FoodOrder'
 import ProductOrder from './ProductOrder'
 import { ORDER_TABS as TABS, ORDER_TAB_SOURCE as SOURCE, resolveOrderTab, type LegacyOrderTab as LegacyTab, type OrderTab } from '../../features/order/orderTabs'
 import './OrderWorkspace.css'
+import './OrderPos.css'
 
 export type { OrderTab } from '../../features/order/orderTabs'
 
