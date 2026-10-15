@@ -119,6 +119,14 @@ function isInventoryItemChanged(
   ] as const).some((field) => item[field] !== original[field])
 }
 
+/** 상태 묶음: 발주 필요(즉시 부족·입고예정 반영 후 부족) / 확인 필요(사용 이력 없음·재고 없음 등) / 충분 */
+function stockGroup(item: AccountInventoryItem): 'order' | 'check' | 'ok' {
+  const status = getInventoryStockStatus(item)
+  if (status.needsOrder) return 'order'
+  return item.stock_status === 'GREEN' ? 'ok' : 'check'
+}
+const STOCK_CHIP = { order: { text: '발주 필요', tone: 'is-urgent' }, check: { text: '확인 필요', tone: 'rd-tone-yellow' }, ok: { text: '충분', tone: 'is-ok' } } as const
+
 function AccountInventoryManager() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -134,6 +142,8 @@ function AccountInventoryManager() {
   const [reloadVersion, setReloadVersion] = useState(0)
   const [keyword, setKeyword] = useState(initialKeyword)
   const [selectedLocationId, setSelectedLocationId] = useState('')
+  // 2026-10-15 개편(시안 ⑦): 상단 칸·알약으로 상태별 거르기(화면만, 저장 로직 무관)
+  const [statusFilter, setStatusFilter] = useState<'' | 'order' | 'check' | 'ok'>('')
   const [currentPage, setCurrentPage] = useState(1)
   const [isSaving, setIsSaving] = useState(false)
   const [alert, setAlert] = useState<AppAlertState | null>(null)
@@ -197,11 +207,20 @@ function AccountInventoryManager() {
   const filteredItems = useMemo(() => orderStockFirst(items).filter(item => matchesInventoryKeyword(item, keyword)), [items, keyword])
 
   const locationFilteredItems = useMemo(
-    () => filteredItems.filter((item) => selectedLocationId === '' || item.location_id === selectedLocationId),
-    [filteredItems, selectedLocationId],
+    () => filteredItems.filter((item) => (selectedLocationId === '' || item.location_id === selectedLocationId) && (statusFilter === '' || stockGroup(item) === statusFilter)),
+    [filteredItems, selectedLocationId, statusFilter],
   )
 
   const totalPages = Math.max(1, Math.ceil(locationFilteredItems.length / MENU_PAGE_SIZE))
+  const groupCount = useMemo(() => items.reduce((acc, item) => { acc[stockGroup(item)] += 1; return acc }, { order: 0, check: 0, ok: 0 }), [items])
+  const totalAmount = useMemo(() => items.reduce((sum, item) => sum + (Number(item.inventory_amount) || 0), 0), [items])
+  const dirtyCount = items.filter((item) => isInventoryItemChanged(item, originalItemsByRowId)).length
+  /** 막대: 현재고 ÷ max(안전재고+필요량, 현재고) — 상태 칩 옆에서 얼마나 남았는지 */
+  const stockPct = (item: EditableAccountInventoryItem) => {
+    const current = Number(item.current_qty) || 0
+    const target = Math.max((Number(item.safe_stock_qty) || 0) + (Number(item.required_qty) || 0), current, 1)
+    return Math.min(100, Math.round(current / target * 100))
+  }
 
   const pagedItems = useMemo(() => {
     const startIndex = (currentPage - 1) * MENU_PAGE_SIZE
@@ -210,7 +229,7 @@ function AccountInventoryManager() {
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [keyword, selectedLocationId])
+  }, [keyword, selectedLocationId, statusFilter])
 
   useEffect(() => {
     setCurrentPage((page) => Math.min(page, totalPages))
@@ -320,58 +339,11 @@ function AccountInventoryManager() {
             />
           }
         >
-          <section className="menu-manager-filters">
-            <div className="menu-manager-filter-grid">
-              <div className="menu-manager-field">
-                <label htmlFor="account-inventory-keyword">검색</label>
-                <input
-                  id="account-inventory-keyword"
-                  className="menu-manager-cell-input"
-                  value={keyword}
-                  placeholder="식자재, 상품명, 카테고리, 위치"
-                  onChange={(event) => setKeyword(event.target.value)}
-                />
-              </div>
-              <div className="menu-manager-field">
-                <label htmlFor="account-inventory-location">보관위치</label>
-                <select
-                  id="account-inventory-location"
-                  value={selectedLocationId}
-                  onChange={(event) => setSelectedLocationId(event.target.value)}
-                >
-                  <option value="">전체</option>
-                  {locationOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {getLocationName(option.value)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className="menu-manager-filters__actions">
-              <button type="button" className="action-query-button" disabled={isLoading || isSaving}
-                onClick={() => {
-                  if (items.some((item) => isInventoryItemChanged(item, originalItemsByRowId))
-                    && !window.confirm('저장하지 않은 변경사항을 버리고 최신 재고를 조회할까요?')) return
-                  setReloadVersion((current) => current + 1)
-                }}>
-                재고 새로고침
-              </button>
-              <button type="button" className="menu-manager-add-button" onClick={handleAddRow}>
-                행 추가
-              </button>
-              <button type="button" className="menu-manager-add-button" disabled={isLoading || isSaving}
-                title="도입 전부터 보유한 재고를 수량과 단가로 등록합니다"
-                onClick={() => {
-                  if (items.some((item) => isInventoryItemChanged(item, originalItemsByRowId))) {
-                    setAlert({ type: 'error', title: '저장 필요', message: '저장하지 않은 변경사항을 먼저 저장하거나 새로고침한 뒤 기초재고를 등록해주세요.' })
-                    return
-                  }
-                  setIsOpeningOpen(true)
-                }}>
-                기초재고 등록
-              </button>
-              <button type="button" className="menu-manager-add-button" disabled={isLoading || isSaving || !targetAccountId}
+          <div className="rd rd-inv">
+          <header className="rd-inv__head">
+            <h1 className="rd-h1">재고</h1>
+            <div className="rd-inv__actions">
+              <button type="button" className="rd-btn is-primary" disabled={isLoading || isSaving || !targetAccountId}
                 title="마트·쿠팡 등에서 직접 산 식재료를 재고에 넣습니다"
                 onClick={() => {
                   if (items.some((item) => isInventoryItemChanged(item, originalItemsByRowId))) {
@@ -382,19 +354,53 @@ function AccountInventoryManager() {
                 }}>
                 직접구매 등록
               </button>
-              <button type="button" className="menu-manager-save-button" onClick={() => void handleSave()} disabled={isSaving}>
-                {isSaving ? '저장 중...' : '저장'}
+              <button type="button" className="rd-btn" disabled={isLoading || isSaving}
+                title="도입 전부터 보유한 재고를 수량과 단가로 등록합니다"
+                onClick={() => {
+                  if (items.some((item) => isInventoryItemChanged(item, originalItemsByRowId))) {
+                    setAlert({ type: 'error', title: '저장 필요', message: '저장하지 않은 변경사항을 먼저 저장하거나 새로고침한 뒤 기초재고를 등록해주세요.' })
+                    return
+                  }
+                  setIsOpeningOpen(true)
+                }}>
+                기초재고 등록
               </button>
+              <Link className="rd-btn" to={`/inventory/history?${new URLSearchParams({ account_id: targetAccountId })}`}>재고 이력</Link>
             </div>
-          </section>
+          </header>
 
+          <section className="rd-inv__tiles" aria-label="재고 현황">
+            {([['', '관리 식재료', `${items.length}개`, '이 거래처에서 쓰는 식재료', 'is-done'],
+              ['order', '발주 필요', `${groupCount.order}개`, '즉시 부족·입고예정 반영 후 부족', 'is-urgent'],
+              ['check', '확인 필요', `${groupCount.check}개`, '사용 이력 없음·재고 없음 등', 'is-warn'],
+              ['ok', '재고 금액', `${Math.round(totalAmount).toLocaleString('ko-KR')}원`, '평균단가 × 현재고 합계', 'is-ok']] as const).map(([key, label, value, hint, tone]) =>
+              <button key={label} type="button" aria-pressed={statusFilter === key && key !== 'ok'} className={`rd-inv__tile ${tone}${statusFilter === key && key !== 'ok' ? ' is-active' : ''}`}
+                onClick={() => setStatusFilter(key === 'ok' ? '' : statusFilter === key ? '' : key)}>
+                <span className="rd-inv__tile-label">{label}</span><strong>{value}</strong><small>{hint}</small>
+              </button>)}
+          </section>
           <section className="menu-manager-layout account-inventory-layout">
             <section className="menu-manager-panel">
-              <div className="menu-manager-panel__header">
-                <div>
-                  <h2>거래처 재고 목록</h2>
-                  <span>{locationFilteredItems.length}건</span>
+              <div className="rd-inv__filters">
+                <input aria-label="식재료 찾기" className="rd-input" value={keyword} placeholder="식재료·상품·카테고리·위치 찾기" onChange={(event) => setKeyword(event.target.value)} />
+                <div className="rd-pills" role="group" aria-label="상태">
+                  {([['', '전체', items.length], ['order', '발주 필요', groupCount.order], ['check', '확인 필요', groupCount.check], ['ok', '충분', groupCount.ok]] as const).map(([key, label, count]) =>
+                    <button key={label} type="button" aria-pressed={statusFilter === key} className={statusFilter === key ? 'is-active' : ''} onClick={() => setStatusFilter(key)}>{label} {count}</button>)}
                 </div>
+                <select aria-label="보관위치" className="rd-input" value={selectedLocationId} onChange={(event) => setSelectedLocationId(event.target.value)}>
+                  <option value="">전체 보관위치</option>
+                  {locationOptions.map((option) => <option key={option.value} value={option.value}>{getLocationName(option.value)}</option>)}
+                </select>
+                <span className="rd-inv__spacer" />
+                <span className="rd-muted rd-fs-sm">{locationFilteredItems.length}건</span>
+                <button type="button" className="rd-btn is-ghost" disabled={isLoading || isSaving}
+                  onClick={() => {
+                    if (items.some((item) => isInventoryItemChanged(item, originalItemsByRowId))
+                      && !window.confirm('저장하지 않은 변경사항을 버리고 최신 재고를 조회할까요?')) return
+                    setReloadVersion((current) => current + 1)
+                  }}>새로고침</button>
+                <button type="button" className="rd-btn" onClick={handleAddRow}>행 추가</button>
+                <button type="button" className={`rd-btn${dirtyCount ? ' is-primary' : ''}`} onClick={() => void handleSave()} disabled={isSaving}>{isSaving ? '저장 중...' : dirtyCount ? `변경 ${dirtyCount}건 저장` : '저장'}</button>
               </div>
               {ingredientError ? <div className="menu-manager-notice">{ingredientError}</div> : null}
 
@@ -407,9 +413,9 @@ function AccountInventoryManager() {
                       <tr>
                         <th>카테고리</th>
                         <th>식자재명</th>
+                        <th>재고상태</th>
                         <th>공급상품</th>
-                        <th>포장가격</th>
-                        <th>기준단가</th>
+                        <th>포장가 / 기준단가</th>
                         <th>재고평균단가</th>
                         <th>재고금액</th>
                         <th>보관위치</th>
@@ -418,8 +424,6 @@ function AccountInventoryManager() {
                         <th>안전재고</th>
                         <th>부족재고</th>
                         <th>발주필요</th>
-                        <th>재고상태</th>
-                        <th>발주</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -458,6 +462,18 @@ function AccountInventoryManager() {
                               />
                             </div>
                           </td>
+                          <td className="rd-inv__status">
+                            <span className={`rd-chip ${STOCK_CHIP[stockGroup(item)].tone}`} title={getInventoryStockStatus(item).label}>{STOCK_CHIP[stockGroup(item)].text}</span>
+                            <span className="rd-bar rd-inv__bar" aria-hidden="true"><span className={`is-${stockGroup(item)}`} style={{ width: `${stockPct(item)}%` }} /></span>
+                            <small className="rd-muted rd-inv__status-text">{getInventoryStockStatus(item).label}</small>
+                            <div className="rd-inv__status-action">
+                            {getInventoryStockStatus(item).needsOrder ? (
+                              <button type="button" className="rd-btn is-primary rd-inv__order" onClick={() => goToOrder(item)}>
+                                발주
+                              </button>
+                            ) : null}
+                          </div>
+                          </td>
                           <td title={`${item.supplier_name ?? ''} ${item.product_name ?? ''}`}>
                             <div className="product-name-with-image"><ProductImage compact src={item.image_url} name={item.product_name || item.ingredient_name} /><span>{item.product_name || '상품 미연결'}{item.supplier_code === 'DIRECT' && <small className="account-inventory-tag"> 직접구매</small>}{item.account_ingredient_product_id ? <Link className="account-inventory-history-link" to={`/inventory/history?${new URLSearchParams({ account_id: targetAccountId, account_ingredient_product_id: String(item.account_ingredient_product_id) })}`}>변동 이력</Link> : null}</span></div>
                           </td>
@@ -465,11 +481,11 @@ function AccountInventoryManager() {
                             {(item.purchase_price ?? 0) > 0
                               ? `${Math.round(item.purchase_price ?? 0).toLocaleString('ko-KR')}원`
                               : '가격 미등록'}
-                          </td>
-                          <td>
-                            {(item.purchase_price ?? 0) > 0 && (item.package_base_qty ?? 0) > 0
-                              ? `${((item.purchase_price ?? 0) / (item.package_base_qty ?? 1)).toLocaleString('ko-KR', { maximumFractionDigits: 2 })}원/${item.base_unit}`
-                              : '미산정'}
+                            <small className="rd-muted rd-inv__sub">
+                              {(item.purchase_price ?? 0) > 0 && (item.package_base_qty ?? 0) > 0
+                                ? `${((item.purchase_price ?? 0) / (item.package_base_qty ?? 1)).toLocaleString('ko-KR', { maximumFractionDigits: 2 })}원/${item.base_unit}`
+                                : '미산정'}
+                            </small>
                           </td>
                           <td>{(item.average_unit_cost ?? 0) > 0 ? `${(item.average_unit_cost ?? 0).toLocaleString('ko-KR', { maximumFractionDigits: 2 })}원/${item.base_unit}` : '입고 전'}
                             {item.opening_cost_estimated && <small className="account-inventory-tag" title="기초재고를 공급가 기반 추정 단가로 등록했습니다. 입고·사용이 쌓이면 실제 단가로 평균이 바뀝니다."> 추정</small>}</td>
@@ -527,18 +543,6 @@ function AccountInventoryManager() {
                           <td>
                             {item.order_needed_qty} {item.base_unit}
                           </td>
-                          <td>
-                            <span className={`workspace-status workspace-status--${getInventoryStockStatus(item).needsOrder ? "danger" : Number(item.current_qty) <= 0 ? "warning" : "neutral"}`} title={getInventoryStockStatus(item).label}>
-                              {getInventoryStockStatus(item).label}
-                            </span>
-                          </td>
-                          <td>
-                            {getInventoryStockStatus(item).needsOrder ? (
-                              <button type="button" className="menu-manager-add-button" onClick={() => goToOrder(item)}>
-                                발주하러 가기
-                              </button>
-                            ) : '-'}
-                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -595,6 +599,7 @@ function AccountInventoryManager() {
               </div>
             </section>
           </section>
+          </div>
         </SideMenuLayout>
       </main>
       <AppAlert alert={alert} onClose={() => setAlert(null)} />
