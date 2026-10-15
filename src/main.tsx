@@ -54,6 +54,7 @@ import './styles/ProcurementRefresh.css'
 import './styles/Readability.css'
 import './styles/PosTheme.css'
 import './styles/Redesign.css'
+import './styles/RedesignOrder.css'
 
 installWorkspaceSession()
 // 모든 화면의 조회·저장 요청에 로딩 표시(세션 래퍼 다음에 설치해 전체 요청 시간을 잰다)

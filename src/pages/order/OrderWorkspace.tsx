@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import HeaderBar from '../../components/HeaderBar'
 import SideMenuLayout from '../../components/SideMenuLayout'
@@ -19,7 +19,7 @@ export default function OrderWorkspace({ initialTab }: { initialTab?: OrderTab |
   const [params] = useSearchParams()
   const location = useLocation()
   const navigate = useNavigate()
-  const { tab, queryTab, legacy } = resolveOrderTab(params, initialTab)
+  const { tab, queryTab, legacy } = resolveOrderTab(params, initialTab, 'plan')
 
   useEffect(() => {
     if (location.pathname === '/order_manager/order' && queryTab === tab) return
@@ -38,13 +38,32 @@ export default function OrderWorkspace({ initialTab }: { initialTab?: OrderTab |
     navigate(`/order_manager/order?${query}`)
   }
 
+  const [search, setSearch] = useState(() => params.get('q') || '')
+  const go = (next: OrderTab, extra?: Record<string, string>) => {
+    const query = new URLSearchParams({ tab: next, ...extra })
+    const account = params.get('account_id')
+    if (account) query.set('account_id', account)
+    navigate(`/order_manager/order?${query}`)
+  }
+  const BASIS: { key: OrderTab; label: string }[] = [{ key: 'plan', label: '식단표 기준' }, { key: 'stock', label: '지금 부족한 재고' }, { key: 'usage', label: '최근 사용량' }]
+
   return <div className="order-workspace"><SideMenuLayout header={<HeaderBar title="발주하기" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주 관리', to: '/order_manager' }, { label: '발주하기' }]} />}>
-    <nav className="order-workspace__tabs" role="tablist" aria-label="발주 방법">
-      {TABS.map(item => <button key={item.key} type="button" role="tab" aria-selected={tab === item.key} className={tab === item.key ? 'is-active' : ''}
-        title={item.hint} onClick={() => select(item.key)}>{item.label}</button>)}
-    </nav>
-    {/* 부족량 기준 탭은 표 위 안내 문단 하나에 설명을 합쳐 표를 최대한 위로 올린다 */}
-    {!(tab in SOURCE) && <p className="order-workspace__hint">{TABS.find(item => item.key === tab)?.hint}. 어느 탭에서 발주해도 발주서·입고·재고·상품 연결이 같게 처리됩니다.</p>}
+    {/* 2026-10-15 개편(시안 ② 발주하기): 기준 3개 전환 + 추천 발주안·상품 검색은 오른쪽 */}
+    <header className="rd rd-order__head">
+      <div role="tablist" aria-label="무엇을 기준으로 시킬까요" className="rd-seg">
+        {BASIS.map(item => <button key={item.key} type="button" role="tab" aria-selected={tab === item.key} className={tab === item.key ? 'is-active' : ''}
+          title={TABS.find(t => t.key === item.key)?.hint} onClick={() => select(item.key)}>{item.label}</button>)}
+      </div>
+      <div className="rd-order__head-right">
+        <button type="button" className={`rd-btn${tab === 'recommended' ? ' is-selected' : ''}`} aria-pressed={tab === 'recommended'} title={TABS[0].hint} onClick={() => select('recommended')}>추천 발주안</button>
+        <form className="rd-order__search" role="search" onSubmit={event => { event.preventDefault(); go('products', search.trim() ? { q: search.trim() } : undefined) }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="#5B6660" strokeWidth="2" fill="none" /><path d="M16 16 L21 21" stroke="#5B6660" strokeWidth="2" strokeLinecap="round" /></svg>
+          <input type="search" className="rd-bare-input" aria-label="상품 직접 검색" placeholder="다른 상품 직접 찾아 담기" value={search} onChange={e => setSearch(e.target.value)} />
+          <button type="submit" className={`rd-btn${tab === 'products' ? ' is-selected' : ''}`}>상품 검색</button>
+        </form>
+      </div>
+    </header>
+    {!(tab in SOURCE) && <p className="rd rd-order__hint rd-muted">{TABS.find(item => item.key === tab)?.hint}. 어느 화면에서 발주해도 발주서·입고·재고·상품 연결이 같게 처리됩니다.</p>}
     <div role="tabpanel" aria-label={TABS.find(item => item.key === tab)?.label}>
       {tab === 'recommended' ? <QuickOrder embedded /> : tab === 'products' ? <ProductOrder embedded /> : <FoodOrder key={tab} embedded fixedSource={SOURCE[tab]} />}
     </div>

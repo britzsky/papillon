@@ -1,0 +1,123 @@
+/* 2026-10-15 개편 — 발주하기(시안 ②)·발주서/입고(시안 ③). 토큰·글씨 규칙은 Redesign.css(.rd). */
+
+/* ---- 공통 보조 ---- */
+.rd .rd-text-warn { color: var(--rd-orange); }
+.rd .rd-text-red { color: var(--rd-red); }
+.rd .rd-text-yellow { color: var(--rd-yellow-ink); }
+.rd .rd-text-ok { color: var(--rd-green); }
+.rd .rd-tone-yellow { background: var(--rd-yellow-soft); color: var(--rd-yellow-ink); }
+.rd .rd-alert { margin: 0; padding: 12px 16px; border: 1px solid var(--rd-red-line); border-radius: 12px; background: var(--rd-red-soft); color: var(--rd-red-ink); }
+.rd .rd-link { padding: 0; border: 0; background: transparent; color: var(--rd-blue); text-align: left; cursor: pointer; --rd-fs: 12px; }
+.rd .rd-link:hover { text-decoration: underline; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-link { min-height: 0 !important; height: auto !important; padding: 0 !important; border: 0 !important; background: transparent !important; }
+.rd .rd-input { min-height: 40px; padding: 0 12px; border: 1px solid var(--rd-line-strong); border-radius: 10px; background: #fff; font: inherit; }
+.rd .rd-seg { display: inline-flex; padding: 4px; border-radius: 12px; background: #E6EBE7; }
+.rd .rd-seg button { min-height: 40px; padding: 0 16px; border: 0; border-radius: 9px; background: transparent; color: var(--rd-soft-ink); cursor: pointer; }
+.rd .rd-seg button.is-active { background: #fff; color: var(--rd-ink); box-shadow: 0 1px 2px rgba(0, 0, 0, .08); }
+body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-seg button { border: 0 !important; }
+.rd .rd-pills { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.rd .rd-pills button { min-height: 34px; padding: 0 12px; border: 1px solid var(--rd-line); border-radius: 999px; background: #fff; color: var(--rd-soft-ink); cursor: pointer; --rd-fs: 12px; }
+.rd .rd-pills button.is-active { border-color: var(--rd-green); background: var(--rd-green-soft); color: var(--rd-green-dark); }
+.rd .rd-btn.is-selected { border-color: var(--rd-green); background: var(--rd-green-soft); color: var(--rd-green-dark); }
+
+/* ---- 발주하기 머리 줄 ---- */
+.rd.rd-order__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 14px; }
+.rd .rd-order__head-right { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-left: auto; }
+.rd .rd-order__search { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 4px 0 14px; border: 1px solid #D5DDD7; border-radius: 12px; background: #fff; min-width: 340px; }
+.rd .rd-order__search input { flex: 1; min-width: 0; font: inherit; }
+.rd .rd-order__search .rd-btn { min-height: 38px; }
+.rd.rd-order__hint { margin: -4px 0 12px; }
+
+/* ---- 부족량 화면 ---- */
+.rd.rd-order { display: flex; flex-direction: column; gap: 16px; padding-bottom: 32px; }
+.rd .rd-days { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.rd .rd-day { display: flex; flex-direction: column; gap: 6px; min-height: 76px; padding: 12px 14px; border: 1px solid var(--rd-line); border-radius: 14px; background: #fff; color: var(--rd-ink); text-align: left; cursor: pointer; }
+.rd .rd-day:hover { border-color: var(--rd-green); }
+.rd .rd-day.is-active { border-color: var(--rd-green); background: var(--rd-green); color: #fff; }
+.rd .rd-day__top { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+.rd .rd-day__top strong { --rd-fs: 16px; font-weight: 800; }
+.rd .rd-day__deadline { --rd-fs: 11px; font-weight: 500; opacity: .9; }
+.rd .rd-day.is-active .rd-chip { background: #fff; color: var(--rd-green-dark); }
+.rd .rd-order__filters { padding: 10px 16px; }
+.rd .rd-order__filters > summary { cursor: pointer; color: var(--rd-soft-ink); padding: 4px 0; }
+.rd .rd-order__filters .shortage-order-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 14px; margin-top: 10px; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.rd .rd-order__filters .shortage-order-filters label { display: flex; flex-direction: column; gap: 4px; --rd-fs: 12px; color: var(--rd-soft-ink); }
+.rd .rd-order__filters .shortage-order-check { flex-direction: row !important; align-items: center; }
+.rd .rd-order__notes { display: flex; flex-direction: column; gap: 4px; margin: 10px 0 2px; color: var(--rd-muted); }
+.rd .rd-order__grid { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
+.rd .rd-order__list { flex: 999 1 680px; min-width: 0; overflow: hidden; }
+.rd .rd-order__list-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 20px; border-bottom: 1px solid #E8ECE9; }
+.rd .rd-order__list-head p { margin: 3px 0 0; }
+.rd .rd-order__tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.rd .rd-order__scroll { overflow-x: auto; }
+.rd .rd-order__table { min-width: 860px; }
+.rd .rd-order__row { display: grid; grid-template-columns: 28px minmax(120px, 1.1fr) minmax(150px, 1.1fr) minmax(260px, 2.1fr) minmax(150px, 1fr); gap: 14px; align-items: center; padding: 14px 20px; border-top: 1px solid #EEF1EE; }
+.rd .rd-order__row.is-head { padding: 9px 20px; border-top: 0; background: #F7F9F7; color: var(--rd-muted); font-weight: 700; }
+.rd .rd-order__row.is-focused { background: #F2F8F3; }
+.rd .rd-order__row.is-blocked { background: #FFF8F0; }
+.rd .rd-order__row input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--rd-green); }
+.rd .rd-order__name { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.rd .rd-order__stock { display: flex; flex-direction: column; gap: 4px; }
+.rd .rd-bar { display: flex; height: 10px; border-radius: 999px; background: #EEF1EE; overflow: hidden; }
+.rd .rd-bar > span { background: var(--rd-green); }
+.rd .rd-bar > span.is-incoming { background: #7FB0E0; }
+.rd .rd-order__offer { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+.rd .rd-order__offer > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.rd .rd-order__offer-name { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.rd .rd-order__offer-name select { flex: 1; min-width: 0; max-width: 100%; min-height: 34px; border-radius: 8px; background: transparent; font: inherit; font-weight: 700; --rd-fs: 14px; text-overflow: ellipsis; }
+.rd .rd-order__qty { display: flex; flex-direction: column; gap: 4px; }
+.rd .rd-stepper { display: inline-flex; align-items: center; align-self: flex-start; border: 1px solid var(--rd-line-strong); border-radius: 10px; overflow: hidden; background: #fff; }
+.rd .rd-stepper button { width: 38px; height: 38px; border: 0; background: #F7F9F7; cursor: pointer; --rd-fs: 17px; }
+.rd .rd-stepper button:disabled { color: #B8C0BB; cursor: not-allowed; }
+.rd .rd-stepper input { width: 58px; height: 38px; border: 0; text-align: center; font: inherit; font-weight: 800; --rd-fs: 15px; -moz-appearance: textfield; }
+.rd .rd-stepper input::-webkit-inner-spin-button, .rd .rd-stepper input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-stepper input { width: 58px !important; height: 38px !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; min-height: 0 !important; padding: 0 !important; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-stepper button { width: 38px !important; height: 38px !important; min-width: 0 !important; min-height: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; }
+.rd .rd-order__empty { margin: 0; padding: 24px 20px; color: var(--rd-muted); text-align: center; }
+.rd .rd-order__foot { padding: 12px 20px; border-top: 1px solid #EEF1EE; }
+.rd .rd-order__side { flex: 1 1 320px; max-width: 380px; display: flex; flex-direction: column; gap: 12px; position: sticky; top: 8px; }
+.rd .rd-order__summary { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+.rd .rd-order__summary > p { margin: 0; }
+.rd .rd-order__sheet { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border: 1px solid var(--rd-line); border-radius: 12px; }
+.rd .rd-order__sheet.is-OURHOME { border-color: var(--rd-orange-line); background: #FFFAF4; }
+.rd .rd-order__sheet-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; }
+.rd .rd-order__sheet-sum { display: flex; justify-content: space-between; }
+.rd .rd-order__sheet-sum strong { font-weight: 800; }
+.rd .rd-order__total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 10px; border-top: 1px solid #E8ECE9; }
+.rd .rd-order__total strong { --rd-fs: 21px; font-weight: 800; }
+.rd .rd-order__confirm { width: 100%; min-height: 52px; --rd-fs: 15px; }
+.rd .rd-order__side-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+.rd .rd-order__blocked { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border: 1px solid var(--rd-orange-line); border-radius: 14px; background: var(--rd-orange-soft); color: #6A3A12; }
+.rd .rd-order__blocked strong { color: var(--rd-orange-ink); }
+@media (max-width: 1100px) {
+  .rd .rd-days { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rd .rd-order__side { position: static; max-width: none; }
+  .rd .rd-order__search { min-width: 0; flex: 1 1 260px; }
+}
+
+/*
+ * 버튼 색: PosTheme.css가 모든 button의 배경·글자·테두리·모서리를 !important로 고정한다.
+ * 개편 영역 안에서는 더 강한 선택자로 아래 변수 값을 쓰게 하고, 부품마다 변수만 바꾼다.
+ */
+body.workspace-ui .rd.rd button {
+  background: var(--rd-btn-bg, #fff) !important; color: var(--rd-btn-fg, var(--rd-ink)) !important;
+  border-color: var(--rd-btn-line, var(--rd-line-strong)) !important; border-radius: var(--rd-btn-radius, 10px) !important;
+}
+body.workspace-ui .rd.rd button:hover:not(:disabled) {
+  background: var(--rd-btn-hover-bg, var(--rd-btn-bg, #fff)) !important; color: var(--rd-btn-hover-fg, var(--rd-btn-fg, var(--rd-ink))) !important;
+  border-color: var(--rd-btn-hover-line, var(--rd-green)) !important;
+}
+body.workspace-ui .rd.rd button:disabled { background: var(--rd-btn-disabled-bg, #F0F3F0) !important; color: #A2ACA6 !important; border-color: var(--rd-btn-disabled-line, var(--rd-line)) !important; }
+.rd .rd-btn.is-primary, .rd .rd-day.is-active { --rd-btn-bg: var(--rd-green); --rd-btn-fg: #fff; --rd-btn-line: var(--rd-green); --rd-btn-hover-bg: var(--rd-green-dark); --rd-btn-hover-fg: #fff; --rd-btn-hover-line: var(--rd-green-dark); }
+.rd .rd-btn.is-ghost { --rd-btn-bg: transparent; --rd-btn-line: transparent; --rd-btn-fg: var(--rd-soft-ink); --rd-btn-hover-bg: #F0F3F0; --rd-btn-hover-line: transparent; --rd-btn-disabled-bg: transparent; --rd-btn-disabled-line: transparent; }
+.rd .rd-btn.is-selected { --rd-btn-bg: var(--rd-green-soft); --rd-btn-fg: var(--rd-green-dark); --rd-btn-line: var(--rd-green); }
+.rd .rd-seg button { --rd-btn-bg: transparent; --rd-btn-line: transparent; --rd-btn-fg: var(--rd-soft-ink); --rd-btn-radius: 9px; --rd-btn-hover-bg: rgba(255, 255, 255, .6); --rd-btn-hover-line: transparent; }
+.rd .rd-seg button.is-active { --rd-btn-bg: #fff; --rd-btn-fg: var(--rd-ink); --rd-btn-hover-bg: #fff; }
+.rd .rd-pills button { --rd-btn-radius: 999px; --rd-btn-line: var(--rd-line); --rd-btn-fg: var(--rd-soft-ink); }
+.rd .rd-pills button.is-active { --rd-btn-bg: var(--rd-green-soft); --rd-btn-line: var(--rd-green); --rd-btn-fg: var(--rd-green-dark); }
+.rd .rd-day { --rd-btn-radius: 14px; --rd-btn-line: var(--rd-line); }
+.rd .rd-link { --rd-btn-bg: transparent; --rd-btn-line: transparent; --rd-btn-fg: var(--rd-blue); --rd-btn-radius: 0; --rd-btn-hover-line: transparent; --rd-btn-hover-fg: var(--rd-blue-ink); }
+.rd .rd-stepper button { --rd-btn-bg: #F7F9F7; --rd-btn-line: transparent; --rd-btn-radius: 0; --rd-btn-hover-bg: var(--rd-green-soft); --rd-btn-hover-line: transparent; --rd-btn-disabled-bg: #F7F9F7; --rd-btn-disabled-line: transparent; }
+.rd .rd-shortcut, .rd .rd-home__result { --rd-btn-radius: 12px; --rd-btn-line: var(--rd-line); }
+.rd .rd-home__keywords button { --rd-btn-radius: 999px; --rd-btn-line: var(--rd-line); --rd-btn-fg: var(--rd-soft-ink); }
+.rd .rd-cal__nav button { --rd-btn-line: var(--rd-line); }

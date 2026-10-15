@@ -18,7 +18,8 @@ export function useProductOrder(accountId: string, initialSource: string) {
   const [site, setSite] = useState('')
   const [date, setDate] = useState(() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toLocaleDateString('sv-SE') })
   const [offers, setOffers] = useState<SupplierOffer[]>([])
-  const [query, setQuery] = useState('')
+  // 발주하기 머리 줄 검색창에서 넘어오면 ?q= 로 받는다
+  const [query, setQuery] = useState(() => new URLSearchParams(window.location.search).get('q') || '')
   const [cart, setCart] = useState<CartLine[]>([])
   const [busy, setBusy] = useState(false)
   const pending = useRef(false)

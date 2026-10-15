@@ -25,9 +25,10 @@ export function sourceTab(params: URLSearchParams): OrderTab {
 }
 
 /** 주소(tab·예전 source)와 진입 경로(initialTab)로 지금 탭을 정한다. legacy=예전 '부족 식자재' 진입 */
-export function resolveOrderTab(params: URLSearchParams, initialTab?: OrderTab | LegacyOrderTab) {
+/** fallback: 주소에 탭이 없을 때. PC는 2026-10-15 개편으로 'plan'(식단표 기준), 터치는 'recommended' 유지 */
+export function resolveOrderTab(params: URLSearchParams, initialTab?: OrderTab | LegacyOrderTab, fallback: OrderTab = 'recommended') {
   const queryTab = params.get('tab')
   const legacy = queryTab === 'shortage' || (!isOrderTab(queryTab) && initialTab === 'shortage')
-  const tab: OrderTab = isOrderTab(queryTab) ? queryTab : legacy ? sourceTab(params) : (initialTab as OrderTab | undefined) ?? 'recommended'
+  const tab: OrderTab = isOrderTab(queryTab) ? queryTab : legacy ? sourceTab(params) : (initialTab as OrderTab | undefined) ?? fallback
   return { tab, queryTab, legacy }
 }
