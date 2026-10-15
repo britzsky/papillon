@@ -131,6 +131,7 @@ function VendorSanitation() {
                 <p className="rd-muted">거래처별 조치 전 · 조치 후 사진으로 위생 상태를 확인합니다.</p>
               </div>
               <div className="rd-page__actions">
+                <div className="vs-ai-banner rd-vs__ai"><span className="rd-chip is-info">AI</span><p>{aiNoteMessage || '조치 전 사진과 전달 메모를 기준으로 조치 요청 문구를 자동 생성하고, 담당자가 수정할 수 있습니다.'}</p></div>
                 <button type="button" className="rd-btn" onClick={() => setCategoryModal(true)} disabled={!accountId}>카테고리 관리</button>
                 <button type="button" className="rd-btn" onClick={() => void handleGenerateAiNotes()} disabled={isAiNoteLoading}>{isAiNoteLoading ? 'AI 생성 중' : 'AI 메모'}</button>
                 <button type="button" className="rd-btn" onClick={() => setAlert({ type: 'error', title: '조회', message: '위생 점검 조회 서버 기능은 아직 연결되지 않았습니다. 지금은 이 화면에서 입력한 내용만 보입니다.' })}>조회</button>
@@ -139,19 +140,19 @@ function VendorSanitation() {
             </header>
 
             <section className="rd-card rd-page__filters">
-              <label>거래처
+              <label className="rd-vs__field"><span>거래처</span>
                 <select className="rd-input" value={accountId} onChange={event => { setAccountId(event.target.value); setCategoryFilter('') }}>
                   {!accounts.length ? <option value={accountId}>{accountName || '거래처 불러오는 중'}</option> : null}
                   {accounts.map(option => <option key={option.value} value={option.value}>{option.text}</option>)}
                 </select>
               </label>
-              <label>점검일
+              <label className="rd-vs__field"><span>점검일</span>
                 <input className="rd-input" type="date" value={inspectionDate} onChange={event => setInspectionDate(event.target.value)} />
               </label>
-              <label>점검자
+              <label className="rd-vs__field"><span>점검자</span>
                 <input className="rd-input" value={inspector} placeholder="점검자 이름" onChange={event => setInspector(event.target.value)} />
               </label>
-              <label>상태
+              <label className="rd-vs__field"><span>상태</span>
                 <select className="rd-input" value={statusFilter} onChange={event => setStatusFilter(event.target.value as SanitationStatus | '')}>
                   <option value="">전체</option>
                   {(Object.keys(STATUS_LABEL) as SanitationStatus[]).map(key => <option key={key} value={key}>{STATUS_LABEL[key]}</option>)}
@@ -165,7 +166,6 @@ function VendorSanitation() {
               {categories.map(category => <button type="button" key={category.id} className={categoryFilter === category.id ? 'is-active' : ''} aria-pressed={categoryFilter === category.id} onClick={() => setCategoryFilter(category.id)}>{category.name}</button>)}
             </div>
 
-            <div className="vs-ai-banner rd-page__notice"><span className="rd-chip is-info">AI</span><p>{aiNoteMessage || '조치 전 사진과 전달 메모를 기준으로 조치 요청 문구를 자동 생성하고, 담당자가 수정할 수 있습니다.'}</p></div>
 
             <section className="vs-list" aria-label="점검 항목">
               <div className="vs-list__head"><h2 className="rd-h2">점검 항목 <span className="rd-chip is-done">{categories.length}개 카테고리</span></h2><small className="rd-muted">조치 전 → 조치 후 비교 중심 보기</small></div>
