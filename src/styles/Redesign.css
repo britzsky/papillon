@@ -2,6 +2,7 @@
  * 2026-10-15 화면 개편(홈·발주하기·발주서/입고) — 시안 https://claude.ai/artifact/NHPjXDeqwvBHdpGX6SfVEW
  * 범위: 루트에 .rd 를 붙인 영역만. 다른 화면은 UserTypography.css(본문 10px) 그대로.
  * 글씨: 사용자 지정 "시안보다 1px 작게" — 본문 13 / 보조 12 / 작은 11 / 강조 14·16 / 소제목 17 / 제목 25 / 큰 숫자 33.
+ * 이후 사용자 요청으로 전부 2px 더 작게(--rd-fs-shift) → 실제 본문 11 / 보조 10 / 작은 9 / 제목 23 / 큰 숫자 31.
  * UserTypography.css가 모든 요소에 !important로 10px을 주므로, 같은 방식으로 더 강한 선택자에서 변수 값을 준다.
  * 요소별 크기는 --rd-fs 로 바꾼다(자식에게 상속).
  */
@@ -10,7 +11,7 @@
 body.workspace-ui > :is(#root, :not(#root)) .rd.rd,
 body.workspace-ui > :is(#root, :not(#root)) .rd.rd *,
 body.workspace-ui.workspace-ui > :is(.rd.rd, #__rd),
-body.workspace-ui.workspace-ui > :is(.rd.rd, #__rd) * { font-size: var(--rd-fs) !important; }
+body.workspace-ui.workspace-ui > :is(.rd.rd, #__rd) * { font-size: calc(var(--rd-fs) - var(--rd-fs-shift)) !important; }
 body.workspace-ui > :is(#root, :not(#root)) .rd.rd button,
 body.workspace-ui > :is(#root, :not(#root)) .rd.rd button *,
 body.workspace-ui.workspace-ui > :is(.rd.rd, #__rd) button,
@@ -23,6 +24,8 @@ body.workspace-ui.workspace-ui > :is(.rd.rd, #__rd) .rd-icon-btn { width: 36px !
 
 .rd {
   --rd-fs: 13px;
+  /* 2026-10-15 사용자 요청: 개편 화면 글씨 전체 2px 작게. 아래 값 하나로 일괄 조정(각 부품의 --rd-fs는 그대로 두고 여기서 뺀다) */
+  --rd-fs-shift: 2px;
   --rd-ink: #1E2A22; --rd-muted: #5B6660; --rd-soft-ink: #4A5650;
   --rd-bg: #F3F6F2; --rd-card: #FFFFFF; --rd-line: #E1E7E2; --rd-line-strong: #C9D3CC;
   --rd-green: #2E6B3A; --rd-green-dark: #1F4F29; --rd-green-soft: #E6F0E7;
