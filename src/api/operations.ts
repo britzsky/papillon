@@ -53,7 +53,10 @@ export type AccountMealConfigurationSavePayload = {
 }
 
 export type MenuManagerItem = {
+  /** 검색용: 레시피 식재료의 원문·표준 이름을 띄어쓰기로 이은 글자(같은 단어는 한 번만) */
   recipe_ingredient_names?: string
+  /** 화면 표시용: 레시피 식재료 이름 목록(식재료당 하나, 중복 없음) */
+  recipe_ingredient_list?: string[]
   menu_id: string
   menu_name: string
   food_type?: number
@@ -558,6 +561,33 @@ function normalizeAccountOption(record: RawRecord): AccountOption {
   }
 }
 
+/** JSON 배열 글자('["a","b"]') 또는 배열 → 글자 목록 */
+function readNameArray(value: unknown): string[] {
+  let items: unknown = value
+  if (typeof value === 'string') {
+    const text = value.trim()
+    if (!text) return []
+    try { items = text.startsWith('[') ? JSON.parse(text) : [text] } catch { items = [text] }
+  }
+  return Array.isArray(items) ? items.map((item) => asText(item).trim()).filter(Boolean) : []
+}
+
+/**
+ * 메뉴 목록의 레시피 식재료. 서버의 recipe_ingredient_names는 검색 키라 식재료마다 '원문 표준 원문' 이름을 이어 붙여
+ * ["고추장 고추장 고추장", …]처럼 온다 → 검색용은 단어 중복을 빼고, 표시용은 recipe_ingredient_list(식재료당 이름 하나)를 쓴다.
+ * recipe_ingredient_list가 없는 서버(배포 전)면 각 항목에서 반복된 단어를 빼서 표시한다.
+ */
+function recipeIngredientNames(namesValue: unknown, listValue: unknown) {
+  const entries = readNameArray(namesValue)
+  const dedupeWords = (text: string) => Array.from(new Set(text.split(/\s+/).filter(Boolean))).join(' ')
+  const list = readNameArray(listValue)
+  const display = list.length > 0 ? list : entries.map(dedupeWords)
+  return {
+    recipe_ingredient_names: dedupeWords(entries.join(' ')),
+    recipe_ingredient_list: Array.from(new Set(display)),
+  }
+}
+
 function normalizeMenu(record: RawRecord, index: number): MenuManagerItem {
   const menuImg = asText(record.menu_img ?? record.menuImg ?? record.image_url ?? record.imageUrl)
   const menuCostComplete = record.menu_cost_complete ?? record.menuCostComplete
@@ -566,7 +596,7 @@ function normalizeMenu(record: RawRecord, index: number): MenuManagerItem {
     menu_id: asText(record.menu_id ?? record.menuId, `row-${index + 1}`),
     menu_name: asText(record.menu_name ?? record.menuName, `메뉴 ${index + 1}`),
     food_type: asNumber(record.food_type ?? record.foodType, Number.NaN),
-    recipe_ingredient_names: Array.isArray(record.recipe_ingredient_names) ? record.recipe_ingredient_names.join(' ') : asText(record.recipe_ingredient_names),
+    ...recipeIngredientNames(record.recipe_ingredient_names, record.recipe_ingredient_list),
     food_type_reason: asText(record.food_type_reason ?? record.foodTypeReason),
     meal_category: toMealCategory(record),
     menu_type: asOptionValue(record.menu_type ?? record.menuType, menuTypeValueByText, ['0', '1', '2', '3', '4']),

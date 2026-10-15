@@ -111,7 +111,7 @@ function AccountMenuImport() {
                               <td>{optionText(mealPlanTypeOptions, item.meal_plan_type)}</td>
                               <td className="is-num">{item.calories_per_serving ? `${Number(item.calories_per_serving).toLocaleString('ko-KR')}kcal` : '-'}</td>
                               <td className="is-num">{won(item.menu_cost_per_person)}</td>
-                              <td><span className="rd-mi__ingredients" title={item.recipe_ingredient_names}>{item.recipe_ingredient_names || '-'}</span></td>
+                              <td><span className="rd-mi__ingredients" title={item.recipe_ingredient_list?.join(', ')}>{item.recipe_ingredient_list?.length ? item.recipe_ingredient_list.join(', ') : '-'}</span></td>
                               <td>{registered ? <span className="rd-chip is-ok">등록됨</span> : checked ? <span className="rd-chip is-info">선택</span> : <span className="rd-chip is-done">미등록</span>}</td>
                             </tr>
                           )
