@@ -285,3 +285,35 @@ body.workspace-ui > :is(#root, :not(#root)) .rd.rd .pos-card .rd-stepper input {
 .rd .rd-inv__status-text { display: block; --rd-fs: 10px; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rd .rd-inv__order { min-height: 32px; padding: 0 14px; }
 @media (max-width: 1100px) { .rd .rd-inv__tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ---- 식단표(시안 ⑧) — 주간 표(table-meals-hangyeol)·PDF 결과 표 구조는 그대로, 배치·글씨만 ---- */
+.rd.rd-meals { display: flex; flex-direction: column; gap: 12px; height: 100%; min-height: 0; overflow: auto; padding-bottom: 16px; }
+.rd .rd-meals__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.rd .rd-meals__title { display: flex; align-items: center; gap: 10px; }
+.rd .rd-meals__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.rd .rd-meals__actions .table-meals-upload-button { --rd-btn-line: var(--rd-line-strong); min-height: 40px; padding: 0 14px; border: 1px solid; --button-height: 40px; --button-width: 0; }
+.rd .rd-meals__actions .table-meals-upload-button.is-summary { --rd-btn-bg: var(--rd-green-soft); --rd-btn-fg: var(--rd-green-dark); --rd-btn-line: var(--rd-green); }
+.rd .rd-meals__filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 14px; padding: 12px 16px; border: 1px solid var(--rd-line); border-radius: 14px; background: #fff; box-shadow: none; }
+.rd .rd-meals__filters .table-meals-field label, .rd .rd-meals__filters .table-meals-servings-field span { --rd-fs: 12px; color: var(--rd-soft-ink); }
+.rd .table-meals-weekly-summary { border-radius: 12px; }
+.rd .rd-meals__grid { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+.rd .rd-meals__main { flex: 999 1 720px; min-width: 0; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+.rd .rd-meals__view { align-self: flex-start; }
+.rd .rd-meals__saved-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.rd .rd-meals__saved-actions { display: flex; gap: 6px; }
+.rd .rd-meals__saved .table-meals-sheet { margin-top: 8px; }
+.rd .rd-meals__saved .table-meals-hangyeol__table { width: 100%; }
+.rd .rd-meals__saved .table-meals-hangyeol__table td, .rd .rd-meals__saved .table-meals-hangyeol__table th { --rd-fs: 12px; }
+.rd .rd-meals__saved .table-meals-hangyeol__title h3 { --rd-fs: 17px; }
+.rd .rd-meals__saved .table-meals-hangyeol__notice, .rd .rd-meals__saved .table-meals-hangyeol__origin { --rd-fs: 11px; }
+.rd .rd-meals__draft .table-meals-week-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+.rd .rd-meals__draft .table-meals-day-card { --rd-fs: 12px; border-radius: 12px; }
+.rd .rd-meals__draft .table-meals-summary-card { border-radius: 12px; --rd-fs: 12px; }
+.rd .rd-meals__empty { padding: 40px 20px; text-align: center; color: var(--rd-muted); }
+.rd .rd-meals__side { flex: 1 1 280px; max-width: 320px; display: flex; flex-direction: column; gap: 12px; }
+.rd .rd-meals__box { padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.rd .rd-meals__box p { margin: 0; }
+.rd .rd-meals__list { display: flex; flex-direction: column; gap: 6px; max-height: 420px; overflow: auto; }
+.rd .rd-meals__item { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; text-align: left; cursor: pointer; --rd-btn-radius: 10px; --rd-btn-line: var(--rd-line); --button-height: auto; --button-width: 0; }
+.rd .rd-meals__item.is-selected { --rd-btn-bg: #F2F8F3; --rd-btn-line: var(--rd-green); --rd-btn-hover-bg: #F2F8F3; }
+@media (max-width: 1100px) { .rd .rd-meals__side { max-width: none; } .rd .rd-meals__draft .table-meals-week-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
