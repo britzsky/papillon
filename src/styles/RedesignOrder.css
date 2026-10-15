@@ -176,3 +176,18 @@ body.workspace-ui .rd.rd button:disabled { background: var(--rd-btn-disabled-bg,
   .rd .rd-week > .rd-icon-btn { display: none; }
   .rd .rd-recv__list { max-width: none; }
 }
+
+/* ---- 추천 발주안(시안 ④) ---- */
+.rd .rd-quick__hero { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; padding: 18px 22px; }
+.rd .rd-quick__hero-text { flex: 1 1 380px; display: flex; flex-direction: column; gap: 4px; }
+.rd .rd-quick__field { display: flex; flex-direction: column; gap: 4px; --rd-fs: 12px; color: var(--rd-soft-ink); }
+.rd .rd-quick__row { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) minmax(0, .8fr) minmax(0, .8fr); gap: 12px; align-items: center; padding: 10px 20px; border-top: 1px solid #EEF1EE; }
+.rd .rd-quick__row.is-head { padding: 9px 20px; border-top: 0; background: #F7F9F7; color: var(--rd-muted); font-weight: 700; }
+.rd .rd-quick__row .is-num { text-align: right; white-space: nowrap; }
+.rd .rd-quick__row small { display: block; }
+.rd .rd-quick__item { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.rd .rd-quick__basis { padding: 10px 20px; border-top: 1px solid #EEF1EE; color: var(--rd-soft-ink); }
+.rd .rd-quick__basis p { margin: 4px 0; }
+.rd .rd-quick__links { display: flex; flex-wrap: wrap; gap: 14px; }
+.rd .rd-quick__partial { display: flex; align-items: center; gap: 8px; margin-top: 6px; color: var(--rd-ink); }
+.rd .rd-quick__sheet { display: flex; justify-content: space-between; align-items: center; gap: 8px; }

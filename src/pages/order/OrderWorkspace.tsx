@@ -63,7 +63,6 @@ export default function OrderWorkspace({ initialTab }: { initialTab?: OrderTab |
         </form>
       </div>
     </header>
-    {!(tab in SOURCE) && <p className="rd rd-order__hint rd-muted">{TABS.find(item => item.key === tab)?.hint}. 어느 화면에서 발주해도 발주서·입고·재고·상품 연결이 같게 처리됩니다.</p>}
     <div role="tabpanel" aria-label={TABS.find(item => item.key === tab)?.label}>
       {tab === 'recommended' ? <QuickOrder embedded /> : tab === 'products' ? <ProductOrder embedded /> : <FoodOrder key={tab} embedded fixedSource={SOURCE[tab]} />}
     </div>
