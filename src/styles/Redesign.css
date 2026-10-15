@@ -149,10 +149,31 @@ a.rd-tile:hover { border-color: var(--rd-green); }
 .rd .rd-shortcut strong { --rd-fs: 13px; }
 .rd .rd-shortcut small { --rd-fs: 11px; color: var(--rd-muted); font-weight: 400; }
 
+/* 거래처 한 곳 홈: 왼쪽(칸 4개 + 순서 목록) / 오른쪽(거래처 카드 + 달력) — 사용자 요청 2026-10-15 */
+.rd .rd-home__main { flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+.rd .rd-home__main .rd-tiles { gap: 10px; }
+.rd .rd-home__main .rd-tile { min-height: 124px; padding: 14px 16px; }
+.rd .rd-home__main .rd-tile__value { --rd-fs: 29px; }
+.rd .rd-home__main .rd-steps { flex: none; }
+.rd .rd-home__side { flex: 1 1 340px; max-width: 400px; display: flex; flex-direction: column; gap: 18px; }
+.rd .rd-home__side .rd-cal { flex: none; max-width: none; }
+.rd .rd-account { padding: 20px 22px; display: flex; flex-direction: column; gap: 12px; }
+.rd .rd-account__who { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 10px; padding-bottom: 12px; border-bottom: 1px solid #E8ECE9; }
+.rd .rd-account__who strong { font-weight: 800; }
+.rd .rd-account__rows { margin: 0; display: grid; gap: 8px; }
+.rd .rd-account__rows > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.rd .rd-account__rows dt { color: var(--rd-muted); }
+.rd .rd-account__rows dd { margin: 0; font-weight: 700; text-align: right; }
+.rd .rd-account__rows .is-remaining { padding-top: 8px; border-top: 1px dashed #DDE3DF; }
+.rd .rd-account__rows .is-remaining dd { --rd-fs: 16px; font-weight: 800; }
+.rd .rd-account__bar > span { background: var(--rd-green); }
+.rd .rd-account__bar > span.is-over { background: var(--rd-red); }
+
 @media (max-width: 1100px) {
   .rd .rd-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .rd .rd-shortcuts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .rd .rd-cal { max-width: none; }
+  .rd .rd-home__side { max-width: none; }
 }
 @media (max-width: 640px) {
   .rd .rd-tiles { grid-template-columns: 1fr; }

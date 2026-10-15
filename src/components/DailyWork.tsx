@@ -3,6 +3,9 @@ import { Fragment, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { TASKS, accountHref as href, needsSite, taskCount as count, useDailyWork, type TaskTile, type TaskTone } from '../features/workspace/useDailyWork'
 import { useWorkspaceCalendar } from '../features/workspace/useWorkspaceCalendar'
+import { useAccountSummary } from '../features/workspace/useAccountSummary'
+
+const won = (value: number) => Math.round(value).toLocaleString('ko-KR')
 
 /**
  * PC 홈 본문(2026-10-15 개편, 시안 ① 홈). 조회·계산은 features/workspace/useDailyWork(터치 홈과 공용).
@@ -18,6 +21,7 @@ export default function DailyWork({ search }: { search: ReactNode }) {
   const { data, error, rows, single, busy, idle, tiles, refresh } = useDailyWork(account)
   const [noticeAccount, setNoticeAccount] = useState('')
   const calendar = useWorkspaceCalendar(single?.account_id || '')
+  const summary = useAccountSummary(single?.account_id || '')
 
   // 거래처 한 곳: 두 번째 칸은 '공급사 확인 요망'(접수 불명확 발주서 + 아워홈 출고·삭제 알림)
   const notices = single ? Number(single.supplier_notices) || 0 : 0
@@ -61,9 +65,12 @@ export default function DailyWork({ search }: { search: ReactNode }) {
     {!data && !error && <p role="status" className="rd-muted">업무 현황을 확인하고 있습니다.</p>}
     {data && !rows.length && <p>조회할 거래처가 없습니다. 거래처 설정을 확인해주세요.</p>}
 
-    {rows.length > 0 && <section className="rd-tiles" aria-label="오늘 현황">{view.map(tileView)}</section>}
+    {!single && rows.length > 0 && <section className="rd-tiles" aria-label="오늘 현황">{view.map(tileView)}</section>}
 
+    {/* 거래처 한 곳: 왼쪽 = 칸 4개 + 순서 목록, 오른쪽 = 거래처 카드(담당자·예산) + 달력 */}
     {single && <div className="rd-home__grid">
+      <div className="rd-home__main">
+      <section className="rd-tiles" aria-label="오늘 현황">{view.map(tileView)}</section>
       <section className="rd-card rd-steps" aria-label="오늘 할 일 순서">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
           <h2 className="rd-h2">오늘 순서대로 하면 돼요</h2>
@@ -76,6 +83,23 @@ export default function DailyWork({ search }: { search: ReactNode }) {
           <Link className="rd-btn" to={step.to}>{step.action}</Link>
         </li>)}</ol> : <div className="rd-steps__done">지금 할 일이 없어요. 새 일이 생기면 여기에 순서대로 나타납니다.</div>}
         <div className="rd-steps__more"><WorkspaceNotifications accountId={single.account_id} /></div>
+      </section>
+      </div>
+
+      <aside className="rd-home__side" aria-label="거래처 정보와 달력">
+      <section className="rd-card rd-account" aria-label="거래처 정보">
+        <div className="rd-account__who">
+          <strong className="rd-fs-lg">{summary?.account_name || single.account_name}</strong>
+          {summary?.user_name ? <span className="rd-muted">{summary.user_name} 님</span> : null}
+        </div>
+        <dl className="rd-account__rows">
+          <div><dt>담당자</dt><dd>{summary?.manager_name ? `${summary.manager_name}${summary.manager_tel ? ` · ${summary.manager_tel}` : ''}` : '등록 안 됨'}</dd></div>
+          <div><dt>이달 예산</dt><dd>{summary ? summary.budget !== null ? `${won(summary.budget)}원` : '예산 미등록' : '확인 중'}</dd></div>
+          <div><dt>사용 예산</dt><dd>{summary ? <>{won(summary.used)}원{summary.budget ? <small className="rd-muted"> ({Math.round(summary.used / summary.budget * 100)}%)</small> : null}</> : '확인 중'}</dd></div>
+          <div className="is-remaining"><dt>여유 예산</dt><dd className={summary?.remaining !== null && summary?.remaining !== undefined && summary.remaining < 0 ? 'rd-text-red' : 'rd-text-ok'}>{summary?.remaining !== null && summary?.remaining !== undefined ? `${won(summary.remaining)}원` : '—'}</dd></div>
+        </dl>
+        {summary?.budget ? <span className="rd-bar rd-account__bar" aria-hidden="true"><span className={summary.used > summary.budget ? 'is-over' : ''} style={{ width: `${Math.min(100, summary.used / summary.budget * 100)}%` }} /></span> : null}
+        <small className="rd-muted rd-fs-xs">{summary ? `${Number(summary.month.slice(5))}월 · 사용 = 이번 달 납품 발주(접수·입고) ${won(summary.used_orders)}원 + 직접구매 ${won(summary.used_direct)}원` : ''}</small>
       </section>
 
       <section className="rd-card rd-cal" aria-label="발주·입고 달력">
@@ -100,6 +124,7 @@ export default function DailyWork({ search }: { search: ReactNode }) {
           <span><span className="rd-cal__dot is-meal" />식단만 있음</span>
         </div>
       </section>
+      </aside>
     </div>}
 
     {!single && busy.length > 0 && <section className="rd-card rd-hq-table" aria-label="거래처별 할 일"><table>
