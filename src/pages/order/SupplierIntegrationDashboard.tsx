@@ -99,12 +99,19 @@ function SupplierWorkspace({ accountId }: { accountId: string }) {
   const ourhome = useOurhomeSite(accountId)
 
   return <div className="supplier-integration-page"><SideMenuLayout header={<HeaderBar title="공급사 통합 연동" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주 관리', to: '/order_manager' }, { label: '공급사 통합 연동' }]} />}>
-    <div className="supplier-topbar">
-      {headquarters && <AccountPicker accountId={accountId} />}
-      <nav className="supplier-segment" aria-label="공급사 선택">
-        {Object.entries(SUPPLIER_NAMES).map(([code, name]) => <button type="button" key={code} aria-pressed={supplier === code} onClick={() => setSupplier(code)}>{name}</button>)}
-      </nav>
-    </div>
+    <div className="rd rd-page rd-sup">
+    <header className="rd-page__head">
+      <div>
+        <h1 className="rd-h1">공급사 통합 연동</h1>
+        <p className="rd-muted">공급사 사업장·상품·판가·입고를 받아 오고, 동기화 결과를 확인합니다.</p>
+      </div>
+      <div className="rd-page__actions">
+        {headquarters && <AccountPicker accountId={accountId} />}
+        <nav className="rd-seg" aria-label="공급사 선택">
+          {Object.entries(SUPPLIER_NAMES).map(([code, name]) => <button type="button" key={code} className={supplier === code ? 'is-active' : ''} aria-pressed={supplier === code} onClick={() => setSupplier(code)}>{name}</button>)}
+        </nav>
+      </div>
+    </header>
 
     <div hidden={supplier !== 'WELSTORY'}><SupplierSiteBar
       supplierName="웰스토리"
@@ -151,6 +158,7 @@ function SupplierWorkspace({ accountId }: { accountId: string }) {
           </div> : null}
         </div>
       </section>
+    </div>
     </div>
   </SideMenuLayout></div>
 }

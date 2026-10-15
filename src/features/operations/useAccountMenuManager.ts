@@ -16,6 +16,37 @@ export function accountIngredientCost(item: EditableMenuIngredientItem): number 
   return qty * item.cost_unit_cost
 }
 
+/** 레시피 행 → 편집 행(비어 있는 이름·단위 등은 본사 식자재 목록에서 채움). 거래처 메뉴 관리·본사 메뉴 가져오기 공용 */
+export function toAccountDetailItems(items: Awaited<ReturnType<typeof getMenuDetailList>>, ingredientOptions: IngredientOption[]): EditableMenuIngredientItem[] {
+  return items.map((detail) => {
+    const matchedOption = ingredientOptions.find((option) => option.ingredient_id === detail.ingredient_id)
+    return toEditableDetailItem({
+      ...detail,
+      category_name: detail.category_name || matchedOption?.category_name || '',
+      ingredient_name: detail.ingredient_name || matchedOption?.ingredient_name || '',
+      ingredient_name_raw: detail.ingredient_name_raw || detail.ingredient_name || matchedOption?.ingredient_name || '',
+      ingredient_name_std: detail.ingredient_name_std || matchedOption?.ingredient_name_std || detail.ingredient_name || matchedOption?.ingredient_name || '',
+      base_unit: detail.base_unit || matchedOption?.base_unit || '',
+      convert_value: detail.convert_value || matchedOption?.convert_value || 1,
+      storage_type: detail.storage_type || matchedOption?.storage_type || '',
+      menu_usage_count: detail.menu_usage_count ?? matchedOption?.menu_usage_count ?? 0,
+      needs_review: detail.needs_review ?? matchedOption?.needs_review ?? 0,
+      note: detail.note ?? matchedOption?.note ?? '',
+      safe_stock_qty: detail.safe_stock_qty ?? matchedOption?.safe_stock_qty ?? 0,
+      like: detail.like ?? matchedOption?.like ?? 'N',
+      supplier_product_id: detail.supplier_product_id,
+      supplier_id: detail.supplier_id,
+      supplier_name: detail.supplier_name || '',
+      supplier_item_code: detail.supplier_item_code || '',
+      product_name: detail.product_name || '',
+      order_unit: detail.order_unit || matchedOption?.order_unit || matchedOption?.base_unit || '',
+      package_qty: detail.package_qty,
+      package_unit: detail.package_unit || '',
+      base_qty: detail.base_qty,
+    })
+  })
+}
+
 /**
  * 거래처 메뉴 관리(PC·터치 공용): 거래처 선택, 본사 메뉴 중 거래처에 쓸 메뉴 담기·빼기, 거래처별 메뉴 레시피 식자재·예상 원가,
  * 즐겨찾기(메뉴·식자재), 공급상품 새로고침, 바뀐 것만 저장, AI 레시피 보기·등록 상태.
@@ -406,34 +437,7 @@ export function useAccountMenuManager() {
     return { total, missingCount }
   }, [activeDetailItems])
 
-  const toAccountEditableDetailItems = (items: Awaited<ReturnType<typeof getMenuDetailList>>) =>
-    items.map((detail) => {
-      const matchedOption = ingredientOptions.find((option) => option.ingredient_id === detail.ingredient_id)
-      return toEditableDetailItem({
-        ...detail,
-        category_name: detail.category_name || matchedOption?.category_name || '',
-        ingredient_name: detail.ingredient_name || matchedOption?.ingredient_name || '',
-        ingredient_name_raw: detail.ingredient_name_raw || detail.ingredient_name || matchedOption?.ingredient_name || '',
-        ingredient_name_std: detail.ingredient_name_std || matchedOption?.ingredient_name_std || detail.ingredient_name || matchedOption?.ingredient_name || '',
-        base_unit: detail.base_unit || matchedOption?.base_unit || '',
-        convert_value: detail.convert_value || matchedOption?.convert_value || 1,
-        storage_type: detail.storage_type || matchedOption?.storage_type || '',
-        menu_usage_count: detail.menu_usage_count ?? matchedOption?.menu_usage_count ?? 0,
-        needs_review: detail.needs_review ?? matchedOption?.needs_review ?? 0,
-        note: detail.note ?? matchedOption?.note ?? '',
-        safe_stock_qty: detail.safe_stock_qty ?? matchedOption?.safe_stock_qty ?? 0,
-        like: detail.like ?? matchedOption?.like ?? 'N',
-        supplier_product_id: detail.supplier_product_id,
-        supplier_id: detail.supplier_id,
-        supplier_name: detail.supplier_name || '',
-        supplier_item_code: detail.supplier_item_code || '',
-        product_name: detail.product_name || '',
-        order_unit: detail.order_unit || matchedOption?.order_unit || matchedOption?.base_unit || '',
-        package_qty: detail.package_qty,
-        package_unit: detail.package_unit || '',
-        base_qty: detail.base_qty,
-      })
-    })
+  const toAccountEditableDetailItems = (items: Awaited<ReturnType<typeof getMenuDetailList>>) => toAccountDetailItems(items, ingredientOptions)
 
   useEffect(() => {
     let isMounted = true

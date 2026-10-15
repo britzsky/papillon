@@ -124,56 +124,51 @@ function VendorSanitation() {
     <div className="vendor-sanitation-page">
       <main className="vendor-sanitation-content">
         <SideMenuLayout header={<HeaderBar title="위생 점검 관리" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '위생관리' }, { label: '위생 점검 관리' }]} />}>
-          <div className="vs-page">
-            <section className="vs-panel">
-              <div className="vs-page__head">
-                <p className="vs-page__lead">거래처별 조치 전 · 조치 후 사진으로 위생 상태를 확인합니다.</p>
-                <div className="vs-page__actions">
-                  <button type="button" className="vs-btn" onClick={() => setCategoryModal(true)} disabled={!accountId}>카테고리 관리</button>
-                  <button type="button" className="vs-btn is-ai" onClick={() => void handleGenerateAiNotes()} disabled={isAiNoteLoading}>{isAiNoteLoading ? 'AI 생성 중' : 'AI 메모'}</button>
-                  <button type="button" className="vs-btn is-query" onClick={() => setAlert({ type: 'error', title: '조회', message: '위생 점검 조회 서버 기능은 아직 연결되지 않았습니다. 지금은 이 화면에서 입력한 내용만 보입니다.' })}>조회</button>
-                  <button type="button" className="vs-btn is-save" onClick={() => setAlert({ type: 'error', title: '저장', message: '위생 점검 저장 서버 기능은 아직 연결되지 않았습니다. 입력한 사진·메모·카테고리는 새로고침하면 사라집니다.' })}>저장</button>
-                </div>
+          <div className="vs-page rd rd-page rd-vs">
+            <header className="rd-page__head">
+              <div>
+                <h1 className="rd-h1">위생 점검 관리</h1>
+                <p className="rd-muted">거래처별 조치 전 · 조치 후 사진으로 위생 상태를 확인합니다.</p>
               </div>
+              <div className="rd-page__actions">
+                <button type="button" className="rd-btn" onClick={() => setCategoryModal(true)} disabled={!accountId}>카테고리 관리</button>
+                <button type="button" className="rd-btn" onClick={() => void handleGenerateAiNotes()} disabled={isAiNoteLoading}>{isAiNoteLoading ? 'AI 생성 중' : 'AI 메모'}</button>
+                <button type="button" className="rd-btn" onClick={() => setAlert({ type: 'error', title: '조회', message: '위생 점검 조회 서버 기능은 아직 연결되지 않았습니다. 지금은 이 화면에서 입력한 내용만 보입니다.' })}>조회</button>
+                <button type="button" className="rd-btn is-primary" onClick={() => setAlert({ type: 'error', title: '저장', message: '위생 점검 저장 서버 기능은 아직 연결되지 않았습니다. 입력한 사진·메모·카테고리는 새로고침하면 사라집니다.' })}>저장</button>
+              </div>
+            </header>
 
-              <div className="vs-filter-row">
-                <div className="vendor-sanitation-filters">
-                  <div className="vendor-sanitation-field">
-                    <label htmlFor="vs-account">거래처</label>
-                    <select id="vs-account" value={accountId} onChange={event => { setAccountId(event.target.value); setCategoryFilter('') }}>
-                      {!accounts.length ? <option value={accountId}>{accountName || '거래처 불러오는 중'}</option> : null}
-                      {accounts.map(option => <option key={option.value} value={option.value}>{option.text}</option>)}
-                    </select>
-                  </div>
-                  <div className="vendor-sanitation-field">
-                    <label htmlFor="vs-date">점검일</label>
-                    <input id="vs-date" type="date" value={inspectionDate} onChange={event => setInspectionDate(event.target.value)} />
-                  </div>
-                  <div className="vendor-sanitation-field">
-                    <label htmlFor="vs-inspector">점검자</label>
-                    <input id="vs-inspector" value={inspector} placeholder="점검자 이름" onChange={event => setInspector(event.target.value)} />
-                  </div>
-                  <div className="vendor-sanitation-field">
-                    <label htmlFor="vs-status">상태</label>
-                    <select id="vs-status" value={statusFilter} onChange={event => setStatusFilter(event.target.value as SanitationStatus | '')}>
-                      <option value="">전체</option>
-                      {(Object.keys(STATUS_LABEL) as SanitationStatus[]).map(key => <option key={key} value={key}>{STATUS_LABEL[key]}</option>)}
-                    </select>
-                  </div>
-                </div>
-                <div className="vs-guide"><strong>사진 업로드 권장: 4:3 비율 · 최대 {MAX_PHOTOS}장</strong><span>미리보기는 잘려 보이고, 누르면 원본 전체를 봅니다</span></div>
-              </div>
-
-              <div className="vs-chips" role="group" aria-label="카테고리">
-                <button type="button" className={`vs-chip${!categoryFilter ? ' is-active' : ''}`} aria-pressed={!categoryFilter} onClick={() => setCategoryFilter('')}>전체</button>
-                {categories.map(category => <button type="button" key={category.id} className={`vs-chip${categoryFilter === category.id ? ' is-active' : ''}`} aria-pressed={categoryFilter === category.id} onClick={() => setCategoryFilter(category.id)}>{category.name}</button>)}
-              </div>
+            <section className="rd-card rd-page__filters">
+              <label>거래처
+                <select className="rd-input" value={accountId} onChange={event => { setAccountId(event.target.value); setCategoryFilter('') }}>
+                  {!accounts.length ? <option value={accountId}>{accountName || '거래처 불러오는 중'}</option> : null}
+                  {accounts.map(option => <option key={option.value} value={option.value}>{option.text}</option>)}
+                </select>
+              </label>
+              <label>점검일
+                <input className="rd-input" type="date" value={inspectionDate} onChange={event => setInspectionDate(event.target.value)} />
+              </label>
+              <label>점검자
+                <input className="rd-input" value={inspector} placeholder="점검자 이름" onChange={event => setInspector(event.target.value)} />
+              </label>
+              <label>상태
+                <select className="rd-input" value={statusFilter} onChange={event => setStatusFilter(event.target.value as SanitationStatus | '')}>
+                  <option value="">전체</option>
+                  {(Object.keys(STATUS_LABEL) as SanitationStatus[]).map(key => <option key={key} value={key}>{STATUS_LABEL[key]}</option>)}
+                </select>
+              </label>
+              <span className="rd-vs__guide"><strong>사진 4:3 비율 · 최대 {MAX_PHOTOS}장</strong><small className="rd-muted">미리보기는 잘려 보이고, 누르면 원본 전체를 봅니다</small></span>
             </section>
 
-            <div className="vs-ai-banner"><span className="vs-ai-banner__mark">AI</span><p>{aiNoteMessage || '조치 전 사진과 전달 메모를 기준으로 조치 요청 문구를 자동 생성하고, 담당자가 수정할 수 있습니다.'}</p></div>
+            <div className="rd-pills" role="group" aria-label="카테고리">
+              <button type="button" className={!categoryFilter ? 'is-active' : ''} aria-pressed={!categoryFilter} onClick={() => setCategoryFilter('')}>전체</button>
+              {categories.map(category => <button type="button" key={category.id} className={categoryFilter === category.id ? 'is-active' : ''} aria-pressed={categoryFilter === category.id} onClick={() => setCategoryFilter(category.id)}>{category.name}</button>)}
+            </div>
+
+            <div className="vs-ai-banner rd-page__notice"><span className="rd-chip is-info">AI</span><p>{aiNoteMessage || '조치 전 사진과 전달 메모를 기준으로 조치 요청 문구를 자동 생성하고, 담당자가 수정할 수 있습니다.'}</p></div>
 
             <section className="vs-list" aria-label="점검 항목">
-              <div className="vs-list__head"><h2>점검 항목 <span className="vs-badge is-done">{categories.length}개 카테고리</span></h2><small>조치 전 → 조치 후 비교 중심 보기</small></div>
+              <div className="vs-list__head"><h2 className="rd-h2">점검 항목 <span className="rd-chip is-done">{categories.length}개 카테고리</span></h2><small className="rd-muted">조치 전 → 조치 후 비교 중심 보기</small></div>
               {visibleCategories.map(category => <SanitationCard key={category.id} category={category} item={itemOf(category.id)} board={board} />)}
               {!visibleCategories.length ? <p className="vs-empty">{categories.length ? '선택한 조건에 해당하는 점검 항목이 없습니다.' : '카테고리가 없습니다. 카테고리 관리에서 추가해주세요.'}</p> : null}
             </section>

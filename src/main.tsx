@@ -16,6 +16,7 @@ import AccountIngredientManager from './pages/inventory/AccountIngredientManager
 import IngredientMasterManager from './pages/inventory/IngredientMasterManager.tsx'
 import OrderManager from './pages/order/OrderManager.tsx'
 import AccountMenuManager from './pages/operations/AccountMenuManager.tsx'
+import AccountMenuImport from './pages/operations/AccountMenuImport.tsx'
 import AccountManager from './pages/operations/AccountManager.tsx'
 import MenuManager from './pages/operations/MenuManager.tsx'
 import TableMealsManager from './pages/operations/TableMealsManager.tsx'
@@ -55,6 +56,7 @@ import './styles/Readability.css'
 import './styles/PosTheme.css'
 import './styles/Redesign.css'
 import './styles/RedesignOrder.css'
+import './styles/RedesignPages.css'
 
 installWorkspaceSession()
 // 모든 화면의 조회·저장 요청에 로딩 표시(세션 래퍼 다음에 설치해 전체 요청 시간을 잰다)
@@ -94,6 +96,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/operations/menu" element={<DeviceRoute pc={<MenuManager />} touch={<MenuManagerTouch />} />} />
         <Route path="/operations/account" element={<DeviceRoute pc={<AccountManager />} touch={<AccountConfigTouch />} />} />
         <Route path="/operations/account-menu" element={<DeviceRoute pc={<AccountMenuManager />} touch={<AccountMenuTouch />} />} />
+        <Route path="/operations/account-menu/import" element={<DeviceRoute pc={<AccountMenuImport />} touch={<AccountMenuTouch />} />} />
         <Route path="/operations/table-meals" element={<DeviceRoute pc={<TableMealsManager />} touch={<TableMealsTouch />} />} />
         <Route path="/operations/search-analytics" element={<DeviceRoute pc={<SearchAnalytics />} touch={<SearchAnalyticsTouch />} />} />
         <Route path="/sanitation/vendor" element={<DeviceRoute pc={<VendorSanitation />} touch={<SanitationTouch />} />} />

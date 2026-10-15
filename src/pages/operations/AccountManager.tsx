@@ -22,99 +22,105 @@ function AccountManager() {
   return (
     <SideMenuLayout header={<HeaderBar title="고객사 관리" breadcrumbs={[{ label: "홈", to: "/home" }, { label: "본사관리" }, { label: "고객사 관리" }]} />}>
       {saving ? <LoadingScreen overlay message="거래처 식사 설정을 저장하고 있습니다." /> : null}
-      <main className="account-manager-page">
-        <section className="account-manager-toolbar">
-          <div className="account-manager-toolbar__field">
-            <label htmlFor="account-manager-account">고객사</label>
-            <select id="account-manager-account" value={accountId} onChange={(event) => setAccountId(event.target.value)}>
+      <div className="rd rd-page rd-acc">
+        <header className="rd-page__head">
+          <div>
+            <h1 className="rd-h1">고객사 관리</h1>
+            <p className="rd-muted">{accountName ? `${accountName}에서 제공하는 식사와 기본 식사 구성을 정합니다.` : '고객사를 고르면 식사구분을 설정할 수 있습니다.'}</p>
+          </div>
+          <div className="rd-page__actions">
+            <select className="rd-input" aria-label="고객사" value={accountId} onChange={(event) => setAccountId(event.target.value)}>
               <option value="">고객사를 선택하세요</option>
               {accounts.map((account) => <option key={account.value} value={account.value}>{account.text || account.value}</option>)}
             </select>
+            <button type="button" className="rd-btn is-primary" onClick={() => void save()} disabled={!accountId || loading || saving}>
+              {saving ? '저장 중' : '저장'}
+            </button>
           </div>
-          <button type="button" onClick={() => void save()} disabled={!accountId || loading || saving}>
-            {saving ? '저장 중' : '저장'}
-          </button>
-        </section>
+        </header>
+        {message ? <p className="rd-page__notice" role="status">{message}</p> : null}
 
-        <section className="account-manager-panel">
-          <div className="account-manager-panel__header">
-            <div><h1>고객사 관리</h1><p>{accountName ? `${accountName}에서 제공하는 식사를 선택하세요.` : '고객사를 선택하면 식사구분을 설정할 수 있습니다.'}</p></div>
-            {accountId ? <span>{selectedCodes.length}개 선택</span> : null}
-          </div>
-
-          {loading ? <div className="account-manager-empty">설정을 불러오는 중입니다.</div> : null}
-          {!loading && accountId ? (
-            <><div className="account-manager-slots">
-              {orderedSlots.map((slot) => {
-                const selected = selectedCodes.includes(slot.meal_slot_code)
-                return (
-                  <button
-                    key={slot.meal_slot_code}
-                    type="button"
-                    draggable={selected}
-                    className={`account-manager-slot${selected ? ' is-selected' : ''}${draggedCode === slot.meal_slot_code ? ' is-dragging' : ''}`}
-                    onDragStart={() => setDraggedCode(slot.meal_slot_code)}
-                    onDragEnd={() => setDraggedCode(null)}
-                    onDragOver={(event) => { if (selected) event.preventDefault() }}
-                    onDrop={(event) => { event.preventDefault(); if (draggedCode !== null) placeMealSlot(draggedCode, slot.meal_slot_code); setDraggedCode(null) }}
-                    onClick={() => toggleMealSlot(slot.meal_slot_code)}
-                    aria-pressed={selected}
-                  >
-                    <span className="account-manager-slot__check">{selected ? '✓' : ''}</span>
-                    <strong>{slot.meal_slot_name}</strong>
-                    <small>{selected ? `${selectedCodes.indexOf(slot.meal_slot_code) + 1}번 순서 · 드래그로 이동` : `코드 ${slot.meal_slot_code}`}</small>
-                  </button>
-                )
-              })}
-            </div>
-
-            <section className="account-manager-config" aria-label="기본 식사 구성">
-              <div className="account-manager-config__heading">
-                <div>
-                  <h2>기본 식사 구성</h2>
-                  <p>자동 식단표의 기본값입니다. 특정 날짜의 분류와 식단유형은 식단표 제작 화면에서 바꿀 수 있습니다.</p>
-                </div>
-                <div className="account-manager-price-summary">
-                  <strong>{configuration?.account_type_name || `고객사 유형 ${configuration?.account_type ?? '-'}`}</strong>
-                  <span>본식 {configuration?.main_meal_count ?? 0}회 기준 · 서버 자동 계산</span>
-                </div>
+        {loading ? <p className="rd-card rd-page__empty">설정을 불러오는 중입니다.</p> : null}
+        {!loading && !accountId ? <p className="rd-card rd-page__empty">오른쪽 위에서 설정할 고객사를 고르세요.</p> : null}
+        {!loading && accountId ? (
+          <>
+            <section className="rd-card rd-page__box">
+              <div className="rd-acc__title">
+                <h2 className="rd-h2">제공하는 식사</h2>
+                <span className="rd-chip is-ok">{selectedCodes.length}개 선택</span>
+                <span className="rd-muted">눌러서 켜고 끄며, 켠 식사는 끌어서 순서를 바꿉니다.</span>
               </div>
-
-              <div className="account-manager-config__rows">
-                {selectedCodes.map((code) => {
-                  const slot = mealSlots.find((item) => item.meal_slot_code === code)
-                  const profile = profiles[code]
-                  const isSnack = isSnackSlot(code)
+              <div className="rd-acc__slots">
+                {orderedSlots.map((slot) => {
+                  const selected = selectedCodes.includes(slot.meal_slot_code)
                   return (
-                    <div className="account-manager-config-row" key={code}>
-                      <strong>{slot?.meal_slot_name ?? `식사 ${code}`}</strong>
-                      <label>
-                        <span>식사분류</span>
-                        <select value={profile?.default_food_type ?? (isSnack ? 6 : 1)} onChange={(event) => updateProfile(code, { default_food_type: Number(event.target.value) })}>
-                          {FOOD_TYPE_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                        </select>
-                      </label>
-                      <label>
-                        <span>식단유형</span>
-                        <select value={profile?.default_meal_plan_type ?? 0} onChange={(event) => updateProfile(code, { default_meal_plan_type: Number(event.target.value) })}>
-                          {MEAL_PLAN_TYPE_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                        </select>
-                      </label>
-                      <div className="account-manager-config-row__budget">
-                        <span>1인 단가</span>
-                        <strong>{formatBudget(profile?.budget_per_person)}</strong>
-                        <small>{profile?.budget_source || (isSnack ? '간식 단가' : '고객사 유형별 자동 계산')}</small>
-                      </div>
-                    </div>
+                    <button
+                      key={slot.meal_slot_code}
+                      type="button"
+                      draggable={selected}
+                      className={`rd-acc__slot${selected ? ' is-selected' : ''}${draggedCode === slot.meal_slot_code ? ' is-dragging' : ''}`}
+                      onDragStart={() => setDraggedCode(slot.meal_slot_code)}
+                      onDragEnd={() => setDraggedCode(null)}
+                      onDragOver={(event) => { if (selected) event.preventDefault() }}
+                      onDrop={(event) => { event.preventDefault(); if (draggedCode !== null) placeMealSlot(draggedCode, slot.meal_slot_code); setDraggedCode(null) }}
+                      onClick={() => toggleMealSlot(slot.meal_slot_code)}
+                      aria-pressed={selected}
+                    >
+                      <span className="rd-acc__check">{selected ? selectedCodes.indexOf(slot.meal_slot_code) + 1 : ''}</span>
+                      <strong>{slot.meal_slot_name}</strong>
+                      <small>{selected ? `${selectedCodes.indexOf(slot.meal_slot_code) + 1}번째 · 끌어서 이동` : `코드 ${slot.meal_slot_code}`}</small>
+                    </button>
                   )
                 })}
               </div>
-            </section></>
-          ) : null}
-          {!loading && !accountId ? <div className="account-manager-empty">상단에서 설정할 고객사를 선택해 주세요.</div> : null}
-          {message ? <p className="account-manager-message" role="status">{message}</p> : null}
-        </section>
-      </main>
+            </section>
+
+            <section className="rd-card rd-page__box" aria-label="기본 식사 구성">
+              <div className="rd-acc__title">
+                <div>
+                  <h2 className="rd-h2">기본 식사 구성</h2>
+                  <p className="rd-muted">자동 식단표의 기본값입니다. 특정 날짜의 분류·식단유형은 식단표 화면에서 바꿀 수 있습니다.</p>
+                </div>
+                <div className="rd-acc__type">
+                  <strong>{configuration?.account_type_name || `고객사 유형 ${configuration?.account_type ?? '-'}`}</strong>
+                  <small className="rd-muted">본식 {configuration?.main_meal_count ?? 0}회 기준 · 서버 자동 계산</small>
+                </div>
+              </div>
+              {selectedCodes.length === 0 ? <p className="rd-page__empty">위에서 제공하는 식사를 먼저 고르세요.</p> : (
+                <table className="rd-table">
+                  <thead><tr><th>식사</th><th>식사분류</th><th>식단유형</th><th className="is-num">1인 단가</th></tr></thead>
+                  <tbody>
+                    {selectedCodes.map((code) => {
+                      const slot = mealSlots.find((item) => item.meal_slot_code === code)
+                      const profile = profiles[code]
+                      const isSnack = isSnackSlot(code)
+                      return (
+                        <tr key={code}>
+                          <td><strong>{slot?.meal_slot_name ?? `식사 ${code}`}</strong></td>
+                          <td>
+                            <select className="rd-input" aria-label="식사분류" value={profile?.default_food_type ?? (isSnack ? 6 : 1)} onChange={(event) => updateProfile(code, { default_food_type: Number(event.target.value) })}>
+                              {FOOD_TYPE_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                            </select>
+                          </td>
+                          <td>
+                            <select className="rd-input" aria-label="식단유형" value={profile?.default_meal_plan_type ?? 0} onChange={(event) => updateProfile(code, { default_meal_plan_type: Number(event.target.value) })}>
+                              {MEAL_PLAN_TYPE_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                            </select>
+                          </td>
+                          <td className="is-num">
+                            <strong>{formatBudget(profile?.budget_per_person)}</strong>
+                            <small className="rd-muted">{profile?.budget_source || (isSnack ? '간식 단가' : '고객사 유형별 자동 계산')}</small>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </section>
+          </>
+        ) : null}
+      </div>
     </SideMenuLayout>
   )
 }

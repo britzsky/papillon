@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import HeaderBar from '../../components/HeaderBar'
 import AppAlert from '../../components/AppAlert'
@@ -32,66 +33,41 @@ function MenuManager() {
             />
           }
         >
-          <section className="menu-manager-filters">
-            <div className="menu-manager-filter-grid">
-              <div className="menu-manager-field">
-                <label htmlFor="meal-category">식사분류</label>
-                <select id="meal-category" value={selectedMealCategory} onChange={(event) => setSelectedMealCategory(event.target.value)}>
-                  <option value="">전체</option>
-                  {mealCategoryOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="menu-manager-field">
-                <label htmlFor="menu-keyword">키워드</label>
-                <input
-                  id="menu-keyword"
-                  type="search"
-                  value={keywordFilter}
-                  placeholder="메뉴명, 키워드, 레시피 식재료"
-                  onChange={(event) => setKeywordFilter(event.target.value)}
-                />
-              </div>
-              <div className="menu-manager-field">
-                <label htmlFor="menu-type-filter">메뉴유형</label>
-                <select id="menu-type-filter" value={selectedMenuType} onChange={(event) => setSelectedMenuType(event.target.value)}>
-                  <option value="">전체</option>
-                  {menuTypeOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.text}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="menu-manager-field">
-                <label htmlFor="menu-gubun-filter">메뉴구분</label>
-                <select id="menu-gubun-filter" value={selectedMenuGubun} onChange={(event) => setSelectedMenuGubun(event.target.value)}>
-                  <option value="">전체</option>
-                  {menuGubunOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.text}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="menu-manager-field">
-                <label htmlFor="meal-plan-type-filter">식단 유형</label>
-                <select id="meal-plan-type-filter" value={selectedMealPlanType} onChange={(event) => setSelectedMealPlanType(event.target.value)}>
-                  <option value="">전체</option>
-                  {mealPlanTypeOptions.map((option) => (
-                    <option key={option.value} value={option.value}>{option.text}</option>
-                  ))}
-                </select>
-              </div>
+          <div className="rd rd-page rd-mm">
+          <header className="rd-page__head">
+            <div>
+              <h1 className="rd-h1">메뉴 관리</h1>
+              <p className="rd-muted">본사 메뉴 마스터와 본사 레시피를 관리합니다. 거래처로 옮기는 일은 '본사 메뉴 가져오기'에서 합니다.</p>
             </div>
-            <div className="menu-manager-filters__actions">
-              <button type="button" className="menu-manager-save-button" onClick={() => void handleSave()} disabled={isSaving}>
+            <div className="rd-page__actions">
+              <Link className="rd-btn" to="/operations/account-menu/import">본사 메뉴 가져오기</Link>
+              <button type="button" className="rd-btn" onClick={handleAddRow}>+ 메뉴 추가</button>
+              <button type="button" className="rd-btn is-primary" onClick={() => void handleSave()} disabled={isSaving}>
                 {isSaving ? '저장 중...' : '저장'}
               </button>
             </div>
+          </header>
+
+          <section className="rd-card rd-page__filters">
+            <input className="rd-input" type="search" aria-label="키워드" value={keywordFilter} placeholder="메뉴명·키워드·레시피 식재료" onChange={(event) => setKeywordFilter(event.target.value)} />
+            <div className="rd-pills" role="group" aria-label="식사분류">
+              <button type="button" className={selectedMealCategory === '' ? 'is-active' : ''} onClick={() => setSelectedMealCategory('')}>전체</button>
+              {mealCategoryOptions.map((option) => (
+                <button type="button" key={option} className={selectedMealCategory === option ? 'is-active' : ''} onClick={() => setSelectedMealCategory(option)}>{option}</button>
+              ))}
+            </div>
+            <select className="rd-input" aria-label="메뉴유형" value={selectedMenuType} onChange={(event) => setSelectedMenuType(event.target.value)}>
+              <option value="">메뉴유형 전체</option>
+              {menuTypeOptions.map((option) => <option key={option.value} value={option.value}>{option.text}</option>)}
+            </select>
+            <select className="rd-input" aria-label="메뉴구분" value={selectedMenuGubun} onChange={(event) => setSelectedMenuGubun(event.target.value)}>
+              <option value="">메뉴구분 전체</option>
+              {menuGubunOptions.map((option) => <option key={option.value} value={option.value}>{option.text}</option>)}
+            </select>
+            <select className="rd-input" aria-label="식단 유형" value={selectedMealPlanType} onChange={(event) => setSelectedMealPlanType(event.target.value)}>
+              <option value="">식단 유형 전체</option>
+              {mealPlanTypeOptions.map((option) => <option key={option.value} value={option.value}>{option.text}</option>)}
+            </select>
           </section>
 
           <section className="menu-manager-layout menu-manager-layout--equal-headers">
@@ -105,16 +81,13 @@ function MenuManager() {
                   <button type="button" aria-pressed={menuView === 'table'} onClick={() => setMenuView('table')}>표 보기</button>
                   <button type="button" aria-pressed={menuView === 'cards'} onClick={() => setMenuView('cards')}>사진 카드</button>
                 </div>
-                <button type="button" className="menu-manager-add-button" onClick={handleAddRow}>
-                  행 추가
-                </button>
               </div>
 
               <div className="menu-manager-table-scroll">
                 {isMenuLoading ? <LoadingScreen compact message="메뉴 목록을 불러오는 중입니다." /> : null}
                 {!isMenuLoading ? (
                   <>
-                    <table className={`menu-manager-table menu-manager-menu-list-table${menuView === 'cards' ? ' workspace-menu-cards' : ''}`}>
+                    <table className={`rd-table menu-manager-table menu-manager-menu-list-table${menuView === 'cards' ? ' workspace-menu-cards' : ''}`}>
                       <thead>
                         <tr>
                           <th>메뉴명</th>
@@ -311,7 +284,7 @@ function MenuManager() {
                 {!isDetailLoading && detailError ? <div className="menu-manager-empty">{detailError}</div> : null}
                 {!isDetailLoading && !detailError && activeMenu ? (
                   activeDetailItems.length > 0 ? (
-                    <table className="menu-manager-table menu-manager-table--ingredients">
+                    <table className="rd-table menu-manager-table menu-manager-table--ingredients">
                       <thead>
                         <tr>
                           <th>카테고리</th>
@@ -396,6 +369,7 @@ function MenuManager() {
               </div>
             </section>
           </section>
+          </div>
         </SideMenuLayout>
       </main>
       {imageEditorMenu ? (

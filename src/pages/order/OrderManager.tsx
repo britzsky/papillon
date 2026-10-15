@@ -52,7 +52,14 @@ function OrderManager() {
           }
         >
 
-          <section className="order-manager-grid" aria-label="order management menu">
+          <div className="rd rd-page rd-om">
+          <header className="rd-page__head">
+            <div>
+              <h1 className="rd-h1">발주 관리</h1>
+              <p className="rd-muted">발주·발주서·공급사 연동 화면으로 이동합니다.</p>
+            </div>
+          </header>
+          <section className="order-manager-grid" aria-label="발주 관리 메뉴">
             {orderMenus.map((menu) => {
               const content = (
                 <>
@@ -61,6 +68,7 @@ function OrderManager() {
                   </span>
                   <strong className="order-manager-card__title">{menu.title}</strong>
                   <span className="order-manager-card__description">{menu.description}</span>
+                  {menu.to ? null : <span className="rd-chip is-done">준비 중</span>}
                 </>
               )
 
@@ -76,13 +84,14 @@ function OrderManager() {
                 <button
                   key={menu.key}
                   type="button"
-                  className="order-manager-card order-manager-card--disabled"
+                  className="order-manager-card order-manager-card--disabled" disabled
                 >
                   {content}
                 </button>
               )
             })}
           </section>
+          </div>
         </SideMenuLayout>
       </main>
     </div>

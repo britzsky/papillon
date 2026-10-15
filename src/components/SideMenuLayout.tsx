@@ -70,6 +70,7 @@ const majorMenus: MajorMenu[] = [
     items: [
       { label: '메뉴 관리', to: '/operations/menu', exact: true },
       { label: '거래처 메뉴 관리', to: '/operations/account-menu', exact: true },
+      { label: '본사 메뉴 가져오기', to: '/operations/account-menu/import', exact: true },
       { label: '식단표 관리', to: '/operations/table-meals', exact: true },
       // { label: '거래명세서 관리' },
     ],
