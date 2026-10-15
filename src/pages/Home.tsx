@@ -1,8 +1,8 @@
 import DailyWork from '../components/DailyWork'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import HeaderBar from '../components/HeaderBar'
 import SideMenuLayout from '../components/SideMenuLayout'
-import WorkspaceIcon from '../components/WorkspaceIcon'
 import { searchActions, searchIntentLabels, useHomeSearch } from '../features/home/useHomeSearch'
 import './Home.css'
 
@@ -22,99 +22,49 @@ function Home() {
     searchText, setSearchText, normalizedSearchText, searchMatches, primaryMatch, suggestedActions,
     isSearchDataLoading, searchDataError, recent, popular, navigateWithSearch, handleSearchSubmit,
   } = useHomeSearch()
+  const [searchOpen, setSearchOpen] = useState(false)
+
+  const searchBox = <div className="rd-home__search" role="search" onFocus={() => setSearchOpen(true)}
+    onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setSearchOpen(false) }}>
+    <label>
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="#5B6660" strokeWidth="2" fill="none" /><path d="M16 16 L21 21" stroke="#5B6660" strokeWidth="2" strokeLinecap="round" /></svg>
+      <input type="search" className="rd-bare-input" aria-label="통합 검색" placeholder="식재료·거래처·메뉴 검색 (예: 양파)" value={searchText}
+        onChange={(event) => setSearchText(event.target.value)}
+        onKeyDown={(event) => { if (event.key === 'Enter') handleSearchSubmit() }} />
+    </label>
+    <button type="button" className="rd-btn is-primary" onClick={handleSearchSubmit} disabled={!normalizedSearchText || isSearchDataLoading || Boolean(searchDataError)}>검색</button>
+    {searchOpen && (normalizedSearchText || recent.length || popular.length) ? <div className="rd-home__search-pop" aria-live="polite">
+      {normalizedSearchText ? <>
+        {isSearchDataLoading ? <p className="rd-muted">검색 데이터를 불러오는 중입니다.</p> : null}
+        {!isSearchDataLoading && primaryMatch ? <>
+          <p><strong>{primaryMatch.name}</strong> — {searchIntentLabels[primaryMatch.intent]}{primaryMatch.matchedIngredients ? <span className="rd-muted"> · 레시피 식재료: {primaryMatch.matchedIngredients}</span> : null}</p>
+          {searchMatches.length > 1 ? <div className="rd-home__keywords" aria-label="다른 검색 결과">{searchMatches.map((match) => <button key={`${match.intent}-${match.id}-${match.name}`} type="button"
+            onClick={() => navigateWithSearch(searchActions.find((action) => action.intent === match.intent)?.path ?? '/home', match)}>{searchIntentLabels[match.intent]} · {match.name}</button>)}</div> : null}
+          {suggestedActions.map((action) => <button key={`${action.intent}-${action.title}`} type="button" className="rd-home__result" onClick={() => navigateWithSearch(action.path, primaryMatch)}>
+            <span className="rd-chip is-ok">{action.category}</span>
+            <span><strong>{action.title}</strong><small>{action.description}</small></span>
+            <span aria-hidden="true">→</span>
+          </button>)}
+        </> : null}
+        {!isSearchDataLoading && !primaryMatch ? <p><strong>{normalizedSearchText}</strong>와 일치하는 식재료·거래처·메뉴가 없습니다.{searchDataError ? ` ${searchDataError}` : ''}</p> : null}
+      </> : <div className="rd-home__keywords">
+        {recent.length ? <><b>최근</b>{recent.map(value => <button key={value} type="button" onClick={() => setSearchText(value)}>{value}</button>)}</> : null}
+        {popular.length ? <><b>많이 찾는</b>{popular.map(item => <button key={item.query} type="button" onClick={() => setSearchText(item.query)}>{item.query}</button>)}</> : null}
+      </div>}
+    </div> : null}
+  </div>
 
   return (
     <div className="home-page procurement-refresh">
       <main className="home-content">
         <SideMenuLayout header={<HeaderBar title="오늘의 운영" breadcrumbs={[{ label: '홈' }]} />}>
-          <div className="home-dashboard">
-            <div className="home-top">
-              {/* 화면 제목은 머리글 '오늘의 운영' 하나만 두고 여기에는 날짜만 */}
-              <p className="home-top__title">{new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}</p>
-            <section className="home-search" aria-label="업무 검색">
-              <label className="home-search__box">
-                <span aria-hidden="true">⌕</span>
-                <input
-                  type="search"
-                  placeholder="식자재, 거래처, 메뉴명을 검색해보세요"
-                  value={searchText}
-                  onChange={(event) => setSearchText(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      handleSearchSubmit()
-                    }
-                  }}
-                />
-              </label>
-              <button type="button" className="home-search__assistant" onClick={handleSearchSubmit} disabled={!normalizedSearchText || isSearchDataLoading || Boolean(searchDataError)}>
-                🔍 통합 추천 검색
-              </button>
-              {normalizedSearchText ? (
-                <div className="home-search__results" aria-live="polite">
-                  {isSearchDataLoading ? <p className="home-search__summary">검색 데이터를 불러오는 중입니다.</p> : null}
-                  {!isSearchDataLoading && primaryMatch ? (
-                    <>
-                      <p className="home-search__summary">
-                        <strong>{primaryMatch.name}</strong> 항목을 {searchIntentLabels[primaryMatch.intent]}로 찾았습니다.
-                        {primaryMatch.matchedIngredients && <span> 레시피 식재료: {primaryMatch.matchedIngredients}</span>}
-                      </p>
-                      {searchMatches.length > 1 ? (
-                        <div className="home-search__matches" aria-label="다른 검색 결과">
-                          {searchMatches.map((match) => (
-                            <button
-                              key={`${match.intent}-${match.id}-${match.name}`}
-                              type="button"
-                              className={`home-search__match${match === primaryMatch ? ' is-active' : ''}`}
-                              onClick={() => navigateWithSearch(searchActions.find((action) => action.intent === match.intent)?.path ?? '/home', match)}
-                            >
-                              {searchIntentLabels[match.intent]} · {match.name}
-                              {match.matchedIngredients && <small> · 레시피 식재료: {match.matchedIngredients}</small>}
-                            </button>
-                          ))}
-                        </div>
-                      ) : null}
-                      {suggestedActions.map((action) => (
-                        <button
-                          key={`${action.intent}-${action.title}`}
-                          type="button"
-                          className="home-search__result"
-                          onClick={() => navigateWithSearch(action.path, primaryMatch)}
-                        >
-                          <span className="home-search__category">{action.category}</span>
-                          <span className="home-search__result-text">
-                            <strong>{action.title}</strong>
-                            <span>{action.description}</span>
-                          </span>
-                          <span className="home-search__arrow" aria-hidden="true">
-                            →
-                          </span>
-                        </button>
-                      ))}
-                    </>
-                  ) : null}
-                  {!isSearchDataLoading && !primaryMatch ? (
-                    <p className="home-search__summary">
-                      <strong>{normalizedSearchText}</strong>와 일치하는 식자재, 거래처, 메뉴가 없습니다.
-                      {searchDataError ? ` ${searchDataError}` : ''}
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-              {recent.length || popular.length ? <div className="home-search__keywords">
-                {recent.length ? <span><b>최근</b>{recent.map(value => <button key={value} type="button" onClick={() => setSearchText(value)}>{value}</button>)}</span> : null}
-                {popular.length ? <span><b>많이 찾는</b>{popular.map(item => <button key={item.query} type="button" onClick={() => setSearchText(item.query)}>{item.query}</button>)}</span> : null}
-              </div> : null}
-            </section>
-            </div>
-
-            <DailyWork />
-
-            <section className="home-shortcuts" aria-labelledby="home-shortcuts-title">
-              <h2 id="home-shortcuts-title">자주 쓰는 화면</h2>
-              <div className="home-shortcuts__grid">
-                {shortcuts.map(card => <button key={card.path} type="button" className="home-shortcut" onClick={() => navigate(card.path)}>
-                  <span className="home-shortcut__icon"><WorkspaceIcon name={card.icon} /></span>
-                  <span className="home-shortcut__text"><strong>{card.title}</strong><small>{card.description}</small></span>
+          <div className="home-dashboard rd rd-home">
+            <DailyWork search={searchBox} />
+            <section aria-labelledby="home-shortcuts-title">
+              <h2 id="home-shortcuts-title" className="rd-h2" style={{ marginBottom: 10 }}>자주 쓰는 화면</h2>
+              <div className="rd-shortcuts">
+                {shortcuts.map(card => <button key={card.path} type="button" className="rd-shortcut" onClick={() => navigate(card.path)}>
+                  <strong>{card.title}</strong><small>{card.description}</small>
                 </button>)}
               </div>
             </section>

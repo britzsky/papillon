@@ -82,23 +82,31 @@ export default function DeadlineAlertBanner() {
   const itemCount = visible.reduce((sum, { alert }) => sum + alert.items.length, 0)
   const urgent = first.minutes <= 60
 
-  return <section className={`deadline-alert${urgent ? ' is-urgent' : ''}`} role="status" aria-live="polite" aria-label="발주 마감 알림">
+  const clock = `${Math.floor(first.minutes / 60)}:${String(first.minutes % 60).padStart(2, '0')}`
+  const delivery = new Date(`${first.alert.delivery_date}T00:00:00`)
+  const deliveryLabel = `${delivery.getMonth() + 1}/${delivery.getDate()}(${'일월화수목금토'[delivery.getDay()]})`
+  const names = visible.flatMap(({ alert }) => alert.items.map(item => item.ingredient_name))
+  const nameText = names.slice(0, 4).join(', ') + (names.length > 4 ? ` 외 ${names.length - 4}개` : '')
+
+  return <section className={`rd deadline-alert${urgent ? ' is-urgent' : ''}`} role="status" aria-live="polite" aria-label="발주 마감 알림">
     <div className="deadline-alert__summary">
-      <strong>발주 마감 {remainingLabel(first.minutes)}</strong>
-      <span>{first.alert.supplier_name} · {first.alert.deadline.replace('T', ' ')} 마감 · {first.alert.delivery_date} 납품
-        {visible.length > 1 ? ` 외 마감 ${visible.length - 1}건` : ''} · 부족 식재료 {itemCount}건</span>
+      <div className="deadline-alert__clock"><small>마감까지</small><strong>{clock}</strong></div>
+      <div className="deadline-alert__text">
+        <strong>{first.alert.supplier_name} {first.alert.deadline.slice(11, 16)} 마감 · {deliveryLabel} 납품분{visible.length > 1 ? ` 외 마감 ${visible.length - 1}건` : ''}</strong>
+        <span>식단에 필요한데 아직 안 시킨 식재료 {itemCount}개 — {nameText}</span>
+      </div>
       <div className="deadline-alert__actions">
-        <button type="button" className="is-primary" onClick={() => navigate(orderLink(accountId, first.alert))}>발주하기</button>
-        <button type="button" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>{expanded ? '접기' : '품목 보기'}</button>
-        {permission === 'default' ? <button type="button" onClick={() => void Notification.requestPermission().then(setPermission)}>브라우저 알림 켜기</button> : null}
-        <button type="button" onClick={() => { write(snoozeKey, '1'); setSnoozed(true) }}>오늘 안 함</button>
+        <button type="button" className="rd-btn is-primary" onClick={() => navigate(orderLink(accountId, first.alert))}>{itemCount}개 바로 발주</button>
+        <button type="button" className="rd-btn is-ghost" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>{expanded ? '접기' : '품목 보기'}</button>
+        {permission === 'default' ? <button type="button" className="rd-btn is-ghost" onClick={() => void Notification.requestPermission().then(setPermission)}>브라우저 알림 켜기</button> : null}
+        <button type="button" className="rd-btn is-ghost" onClick={() => { write(snoozeKey, '1'); setSnoozed(true) }}>오늘 안 함</button>
       </div>
     </div>
     {expanded ? <ul className="deadline-alert__groups">
       {visible.map(({ alert, minutes }) => <li key={alert.alert_key}>
         <div><strong>{alert.supplier_name} · {alert.external_site_name || alert.external_site_code}</strong>
           <span>{alert.deadline.replace('T', ' ')} 마감 ({remainingLabel(minutes)}) · {alert.delivery_date} 납품 · {alert.rule}</span>
-          <button type="button" onClick={() => navigate(orderLink(accountId, alert))}>이 납품일로 발주</button></div>
+          <button type="button" className="rd-btn" onClick={() => navigate(orderLink(accountId, alert))}>이 납품일로 발주</button></div>
         <ul>{alert.items.map(item => <li key={item.ingredient_id}>
           {item.ingredient_name} <small>{item.product_name} · 부족 {Number(item.shortage_qty).toLocaleString('ko-KR', { maximumFractionDigits: 3 })}{item.base_unit}
             {item.late ? ` · 필요일 ${item.needed_by}보다 늦은 납품` : ` · ${item.needed_by} 필요`}</small></li>)}</ul>

@@ -18,7 +18,7 @@ function stockShortagesCached(accountId: string) {
 /** 지금 바로 담을 수 없는 행: 확인 사항이 있거나 발주 가능한 상품이 없음(판매 중단·리드타임 등) */
 const needsCheck = (row: ShortageRow) => (row.issues?.length ?? 0) > 0 || !(row.offers || []).some(o => o.orderable && o.orderability_status === 'AVAILABLE')
 
-export type AccountTask = { account_id: string; account_name: string; pending_orders: number; due_receipts: number; pending_meals: number; mapped_suppliers: number }
+export type AccountTask = { account_id: string; account_name: string; pending_orders: number; due_receipts: number; pending_meals: number; mapped_suppliers: number; supplier_notices?: number }
 export type TaskKey = 'pending_orders' | 'due_receipts' | 'pending_meals'
 export type TaskTone = 'warn' | 'info' | 'urgent' | 'done'
 /** 칸 하나(제목·값·설명·색·이동할 주소) */
