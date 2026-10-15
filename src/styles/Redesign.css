@@ -185,3 +185,67 @@ a.rd-tile:hover { border-color: var(--rd-green); }
   .rd .rd-home__search { flex-basis: 100%; min-width: 0; }
   .rd .rd-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/*
+ * 홈 한 화면 맞춤(사용자 요청 2026-10-15: 스크롤 없이). 크기는 아래 변수만 바꾸면 된다.
+ *   --rd-home-gap   영역 사이 간격        --rd-card-pad  카드 안쪽 여백
+ *   --rd-tile-min   할 일 칸 최소 높이    --rd-step-pad  순서 목록 한 줄 위아래 여백
+ *   --rd-cal-cell   달력 날짜 칸 높이     --rd-cal-gap   달력 칸 사이 간격
+ * 화면 높이가 낮으면(아래 @media) 한 단계 더 줄인다.
+ */
+.rd.rd-home { --rd-home-gap: 14px; --rd-card-pad: 16px; --rd-tile-min: 96px; --rd-step-pad: 8px; --rd-cal-cell: 30px; --rd-cal-gap: 4px; gap: var(--rd-home-gap); padding: 0 4px 2px; }
+.rd .rd-home__grid { gap: var(--rd-home-gap); }
+.rd .rd-home__main, .rd .rd-home__side { gap: var(--rd-home-gap); }
+.rd .rd-home__head h1 { margin-top: 2px; }
+.rd .rd-home__search label { min-height: 42px; }
+.rd .rd-home__search .rd-btn { min-height: 42px; }
+.rd .rd-home__main .rd-tile { min-height: var(--rd-tile-min); padding: 12px 14px; gap: 4px; }
+.rd .rd-home__main .rd-tile__value { --rd-fs: 26px; }
+.rd .rd-tile__hint { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.rd .rd-steps { padding: var(--rd-card-pad) calc(var(--rd-card-pad) + 2px); }
+.rd .rd-steps > p { margin: 2px 0 10px; }
+.rd .rd-steps ol { gap: 6px; }
+.rd .rd-step { padding: var(--rd-step-pad) 14px; gap: 12px; }
+.rd .rd-step__no { width: 28px; height: 28px; }
+.rd .rd-step .rd-btn { min-height: 36px; padding: 0 14px; }
+.rd .rd-steps__more { margin-top: 10px; }
+.rd .rd-home__main .rd-shortcuts { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.rd .rd-home__main .rd-shortcut { min-height: 0; padding: 9px 10px; }
+.rd .rd-home__main .rd-shortcut small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rd .rd-home__shortcuts .rd-h2 { margin-bottom: 6px !important; }
+.rd .rd-account { padding: var(--rd-card-pad) calc(var(--rd-card-pad) + 2px); gap: 8px; }
+.rd .rd-account__who { padding-bottom: 8px; }
+.rd .rd-budget { gap: 4px; padding: 8px 12px; }
+.rd .rd-budget__head { display: flex; align-items: baseline; justify-content: space-between; }
+.rd .rd-budget__nums { margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.rd .rd-budget__nums dt { color: var(--rd-muted); --rd-fs: 11px; }
+.rd .rd-budget__nums dd { margin: 0; font-weight: 800; --rd-fs: 13px; white-space: nowrap; }
+.rd .rd-cal { padding: var(--rd-card-pad) calc(var(--rd-card-pad) + 2px); }
+.rd .rd-cal__head { margin-bottom: 6px; }
+.rd .rd-cal__week { margin-bottom: 4px; }
+.rd .rd-cal__days { gap: var(--rd-cal-gap); }
+.rd .rd-cal__day { aspect-ratio: auto; height: var(--rd-cal-cell); gap: 1px; border-radius: 8px; }
+.rd .rd-cal__dot { width: 5px; height: 5px; }
+.rd .rd-cal__legend { margin-top: 8px; gap: 10px; }
+.rd.deadline-alert { padding: 10px 16px; margin-bottom: 12px; }
+.rd .deadline-alert__clock { min-width: 80px; padding: 4px 10px; }
+.rd .deadline-alert__clock strong { --rd-fs: 21px; }
+.rd .deadline-alert__actions .rd-btn { min-height: 38px; }
+
+.rd .rd-steps__head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.rd .rd-steps__head h2 { flex: 1 1 auto; }
+.rd .rd-steps__notice > section > button { min-height: 36px; padding: 0 12px; }
+.rd .rd-steps__notice:has(article, p) { flex: 1 1 100%; order: 3; padding: 10px 0 4px; }
+
+/* 화면 높이가 낮은 노트북(1440×900 브라우저 등) */
+@media (max-height: 860px) {
+  .rd.rd-home { --rd-home-gap: 10px; --rd-card-pad: 12px; --rd-tile-min: 84px; --rd-step-pad: 6px; --rd-cal-cell: 24px; --rd-cal-gap: 3px; }
+  .rd .rd-steps > p, .rd .rd-cal__legend, .rd .rd-account > small { display: none; }
+  .rd .rd-tile__hint { -webkit-line-clamp: 1; }
+  .rd .rd-home__main .rd-shortcut small { display: none; }
+  .rd .rd-home__head .rd-h1 { --rd-fs: 21px; }
+  .rd .rd-home__main .rd-tile > .rd-chip, .rd .rd-budget .rd-account__bar { display: none; }
+  .rd.rd-home { --rd-cal-cell: 22px; }
+  .rd .rd-steps ol { gap: 4px; }
+  .rd .rd-home__main .rd-tile { padding: 10px 12px; }
+}

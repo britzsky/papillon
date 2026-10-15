@@ -9,14 +9,15 @@ const won = (value: number) => Math.round(value).toLocaleString('ko-KR')
 /** 예산 묶음 하나(예산·사용·여유 + 사용 막대) */
 function budgetBlock(title: string, budget = 0, used = 0, remaining = 0) {
   const pct = budget ? Math.round(used / budget * 100) : 0
+  // 한 줄 제목(사용률) + 막대 + 예산|사용|여유 가로 3칸 — 홈이 스크롤 없이 한 화면에 들어가게(사용자 요청)
   return <div className="rd-budget">
-    <strong className="rd-budget__title">{title}</strong>
-    <dl className="rd-account__rows">
-      <div><dt>예산</dt><dd>{won(budget)}원</dd></div>
-      <div><dt>사용</dt><dd>{won(used)}원{budget ? <small className="rd-muted"> ({pct}%)</small> : null}</dd></div>
-      <div className="is-remaining"><dt>여유</dt><dd className={remaining < 0 ? 'rd-text-red' : 'rd-text-ok'}>{won(remaining)}원</dd></div>
-    </dl>
+    <div className="rd-budget__head"><strong className="rd-budget__title">{title}</strong>{budget ? <span className="rd-muted rd-fs-xs">{pct}% 사용</span> : null}</div>
     {budget ? <span className="rd-bar rd-account__bar" aria-hidden="true"><span className={used > budget ? 'is-over' : ''} style={{ width: `${Math.min(100, pct)}%` }} /></span> : null}
+    <dl className="rd-budget__nums">
+      <div><dt>예산</dt><dd>{won(budget)}원</dd></div>
+      <div><dt>사용</dt><dd>{won(used)}원</dd></div>
+      <div><dt>여유</dt><dd className={remaining < 0 ? 'rd-text-red' : 'rd-text-ok'}>{won(remaining)}원</dd></div>
+    </dl>
   </div>
 }
 
@@ -86,9 +87,11 @@ export default function DailyWork({ search, shortcuts }: { search: ReactNode; sh
       <div className="rd-home__main">
       <section className="rd-tiles" aria-label="오늘 현황">{view.map(tileView)}</section>
       <section className="rd-card rd-steps" aria-label="오늘 할 일 순서">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        {/* 제목 줄: 업무 알림 버튼도 여기(목록 아래 한 줄 절약). 펼치면 알림 패널은 제목 아래 한 줄 전체 */}
+        <div className="rd-steps__head">
           <h2 className="rd-h2">오늘 순서대로 하면 돼요</h2>
           <button type="button" className="rd-btn is-ghost" onClick={refresh}>새로고침</button>
+          <div className="rd-steps__notice"><WorkspaceNotifications accountId={single.account_id} /></div>
         </div>
         <p className="rd-muted">발주 → 공급사 확인 → 입고 → 사용 확정. 끝나면 자동으로 지워집니다.</p>
         {steps.length ? <ol>{steps.map((step, index) => <li key={step.key} className={`rd-step${index === 0 ? ' is-first' : ''}`}>
@@ -96,7 +99,6 @@ export default function DailyWork({ search, shortcuts }: { search: ReactNode; sh
           <span className="rd-step__text"><strong>{step.title}</strong><span>{step.detail}</span></span>
           <Link className="rd-btn" to={step.to}>{step.action}</Link>
         </li>)}</ol> : <div className="rd-steps__done">지금 할 일이 없어요. 새 일이 생기면 여기에 순서대로 나타납니다.</div>}
-        <div className="rd-steps__more"><WorkspaceNotifications accountId={single.account_id} /></div>
       </section>
       {shortcuts}
       </div>
