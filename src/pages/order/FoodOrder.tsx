@@ -31,6 +31,17 @@ function per100(offer: ShortageOffer, unit: string) {
   const cost = unitCost(offer, unit)
   return cost ? `${cost.per}당 ${money(Math.round(cost.value))}원` : ''
 }
+type RowSort = 'default' | 'amount_desc' | 'amount_asc'
+/** 상품 선택칸 순서: 늘 쓰는 상품(기본 상품) 맨 위 고정 → 나머지 기준단위당 싼 순 → 발주 불가는 뒤로 */
+function offerOptions(row: ShortageRow) {
+  return [...row.offers].sort((a, b) => {
+    if (a.supplier_offer_id === row.recommended_offer_id) return -1
+    if (b.supplier_offer_id === row.recommended_offer_id) return 1
+    if (a.orderable !== b.orderable) return a.orderable ? -1 : 1
+    const ca = unitCost(a, row.base_unit), cb = unitCost(b, row.base_unit)
+    return ca && cb ? ca.value - cb.value : ca ? -1 : cb ? 1 : 0
+  })
+}
 /** 지금 고른 상품보다 기준단위당 더 싼, 바로 시킬 수 있는 다른 상품(같은 행) */
 function cheapestOther(row: ShortageRow, current: ShortageOffer) {
   const mine = unitCost(current, row.base_unit)
@@ -66,6 +77,14 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
     return () => { active = false }
   }, [accountId])
   const blocked = (result?.ingredients || []).filter(row => !row.offers.some(o => o.orderable))
+  // 줄 순서 정렬: 보는 순서만 바꾼다(고른 상품·수량은 그대로). 금액 = 고른 상품(없으면 기본 상품) × 수량
+  const [rowSort, setRowSort] = useState<RowSort>('default')
+  const rowAmount = (row: ShortageRow) => {
+    const sel = selected[row.ingredient_id]
+    const offer = row.offers.find(o => o.supplier_offer_id === sel?.supplier_offer_id) || row.offers.find(o => o.orderable)
+    return offer ? (sel?.order_qty ?? offer.recommended_qty ?? 0) * offer.purchase_price : -1
+  }
+  const sortedRows = rowSort === 'default' ? rows : [...rows].sort((a, b) => rowSort === 'amount_desc' ? rowAmount(b) - rowAmount(a) : rowAmount(a) - rowAmount(b))
   // ---- 2026-10-15 개편(시안 ② 발주하기) 화면 계산: 로직은 useShortageOrder 그대로 ----
   const allRows = result?.ingredients || []
   const offerOf = (row: ShortageRow) => row.offers.find(o => o.supplier_offer_id === selected[row.ingredient_id]?.supplier_offer_id) || row.offers.find(o => o.orderable)
@@ -129,6 +148,9 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
             <p className="rd-muted rd-fs-sm">{criteria.source === 'STOCK' ? '현재고가 없거나 안전재고보다 적어요. 사용 이력이 없으면 수량을 직접 정해 주세요.' : criteria.source === 'INVENTORY' ? '최근 평균 사용량 × 확보일수 + 안전재고 기준이에요. 사용 확정 이력이 없으면 0으로 계산돼요.' : '필요량에서 지금 재고와 들어올 예정 수량을 빼고 계산했어요. 수량만 고치면 됩니다.'}</p>
           </div>
           <div className="rd-order__tools">
+            <select className="rd-input" aria-label="줄 순서" value={rowSort} onChange={e => setRowSort(e.target.value as RowSort)}>
+              <option value="default">기본 (모자란 순)</option><option value="amount_desc">금액 높은 순</option><option value="amount_asc">금액 낮은 순</option>
+            </select>
             <div className="rd-pills" role="group" aria-label="재고 상태 필터">{([['', '전체'], ['RED', '모자람'], ['YELLOW', '안전재고 미달'], ['CHECK', '확인 필요']] as const).map(([value, label]) =>
               <button key={value} type="button" aria-pressed={stockFilter === value} className={stockFilter === value ? 'is-active' : ''} onClick={() => setStockFilter(value)}>{label} {stockCounts[value]}</button>)}</div>
             <input className="rd-input" aria-label="부족 식재료 검색" placeholder="식재료 찾기" value={keyword} onChange={e => setKeyword(e.target.value)} />
@@ -138,7 +160,7 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
         </div>
         <div className="rd-order__scroll"><div className="rd-order__table">
           <div className="rd-order__row is-head rd-fs-xs"><span /><span>식재료</span><span>재고 → 필요</span><span>시킬 상품 (100g당 가격)</span><span>주문 수량</span></div>
-          {rows.map(row => {
+          {sortedRows.map(row => {
             const selection = selected[row.ingredient_id]
             const offer = offerOf(row)
             const status = shortageStockStatus(row)
@@ -166,7 +188,7 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
                 <div>
                   {offer ? <div className="rd-order__offer-name"><span className={`rd-supplier is-${offer.supplier_code}`}>{offer.supplier_name}</span>
                     <select aria-label={`${row.ingredient_name} 공급상품`} value={offer.supplier_offer_id} disabled={loading || row.offers.filter(o => o.orderable).length < 2} onChange={e => choose(row, Number(e.target.value))}>
-                      {row.offers.map(o => <option key={o.supplier_offer_id} value={o.supplier_offer_id} disabled={!o.orderable}>{o.product_name} ({o.supplier_name}) · {o.orderable ? `${money(o.purchase_price)}원/${o.order_unit}` : o.availability_reason || '발주 불가'}</option>)}
+                      {offerOptions(row).map(o => <option key={o.supplier_offer_id} value={o.supplier_offer_id} disabled={!o.orderable}>{o.supplier_offer_id === row.recommended_offer_id ? '★ 늘 쓰는 · ' : ''}{o.product_name} ({o.supplier_name}) · {o.orderable ? `${money(o.purchase_price)}원/${o.order_unit}${per100(o, row.base_unit) ? ` · ${per100(o, row.base_unit)}` : ''}` : o.availability_reason || '발주 불가'}</option>)}
                     </select></div>
                     : <strong className="rd-text-warn">발주 가능한 상품 없음</strong>}
                   {offer ? <small className="rd-fs-sm">{money(offer.purchase_price)}원/{offer.order_unit}{per100(offer, row.base_unit) ? ` · ${per100(offer, row.base_unit)}` : ''} · {deliveryTerms(offer)}</small>

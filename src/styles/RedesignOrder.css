@@ -207,6 +207,8 @@ body.workspace-ui .rd.rd button:disabled { background: var(--rd-btn-disabled-bg,
 /* ---- 상품 검색(시안 ⑤) — 카드 구조는 OrderPos.css(pos-*) 그대로, 글씨·태그·100g당 가격·수량 버튼만 ---- */
 .rd .pos-catalog__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .rd .pos-card__tag { margin-left: auto; }
+.rd .rd-pos__tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.rd .rd-pos__tools select, .rd .rd-order__tools select { min-height: 36px; }
 .rd .pos-card__price-row { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
 .rd .pos-card__price { --rd-fs: 15px; }
 .rd .pos-card__price small { --rd-fs: 11px; font-weight: 500; color: var(--rd-muted); }

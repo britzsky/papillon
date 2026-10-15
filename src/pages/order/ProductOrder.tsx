@@ -36,6 +36,23 @@ export default function ProductOrder({ embedded = false }: { embedded?: boolean 
   return <ProductOrderContent key={accountId} accountId={accountId} initialSource={params.get('ingredient_id') || ''} embedded={embedded} />
 }
 
+/** 같은 기준단위(100g·100ml·개)끼리 단가 비교. 단위가 다르면 100g → 100ml → 그 외 순서로 묶는다 */
+function compareUnit(a: SupplierOffer, b: SupplierOffer, direction: 1 | -1) {
+  const ca = unitCost(a), cb = unitCost(b)
+  if (!ca || !cb) return ca ? -1 : cb ? 1 : 0
+  if (ca.per !== cb.per) return ca.per === '100g' ? -1 : cb.per === '100g' ? 1 : ca.per.localeCompare(cb.per)
+  return (ca.value - cb.value) * direction
+}
+/** 상품 검색 정렬(2026-10-15 사용자 결정: 추천순 기본, 포장 가격과 100g당 가격을 구분해 이름에 표시) */
+const SORTS = {
+  recommend: { label: '추천순 (늘 쓰는 상품 먼저)', compare: (a: SupplierOffer, b: SupplierOffer) => Number(Boolean(b.linked_ingredient_id)) - Number(Boolean(a.linked_ingredient_id)) || compareUnit(a, b, 1) },
+  unit_asc: { label: '100g당 낮은 순', compare: (a: SupplierOffer, b: SupplierOffer) => compareUnit(a, b, 1) },
+  unit_desc: { label: '100g당 높은 순', compare: (a: SupplierOffer, b: SupplierOffer) => compareUnit(a, b, -1) },
+  price_asc: { label: '포장 가격 낮은 순', compare: (a: SupplierOffer, b: SupplierOffer) => a.purchase_price - b.purchase_price },
+  price_desc: { label: '포장 가격 높은 순', compare: (a: SupplierOffer, b: SupplierOffer) => b.purchase_price - a.purchase_price },
+} as const
+type SortKey = keyof typeof SORTS
+
 /** 상품 카드: 사진 · 공급사 · D-N · 이름 · 규격 · 발주 상태 · 단가 · 담기 */
 function OfferCard({ offer, inCart, canAdd, onAdd, cheapest, line, onQty, disabled }: { offer: SupplierOffer; inCart: boolean; canAdd: boolean; onAdd: () => void; cheapest: boolean; line?: CartLine; onQty: (line: CartLine, quantity: number) => void; disabled: boolean }) {
   const available = offer.orderability_status === 'AVAILABLE'
@@ -68,21 +85,20 @@ function ProductOrderContent({ accountId, initialSource, embedded }: { accountId
     sites, ingredients, source, chooseSource, site, setSite, date, changeDate, query, setQuery, cart, busy, locked, message, result, page, setPage,
     search, order, newCart, canAdd, addToCart, setLineQuantity, removeLine, filtered, groups, cartTotal, canOrder,
   } = useProductOrder(accountId, initialSource)
-  const [sort, setSort] = useState<'default' | 'unit'>('unit')
-  // 100g당 싼 순(기본) — 기준단위가 다른 상품(개·ml)은 같은 단위끼리 묶여 뒤로
-  const sorted = sort === 'unit' ? [...filtered].sort((a, b) => {
-    const ca = unitCost(a), cb = unitCost(b)
-    if (!ca || !cb) return ca ? -1 : cb ? 1 : 0
-    return ca.per === cb.per ? ca.value - cb.value : ca.per === '100g' ? -1 : cb.per === '100g' ? 1 : ca.per.localeCompare(cb.per)
-  }) : filtered
+  // 정렬은 보는 순서만 바꾼다(무엇을 발주할지는 담기로 사용자가 고름). 기본 추천순 = 늘 쓰는 상품 먼저 → 100g당 싼 순
+  const [sort, setSort] = useState<SortKey>('recommend')
+  const [onlyLinked, setOnlyLinked] = useState(false)
+  const [onlyOrderable, setOnlyOrderable] = useState(false)
+  const shown = filtered.filter(o => (!onlyLinked || o.linked_ingredient_id) && (!onlyOrderable || (o.orderable_yn === 'Y' && o.orderability_status === 'AVAILABLE')))
+  const sorted = [...shown].sort(SORTS[sort].compare)
   const cheapestId = (() => {
-    const orderable = filtered.filter(o => o.orderable_yn === 'Y' && unitCost(o))
-    const per = orderable.some(o => unitCost(o)?.per === '100g') ? '100g' : unitCost(orderable[0] || filtered[0] || ({} as SupplierOffer))?.per
+    const orderable = shown.filter(o => o.orderable_yn === 'Y' && unitCost(o))
+    const per = orderable.some(o => unitCost(o)?.per === '100g') ? '100g' : unitCost(orderable[0] || shown[0] || ({} as SupplierOffer))?.per
     const same = orderable.filter(o => unitCost(o)?.per === per)
     return same.length > 1 ? same.reduce((best, o) => (unitCost(o)!.value < unitCost(best)!.value ? o : best)).supplier_offer_id : null
   })()
   const lineOf = (offer: SupplierOffer) => cart.find(line => line.offer.supplier_offer_id === offer.supplier_offer_id && line.date === date)
-  const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const pages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE))
   const inCart = (offer: SupplierOffer) => cart.some(line => line.offer.supplier_offer_id === offer.supplier_offer_id && line.date === date)
 
   const body = <div className="pos-order rd rd-pos">
@@ -101,18 +117,23 @@ function ProductOrderContent({ accountId, initialSource, embedded }: { accountId
     <div className="pos-layout">
       <section className="pos-catalog" aria-label="공급상품">
         <header className="pos-catalog__head">
-          <h2 className="rd-h2">{query.trim() ? `'${query.trim()}' 상품 ${filtered.length}개` : `공급상품 ${filtered.length}개`}</h2>
-          <div className="rd-pills" role="group" aria-label="정렬">
-            <button type="button" aria-pressed={sort === 'unit'} className={sort === 'unit' ? 'is-active' : ''} onClick={() => { setSort('unit'); setPage(1) }}>100g당 싼 순</button>
-            <button type="button" aria-pressed={sort === 'default'} className={sort === 'default' ? 'is-active' : ''} onClick={() => { setSort('default'); setPage(1) }}>기본 순</button>
+          <h2 className="rd-h2">{query.trim() ? `'${query.trim()}' 상품 ${shown.length}개` : `공급상품 ${shown.length}개`}{shown.length !== filtered.length ? <small className="rd-muted rd-fs-sm"> / 전체 {filtered.length}</small> : null}</h2>
+          <div className="rd-pos__tools">
+            <div className="rd-pills" role="group" aria-label="거르기">
+              <button type="button" aria-pressed={onlyLinked} className={onlyLinked ? 'is-active' : ''} onClick={() => { setOnlyLinked(v => !v); setPage(1) }}>늘 쓰는 상품만</button>
+              <button type="button" aria-pressed={onlyOrderable} className={onlyOrderable ? 'is-active' : ''} onClick={() => { setOnlyOrderable(v => !v); setPage(1) }}>발주 가능만</button>
+            </div>
+            <select className="rd-input" aria-label="정렬" value={sort} onChange={e => { setSort(e.target.value as SortKey); setPage(1) }}>
+              {(Object.keys(SORTS) as SortKey[]).map(key => <option key={key} value={key}>{SORTS[key].label}</option>)}
+            </select>
           </div>
         </header>
-        {filtered.length ? <div className="pos-grid">
+        {shown.length ? <div className="pos-grid">
           {sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map(offer =>
             <OfferCard key={offer.supplier_offer_id} offer={offer} inCart={inCart(offer)} canAdd={canAdd(offer)} onAdd={() => addToCart(offer)}
               cheapest={offer.supplier_offer_id === cheapestId} line={lineOf(offer)} onQty={setLineQuantity} disabled={busy || locked} />)}
-        </div> : <p className="pos-empty">{busy ? '상품 조회 중' : '조회된 상품 없음 · 납품일 선택 후 상품 조회 요망'}</p>}
-        {filtered.length > PAGE_SIZE && <nav className="pos-pager" aria-label="상품 쪽 이동">
+        </div> : <p className="pos-empty">{busy ? '상품 조회 중' : filtered.length ? '거르기 조건에 맞는 상품 없음 · 거르기 해제 요망' : '조회된 상품 없음 · 납품일 선택 후 상품 조회 요망'}</p>}
+        {shown.length > PAGE_SIZE && <nav className="pos-pager" aria-label="상품 쪽 이동">
           <button type="button" disabled={page <= 1} onClick={() => setPage(page - 1)}>이전</button>
           <span>{page} / {pages}</span>
           <button type="button" disabled={page >= pages} onClick={() => setPage(page + 1)}>다음</button>
