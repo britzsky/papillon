@@ -15,13 +15,14 @@ const won = (value: number) => Math.round(value).toLocaleString('ko-KR')
 const CHIP: Record<TaskTone, string> = { urgent: '마감 임박', warn: '확인 요망', info: '오늘', done: '여유' }
 type Step = { key: string; title: string; detail: string; action: string; to: string }
 
-export default function DailyWork({ search }: { search: ReactNode }) {
+export default function DailyWork({ search, shortcuts }: { search: ReactNode; shortcuts?: ReactNode }) {
   const [params] = useSearchParams()
   const account = params.get('account_id') || (localStorage.getItem('user_type') === '3' ? localStorage.getItem('account_id') || '' : '')
   const { data, error, rows, single, busy, idle, tiles, refresh } = useDailyWork(account)
   const [noticeAccount, setNoticeAccount] = useState('')
   const calendar = useWorkspaceCalendar(single?.account_id || '')
   const summary = useAccountSummary(single?.account_id || '')
+  const userName = summary?.user_name || localStorage.getItem('user_name') || ''
 
   // 거래처 한 곳: 두 번째 칸은 '공급사 확인 요망'(접수 불명확 발주서 + 아워홈 출고·삭제 알림)
   const notices = single ? Number(single.supplier_notices) || 0 : 0
@@ -84,13 +85,15 @@ export default function DailyWork({ search }: { search: ReactNode }) {
         </li>)}</ol> : <div className="rd-steps__done">지금 할 일이 없어요. 새 일이 생기면 여기에 순서대로 나타납니다.</div>}
         <div className="rd-steps__more"><WorkspaceNotifications accountId={single.account_id} /></div>
       </section>
+      {shortcuts}
       </div>
 
       <aside className="rd-home__side" aria-label="거래처 정보와 달력">
       <section className="rd-card rd-account" aria-label="거래처 정보">
+        {/* 거래처명 바로 옆에 로그인한 사람 이름(서버 값, 없으면 로그인 때 저장한 이름 — 사이드 메뉴 카드와 같은 값) */}
         <div className="rd-account__who">
           <strong className="rd-fs-lg">{summary?.account_name || single.account_name}</strong>
-          {summary?.user_name ? <span className="rd-muted">{summary.user_name} 님</span> : null}
+          {userName ? <span className="rd-account__user">{userName} 님</span> : null}
         </div>
         <dl className="rd-account__rows">
           <div><dt>담당자</dt><dd>{summary?.manager_name ? `${summary.manager_name}${summary.manager_tel ? ` · ${summary.manager_tel}` : ''}` : '등록 안 됨'}</dd></div>
@@ -147,5 +150,6 @@ export default function DailyWork({ search }: { search: ReactNode }) {
       <summary>업무 없는 거래처 {idle.length}곳</summary>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>{idle.map(row => <Link key={row.account_id} className="rd-btn" to={href('/order_manager/recommended', row.account_id)}>{row.account_name}</Link>)}</div>
     </details>}
+    {!single && shortcuts}
   </>
 }

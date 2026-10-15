@@ -59,15 +59,15 @@ function Home() {
       <main className="home-content">
         <SideMenuLayout header={<HeaderBar title="오늘의 운영" breadcrumbs={[{ label: '홈' }]} />}>
           <div className="home-dashboard rd rd-home">
-            <DailyWork search={searchBox} />
-            <section aria-labelledby="home-shortcuts-title">
+            {/* 자주 쓰는 화면: 거래처 한 곳이면 왼쪽 열(달력 왼쪽), 본사 여러 거래처면 맨 아래 */}
+            <DailyWork search={searchBox} shortcuts={<section className="rd-home__shortcuts" aria-labelledby="home-shortcuts-title">
               <h2 id="home-shortcuts-title" className="rd-h2" style={{ marginBottom: 10 }}>자주 쓰는 화면</h2>
               <div className="rd-shortcuts">
                 {shortcuts.map(card => <button key={card.path} type="button" className="rd-shortcut" onClick={() => navigate(card.path)}>
                   <strong>{card.title}</strong><small>{card.description}</small>
                 </button>)}
               </div>
-            </section>
+            </section>} />
           </div>
         </SideMenuLayout>
       </main>
