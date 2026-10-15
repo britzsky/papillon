@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { buildApiUrl } from '../config/api'
+import KakaoRecipients from './KakaoRecipients'
 type Notice = { event_key: string; event_type: string; fingerprint: string; title: string; action_path: string; status: string; actor_id?: string }
 export default function WorkspaceNotifications({ accountId, defaultOpen = false }: { accountId: string; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen)
@@ -37,5 +38,6 @@ export default function WorkspaceNotifications({ accountId, defaultOpen = false 
       {row.event_type === 'MEAL_CHANGE' && <button disabled={busy} onClick={() => void state(row, 'RESOLVED')}>변경 확인 완료</button>}
       {row.event_type === 'SUPPLIER_STATUS' && <button disabled={busy} onClick={() => void state(row, 'RESOLVED')}>확인 완료</button>}
     </article>)}{!rows.length && !error && <p>현재 확인할 알림이 없습니다.</p>}
+    <KakaoRecipients accountId={accountId} />
   </>}</section>
 }
