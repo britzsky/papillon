@@ -177,6 +177,33 @@ body.workspace-ui .rd.rd button:disabled { background: var(--rd-btn-disabled-bg,
   .rd .rd-recv__list { max-width: none; }
 }
 
+/* ---- 발주서 확인 창(시안 ⑥) — 인쇄 규칙은 ShortageFoodOrder.css의 shortage-order-sheet 그대로 ---- */
+@media screen {
+  .rd.rd-preview-overlay { background: rgba(30, 42, 34, .45) !important; }
+  .rd .rd-preview { max-width: 1000px !important; padding: 0 !important; border-radius: 20px; box-shadow: 0 24px 60px rgba(0, 0, 0, .25); }
+}
+.rd .rd-preview__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 20px 24px 14px; border-bottom: 1px solid #E8ECE9; }
+.rd .rd-preview__head h2 { margin: 2px 0 0; }
+.rd .rd-preview__body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 14px 24px; display: flex; flex-direction: column; gap: 12px; }
+.rd .rd-preview__chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.rd .rd-preview__chips .rd-chip { --rd-fs: 12px; padding: 5px 12px; }
+.rd .rd-preview__sheet { border: 1px solid var(--rd-line); border-radius: 14px; overflow: hidden; }
+.rd .rd-preview__sheet.is-OURHOME { border-color: var(--rd-orange-line); }
+.rd .rd-preview__sheet-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 16px; background: #F7F9F7; }
+.rd .rd-preview__sheet.is-OURHOME .rd-preview__sheet-head { background: #FFFAF4; }
+.rd .rd-preview__row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, .7fr) minmax(0, .8fr) minmax(0, .9fr); gap: 10px; align-items: center; padding: 9px 16px; border-top: 1px solid #F0F2F0; }
+.rd .rd-preview__row.is-head { color: var(--rd-muted); font-weight: 700; padding: 7px 16px; }
+.rd .rd-preview__row.is-warn { background: #FFF8F0; }
+.rd .rd-preview__row .is-num { text-align: right; white-space: nowrap; }
+.rd .rd-preview__row small { display: block; --rd-fs: 11px; }
+.rd .rd-preview__item { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.rd .rd-preview__subtotal { display: flex; justify-content: flex-end; gap: 10px; padding: 9px 16px; border-top: 1px solid #F0F2F0; }
+.rd .rd-preview__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 24px; border-top: 1px solid #E8ECE9; background: #F7F9F7; border-radius: 0 0 20px 20px; }
+.rd .rd-preview__foot > div:first-child { display: flex; flex-direction: column; }
+.rd .rd-preview__foot .shortage-order-total { --rd-fs: 25px; font-weight: 800; text-align: left; margin: 0; }
+.rd .rd-preview__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.rd .rd-preview__send { min-height: 52px; padding: 0 24px; --rd-fs: 15px; }
+
 /* ---- 추천 발주안(시안 ④) ---- */
 .rd .rd-quick__hero { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; padding: 18px 22px; }
 .rd .rd-quick__hero-text { flex: 1 1 380px; display: flex; flex-direction: column; gap: 4px; }

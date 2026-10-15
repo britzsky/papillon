@@ -6,13 +6,20 @@
  * 요소별 크기는 --rd-fs 로 바꾼다(자식에게 상속).
  */
 /* .rd.rd: 전역 h1 규칙(ResponsiveWorkspace.css)과 우선순위가 같아지지 않게 한 단계 높인다 */
+/* 두 번째 줄(body > .rd): 창(포털)처럼 body 바로 아래에 그려지는 개편 영역. #__rd는 없는 id — 우선순위만 맞춘다 */
 body.workspace-ui > :is(#root, :not(#root)) .rd.rd,
-body.workspace-ui > :is(#root, :not(#root)) .rd.rd * { font-size: var(--rd-fs) !important; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.rd *,
+body.workspace-ui.workspace-ui > :is(.rd.rd, #__rd),
+body.workspace-ui.workspace-ui > :is(.rd.rd, #__rd) * { font-size: var(--rd-fs) !important; }
 body.workspace-ui > :is(#root, :not(#root)) .rd.rd button,
-body.workspace-ui > :is(#root, :not(#root)) .rd.rd button * { font-weight: 700 !important; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.rd button *,
+body.workspace-ui.workspace-ui > :is(.rd.rd, #__rd) button,
+body.workspace-ui.workspace-ui > :is(.rd.rd, #__rd) button * { font-weight: 700 !important; }
 /* 전역 입력칸·버튼 크기 규칙(ControlSizing·PosTheme)이 개편 부품을 덮지 않게 */
-body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-bare-input { border: 0 !important; background: transparent !important; box-shadow: none !important; min-height: 0 !important; height: auto !important; padding: 0 !important; }
-body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-icon-btn { width: 36px !important; min-width: 0 !important; height: 36px !important; min-height: 0 !important; padding: 0 !important; flex: none; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-bare-input,
+body.workspace-ui.workspace-ui > :is(.rd.rd, #__rd) .rd-bare-input { border: 0 !important; background: transparent !important; box-shadow: none !important; min-height: 0 !important; height: auto !important; padding: 0 !important; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-icon-btn,
+body.workspace-ui.workspace-ui > :is(.rd.rd, #__rd) .rd-icon-btn { width: 36px !important; min-width: 0 !important; height: 36px !important; min-height: 0 !important; padding: 0 !important; flex: none; }
 
 .rd {
   --rd-fs: 13px;

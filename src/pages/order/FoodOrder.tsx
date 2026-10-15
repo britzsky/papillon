@@ -83,6 +83,15 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
   const dayLabel = (value: string) => { const d = new Date(`${value}T00:00:00`); return `${d.getMonth() + 1}/${d.getDate()} ${'일월화수목금토'[d.getDay()]}` }
   const pickDay = (value: string) => update(value > criteria.date_to ? { delivery_date: value, date_to: value } : { delivery_date: value })
 
+  // 발주서 확인 창: 공급사·사업장별 발주서 묶음과 납품일·마감 경고 품목 수
+  const previewSheets = Object.values((preview?.items || []).reduce<Record<string, { key: string; code: string; name: string; site: string; terms: string; amount: number; rows: NonNullable<typeof preview>['items'] }>>((acc, row) => {
+    const key = row.offer.supplier_code + ':' + row.offer.external_site_code
+    const sheet = acc[key] ||= { key, code: row.offer.supplier_code, name: row.offer.supplier_name, site: row.offer.external_site_name || row.offer.external_site_code, terms: deliveryTerms(row.offer), amount: 0, rows: [] }
+    sheet.rows.push(row); sheet.amount += Number(row.item_amount) || 0
+    return acc
+  }, {}))
+  const previewWarnings = preview ? preview.items.filter(row => deliveryWarning(row.offer, preview.criteria.delivery_date, guidanceNow)).length : 0
+
   const body = <div className="rd rd-order">
     <section className="rd-days" aria-label="납품일 선택">
       {deliveryDays.map(value => { const due = dueByDate[value]; return <button key={value} type="button" aria-pressed={criteria.delivery_date === value}
@@ -206,7 +215,47 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
         {blocked.length ? <div className="rd-order__blocked rd-fs-sm"><strong className="rd-fs-md">바로 시킬 수 없는 식재료 {blocked.length}개</strong>{blocked.slice(0, 4).map(row => <span key={row.ingredient_id}>{row.ingredient_name} · {row.issues[0] || row.offers.map(o => o.availability_reason).find(Boolean) || '발주 가능한 상품 없음'}</span>)}</div> : null}
       </aside>
     </div>
-    {preview ? createPortal(<div className="shortage-order-page shortage-order-overlay"><section className="shortage-order-sheet" role="dialog" aria-modal="true" aria-labelledby="shortage-sheet-title"><h2 id="shortage-sheet-title">부족 식재료 발주 미리보기</h2><p>납품일 {preview.criteria.delivery_date} · 발주서 {new Set(preview.items.map(row => row.offer.supplier_code + ':' + row.offer.external_site_code)).size}건 (공급사·사업장별 분리)</p><div className="shortage-order-table-wrap"><table className="shortage-order-table"><thead><tr><th>식재료 / 공급상품</th><th>필요량</th><th>안전재고</th><th>현재고</th><th>기발주 미입고</th><th>부족량</th><th>발주수량</th><th>포장당 판가</th><th>상품금액</th><th>공급가액 / 부가세</th></tr></thead><tbody>{preview.items.map(row => <tr key={row.ingredient_id}><td><div className="shortage-offer-cell"><ProductImage zoomable src={row.offer.thumbnail_url || row.offer.image_url || undefined} fullSrc={row.offer.image_url || undefined} name={row.offer.product_name} /><div><strong>{row.ingredient_name}</strong><small>{row.offer.product_name}</small><small>{row.offer.supplier_name} · {row.offer.external_site_name || row.offer.external_site_code} · {row.offer.supplier_item_code}</small><small className="shortage-delivery-terms">{deliveryTerms(row.offer)}</small>{deliveryWarning(row.offer, preview.criteria.delivery_date, guidanceNow) ? <small className="shortage-order-error" role="status">{deliveryWarning(row.offer, preview.criteria.delivery_date, guidanceNow)}</small> : null}</div></div></td>{[row.required_qty, row.safe_stock_qty, row.current_qty, row.incoming_qty, row.shortage_qty].map((value, i) => <td key={i}>{number(value)} {row.base_unit}</td>)}<td>{number(row.order_qty)} {row.offer.order_unit}<small>{number(row.ordered_base_qty)} {row.base_unit}</small></td><td>{money(row.offer.purchase_price)}원/{row.offer.order_unit}</td><td>{money(row.item_amount)}원</td><td>{row.supply_amount !== null ? `${money(row.supply_amount)}원 / 0원 (면세)` : taxLabel(row.tax_type)}</td></tr>)}</tbody></table></div><p className="shortage-order-total">상품금액 합계 {money(preview.item_amount)}원</p><p>상품금액은 공급사 판가 × 발주수량입니다. 과세 품목은 판가의 부가세 포함 여부가 확인되지 않아 세액을 임의로 더하지 않습니다. 공급가액·부가세는 공급사 정산 기준 확인이 필요합니다.</p><p className="shortage-delivery-guidance">납품일·리드타임·마감시간을 다시 확인해주세요. 평일 일반 마감과 주말·공휴일 마감은 다를 수 있으며, 사업장 배송일과 공급사 공지가 우선합니다. 발주 접수 후 실제 입고가 확정될 때 현재고에 반영됩니다.</p><p>주문 직전에 판매상태·실시간 가격·최소수량·발주배수와 최신 부족량을 다시 검증합니다.</p>{message ? <p role="status">{message}</p> : null}<BatchOrderResults result={batchResult} accountId={accountId} /><div className="shortage-order-actions"><button className="print-button" disabled={submitting} onClick={() => window.print()}><PrintIcon />미리보기 인쇄</button><button disabled={submitting} onClick={closePreview}>닫기</button><button className="is-primary" disabled={submitting || completed} onClick={() => void submit()}>{submitting ? '검증·발주 중…' : completed ? '발주 결과 확인됨' : '공급사 API 발주'}</button></div></section>{submitting ? <LoadingScreen overlay message={'공급사에 발주를 보내고 있습니다.\n창을 닫거나 새로고침하지 마세요.'} /> : null}</div>, document.body) : null}
+    {preview ? createPortal(<div className="shortage-order-page shortage-order-overlay rd rd-preview-overlay"><section className="shortage-order-sheet rd-preview" role="dialog" aria-modal="true" aria-labelledby="shortage-sheet-title">
+      {/* 2026-10-15 개편(시안 ⑥): 공급사별 발주서 카드 + 상태 칩 + 합계·보내기. 인쇄 규칙은 shortage-order-sheet/actions 클래스 그대로 */}
+      <header className="rd-preview__head">
+        <div><span className="rd-muted rd-fs-sm">보내기 전 마지막 확인</span>
+          <h2 id="shortage-sheet-title" className="rd-h1">{dayLabel(preview.criteria.delivery_date)} 납품 · 발주서 {previewSheets.length}장 · {preview.items.length}품목</h2></div>
+        <button type="button" className="rd-btn rd-icon-btn shortage-order-actions" aria-label="닫기" disabled={submitting} onClick={closePreview}>×</button>
+      </header>
+      <div className="rd-preview__body">
+        <div className="rd-preview__chips">
+          <span className="rd-chip is-ok">✓ 서버 검증 완료 {preview.items.length - previewWarnings}품목</span>
+          {previewWarnings ? <span className="rd-chip is-warn">! 납품일·마감 확인 {previewWarnings}품목</span> : null}
+          <span className="rd-chip is-done">과세 품목 세액은 공급사 정산 기준</span>
+        </div>
+        {previewSheets.map(sheet => <article key={sheet.key} className={`rd-preview__sheet is-${sheet.code}`}>
+          <div className="rd-preview__sheet-head"><span><span className={`rd-supplier is-${sheet.code}`}>{sheet.name}</span> <strong>{sheet.site}</strong></span><span className="rd-fs-xs rd-muted">{sheet.terms}</span></div>
+          <div className="rd-preview__row is-head rd-fs-xs"><span>식재료 → 상품</span><span className="is-num">수량</span><span className="is-num">단가</span><span className="is-num">금액</span></div>
+          {sheet.rows.map(row => { const warning = deliveryWarning(row.offer, preview.criteria.delivery_date, guidanceNow)
+            return <div key={row.ingredient_id} className={`rd-preview__row${warning ? ' is-warn' : ''}`}>
+              <div className="rd-preview__item"><ProductImage zoomable src={row.offer.thumbnail_url || row.offer.image_url || undefined} fullSrc={row.offer.image_url || undefined} name={row.offer.product_name} />
+                <div><strong>{row.ingredient_name}</strong><small className="rd-muted">{row.offer.product_name} · {row.offer.supplier_item_code}</small>
+                  <small className="rd-muted">부족 {number(row.shortage_qty)}{row.base_unit} → {number(row.ordered_base_qty)}{row.base_unit} 주문</small>
+                  {warning ? <small className="rd-text-warn" role="status">{warning}</small> : null}</div></div>
+              <span className="is-num">{number(row.order_qty)} {row.offer.order_unit}</span>
+              <span className="is-num">{money(row.offer.purchase_price)}원</span>
+              <span className="is-num"><b>{money(row.item_amount)}원</b>{row.supply_amount === null ? <small className="rd-muted">{taxLabel(row.tax_type)}</small> : null}</span>
+            </div> })}
+          <div className="rd-preview__subtotal"><span className="rd-muted">소계</span><b>{money(sheet.amount)}원</b></div>
+        </article>)}
+        <p className="rd-muted rd-fs-xs">주문 직전에 판매상태·실시간 가격·최소수량·발주배수와 최신 부족량을 다시 검증해요. 평일·주말 마감이 다를 수 있고 사업장 배송일과 공급사 공지가 우선이에요. 입고가 확정될 때 재고에 반영돼요.</p>
+        {message ? <p role="status">{message}</p> : null}
+        <BatchOrderResults result={batchResult} accountId={accountId} />
+      </div>
+      <footer className="rd-preview__foot">
+        <div><span className="rd-muted rd-fs-sm">상품금액 합계</span><strong className="shortage-order-total">{money(preview.item_amount)}원</strong></div>
+        <div className="shortage-order-actions rd-preview__actions">
+          <button type="button" className="rd-btn print-button" disabled={submitting} onClick={() => window.print()}><PrintIcon />미리보기 인쇄</button>
+          <button type="button" className="rd-btn" disabled={submitting} onClick={closePreview}>돌아가서 고치기</button>
+          <button type="button" className="rd-btn is-primary rd-preview__send" disabled={submitting || completed} onClick={() => void submit()}>{submitting ? '검증·발주 중…' : completed ? '발주 결과 확인됨' : `공급사 ${previewSheets.length}곳에 발주 보내기`}</button>
+        </div>
+      </footer>
+    </section>{submitting ? <LoadingScreen overlay message={'공급사에 발주를 보내고 있습니다.\n창을 닫거나 새로고침하지 마세요.'} /> : null}</div>, document.body) : null}
   </div>
   if (embedded) return <div className="shortage-order-page procurement-refresh">{body}</div>
   return <div className="shortage-order-page procurement-refresh"><SideMenuLayout header={<HeaderBar title="부족 식재료 발주" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주 관리', to: '/order_manager' }, { label: '부족 식재료 발주' }]} />}>{body}</SideMenuLayout></div>
