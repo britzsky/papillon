@@ -93,7 +93,7 @@ export function useDailyWork(account: string) {
     }
     if (stockRows.length) return { key: 'prepare', label: '발주 준비 · 재고 부족', value: `${stockRows.length}품목`,
       hint: `현재고가 없거나 안전재고 미달${checks ? ` · 그중 확인 필요 ${checks}(판매 중단·기존 주문 확인 등)` : ''}`,
-      tone: 'warn', to: `/order_manager/order?${new URLSearchParams({ tab: 'stock', account_id: row.account_id })}` }
+      tone: 'warn', to: `/order_manager/order?${new URLSearchParams({ tab: 'stock', account_id: row.account_id, autoselect: '1' })}` }
     return { key: 'prepare', label: '발주 준비', value: '급한 발주 없음', hint: '마감 임박·재고 부족 품목 없음 · 발주안 보기', tone: 'done', to: accountHref('/order_manager/recommended', row.account_id) }
   }
 

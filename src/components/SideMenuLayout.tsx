@@ -4,6 +4,8 @@ import './SideMenuLayout.css'
 import logo from '../assets/logo/thefull.png'
 import WorkspaceIcon, { type WorkspaceIconName } from './WorkspaceIcon'
 import DeadlineAlertBanner from './DeadlineAlertBanner'
+import WorkflowBar from './WorkflowBar'
+import { matchesBase, workflowSteps } from '../features/workspace/workflow'
 
 type SideMenuLayoutProps = {
   children: ReactNode
@@ -23,29 +25,29 @@ type MajorMenu = {
   items: SubMenuItem[]
 }
 
+/** 업무 순서 아래: 기준정보(메뉴·식재료·공급사) → 위생 → 본사 */
 const majorMenus: MajorMenu[] = [
   {
-    key: 'order',
-    label: '발주관리',
-    basePaths: ['/order_manager'],
+    key: 'operations',
+    label: '메뉴·식재료',
+    basePaths: ['/operations/menu', '/operations/account-menu', '/inventory/account-ingredients', '/inventory/ingredients', '/inventory/history'],
     items: [
-      { label: '발주하기', to: '/order_manager/order', exact: true },
-      { label: '공급사 통합 연동', to: '/order_manager/suppliers', exact: true },
-      { label: '공급사 사업장 매핑', to: '/order_manager/supplier-sites', exact: true },
-      { label: '발주서 관리', to: '/order_manager/orders', exact: true },
-      { label: '거래명세서 관리' },
+      { label: '거래처 메뉴 관리', to: '/operations/account-menu', exact: true },
+      { label: '본사 메뉴 가져오기', to: '/operations/account-menu/import', exact: true },
+      { label: '거래처 재고 관리', to: '/inventory/account-ingredients', exact: true },
+      { label: '재고 변동 이력', to: '/inventory/history', exact: true },
+      { label: '메뉴 관리', to: '/operations/menu', exact: true },
+      { label: '식자재 관리', to: '/inventory/ingredients', exact: true },
     ],
   },
   {
-    key: 'inventory',
-    label: '재고관리',
-    basePaths: ['/inventory'],
+    key: 'order',
+    label: '공급사',
+    basePaths: ['/order_manager/suppliers', '/order_manager/supplier-sites', '/order_manager/welstory'],
     items: [
-      { label: '재고 변동 이력', to: '/inventory/history', exact: true },
-      { label: '상품별 재고 조정', to: '/inventory/account', exact: true },
-      { label: '거래처 재고 관리', to: '/inventory/account-ingredients', exact: true },
-      { label: '식자재 관리', to: '/inventory/ingredients', exact: true },
-      // { label: '재고 이동관리' },
+      { label: '공급사 통합 연동', to: '/order_manager/suppliers', exact: true },
+      { label: '공급사 사업장 매핑', to: '/order_manager/supplier-sites', exact: true },
+      { label: '거래명세서 관리' },
     ],
   },
   {
@@ -63,24 +65,12 @@ const majorMenus: MajorMenu[] = [
       { label: '검색어 관리', to: '/operations/search-analytics', exact: true },
     ],
   },
-  {
-    key: 'operations',
-    label: '운영관리',
-    basePaths: ['/operations/menu', '/operations/account-menu', '/operations/table-meals'],
-    items: [
-      { label: '메뉴 관리', to: '/operations/menu', exact: true },
-      { label: '거래처 메뉴 관리', to: '/operations/account-menu', exact: true },
-      { label: '본사 메뉴 가져오기', to: '/operations/account-menu/import', exact: true },
-      { label: '식단표 관리', to: '/operations/table-meals', exact: true },
-      // { label: '거래명세서 관리' },
-    ],
-  },
 ]
 
 function findActiveMenuKey(pathname: string) {
-  const matchedMenu = majorMenus.find((menu) =>
-    menu.basePaths.some((basePath) => pathname === basePath || pathname.startsWith(`${basePath}/`)),
-  )
+  // '/operations/account'는 '/operations/account-menu'의 앞부분이라 정확히 비교한다
+  const matchedMenu = majorMenus.find((menu) => menu.basePaths.some((basePath) =>
+    basePath === '/operations/account' ? pathname === basePath : matchesBase(pathname, basePath)))
 
   return matchedMenu?.key ?? ''
 }
@@ -226,6 +216,25 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
 
 
 
+          <div className="side-layout__flow" aria-label="업무 순서">
+            <span className="side-layout__flow-title">업무 순서</span>
+            {workflowSteps.map((step) => {
+              const active = step.basePaths.some((basePath) => matchesBase(location.pathname, basePath))
+              return (
+                <NavLink
+                  key={step.to}
+                  to={withAccount(step.to)}
+                  data-side-nav-to={withAccount(step.to)}
+                  onClick={(event) => handleNavigate(event, withAccount(step.to))}
+                  className={`side-layout__flow-link${active ? ' is-active' : ''}`}
+                  aria-current={active ? 'page' : undefined}
+                >
+                  <span className="side-layout__flow-no">{step.no}</span><span>{step.label}</span>
+                </NavLink>
+              )
+            })}
+          </div>
+
           {majorMenus.filter(menu => localStorage.getItem('user_type') !== '3' || menu.key !== 'headquarters').map((menu) => {
             const isOpen = openMenuKey === menu.key
             const isActive = activeMenuKey === menu.key
@@ -299,7 +308,7 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
             </button>
           </div>
         ) : null}
-        <div className="side-layout__content"><DeadlineAlertBanner />{children}</div>
+        <div className="side-layout__content"><WorkflowBar /><DeadlineAlertBanner />{children}</div>
       </section>
     </div>
   )

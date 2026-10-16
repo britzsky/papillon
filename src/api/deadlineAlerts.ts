@@ -56,7 +56,8 @@ export function getDeadlineAlertsCached(accountId: string, withinHours = 24): Pr
 
 /** 그 마감의 납품일로 식단표 기준 발주하기 탭을 연다(배너·종 알림·홈 공통). */
 export function deadlineOrderPath(accountId: string, alert: Pick<DeadlineAlert, 'delivery_date'>) {
-  return `/order_manager/order?${new URLSearchParams({ tab: 'plan', account_id: accountId, source: 'PLAN', delivery_date: alert.delivery_date })}`
+  // autoselect=1: 들어가면 바로 시킬 수 있는 품목이 미리 선택된다(마감 알림 → 발주서 확인 → 보내기)
+  return `/order_manager/order?${new URLSearchParams({ tab: 'plan', account_id: accountId, source: 'PLAN', delivery_date: alert.delivery_date, autoselect: '1' })}`
 }
 
 /** 배너·종 알림·홈이 같은 결과를 쓰도록 맞춘 조회 범위(시간). 배너는 이 중 5시간 이내만 보여준다. */

@@ -274,3 +274,16 @@ body.workspace-ui > :is(#root, :not(#root)) .rd.rd-page .rd-page__actions .rd-in
 .rd.rd-vs .rd-vs__ai p { color: var(--rd-blue-ink); }
 /* 위생 점검: 카테고리 알약을 조회조건 왼쪽에(같은 카드) — 2026-10-16 사용자 요청 */
 .rd.rd-vs .rd-vs__cats { padding-right: 12px; margin-right: 4px; border-right: 1px solid var(--rd-line); }
+
+/* ---- 업무 순서 진행 표시(식단표 → 발주하기 → 발주서·입고 → 재고) — 2026-10-16 ---- */
+.rd.workflow-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin: 0 4px 10px; padding: 6px 8px 6px 10px; border: 1px solid var(--rd-line); border-radius: 14px; background: #fff; }
+.rd .workflow-bar__steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.rd .workflow-bar__steps li { display: flex; align-items: center; }
+.rd .workflow-bar__steps li + li::before { content: '›'; margin: 0 6px; color: #A2ACA6; }
+.rd .workflow-bar__steps :is(a, span) { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; color: var(--rd-soft-ink); text-decoration: none; font-weight: 700; }
+.rd .workflow-bar__steps a:hover { background: #F0F3F0; }
+.rd .workflow-bar__steps b { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--rd-line-strong); --rd-fs: 11px; }
+.rd .workflow-bar__steps li.is-done b { background: var(--rd-green-soft); border-color: var(--rd-green); color: var(--rd-green-dark); }
+.rd .workflow-bar__steps li.is-current span { background: var(--rd-green); color: #fff; }
+.rd .workflow-bar__steps li.is-current b { border-color: #fff; }
+.rd .workflow-bar__next { min-height: 36px; padding: 0 14px; --button-width: 0; --button-height: auto; }

@@ -2,7 +2,7 @@ import WorkspaceNotifications from './WorkspaceNotifications'
 import { Fragment, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { TASKS, accountHref as href, needsSite, taskCount as count, useDailyWork, type TaskTile, type TaskTone } from '../features/workspace/useDailyWork'
-import { useWorkspaceCalendar } from '../features/workspace/useWorkspaceCalendar'
+import { useUpcomingMealDays, useWorkspaceCalendar } from '../features/workspace/useWorkspaceCalendar'
 import { useAccountSummary } from '../features/workspace/useAccountSummary'
 
 const won = (value: number) => Math.round(value).toLocaleString('ko-KR')
@@ -35,6 +35,7 @@ export default function DailyWork({ search, shortcuts }: { search: ReactNode; sh
   const { data, error, rows, single, busy, idle, tiles, refresh } = useDailyWork(account)
   const [noticeAccount, setNoticeAccount] = useState('')
   const calendar = useWorkspaceCalendar(single?.account_id || '')
+  const upcomingMealDays = useUpcomingMealDays(single?.account_id || '')
   const summary = useAccountSummary(single?.account_id || '')
   const userName = summary?.user_name || localStorage.getItem('user_name') || ''
 
@@ -48,14 +49,20 @@ export default function DailyWork({ search, shortcuts }: { search: ReactNode; sh
   })
   const chip = (tile: TaskTile) => tile.key === 'prepare' && tile.tone === 'warn' ? '발주 필요' : tile.key === 'due_receipts' && tile.tone !== 'done' ? '입고' : CHIP[tile.tone]
 
-  // '오늘 순서대로' — 할 일이 있는 칸만, 발주 → 공급사 확인 → 입고 → 사용 확정 순서
-  const steps: Step[] = single ? view.filter(tile => tile.tone !== 'done' && tile.to).map(tile => ({
+  // '오늘 순서대로' — 할 일이 있는 칸만, 식단표 → 발주 → 공급사 확인 → 입고 → 사용 확정 순서
+  const steps: Step[] = single ? [
+    // 업무 순서 ①: 다음 7일 식단이 없으면 식단표부터(식단이 있어야 필요한 재료로 바로 발주된다)
+    ...(upcomingMealDays === 0 && !(view.find(tile => tile.key === 'prepare')?.value === '사업장 지정') ? [{
+      key: 'meal', title: '다음 7일 식단표가 없어요', detail: '식단표를 만들고 저장하면 모자란 재료가 바로 발주 화면에 담겨요',
+      action: '식단표 만들기', to: href('/operations/table-meals', single.account_id),
+    }] : []),
+    ...view.filter(tile => tile.tone !== 'done' && tile.to).map(tile => ({
     key: tile.key,
     title: tile.key === 'prepare' ? `${tile.label.replace('발주 준비 · ', '')} — ${tile.value}` : `${tile.label} ${tile.value}`,
     detail: tile.hint,
     action: tile.key === 'prepare' ? (tile.value === '사업장 지정' ? '사업장 지정' : '발주하기') : tile.key === 'pending_orders' ? '확인' : tile.key === 'due_receipts' ? '입고 확인' : '사용 확정',
     to: tile.to as string,
-  })) : []
+  }))] : []
   const title = single ? (steps.length ? `오늘 할 일 ${steps.length}가지가 있어요` : '오늘 할 일을 모두 마쳤어요')
     : rows.length > 1 ? `거래처 ${rows.length}곳 · 확인할 곳 ${busy.length}곳` : '오늘 할 일'
   const today = new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })
@@ -93,7 +100,7 @@ export default function DailyWork({ search, shortcuts }: { search: ReactNode; sh
           <button type="button" className="rd-btn is-ghost" onClick={refresh}>새로고침</button>
           <div className="rd-steps__notice"><WorkspaceNotifications accountId={single.account_id} /></div>
         </div>
-        <p className="rd-muted">발주 → 공급사 확인 → 입고 → 사용 확정. 끝나면 자동으로 지워집니다.</p>
+        <p className="rd-muted">식단표 → 발주 → 공급사 확인 → 입고 → 사용 확정. 끝나면 자동으로 지워집니다.</p>
         {steps.length ? <ol>{steps.map((step, index) => <li key={step.key} className={`rd-step${index === 0 ? ' is-first' : ''}`}>
           <span className={`rd-step__no${index === 0 ? '' : ` rd-tone-${view.find(t => t.key === step.key)?.tone || 'done'}`}`}>{index + 1}</span>
           <span className="rd-step__text"><strong>{step.title}</strong><span>{step.detail}</span></span>

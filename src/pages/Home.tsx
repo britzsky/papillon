@@ -8,10 +8,11 @@ import './Home.css'
 
 /** 자주 쓰는 화면. 홈에서 화면 입구는 '오늘 할 일'과 여기 두 곳뿐(왼쪽 메뉴에 전체 목록). */
 const shortcuts = [
-  { title: '발주하기', description: '추천 발주안·부족량·상품 검색', path: '/order_manager/order', icon: 'order' as const },
-  { title: '발주서·입고', description: '접수 결과 확인·입고 확정·인쇄', path: '/order_manager/orders', icon: 'product' as const },
-  { title: '재고 조정', description: '현재고·직접구매·기초재고', path: '/inventory/account', icon: 'inventory' as const },
-  { title: '식단표', description: '식단 작성·주간 사용 확정', path: '/operations/table-meals', icon: 'operations' as const },
+  // 업무 순서대로(식단표 → 발주하기 → 발주서·입고 → 재고), 그다음 자주 쓰는 기준정보
+  { title: '① 식단표', description: '식단 작성·주간 사용 확정', path: '/operations/table-meals', icon: 'operations' as const },
+  { title: '② 발주하기', description: '식단 부족량·추천 발주안·상품 검색', path: '/order_manager/order', icon: 'order' as const },
+  { title: '③ 발주서·입고', description: '접수 결과 확인·입고 확정·인쇄', path: '/order_manager/orders', icon: 'product' as const },
+  { title: '④ 재고', description: '현재고·직접구매·기초재고', path: '/inventory/account', icon: 'inventory' as const },
   { title: '거래처 메뉴', description: '메뉴 레시피·원가', path: '/operations/account-menu', icon: 'headquarters' as const },
   { title: '위생 점검', description: '거래처별 점검 상태', path: '/sanitation/vendor', icon: 'sanitation' as const },
 ]

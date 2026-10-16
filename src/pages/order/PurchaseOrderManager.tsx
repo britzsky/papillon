@@ -144,7 +144,9 @@ export default function PurchaseOrderManager() {
           <button type="button" className="rd-btn is-primary" onClick={() => { setDay(''); void load() }} disabled={busy}>조회</button>
         </section>
       </details>
-      {message && <p className="rd-recv__message" role="status">{message}</p>}
+      {message && <p className="rd-recv__message" role="status">{message}
+        {/* 업무 순서 ③→④: 입고를 반영하면 재고로 */}
+        {message.startsWith('실제 입고수량을 재고에 반영') ? <> <Link className="rd-link" to={`/inventory/account?${new URLSearchParams({ account_id: accountId })}`}>다음: 재고 보기 →</Link></> : null}</p>}
 
       <div className="rd-recv__grid">
         <section className="rd-recv__list" aria-label="발주서 목록">

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { clearDeadlineAlertCache } from '../../api/deadlineAlerts'
 import { submitMixedProcurement, type BatchResult } from '../../api/mixedProcurement'
@@ -12,6 +12,14 @@ export const money = (value: number) => value.toLocaleString('ko-KR', { maximumF
 export const taxLabel = (value: string) => value === 'No tax' ? '면세' : ['Full tax', 'CONS', 'CONS(소모품)'].includes(value) ? '과세 · 세액 확인 필요' : '과세정보 확인 필요'
 
 const statusRank = { RED: 0, YELLOW: 1, GREEN: 2 } as const
+
+/** 바로 시킬 수 있는 품목(납품·마감 조건이 확인된 첫 상품)을 추천 수량으로 고른다. '모두 선택'과 식단표에서 넘어올 때 자동 선택이 같이 쓴다. */
+export function availableSelection(rows: ShortageResult['ingredients']): Record<string, OrderSelection> {
+  return Object.fromEntries(rows.flatMap(row => {
+    const offer = row.offers.find(o => o.orderable && o.orderability_status === 'AVAILABLE')
+    return offer ? [[row.ingredient_id, { ingredient_id: row.ingredient_id, supplier_offer_id: offer.supplier_offer_id, order_qty: offer.recommended_qty }]] : []
+  }))
+}
 
 export function deliveryTerms(offer: ShortageOffer) {
   const state = offer.orderability_status === 'AVAILABLE' ? '발주 가능' : offer.orderability_status === 'UNAVAILABLE' ? '발주 불가' : '확인 필요'
@@ -80,6 +88,9 @@ export function useShortageOrder(fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY') {
   const [previewing, setPreviewing] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [completed, setCompleted] = useState(false)
+  // 식단표의 '저장하고 발주하기'(?autoselect=1): 식단 기간이 정해진 첫 조회에서 바로 시킬 수 있는 품목을 미리 고른다(한 번만).
+  const autoSelectPending = useRef(params.get('autoselect') === '1')
+  const planDatesLoaded = useRef(false)
 
   useEffect(() => {
     let active = true
@@ -99,9 +110,10 @@ export function useShortageOrder(fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY') {
     if (!criteria.table_id || criteria.source !== 'PLAN') return
     let active = true
     void getPlanDates(accountId, criteria.table_id).then(dates => {
+      planDatesLoaded.current = true
       if (!active || !dates.length) return
       setCriteria(current => ({ ...current, date_from: dates[0], date_to: dates[dates.length - 1], delivery_date: dates[0] < day() ? day() : dates[0] }))
-    }).catch((e: unknown) => { if (active) setError(e instanceof Error ? e.message : '식단 기간 조회 실패') })
+    }).catch((e: unknown) => { planDatesLoaded.current = true; if (active) setError(e instanceof Error ? e.message : '식단 기간 조회 실패') })
     return () => { active = false }
   }, [accountId, criteria.table_id, criteria.source])
 
@@ -112,6 +124,12 @@ export function useShortageOrder(fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY') {
     void getShortages(criteria, controller.signal).then(data => {
       if (controller.signal.aborted) return
       setResult(data)
+      if (autoSelectPending.current) {
+        // 식단 기간 조회가 끝나기 전 첫 조회 결과는 기간이 달라 다시 조회되므로 그때 고른다
+        if (criteria.source !== 'PLAN' || !criteria.table_id || planDatesLoaded.current) autoSelectPending.current = false
+        setSelected(availableSelection(data.ingredients))
+        return
+      }
       setSelected(current => Object.fromEntries(Object.entries(current).filter(([id, selection]) => {
         const offer = data.ingredients.find(row => row.ingredient_id === id)?.offers.find(candidate => candidate.supplier_offer_id === selection.supplier_offer_id)
         return offer?.orderable && selection.order_qty > 0 && selection.order_qty <= (offer.quantity_basis === 'MANUAL' ? MANUAL_MAX_ORDER_QTY : offer.recommended_qty)

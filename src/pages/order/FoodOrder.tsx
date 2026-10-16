@@ -10,7 +10,7 @@ import SideMenuLayout from '../../components/SideMenuLayout'
 import { MANUAL_MAX_ORDER_QTY, shortageStockStatus, SHORTAGE_STOCK_LABELS, type ShortageOffer, type ShortageRow } from '../../api/shortageProcurement'
 import { useEffect, useState } from 'react'
 import { getDeadlineAlertsCached } from '../../api/deadlineAlerts'
-import { day, deliveryTerms, deliveryWarning, money, number, taxLabel, useShortageOrder } from '../../features/order/useShortageOrder'
+import { availableSelection, day, deliveryTerms, deliveryWarning, money, number, taxLabel, useShortageOrder } from '../../features/order/useShortageOrder'
 import { PrintIcon } from '../../components/ActionIcons'
 import './ShortageFoodOrder.css'
 
@@ -154,7 +154,7 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
             <div className="rd-pills" role="group" aria-label="재고 상태 필터">{([['', '전체'], ['RED', '모자람'], ['YELLOW', '안전재고 미달'], ['CHECK', '확인 필요']] as const).map(([value, label]) =>
               <button key={value} type="button" aria-pressed={stockFilter === value} className={stockFilter === value ? 'is-active' : ''} onClick={() => setStockFilter(value)}>{label} {stockCounts[value]}</button>)}</div>
             <input className="rd-input" aria-label="부족 식재료 검색" placeholder="식재료 찾기" value={keyword} onChange={e => setKeyword(e.target.value)} />
-            <button type="button" className="rd-btn" disabled={loading} title="보이는 품목 중 납품·마감 조건이 확인된 상품을 모두 선택합니다. 수량 직접 입력 품목은 최소 발주수량으로 담기니 수량을 확인하세요." onClick={() => setSelected(current => ({ ...(stockFilter || keyword ? current : {}), ...Object.fromEntries(rows.flatMap(row => { const offer = row.offers.find(o => o.orderable && o.orderability_status === 'AVAILABLE'); return offer ? [[row.ingredient_id, { ingredient_id: row.ingredient_id, supplier_offer_id: offer.supplier_offer_id, order_qty: offer.recommended_qty }]] : [] })) }))}>바로 시킬 수 있는 것 모두 선택</button>
+            <button type="button" className="rd-btn" disabled={loading} title="보이는 품목 중 납품·마감 조건이 확인된 상품을 모두 선택합니다. 수량 직접 입력 품목은 최소 발주수량으로 담기니 수량을 확인하세요." onClick={() => setSelected(current => ({ ...(stockFilter || keyword ? current : {}), ...availableSelection(rows) }))}>바로 시킬 수 있는 것 모두 선택</button>
             <button type="button" className="rd-btn is-ghost" onClick={() => setSelected({})}>선택 해제</button>
           </div>
         </div>
@@ -233,6 +233,7 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
             <button type="button" className="rd-btn is-ghost" disabled={submitting} onClick={() => { setSubmitting(true); void recoverMixedProcurement(accountId).then(setBatchResult).catch(e => setError(e.message)).finally(() => setSubmitting(false)) }}>이전 요청 결과 확인</button>
           </div>
           <BatchOrderResults result={preview ? null : batchResult} accountId={accountId} />
+          {completed && !preview ? <Link className="rd-btn is-primary rd-order__confirm" to={`/order_manager/orders?${new URLSearchParams({ account_id: accountId })}`}>다음: 발주서·입고에서 확인 →</Link> : null}
         </div>
         {blocked.length ? <div className="rd-order__blocked rd-fs-sm"><strong className="rd-fs-md">바로 시킬 수 없는 식재료 {blocked.length}개</strong>{blocked.slice(0, 4).map(row => <span key={row.ingredient_id}>{row.ingredient_name} · {row.issues[0] || row.offers.map(o => o.availability_reason).find(Boolean) || '발주 가능한 상품 없음'}</span>)}</div> : null}
       </aside>
@@ -274,7 +275,9 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
         <div className="shortage-order-actions rd-preview__actions">
           <button type="button" className="rd-btn print-button" disabled={submitting} onClick={() => window.print()}><PrintIcon />미리보기 인쇄</button>
           <button type="button" className="rd-btn" disabled={submitting} onClick={closePreview}>돌아가서 고치기</button>
-          <button type="button" className="rd-btn is-primary rd-preview__send" disabled={submitting || completed} onClick={() => void submit()}>{submitting ? '검증·발주 중…' : completed ? '발주 결과 확인됨' : `공급사 ${previewSheets.length}곳에 발주 보내기`}</button>
+          {/* 업무 순서 ②→③: 보낸 뒤에는 같은 자리에서 발주서·입고로 */}
+          {completed ? <Link className="rd-btn is-primary rd-preview__send" to={`/order_manager/orders?${new URLSearchParams({ account_id: accountId })}`}>다음: 발주서·입고에서 확인 →</Link>
+            : <button type="button" className="rd-btn is-primary rd-preview__send" disabled={submitting} onClick={() => void submit()}>{submitting ? '검증·발주 중…' : `공급사 ${previewSheets.length}곳에 발주 보내기`}</button>}
         </div>
       </footer>
     </section>{submitting ? <LoadingScreen overlay message={'공급사에 발주를 보내고 있습니다.\n창을 닫거나 새로고침하지 마세요.'} /> : null}</div>, document.body) : null}

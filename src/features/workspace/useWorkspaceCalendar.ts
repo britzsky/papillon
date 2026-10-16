@@ -55,3 +55,27 @@ export function useWorkspaceCalendar(accountId: string) {
   }
   return { month, title: `${year}년 ${monthNo}월`, cells, move }
 }
+
+/**
+ * 오늘부터 7일 안에 식단(끼니)이 있는 날 수. 홈의 '식단표 만들기' 안내용(업무 순서 ①). 조회 중이면 null.
+ * 월이 넘어가면 두 달을 조회한다.
+ */
+export function useUpcomingMealDays(accountId: string) {
+  const [state, setState] = useState<{ key: string; count: number } | null>(null)
+  const today = kstToday()
+  const end = new Date(Date.parse(today + 'T00:00:00Z') + 6 * 864e5).toISOString().slice(0, 10)
+  const months = Array.from(new Set([today.slice(0, 7), end.slice(0, 7)]))
+  const key = `${accountId}:${today}`
+  useEffect(() => {
+    if (!accountId) return
+    const controller = new AbortController()
+    Promise.all(months.map(month => fetch(buildApiUrl(`/v2/workspace/calendar?${new URLSearchParams({ account_id: accountId, month })}`), { signal: controller.signal })
+      .then(async response => { if (!response.ok) throw new Error(); return (await response.json() as { days?: CalendarDay[] }).days ?? [] })))
+      .then(all => { if (!controller.signal.aborted) setState({ key, count: all.flat().filter(day => day.date >= today && day.date <= end && Number(day.meals) > 0).length }) })
+      .catch(() => { if (!controller.signal.aborted) setState({ key, count: -1 }) })
+    return () => controller.abort()
+    // months·today·end는 key(거래처·오늘)로 정해진다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key])
+  return state?.key === key ? state.count : null
+}

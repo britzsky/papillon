@@ -308,3 +308,46 @@
   display: flex;
   align-items: center;
 }
+
+/* 업무 순서(식단표 → 발주하기 → 발주서·입고 → 재고): 펼치지 않아도 늘 보이는 번호 메뉴 — 2026-10-16 */
+.side-layout__flow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 10px 0 12px;
+  padding: 10px 8px;
+  border-radius: 12px;
+  background: #F3F6F2;
+}
+.side-layout__flow-title {
+  padding: 0 6px 4px;
+  color: #5B6660;
+  font-weight: 700;
+}
+body.workspace-ui .side-layout__flow-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 10px;
+  color: #1E2A22;
+  font-weight: 700;
+  text-decoration: none;
+}
+body.workspace-ui .side-layout__flow-link:hover { background: #fff; }
+body.workspace-ui .side-layout__flow-link.is-active { background: #2E6B3A; color: #fff; }
+.side-layout__flow-no {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #C9D3CC;
+  color: #2E6B3A;
+  font-weight: 800;
+}
+.side-layout__flow-link.is-active .side-layout__flow-no { border-color: #fff; }
