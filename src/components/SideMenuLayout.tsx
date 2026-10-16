@@ -12,6 +12,8 @@ import { matchesBase } from '../features/workspace/workflow'
 type SideMenuLayoutProps = {
   children: ReactNode
   header?: ReactNode
+  /** 화면이 발주 마감 알림을 직접 자리에 넣을 때(예: 재고 머리 줄) 본문 위 공용 알림을 숨긴다 */
+  hideDeadlineAlert?: boolean
 }
 
 type SubMenuItem = {
@@ -98,9 +100,11 @@ function AccountChoiceNotice() {
   )
 }
 
-/** 업무 흐름 카테고리는 처음부터 펼쳐 둔다(식단표 → 발주하기로 넘어갈 때 다시 펼치는 클릭이 없게) */
-const FLOW_MENU_KEYS = ['operations', 'order', 'inventory']
-const initialOpenKeys = (pathname: string) => new Set([...FLOW_MENU_KEYS, findActiveMenuKey(pathname)].filter(Boolean))
+/**
+ * 대분류는 한 번에 하나만 펼친다(2026-10-16 사용자 요청: 다른 대분류를 누르면 열려 있던 것은 닫힘). 업무 흐름 이동은 WorkflowBar가 맡는다.
+ * 처음엔 지금 화면의 대분류, 홈처럼 속한 대분류가 없으면 업무 첫 단계(운영관리 — 식단표)를 펼쳐 둔다(홈 → 식단표 한 번에).
+ */
+const initialOpenKeys = (pathname: string) => new Set([findActiveMenuKey(pathname) || 'operations'])
 
 function findActiveMenuKey(pathname: string) {
   // '/operations/account'는 '/operations/account-menu'의 앞부분이라 정확히 비교한다
@@ -110,7 +114,7 @@ function findActiveMenuKey(pathname: string) {
   return matchedMenu?.key ?? ''
 }
 
-function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
+function SideMenuLayout({ children, header, hideDeadlineAlert = false }: SideMenuLayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -135,7 +139,7 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
   const [menuPath, setMenuPath] = useState(location.pathname)
   if (menuPath !== location.pathname) {
     setMenuPath(location.pathname)
-    setOpenMenuKeys((current) => { const key = findActiveMenuKey(location.pathname); return key && !current.has(key) ? new Set([...current, key]) : current })
+    setOpenMenuKeys((current) => { const key = findActiveMenuKey(location.pathname); return key && !current.has(key) ? new Set([key]) : current })
   }
 
   useEffect(() => {
@@ -266,7 +270,7 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
                 <button
                   type="button"
                   className={`side-layout__major-button${isActive ? ' is-active' : ''}`}
-                  onClick={() => setOpenMenuKeys((current) => { const next = new Set(current); if (next.has(menu.key)) next.delete(menu.key); else next.add(menu.key); return next })}
+                  onClick={() => setOpenMenuKeys((current) => current.has(menu.key) ? new Set<string>() : new Set([menu.key]))}
                   aria-expanded={isOpen}
                 >
                   <WorkspaceIcon name={menu.key as WorkspaceIconName} /><span>{menu.label}</span>
@@ -327,7 +331,7 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
             </button>
           </div>
         ) : null}
-        <div className="side-layout__content"><WorkflowBar /><DeadlineAlertBanner />{needsAccountChoice ? <AccountChoiceNotice /> : children}</div>
+        <div className="side-layout__content"><WorkflowBar />{hideDeadlineAlert ? null : <DeadlineAlertBanner />}{needsAccountChoice ? <AccountChoiceNotice /> : children}</div>
       </section>
     </div>
   )

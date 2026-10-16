@@ -22,8 +22,9 @@ const orderLink = deadlineOrderPath
 /**
  * 발주 마감 알림. 마감 5시간 전부터 화면 상단에 표시하고, 브라우저 알림을 켜면 5·4·3·2·1시간, 30분 전에 한 번씩 알린다.
  * 발주를 마치면 서버 부족량에서 빠져 사라지고, '오늘 안 함'을 누르면 그날은 표시·알림을 멈춘다.
+ * inline: 화면 머리 줄 안에 한 줄로(글이 길면 말줄임), '품목 보기'는 아래로 떠서 화면을 밀지 않는다.
  */
-export default function DeadlineAlertBanner() {
+export default function DeadlineAlertBanner({ inline = false }: { inline?: boolean } = {}) {
   const location = useLocation()
   const navigate = useNavigate()
   const accountId = workspaceAccountId(location.search).trim()
@@ -89,11 +90,11 @@ export default function DeadlineAlertBanner() {
   const names = visible.flatMap(({ alert }) => alert.items.map(item => item.ingredient_name))
   const nameText = names.slice(0, 4).join(', ') + (names.length > 4 ? ` 외 ${names.length - 4}개` : '')
 
-  return <section className={`rd deadline-alert${urgent ? ' is-urgent' : ''}`} role="status" aria-live="polite" aria-label="발주 마감 알림">
+  return <section className={`rd deadline-alert${urgent ? ' is-urgent' : ''}${inline ? ' is-inline' : ''}`} role="status" aria-live="polite" aria-label="발주 마감 알림">
     <div className="deadline-alert__summary">
       <div className="deadline-alert__clock"><small>마감까지</small><strong>{clock}</strong></div>
       <div className="deadline-alert__text">
-        <strong>{first.alert.supplier_name} {first.alert.deadline.slice(11, 16)} 마감 · {deliveryLabel} 납품분{visible.length > 1 ? ` 외 마감 ${visible.length - 1}건` : ''}</strong>
+        <strong title={inline ? nameText : undefined}>{first.alert.supplier_name} {first.alert.deadline.slice(11, 16)} 마감 · {deliveryLabel} 납품분{visible.length > 1 ? ` 외 마감 ${visible.length - 1}건` : ''}</strong>
         <span>식단에 필요한데 아직 안 시킨 식재료 {itemCount}개 — {nameText}</span>
       </div>
       <div className="deadline-alert__actions">

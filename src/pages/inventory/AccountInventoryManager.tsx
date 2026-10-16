@@ -5,6 +5,7 @@ import HeaderBar from '../../components/HeaderBar'
 import ProductImage from '../../components/ProductImage'
 import LoadingScreen from '../../components/LoadingScreen'
 import SideMenuLayout from '../../components/SideMenuLayout'
+import DeadlineAlertBanner from '../../components/DeadlineAlertBanner'
 import AppAlert, { type AppAlertState } from '../../components/AppAlert'
 import { getAccountInventoryList, saveAccountInventory, type AccountInventoryItem } from '../../api/inventory'
 import { getIngredientOptions, type IngredientOption } from '../../api/operations'
@@ -329,6 +330,7 @@ function AccountInventoryManager() {
       {isSaving ? <LoadingScreen overlay message="거래처 재고를 저장하고 있습니다." /> : null}
       <main className="menu-manager-content">
         <SideMenuLayout
+          hideDeadlineAlert
           header={
             <HeaderBar
               title="재고"
@@ -343,6 +345,7 @@ function AccountInventoryManager() {
           <div className="rd rd-inv">
           <header className="rd-inv__head">
             <h1 className="rd-h1">재고</h1>
+            <DeadlineAlertBanner inline />
             <div className="rd-inv__actions">
               <button type="button" className="rd-btn is-primary" disabled={isLoading || isSaving || !targetAccountId}
                 title="마트·쿠팡 등에서 직접 산 식재료를 재고에 넣습니다"
