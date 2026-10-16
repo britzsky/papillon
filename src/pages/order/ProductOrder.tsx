@@ -1,3 +1,4 @@
+import { workspaceAccountId } from '../../features/workspace/workspaceAccount'
 import CatalogPreparation from '../../components/CatalogPreparation'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -32,7 +33,7 @@ function unitCost(offer: SupplierOffer) {
 /** 상품 검색 발주(PC). 로직은 features/order/useProductOrder(터치와 공용). embedded: 발주하기(OrderWorkspace) 탭 안에서 레이아웃 없이 내용만 그린다 */
 export default function ProductOrder({ embedded = false }: { embedded?: boolean }) {
   const [params] = useSearchParams()
-  const accountId = params.get('account_id') || localStorage.getItem('account_id') || ''
+  const accountId = workspaceAccountId(params)
   return <ProductOrderContent key={accountId} accountId={accountId} initialSource={params.get('ingredient_id') || ''} embedded={embedded} />
 }
 

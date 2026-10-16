@@ -1,3 +1,4 @@
+import { workspaceAccountId } from '../features/workspace/workspaceAccount'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DEADLINE_WINDOW_HOURS, deadlineOrderPath, dueThreshold, getDeadlineAlertsCached, minutesUntil, NOTIFY_MINUTES, remainingLabel, type DeadlineAlert } from '../api/deadlineAlerts'
@@ -25,7 +26,7 @@ const orderLink = deadlineOrderPath
 export default function DeadlineAlertBanner() {
   const location = useLocation()
   const navigate = useNavigate()
-  const accountId = (new URLSearchParams(location.search).get('account_id') || read('account_id') || '').trim()
+  const accountId = workspaceAccountId(location.search).trim()
   const snoozeKey = `deadline-alert:snooze:${accountId}:${todayKst()}`
   const [alerts, setAlerts] = useState<DeadlineAlert[]>([])
   const [now, setNow] = useState(() => Date.now())

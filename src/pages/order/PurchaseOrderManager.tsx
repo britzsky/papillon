@@ -1,3 +1,4 @@
+import { workspaceAccountId } from '../../features/workspace/workspaceAccount'
 import { OrderStatusBadge } from '../../components/WorkspaceTheme'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -27,7 +28,7 @@ const DONE = ['RECEIVED', 'CANCELED', 'FAILED']
  */
 export default function PurchaseOrderManager() {
   const [params, setParams] = useSearchParams()
-  const accountId = params.get('account_id') || localStorage.getItem('account_id') || ''
+  const accountId = workspaceAccountId(params)
   const focusedId = params.get('purchase_order_id') || ''
   const {
     from, setFrom, to, setTo, status, setStatus, offset, setOffset, supplierId, setSupplierId, suppliers,

@@ -1,3 +1,4 @@
+import { workspaceAccountId } from '../workspace/workspaceAccount'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { clearDeadlineAlertCache } from '../../api/deadlineAlerts'
@@ -44,7 +45,7 @@ export function deliveryWarning(offer: ShortageOffer, deliveryDate: string, now:
  */
 export function useShortageOrder(fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY') {
   const [params] = useSearchParams()
-  const accountId = params.get('account_id') || localStorage.getItem('account_id') || ''
+  const accountId = workspaceAccountId(params)
   const focusIngredient = params.get('ingredient_id') || ''
   const [criteria, setCriteria] = useState<ShortageCriteria>(() => {
     const resumeKey = !params.get('source') && !params.get('table_id') && !params.get('ingredient_id') && sessionStorage.getItem(`plan-editor:${accountId}`) ? `plan-procurement:${accountId}` : ''

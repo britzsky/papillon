@@ -1,10 +1,12 @@
-﻿import { useEffect, useMemo, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import './SideMenuLayout.css'
 import logo from '../assets/logo/thefull.png'
 import WorkspaceIcon, { type WorkspaceIconName } from './WorkspaceIcon'
 import DeadlineAlertBanner from './DeadlineAlertBanner'
 import WorkflowBar from './WorkflowBar'
+import WorkspaceAccountPicker from './WorkspaceAccountPicker'
+import { isHeadquarters, workspaceAccountId } from '../features/workspace/workspaceAccount'
 import { matchesBase } from '../features/workspace/workflow'
 
 type SideMenuLayoutProps = {
@@ -81,6 +83,21 @@ const majorMenus: MajorMenu[] = [
   },
 ]
 
+/** 거래처를 고르지 않아도 되는 화면(본사 공통 기준정보·전체 현황) */
+const ACCOUNT_FREE_PATHS = ['/home', '/home/sidebar', '/operations/menu', '/inventory/ingredients', '/operations/search-analytics', '/order_manager/supplier-sites', '/order_manager/welstory', '/order_manager']
+
+function AccountChoiceNotice() {
+  return (
+    <div className="rd rd-page">
+      <section className="rd-card rd-page__empty rd-account-choice">
+        <h2 className="rd-h2">관리할 거래처를 먼저 고르세요</h2>
+        <p>본사 계정은 거래처를 골라 관리합니다. 한 번 고르면 다른 화면으로 옮겨도 그 거래처가 유지됩니다.</p>
+        <WorkspaceAccountPicker />
+      </section>
+    </div>
+  )
+}
+
 /** 업무 흐름 카테고리는 처음부터 펼쳐 둔다(식단표 → 발주하기로 넘어갈 때 다시 펼치는 클릭이 없게) */
 const FLOW_MENU_KEYS = ['operations', 'order', 'inventory']
 const initialOpenKeys = (pathname: string) => new Set([...FLOW_MENU_KEYS, findActiveMenuKey(pathname)].filter(Boolean))
@@ -130,11 +147,14 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
   }, [])
 
   const activeMenuKey = useMemo(() => findActiveMenuKey(location.pathname), [location.pathname])
+  // 본사가 '전체 거래처'인 채로 거래처가 필요한 화면을 열면 화면 대신 거래처 선택 안내
+  const needsAccountChoice = isHeadquarters() && !workspaceAccountId(location.search) && !ACCOUNT_FREE_PATHS.includes(location.pathname)
 
   const withAccount = (to: string) => {
     if (!to.startsWith('/')) return to
     const query = new URLSearchParams(location.search)
-    const accountId = query.get('account_id') || (location.pathname === '/inventory/account' ? query.get('id') : '') || localStorage.getItem('account_id')
+    // 메뉴로 옮겨도 관리 거래처 유지(거래처 계정은 자기 거래처)
+    const accountId = workspaceAccountId(query) || (location.pathname === '/inventory/account' ? query.get('id') : '')
     return accountId ? `${to}?${new URLSearchParams({ account_id: accountId })}` : to
   }
 
@@ -307,7 +327,7 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
             </button>
           </div>
         ) : null}
-        <div className="side-layout__content"><WorkflowBar /><DeadlineAlertBanner />{children}</div>
+        <div className="side-layout__content"><WorkflowBar /><DeadlineAlertBanner />{needsAccountChoice ? <AccountChoiceNotice /> : children}</div>
       </section>
     </div>
   )

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import HeaderBar from '../../components/HeaderBar'
 import LoadingScreen from '../../components/LoadingScreen'
 import SideMenuLayout from '../../components/SideMenuLayout'
+import { useSearchParams } from 'react-router-dom'
+import { workspaceAccountId } from '../../features/workspace/workspaceAccount'
 import { getAccountOptions, type AccountOption } from '../../api/operations'
 import { FOOD_TYPE_OPTIONS, MEAL_PLAN_TYPE_OPTIONS, formatBudget, isSnackSlot, useAccountMealConfig } from '../../features/operations/useAccountMealConfig'
 import './AccountManager.css'
@@ -9,7 +11,8 @@ import './AccountManager.css'
 /** 고객사 관리(PC). 식사 설정 로직은 features/operations/useAccountMealConfig(터치 화면과 공용). 순서는 끌어 놓기로 바꾼다. */
 function AccountManager() {
   const [accounts, setAccounts] = useState<AccountOption[]>([])
-  const [accountId, setAccountId] = useState('')
+  // 관리 거래처는 머리 줄에서 고른다
+  const accountId = workspaceAccountId(useSearchParams()[0])
   const [draggedCode, setDraggedCode] = useState<number | null>(null)
   const { mealSlots, orderedSlots, selectedCodes, configuration, profiles, loading, saving, message, setMessage, toggleMealSlot, placeMealSlot, updateProfile, save } = useAccountMealConfig(accountId)
 
@@ -26,13 +29,9 @@ function AccountManager() {
         <header className="rd-page__head">
           <div>
             <h1 className="rd-h1">고객사 관리</h1>
-            <p className="rd-muted">{accountName ? `${accountName}에서 제공하는 식사와 기본 식사 구성을 정합니다.` : '고객사를 고르면 식사구분을 설정할 수 있습니다.'}</p>
+            <p className="rd-muted">{accountName ? `${accountName}에서 제공하는 식사와 기본 식사 구성을 정합니다.` : "머리 줄의 '관리 거래처'에서 고객사를 고르면 식사구분을 설정할 수 있습니다."}</p>
           </div>
           <div className="rd-page__actions">
-            <select className="rd-input" aria-label="고객사" value={accountId} onChange={(event) => setAccountId(event.target.value)}>
-              <option value="">고객사를 선택하세요</option>
-              {accounts.map((account) => <option key={account.value} value={account.value}>{account.text || account.value}</option>)}
-            </select>
             <button type="button" className="rd-btn is-primary" onClick={() => void save()} disabled={!accountId || loading || saving}>
               {saving ? '저장 중' : '저장'}
             </button>

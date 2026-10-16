@@ -1,3 +1,4 @@
+import { workspaceAccountId } from '../../features/workspace/workspaceAccount'
 import { getAccountInventoryList, type AccountInventoryItem } from '../../api/inventory'
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -5,31 +6,23 @@ import HeaderBar from '../../components/HeaderBar'
 import SideMenuLayout from '../../components/SideMenuLayout'
 import IngredientProductLinkModal from '../../components/IngredientProductLinkModal'
 import BulkIngredientLinkModal from '../../components/BulkIngredientLinkModal'
-import { getAccountOptions, type AccountOption } from '../../api/operations'
 import { supplierInitial, useAccountIngredients, type AccountIngredient as Ingredient } from '../../features/inventory/useAccountIngredients'
 import '../operations/MenuManager.css'
 
 export default function AccountIngredientManager() {
   const [params] = useSearchParams()
-  const accountId = params.get('account_id') ?? localStorage.getItem('account_id') ?? ''
+  const accountId = workspaceAccountId(params)
   return <AccountIngredientContent key={accountId} accountId={accountId} />
 }
 
 function AccountIngredientContent({ accountId }: { accountId: string }) {
-  const [, setParams] = useSearchParams()
-  const [accounts, setAccounts] = useState<AccountOption[]>([])
   const [inventory, setInventory] = useState<AccountInventoryItem[]>([])
   const [inventoryError, setInventoryError] = useState('')
   const [page, setPage] = useState(1)
-  const { rows, filtered, loading, error, setError, keyword, setKeyword, missingOnly, setMissingOnly, nextUnlinked: findNextUnlinked, reload, revision } = useAccountIngredients(accountId)
+  const { rows, filtered, loading, error, keyword, setKeyword, missingOnly, setMissingOnly, nextUnlinked: findNextUnlinked, reload, revision } = useAccountIngredients(accountId)
   const [selected, setSelected] = useState<Ingredient | null>(null)
   const [bulkOpen, setBulkOpen] = useState(false)
   const [notice, setNotice] = useState('')
-  useEffect(() => {
-    let active = true
-    void getAccountOptions().then(data => { if (active) setAccounts(data) }).catch(e => { if (active) setError(e.message) })
-    return () => { active = false }
-  }, [setError])
   useEffect(() => {
     let active = true
     if (!accountId) return
@@ -52,7 +45,6 @@ function AccountIngredientContent({ accountId }: { accountId: string }) {
           <p className="rd-muted">거래처 메뉴에 쓰는 식자재마다 실제로 살 상품을 연결합니다. 같은 식자재를 쓰는 모든 메뉴에 함께 적용됩니다.</p>
         </div>
         <div className="rd-page__actions">
-          <select className="rd-input" aria-label="거래처" value={accountId} onChange={e => setParams({ account_id: e.target.value })}><option value="">거래처 선택</option>{accountId && !accounts.some(a => a.value === accountId) && <option value={accountId}>{accountId}</option>}{accounts.map(a => <option key={a.value} value={a.value}>{a.text}</option>)}</select>
           {unlinkedCount > 0 && <button type="button" className="rd-btn is-primary" onClick={() => { setNotice(''); setBulkOpen(true) }}>미연결 {unlinkedCount}건 일괄 연결</button>}
           <Link className="rd-btn" to={`/inventory/account?account_id=${accountQuery}`}>재고 수량 조정</Link>
           <Link className="rd-btn" to={`/order_manager/product-order?account_id=${accountQuery}`}>새 상품 발주</Link>

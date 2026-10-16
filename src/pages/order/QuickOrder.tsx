@@ -1,3 +1,4 @@
+import { workspaceAccountId } from '../../features/workspace/workspaceAccount'
 import CatalogPreparation from '../../components/CatalogPreparation'
 import { Link, useSearchParams } from 'react-router-dom'
 import HeaderBar from '../../components/HeaderBar'
@@ -16,7 +17,7 @@ const dayLabel = (value: string) => { const d = new Date(`${value}T00:00:00`); r
  */
 export default function QuickOrder({ embedded = false }: { embedded?: boolean }) {
   const [params] = useSearchParams()
-  const accountId = params.get('account_id') || localStorage.getItem('account_id') || ''
+  const accountId = workspaceAccountId(params)
   const {
     date, changeDate, source, changeSource, result, preview, error, busy, attempted, batch, allowPartial, setAllowPartial,
     exceptions, submit, recover, refresh, reloadPreview,

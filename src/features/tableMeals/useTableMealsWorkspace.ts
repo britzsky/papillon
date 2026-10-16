@@ -1,3 +1,4 @@
+import { workspaceAccountId } from '../workspace/workspaceAccount'
 import { type PlanImpact } from '../../components/MealPlanImpact'
 import { buildApiUrl } from '../../config/api'
 import { parseMealTable, WEEKDAYS, type ParsedMealTable, type PdfTextItem } from '../../pages/operations/pdfMealParser'
@@ -604,7 +605,7 @@ export function useTableMealsWorkspace() {
   const [pdfLinkMessage, setPdfLinkMessage] = useState('')
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const initialAccountId = searchParams.get('account_id') || (searchParams.get('type') === 'vendor' ? searchParams.get('id') : '') || localStorage.getItem('account_id') || ''
+  const initialAccountId = workspaceAccountId(searchParams)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [selectedAccountId, setSelectedAccountId] = useState(initialAccountId)
   const [selectedTableMonth, setSelectedTableMonth] = useState(() => formatMonthValue(new Date()))

@@ -1,3 +1,4 @@
+import { workspaceAccountId } from '../workspace/workspaceAccount'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { type AppAlertState } from '../../components/AppAlert'
@@ -14,7 +15,7 @@ export const IMPORT_PAGE_SIZE = 30
  */
 export function useAccountMenuImport() {
   const [searchParams] = useSearchParams()
-  const [selectedAccountId, setSelectedAccountId] = useState(searchParams.get('account_id') || localStorage.getItem('account_id') || '')
+  const [selectedAccountId, setSelectedAccountId] = useState(workspaceAccountId(searchParams))
   const [accountOptions, setAccountOptions] = useState<AccountOption[]>([])
   const [ingredientOptions, setIngredientOptions] = useState<IngredientOption[]>([])
   const [menuItems, setMenuItems] = useState<MenuManagerItem[]>([])

@@ -1,3 +1,4 @@
+import { workspaceAccountId } from '../features/workspace/workspaceAccount'
 import { Link, useLocation } from 'react-router-dom'
 import { workflowIndex, workflowSteps } from '../features/workspace/workflow'
 
@@ -10,7 +11,7 @@ export default function WorkflowBar() {
   const current = workflowIndex(location.pathname)
   if (!current) return null
   const query = new URLSearchParams(location.search)
-  const accountId = query.get('account_id') || localStorage.getItem('account_id') || ''
+  const accountId = workspaceAccountId(query)
   const href = (to: string) => accountId ? `${to}?${new URLSearchParams({ account_id: accountId })}` : to
   const next = workflowSteps[current] // current는 1부터
   return (

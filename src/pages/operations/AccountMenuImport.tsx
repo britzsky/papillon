@@ -4,7 +4,6 @@ import AppAlert from '../../components/AppAlert'
 import LoadingScreen from '../../components/LoadingScreen'
 import SideMenuLayout from '../../components/SideMenuLayout'
 import MenuThumbnail from './MenuThumbnail'
-import AccountSearchSelect from './AccountSearchSelect'
 import { mealCategoryOptions, mealPlanTypeOptions, menuGubunOptions, menuTypeOptions } from './menuManagerShared'
 import { IMPORT_PAGE_SIZE, useAccountMenuImport } from '../../features/operations/useAccountMenuImport'
 import './MenuManager.css'
@@ -32,10 +31,6 @@ function AccountMenuImport() {
                 <p className="rd-muted">본사 메뉴는 읽기 전용입니다. 고른 메뉴를 본사 분류·레시피 그대로 거래처 메뉴로 등록합니다.</p>
               </div>
               <div className="rd-page__actions">
-                <div className="rd-page__account">
-                  <span className="rd-muted">거래처</span>
-                  <AccountSearchSelect id="account-menu-import-account" options={m.accountOptions} placeholder="거래처 선택" value={m.selectedAccountId} onChange={m.setSelectedAccountId} />
-                </div>
                 <Link className="rd-btn" to={`/operations/account-menu${accountQuery}`}>거래처 메뉴 관리</Link>
               </div>
             </header>
@@ -136,7 +131,7 @@ function AccountMenuImport() {
               <aside className="rd-page__side">
                 <section className="rd-card rd-page__box">
                   <h2 className="rd-h2">등록할 메뉴</h2>
-                  {!m.selectedAccountId ? <p className="rd-muted">먼저 오른쪽 위에서 거래처를 고르세요.</p>
+                  {!m.selectedAccountId ? <p className="rd-muted">먼저 머리 줄의 '관리 거래처'에서 거래처를 고르세요.</p>
                     : m.selectedMenus.length === 0 ? <p className="rd-muted">표에서 메뉴를 체크하면 여기에 모입니다.</p> : (
                       <ul className="rd-mi__picked">
                         {m.selectedMenus.map((item) => (

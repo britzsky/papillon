@@ -1,6 +1,7 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { buildApiUrl } from '../config/api'
+import { rememberWorkspaceAccount, urlAccountId, workspaceAccountId } from '../features/workspace/workspaceAccount'
 
 type Session = { userId: string; userType: string; accountId: string }
 function ProtectedWorkspace({ children }: { children: ReactNode }) {
@@ -25,7 +26,18 @@ function ProtectedWorkspace({ children }: { children: ReactNode }) {
   if (state === 'error') return <div role="alert"><p>서버 연결을 확인하지 못했습니다.</p><button onClick={() => { setState('loading'); setRevision(value => value + 1) }}>다시 확인</button></div>
   const hqOnly = ['/order_manager/suppliers', '/order_manager/supplier-sites', '/order_manager/welstory', '/inventory/ingredients', '/operations/menu', '/operations/account', '/operations/search-analytics']
   if (localStorage.getItem('user_type') === '3' && hqOnly.includes(location.pathname)) return <Navigate to="/home" replace />
-  return children
+  return <AccountScope>{children}</AccountScope>
+}
+
+/**
+ * 관리 거래처가 바뀌면 화면을 그 거래처로 처음부터 다시 연다(화면마다 상태로 들고 있는 거래처가 섞이지 않게).
+ * 본사가 링크(?account_id)로 연 거래처는 '마지막으로 고른 거래처'로 기억한다.
+ */
+function AccountScope({ children }: { children: ReactNode }) {
+  const location = useLocation()
+  const fromUrl = urlAccountId(location.search)
+  useEffect(() => { if (fromUrl) rememberWorkspaceAccount(fromUrl) }, [fromUrl])
+  return <Fragment key={workspaceAccountId(location.search) || 'all'}>{children}</Fragment>
 }
 export default function WorkspaceBoundary({ children }: { children: ReactNode }) {
   const { pathname } = useLocation()

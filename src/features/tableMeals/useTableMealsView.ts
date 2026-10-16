@@ -1,3 +1,4 @@
+import { workspaceAccountId } from '../workspace/workspaceAccount'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
@@ -29,7 +30,7 @@ const isAccountUser = () => localStorage.getItem('user_type') === '3'
  */
 export function useTableMealsView() {
   const [searchParams] = useSearchParams()
-  const [accountId, setAccountIdState] = useState(() => searchParams.get('account_id') || localStorage.getItem('account_id') || '')
+  const [accountId, setAccountIdState] = useState(() => workspaceAccountId(searchParams))
   const [month, setMonth] = useState(() => formatMonthValue(new Date()))
   const [accounts, setAccounts] = useState<AccountOption[]>([])
   const [accountError, setAccountError] = useState('')

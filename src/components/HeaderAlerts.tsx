@@ -1,3 +1,4 @@
+import { workspaceAccountId } from '../features/workspace/workspaceAccount'
 import { useEffect, useId, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DEADLINE_WINDOW_HOURS, deadlineOrderPath, getDeadlineAlertsCached, minutesUntil, remainingLabel, type DeadlineAlert } from '../api/deadlineAlerts'
@@ -20,7 +21,7 @@ export default function HeaderAlerts() {
   const navigate = useNavigate()
   const panelId = useId()
   const site = read('user_type') === '3'
-  const accountId = (new URLSearchParams(location.search).get('account_id') || read('account_id') || '').trim()
+  const accountId = workspaceAccountId(location.search).trim()
   const [deadlines, setDeadlines] = useState<DeadlineAlert[]>([])
   const [meals, setMeals] = useState<MealPlanAlert[]>([])
   const [now, setNow] = useState(() => Date.now())

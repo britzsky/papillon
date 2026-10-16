@@ -15,7 +15,6 @@ import IngredientLikeConfirmModal from './IngredientLikeConfirmModal'
 import MenuLikeButton from './MenuLikeButton'
 import MenuThumbnail from './MenuThumbnail'
 import MenuLikeConfirmModal from './MenuLikeConfirmModal'
-import AccountSearchSelect from './AccountSearchSelect'
 import { isIngredientFieldDirty, isMenuFieldDirty, matchesMenuFilters, mealCategoryOptions, menuGubunOptions, mealPlanTypeOptions, menuTypeOptions, qtyUnitOptions } from './menuManagerShared'
 import './MenuManager.css'
 import MenuAliasList from '../../components/MenuAliasList'
@@ -29,7 +28,7 @@ const won = (value: number) => `${Math.round(value).toLocaleString('ko-KR')}원`
  * 로직은 터치 화면과 같은 useAccountMenuManager.
  */
 function AccountMenuManager() {
-  const { selectedMealCategory, setSelectedMealCategory, keywordFilter, setKeywordFilter, selectedMenuType, setSelectedMenuType, selectedMenuGubun, setSelectedMenuGubun, selectedAccountId, setSelectedAccountId, accountOptions, accountError, ingredientOptions, ingredientError, favoriteIngredientItems, isFavoriteIngredientModalOpen, setIsFavoriteIngredientModalOpen, isFavoriteIngredientLoading, setSelectedMenuId, originalDetailsByMenuId, detailError, isDetailLoading, accountMenuError, isAccountMenuLoading, alert, setAlert, isSaving, setLikeTargetMenuId, setLikeTargetIngredientId, isSavingLike, recipeMenuState, setRecipeMenuState, recipeViewRequest, setRecipeViewRequest, recipeViewMode, setRecipeViewMode, recipeRegisterRequest, setRecipeRegisterRequest, assignedMenuIds, originalAssignedMenuIds, originalAssignedMenusById, assignedMenus, removedAssignedMenus, selectedAccountName, ingredientCategoryOptions, activeMenu, likeTargetMenu, likeTargetIngredient, activeDetailItems, activeMenuCost, handleRemoveAssignedMenu, handleAssignedMenuChange, handleRestoreRemovedMenu, handleLikeMenu, handleOpenFavoriteIngredientModal, handleSelectFavoriteIngredient, handleLikeIngredient, handleAddIngredient, handleIngredientCategoryChange, handleIngredientSelect, handleIngredientQtyChange, handleIngredientUnitChange, isRefreshingProducts, refreshLinkedProducts, handleSave, buildRecipeRequest } = useAccountMenuManager()
+  const { selectedMealCategory, setSelectedMealCategory, keywordFilter, setKeywordFilter, selectedMenuType, setSelectedMenuType, selectedMenuGubun, setSelectedMenuGubun, selectedAccountId, accountError, ingredientOptions, ingredientError, favoriteIngredientItems, isFavoriteIngredientModalOpen, setIsFavoriteIngredientModalOpen, isFavoriteIngredientLoading, setSelectedMenuId, originalDetailsByMenuId, detailError, isDetailLoading, accountMenuError, isAccountMenuLoading, alert, setAlert, isSaving, setLikeTargetMenuId, setLikeTargetIngredientId, isSavingLike, recipeMenuState, setRecipeMenuState, recipeViewRequest, setRecipeViewRequest, recipeViewMode, setRecipeViewMode, recipeRegisterRequest, setRecipeRegisterRequest, assignedMenuIds, originalAssignedMenuIds, originalAssignedMenusById, assignedMenus, removedAssignedMenus, selectedAccountName, ingredientCategoryOptions, activeMenu, likeTargetMenu, likeTargetIngredient, activeDetailItems, activeMenuCost, handleRemoveAssignedMenu, handleAssignedMenuChange, handleRestoreRemovedMenu, handleLikeMenu, handleOpenFavoriteIngredientModal, handleSelectFavoriteIngredient, handleLikeIngredient, handleAddIngredient, handleIngredientCategoryChange, handleIngredientSelect, handleIngredientQtyChange, handleIngredientUnitChange, isRefreshingProducts, refreshLinkedProducts, handleSave, buildRecipeRequest } = useAccountMenuManager()
   // 거르기는 거래처 메뉴에만 적용(본사 메뉴 목록은 이 화면에 없다)
   const visibleMenus = useMemo(() => assignedMenus.filter((item) => matchesMenuFilters(item, {
     mealCategory: selectedMealCategory, keyword: keywordFilter, menuType: selectedMenuType, menuGubun: selectedMenuGubun,
@@ -58,10 +57,6 @@ function AccountMenuManager() {
                 <p className="rd-muted">거래처에 등록된 메뉴의 분류·레시피·원가를 거래처 기준으로 고칩니다. 본사 메뉴는 바뀌지 않습니다.</p>
               </div>
               <div className="rd-page__actions">
-                <div className="rd-page__account">
-                  <span className="rd-muted">거래처</span>
-                  <AccountSearchSelect id="account-menu-account-id" options={accountOptions} placeholder="거래처 선택" value={selectedAccountId} onChange={setSelectedAccountId} />
-                </div>
                 <Link className="rd-btn" to={importLink}>+ 본사 메뉴 가져오기</Link>
                 <button type="button" className="rd-btn" onClick={() => void handleOpenFavoriteIngredientModal()} disabled={isSaving}>나만의 식자재</button>
                 <button type="button" className="rd-btn is-primary" onClick={() => void handleSave()} disabled={!selectedAccountId || isSaving}>{isSaving ? '저장 중...' : '저장'}</button>

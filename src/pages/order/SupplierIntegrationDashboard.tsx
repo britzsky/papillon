@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react'
+import { workspaceAccountId } from '../../features/workspace/workspaceAccount'
+import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import HeaderBar from '../../components/HeaderBar'
 import SideMenuLayout from '../../components/SideMenuLayout'
 import LoadingScreen from '../../components/LoadingScreen'
 import { useWelstoryWorkspace } from '../../features/order/useWelstoryWorkspace'
 import { useOurhomeSite } from '../../features/order/useOurhomeSite'
-import { getAccountOptions, type AccountOption } from '../../api/operations'
 import type { SupplierSyncStatus } from '../../api/supplierIntegration'
 import { OurhomeSiteBar, OurhomeWork } from './OurhomeSitesPanel'
 import SupplierSiteBar from './SupplierSiteBar'
@@ -13,30 +13,8 @@ import './SupplierIntegrationDashboard.css'
 
 export default function SupplierIntegrationDashboard() {
   const [params] = useSearchParams()
-  const accountId = (params.get('account_id') || localStorage.getItem('account_id') || '').trim()
+  const accountId = workspaceAccountId(params).trim()
   return <SupplierWorkspace key={accountId} accountId={accountId} />
-}
-
-/** 본사 계정만: 어느 거래처 기준으로 연동할지 고른다. 선택값은 ?account_id=로 남겨 화면 전체가 그 거래처로 다시 열린다. */
-function AccountPicker({ accountId }: { accountId: string }) {
-  const [, setParams] = useSearchParams()
-  const [options, setOptions] = useState<AccountOption[]>([])
-  const [error, setError] = useState('')
-  useEffect(() => {
-    let alive = true
-    getAccountOptions().then(items => { if (alive) setOptions(items) })
-      .catch(e => { if (alive) setError(e instanceof Error ? e.message : '거래처 목록을 불러오지 못했습니다.') })
-    return () => { alive = false }
-  }, [])
-  return <div className="supplier-account-picker">
-    <label htmlFor="supplier-account-id">거래처</label>
-    <select id="supplier-account-id" value={accountId} onChange={e => setParams(current => { const next = new URLSearchParams(current); next.set('account_id', e.target.value); return next })}>
-      <option value="">선택하세요</option>
-      {accountId && !options.some(o => o.value === accountId) && <option value={accountId}>{accountId}</option>}
-      {options.map(o => <option key={o.value} value={o.value}>{o.text}</option>)}
-    </select>
-    {error && <small className="is-danger">{error}</small>}
-  </div>
 }
 
 const syncTypeLabel = (type: string) => {
@@ -88,7 +66,6 @@ const SUPPLIER_NAMES: Record<string, string> = { WELSTORY: '웰스토리', OURHO
 /** 공급사 통합 연동(PC). 상단: 거래처·공급사 선택 → 사업장 정보 줄 → 왼쪽 동기화 상태 / 오른쪽 업무(상품·판가 / 주문·입고 / 연동 관리).
  *  웰스토리·아워홈이 같은 틀(SupplierSiteBar, 업무 탭)을 쓴다. 웰스토리 로직은 useWelstoryWorkspace, 아워홈 사업장은 useOurhomeSite(터치와 공용). */
 function SupplierWorkspace({ accountId }: { accountId: string }) {
-  const headquarters = localStorage.getItem('user_type') !== '3'
   const [supplier, setSupplier] = useState('WELSTORY')
   const [tab, setTab] = useState('products')
   const {
@@ -106,7 +83,6 @@ function SupplierWorkspace({ accountId }: { accountId: string }) {
         <p className="rd-muted">공급사 사업장·상품·판가·입고를 받아 오고, 동기화 결과를 확인합니다.</p>
       </div>
       <div className="rd-page__actions">
-        {headquarters && <AccountPicker accountId={accountId} />}
         <nav className="rd-seg" aria-label="공급사 선택">
           {Object.entries(SUPPLIER_NAMES).map(([code, name]) => <button type="button" key={code} className={supplier === code ? 'is-active' : ''} aria-pressed={supplier === code} onClick={() => setSupplier(code)}>{name}</button>)}
         </nav>

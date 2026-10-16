@@ -4,6 +4,7 @@ import { logout } from '../api/auth'
 import userIcon from '../assets/image/user.png'
 import signOutIcon from '../assets/image/exit.png'
 import HeaderAlerts from './HeaderAlerts'
+import WorkspaceAccountPicker from './WorkspaceAccountPicker'
 import './HeaderBar.css'
 
 type BreadcrumbItem = {
@@ -70,6 +71,7 @@ function HeaderBar({ title = 'Home', breadcrumbs = [] }: HeaderBarProps) {
         </div>
         <h1 className="header-bar__status">{title}</h1>
         <div className="header-bar__actions">
+          <WorkspaceAccountPicker />
           <HeaderAlerts />
           <button
             type="button"

@@ -1,3 +1,4 @@
+import { isHeadquarters, workspaceAccountId } from '../../features/workspace/workspaceAccount'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import HeaderBar from '../../components/HeaderBar'
@@ -131,8 +132,8 @@ function AccountInventoryManager() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const initialKeyword = searchParams.get('q') ?? ''
-  const storedAccountId = typeof window !== 'undefined' ? localStorage.getItem('account_id')?.trim() ?? '' : ''
-  const targetAccountId = (searchParams.get('account_id') ?? searchParams.get('id') ?? '').trim() || storedAccountId
+  // 관리 거래처(옛 주소 ?id= 도 본사는 받는다)
+  const targetAccountId = (workspaceAccountId(searchParams) || (isHeadquarters() ? searchParams.get('id') ?? '' : '')).trim()
   const [items, setItems] = useState<EditableAccountInventoryItem[]>([])
   const [originalItemsByRowId, setOriginalItemsByRowId] = useState<Record<string, EditableAccountInventoryItem>>({})
   const [error, setError] = useState('')

@@ -1,8 +1,8 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { workspaceAccountId } from '../../features/workspace/workspaceAccount'
+import { useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import HeaderBar from '../../components/HeaderBar'
 import SideMenuLayout from '../../components/SideMenuLayout'
-import { getAccountOptions, type AccountOption } from '../../api/operations'
 import type { InventoryMovement } from '../../api/inventory'
 import {
   HISTORY_PAGE_SIZE as PAGE_SIZE, TYPE_META, TYPE_TABS, historyQty as qty, historyWon as won, movementTime, referenceText, shortDate, signed, useInventoryHistory,
@@ -16,22 +16,16 @@ const TONE = { success: 'ok', warning: 'warn', danger: 'urgent', neutral: 'done'
 /** 재고 변동 이력(PC). 조회 로직은 features/inventory/useInventoryHistory(터치 화면과 공용). */
 export default function InventoryHistory() {
   const [params, setParams] = useSearchParams()
-  const accountId = params.get('account_id') || localStorage.getItem('account_id') || ''
+  const accountId = workspaceAccountId(params)
   const productId = params.get('account_ingredient_product_id') || ''
   const ingredientId = params.get('ingredient_id') || ''
 
-  const [accounts, setAccounts] = useState<AccountOption[]>([])
   const [keywordInput, setKeywordInput] = useState('')
   const {
     from, setFrom, to, setTo, keyword, setKeyword, tab, setTab, focusName, setFocusName, setPeriod,
     ready, loading, error, rows: visibleRows, offset, movePage, total, netAmount, showQty, orderedSummary,
   } = useInventoryHistory(accountId, productId, ingredientId)
 
-  useEffect(() => {
-    let active = true
-    void getAccountOptions().then(data => { if (active) setAccounts(data) }).catch(() => undefined)
-    return () => { active = false }
-  }, [])
 
   const productLink = (row: InventoryMovement) =>
     `/inventory/history?${new URLSearchParams({ account_id: accountId, account_ingredient_product_id: String(row.account_ingredient_product_id) })}`
@@ -48,11 +42,6 @@ export default function InventoryHistory() {
                 <p className="rd-muted">입고·사용·조정·폐기로 재고가 언제 얼마나 바뀌었는지 봅니다. 상품 이름을 누르면 그 상품 이력만 봅니다.</p>
               </div>
               <div className="rd-page__actions">
-                <select className="rd-input" aria-label="거래처" value={accountId} onChange={e => { setFocusName(''); setParams({ account_id: e.target.value }) }}>
-                  <option value="">거래처 선택</option>
-                  {accountId && !accounts.some(a => a.value === accountId) && <option value={accountId}>{accountId}</option>}
-                  {accounts.map(a => <option key={a.value} value={a.value}>{a.text}</option>)}
-                </select>
                 {accountId ? <Link className="rd-btn" to={`/inventory/account?${new URLSearchParams({ account_id: accountId })}`}>재고 화면</Link> : null}
               </div>
             </header>

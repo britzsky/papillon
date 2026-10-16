@@ -1,3 +1,4 @@
+import { workspaceAccountId } from '../workspace/workspaceAccount'
 import { useAccountMenuCache } from '../../pages/operations/useAccountMenuCache'
 import { useEffect, useMemo, useState, type DragEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -56,7 +57,7 @@ export function useAccountMenuManager() {
   const initialSearchType = searchParams.get('type')
   const initialSearchId = searchParams.get('account_id') ?? searchParams.get('id') ?? ''
   const initialKeywordFilter = initialSearchType === 'vendor' ? '' : searchParams.get('q') ?? ''
-  const initialAccountId = initialSearchType === 'vendor' ? initialSearchId : searchParams.get('account_id') || localStorage.getItem('account_id') || ''
+  const initialAccountId = workspaceAccountId(searchParams)
   const [selectedMealCategory, setSelectedMealCategory] = useState('')
   const [keywordFilter, setKeywordFilter] = useState(initialKeywordFilter)
   const [selectedMenuType, setSelectedMenuType] = useState('')

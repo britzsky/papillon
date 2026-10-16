@@ -1,3 +1,4 @@
+import { workspaceAccountId } from '../features/workspace/workspaceAccount'
 import WorkspaceNotifications from './WorkspaceNotifications'
 import { Fragment, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -31,7 +32,8 @@ type Step = { key: string; title: string; detail: string; action: string; to: st
 
 export default function DailyWork({ search, shortcuts }: { search: ReactNode; shortcuts?: ReactNode }) {
   const [params] = useSearchParams()
-  const account = params.get('account_id') || (localStorage.getItem('user_type') === '3' ? localStorage.getItem('account_id') || '' : '')
+  // 관리 거래처(본사가 '전체 거래처'면 빈 값 → 전체 현황)
+  const account = workspaceAccountId(params)
   const { data, error, rows, single, busy, idle, tiles, refresh } = useDailyWork(account)
   const [noticeAccount, setNoticeAccount] = useState('')
   const calendar = useWorkspaceCalendar(single?.account_id || '')

@@ -1,3 +1,4 @@
+import { workspaceAccountId } from '../workspace/workspaceAccount'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { requestAiSanitationNote } from '../../api/ai'
@@ -47,7 +48,7 @@ export const photoCountLabel = (item: SanitationItem) =>
 export function useSanitationInspection() {
   const [searchParams] = useSearchParams()
   const [accounts, setAccounts] = useState<AccountOption[]>([])
-  const [accountId, setAccountId] = useState(() => searchParams.get('account_id') || localStorage.getItem('account_id') || '')
+  const [accountId, setAccountId] = useState(() => workspaceAccountId(searchParams))
   const [inspectionDate, setInspectionDate] = useState(getToday())
   const [inspector, setInspector] = useState(() => localStorage.getItem('user_name') || '')
   const [statusFilter, setStatusFilter] = useState<SanitationStatus | ''>('')

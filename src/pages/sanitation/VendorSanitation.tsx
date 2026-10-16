@@ -115,7 +115,7 @@ function Lightbox({ photos, index, onMove, onClose }: { photos: SanitationPhoto[
 
 function VendorSanitation() {
   const board = useSanitationInspection()
-  const { accounts, accountId, setAccountId, accountName, inspectionDate, setInspectionDate, inspector, setInspector, statusFilter, setStatusFilter, categoryFilter, setCategoryFilter, categories, visibleCategories, saveCategories, itemOf, lightbox, setLightbox, aiNoteMessage, isAiNoteLoading, handleGenerateAiNotes } = board
+  const { accountId, accountName, inspectionDate, setInspectionDate, inspector, setInspector, statusFilter, setStatusFilter, categoryFilter, setCategoryFilter, categories, visibleCategories, saveCategories, itemOf, lightbox, setLightbox, aiNoteMessage, isAiNoteLoading, handleGenerateAiNotes } = board
   const [categoryModal, setCategoryModal] = useState(false)
   const [alert, setAlert] = useState<AppAlertState | null>(null)
   const hasData = (categoryId: string) => sanitationStatus(itemOf(categoryId)) !== 'NONE' || Boolean(itemOf(categoryId).beforeNote || itemOf(categoryId).afterNote)
@@ -144,12 +144,6 @@ function VendorSanitation() {
                 <button type="button" className={!categoryFilter ? 'is-active' : ''} aria-pressed={!categoryFilter} onClick={() => setCategoryFilter('')}>전체</button>
                 {categories.map(category => <button type="button" key={category.id} className={categoryFilter === category.id ? 'is-active' : ''} aria-pressed={categoryFilter === category.id} onClick={() => setCategoryFilter(category.id)}>{category.name}</button>)}
               </div>
-              <label className="rd-vs__field"><span>거래처</span>
-                <select className="rd-input" value={accountId} onChange={event => { setAccountId(event.target.value); setCategoryFilter('') }}>
-                  {!accounts.length ? <option value={accountId}>{accountName || '거래처 불러오는 중'}</option> : null}
-                  {accounts.map(option => <option key={option.value} value={option.value}>{option.text}</option>)}
-                </select>
-              </label>
               <label className="rd-vs__field"><span>점검일</span>
                 <input className="rd-input" type="date" value={inspectionDate} onChange={event => setInspectionDate(event.target.value)} />
               </label>
