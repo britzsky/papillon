@@ -43,7 +43,7 @@ export const photoCountLabel = (item: SanitationItem) =>
 /**
  * 위생 점검 관리(PC, 화면 시안): 거래처별 카테고리·점검일별 항목(조치 전/후 사진·전달 메모·조치 내용·비고).
  * 주의: 서버 저장 API가 아직 없어 카테고리·사진·메모는 이 화면 메모리에만 있다(새로고침 시 사라짐).
- * 터치 화면(SanitationTouch)은 아직 useVendorSanitation을 쓴다.
+ * 터치 화면(SanitationTouch)도 이 훅을 쓴다.
  */
 export function useSanitationInspection() {
   const [searchParams] = useSearchParams()
