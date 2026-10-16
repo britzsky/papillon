@@ -80,7 +80,7 @@ function SupplierWorkspace({ accountId }: { accountId: string }) {
     <div className="rd rd-page rd-sup">
     <header className="rd-page__head">
       <div>
-        <h1 className="rd-h1">공급사 통합 연동</h1>
+        <h1 className="rd-sr-only">공급사 통합 연동</h1>
         <p className="rd-muted">공급사 사업장·상품·판가·입고를 받아 오고, 동기화 결과를 확인합니다.</p>
       </div>
       <DeadlineAlertSlot />

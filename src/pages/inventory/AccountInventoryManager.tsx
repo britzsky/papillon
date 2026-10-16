@@ -343,7 +343,7 @@ function AccountInventoryManager() {
         >
           <div className="rd rd-inv">
           <header className="rd-inv__head">
-            <h1 className="rd-h1">재고</h1>
+            <h1 className="rd-sr-only">재고</h1>
             <DeadlineAlertSlot />
             <div className="rd-inv__actions">
               <button type="button" className="rd-btn is-primary" disabled={isLoading || isSaving || !targetAccountId}

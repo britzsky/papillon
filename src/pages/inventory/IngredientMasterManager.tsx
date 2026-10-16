@@ -37,7 +37,7 @@ function IngredientMasterManager() {
           <div className="rd rd-page rd-master">
             <header className="rd-page__head">
               <div>
-                <h1 className="rd-h1">식자재 관리</h1>
+                <h1 className="rd-sr-only">식자재 관리</h1>
                 <p className="rd-muted">본사 표준 식자재를 관리합니다. 실제로 살 상품 연결은 거래처 재고 관리에서 거래처별로 합니다.</p>
               </div>
               <DeadlineAlertSlot />

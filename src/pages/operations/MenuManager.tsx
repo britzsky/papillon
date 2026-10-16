@@ -37,7 +37,7 @@ function MenuManager() {
           <div className="rd rd-page rd-mm">
           <header className="rd-page__head">
             <div>
-              <h1 className="rd-h1">메뉴 관리</h1>
+              <h1 className="rd-sr-only">메뉴 관리</h1>
               <p className="rd-muted">본사 메뉴 마스터와 본사 레시피를 관리합니다. 거래처로 옮기는 일은 '본사 메뉴 가져오기'에서 합니다.</p>
             </div>
             <DeadlineAlertSlot />

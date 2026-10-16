@@ -294,3 +294,6 @@ a.rd-tile:hover { border-color: var(--rd-green); }
 .rd :is(.rd-page__head, .rd-home__head):has(> .deadline-alert.is-inline) > div:first-child :is(p, .rd-muted) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rd :is(.rd-page__head, .rd-inv__head, .rd-meals__head, .rd-recv__head, .rd-home__head):has(> .deadline-alert.is-inline) > :last-child:not(.deadline-alert),
 .rd.rd-order__head:has(> .deadline-alert.is-inline) > :last-child:not(.deadline-alert) { flex: none; margin-left: auto; }
+
+/* 화면 이름은 위 경로 줄(굵게)이 맡는다 — 본문 제목은 보이지 않게 두고 화면 낭독기용으로만 남긴다 (2026-10-16 사용자 요청) */
+.rd-sr-only { position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

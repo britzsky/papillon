@@ -67,13 +67,13 @@ function HeaderBar({ title = 'Home', breadcrumbs = [] }: HeaderBarProps) {
 
   return (
     <div className="header-shell">
-      {/* 한 줄: 왼쪽 경로, 오른쪽 관리 거래처·알림·계정 정보·로그아웃. 화면 이름은 본문 큰 제목(2026-10-16 사용자 요청) */}
+      {/* 한 줄: 왼쪽 경로(마지막 = 지금 화면 이름, 굵게), 오른쪽 관리 거래처·알림·계정 정보·로그아웃. 본문 큰 제목은 화면에서 숨김(2026-10-16 사용자 요청) */}
       <header className="header-bar header-bar--one-line">
         {breadcrumbs.length > 0 ? (
           <nav className="header-breadcrumbs" aria-label="breadcrumb">
             {breadcrumbs.map((item, index) => (
               <span key={`${item.label}-${index}`} className="header-breadcrumbs__item">
-                {item.to ? (
+                {item.to && index < breadcrumbs.length - 1 ? (
                   <Link
                     to={item.to}
                     className="header-breadcrumbs__link"
@@ -83,7 +83,7 @@ function HeaderBar({ title = 'Home', breadcrumbs = [] }: HeaderBarProps) {
                     {item.label}
                   </Link>
                 ) : (
-                  <span className="header-breadcrumbs__current">{item.label}</span>
+                  <span className={index === breadcrumbs.length - 1 ? 'header-breadcrumbs__current is-page' : 'header-breadcrumbs__current'} aria-current={index === breadcrumbs.length - 1 ? 'page' : undefined}>{item.label}</span>
                 )}
                 {index < breadcrumbs.length - 1 ? (
                   <span className="header-breadcrumbs__separator" aria-hidden="true">

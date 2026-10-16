@@ -54,7 +54,7 @@ function AccountMenuManager() {
           <div className="rd rd-page rd-am">
             <header className="rd-page__head">
               <div>
-                <h1 className="rd-h1">거래처 메뉴 관리</h1>
+                <h1 className="rd-sr-only">거래처 메뉴 관리</h1>
                 <p className="rd-muted">거래처에 등록된 메뉴의 분류·레시피·원가를 거래처 기준으로 고칩니다. 본사 메뉴는 바뀌지 않습니다.</p>
               </div>
               <DeadlineAlertSlot />

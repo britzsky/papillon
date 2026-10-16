@@ -42,7 +42,7 @@ function AccountIngredientContent({ accountId }: { accountId: string }) {
     <div className="rd rd-page rd-ing">
       <header className="rd-page__head">
         <div>
-          <h1 className="rd-h1">거래처 재고 관리</h1>
+          <h1 className="rd-sr-only">거래처 재고 관리</h1>
           <p className="rd-muted">거래처 메뉴에 쓰는 식자재마다 실제로 살 상품을 연결합니다. 같은 식자재를 쓰는 모든 메뉴에 함께 적용됩니다.</p>
         </div>
         <DeadlineAlertSlot />

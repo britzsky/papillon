@@ -15,7 +15,7 @@ function SearchAnalytics() {
     <div className="rd rd-page rd-search">
       <header className="rd-page__head">
         <div>
-          <h1 className="rd-h1">검색어 관리</h1>
+          <h1 className="rd-sr-only">검색어 관리</h1>
           <p className="rd-muted">고객이 무엇을 찾고, 어떤 검색에서 결과를 얻지 못했는지 확인합니다.</p>
         </div>
         <DeadlineAlertSlot />

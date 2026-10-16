@@ -110,7 +110,7 @@ export default function PurchaseOrderManager() {
   return <main className="purchase-orders"><SideMenuLayout header={<HeaderBar title="발주서·입고 관리" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주관리', to: '/order_manager' }, { label: '발주서·입고 관리' }]} />}>
     <div className="rd rd-recv">
       <header className="rd-recv__head">
-        <h1 className="rd-h1">발주서·입고 관리</h1>
+        <h1 className="rd-sr-only">발주서·입고 관리</h1>
         <DeadlineAlertSlot />
         <div className="rd-recv__head-actions">
           {accountId ? <Link className="rd-btn" to={`/inventory/account?${new URLSearchParams({ account_id: accountId })}`}>재고·직접구매 등록</Link> : null}

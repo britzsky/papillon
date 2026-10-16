@@ -128,7 +128,7 @@ function VendorSanitation() {
           <div className="vs-page rd rd-page rd-vs">
             <header className="rd-page__head">
               <div>
-                <h1 className="rd-h1">위생 점검 관리</h1>
+                <h1 className="rd-sr-only">위생 점검 관리</h1>
                 <p className="rd-muted">거래처별 조치 전 · 조치 후 사진으로 위생 상태를 확인합니다.</p>
               </div>
               <DeadlineAlertSlot />

@@ -98,8 +98,11 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
     group.names.push(row.ingredient_name); group.amount += (sel.order_qty || 0) * offer.purchase_price
     return acc
   }, {})
-  const deliveryDays = Array.from(new Set([day(1), day(2), day(3), day(4), day(5), criteria.delivery_date].filter(Boolean))).sort().slice(0, 6)
+  const deliveryDays = Array.from(new Set([day(1), day(2), day(3), day(4), day(5), day(6), day(7), criteria.delivery_date].filter(Boolean))).sort().slice(0, 8)
   const dayLabel = (value: string) => { const d = new Date(`${value}T00:00:00`); return `${d.getMonth() + 1}/${d.getDate()} ${'일월화수목금토'[d.getDay()]}` }
+  const dayHint = (value: string) => value === day() ? '오늘' : value === day(1) ? '내일' : value === day(2) ? '모레' : ''
+  // 조회 조건(식단표·기간·사업장·자동 계산)은 자주 바꾸지 않아 접어 둔다. 납품일은 위 납품일 줄에서 고른다
+  const [showFilters, setShowFilters] = useState(false)
   const pickDay = (value: string) => update(value > criteria.date_to ? { delivery_date: value, date_to: value } : { delivery_date: value })
 
   // 발주서 확인 창: 공급사·사업장별 발주서 묶음과 납품일·마감 경고 품목 수
@@ -112,31 +115,35 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
   const previewWarnings = preview ? preview.items.filter(row => deliveryWarning(row.offer, preview.criteria.delivery_date, guidanceNow)).length : 0
 
   const body = <div className="rd rd-order">
-    <section className="rd-days" aria-label="납품일 선택">
-      {deliveryDays.map(value => { const due = dueByDate[value]; return <button key={value} type="button" aria-pressed={criteria.delivery_date === value}
-        className={`rd-day${criteria.delivery_date === value ? ' is-active' : ''}`} onClick={() => pickDay(value)}>
-        <span className="rd-day__top"><strong>{dayLabel(value)}</strong>{due ? <span className="rd-chip is-warn">{due.items}개</span> : null}</span>
-        <span className="rd-day__deadline">{due ? due.text : value === criteria.delivery_date ? '선택한 납품일' : '마감 임박 품목 없음'}</span>
-      </button> })}
-    </section>
+    {/* 2026-10-16 정리(사용자 요청): 납품일은 m버전처럼 한 줄 칸. 순서 = ① 납품일 → ② 식재료 고르기·수량 → ③ 오른쪽 발주서 확인. 조회 조건은 버튼으로 펼침 */}
+    <div className="rd-order__bar">
+      <div className="rd-daystrip" role="tablist" aria-label="납품일">
+        {deliveryDays.map(value => { const due = dueByDate[value]; const d = new Date(`${value}T00:00:00`); const hint = dayHint(value)
+          return <button key={value} type="button" role="tab" aria-selected={criteria.delivery_date === value} title={due ? `${due.text} · 안 시킨 식재료 ${due.items}개` : undefined}
+            className={`rd-daystrip__day${criteria.delivery_date === value ? ' is-active' : ''}${due ? ' is-due' : ''}`} onClick={() => pickDay(value)}>
+            <strong>{'일월화수목금토'[d.getDay()]}요일</strong>
+            <small>{d.getMonth() + 1}.{d.getDate()} 납품</small>
+            {due ? <span className="rd-daystrip__badge is-due">{due.items}개 · {due.text.split(' ').slice(-2, -1).join(' ')}</span> : hint ? <span className="rd-daystrip__badge">{hint}</span> : null}
+          </button> })}
+      </div>
+      <div className="rd-order__bar-side">
+        <span className="rd-order__prep rd-fs-sm"><b>상품 준비</b> <CatalogPreparation inline key={accountId + criteria.delivery_date} accountId={accountId} date={criteria.delivery_date} onReady={() => setRevision(n => n + 1)} /></span>
+        <button type="button" className={`rd-btn${showFilters ? ' is-selected' : ''}`} aria-expanded={showFilters} aria-controls="order-filters" onClick={() => setShowFilters(value => !value)}>조회 조건 {showFilters ? '접기' : '보기'}</button>
+      </div>
+    </div>
+    {criteria.delivery_date === guidanceNow.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }) ? <p className="rd-text-warn rd-fs-sm rd-order__today" role="status">당일 납품 선택 · D-1 이상 품목은 납품일자 변경 요망</p> : null}
 
-    <details className="rd-card rd-order__filters" open>
-      <summary className="rd-fs-sm">조회 조건 · 납품일 {criteria.delivery_date || '미선택'} · {sites.find(site => site.external_site_code === criteria.sold_to)?.external_site_name || '전체 공급사·사업장'}</summary>
+    {showFilters ? <section id="order-filters" className="rd-card rd-order__filters" aria-label="조회 조건">
       <section className="shortage-order-filters" aria-label="부족재고 조회 기준">
         {criteria.source === 'DRAFT' ? <span className="shortage-order-basis"><em>조회 기준</em><b>저장 전 식단의 메뉴·식수 기준</b></span> : criteria.source === 'STOCK' ? <span className="shortage-order-basis"><em>조회 기준</em><b>현재고·입고예정·안전재고 기준</b></span> : criteria.source === 'PLAN' ? <label>식단표<select value={criteria.table_id} onChange={e => update({ table_id: e.target.value })}><option value="">기간 내 모든 식단표</option>{plans.map(plan => <option key={plan.table_id} value={plan.table_id}>{plan.table_name}</option>)}</select></label> : <><label>사용량 조회일수<input type="number" min="1" max="365" value={criteria.average_days} onChange={e => update({ average_days: Number(e.target.value) })} /></label><label>확보일수<input type="number" min="1" max="30" value={criteria.coverage_days} onChange={e => update({ coverage_days: Number(e.target.value) })} /></label></>}
         <label>조회 시작일<input type="date" value={criteria.date_from} onChange={e => update({ date_from: e.target.value })} /></label>
         <label>조회 종료일<input type="date" value={criteria.date_to} onChange={e => update({ date_to: e.target.value })} /></label>
-        <label>납품일<input type="date" min={day()} max={criteria.date_to} aria-describedby="delivery-guidance" value={criteria.delivery_date} onChange={e => update({ delivery_date: e.target.value })} /></label>
+        <label>납품일<input type="date" min={day()} max={criteria.date_to} value={criteria.delivery_date} onChange={e => update({ delivery_date: e.target.value })} /></label>
         <label>공급사 사업장<select className="workplace-select" value={criteria.sold_to ? (criteria.supplier_code || 'WELSTORY') + ':' + criteria.sold_to : ''} onChange={e => { const [supplier_code = '', sold_to = ''] = e.target.value.split(':'); update({ sold_to, supplier_code }) }}><option value="">전체 공급사·사업장</option>{sites.map(site => <option key={site.supplier_account_site_id} value={site.supplier_code + ':' + site.external_site_code}>{site.supplier_name} · {site.external_site_name} ({site.external_site_code})</option>)}</select></label>
         <button type="button" className="rd-btn is-primary" disabled={loading || previewing} onClick={() => setRevision(value => value + 1)}>{loading ? '조회 중…' : '다시 계산'}</button>
         <label className="shortage-order-check"><input type="checkbox" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} />60초마다 다시 계산</label>
       </section>
-      <p className="rd-order__notes rd-fs-sm">
-        <span><b>상품 준비</b> <CatalogPreparation inline key={accountId + criteria.delivery_date} accountId={accountId} date={criteria.delivery_date} onReady={() => setRevision(n => n + 1)} /></span>
-        <span id="delivery-guidance">D-N = 납품일 N일 전까지 주문 · 한국시간 기준 · 주말·공휴일·공급사 공지에 따라 마감 변동 가능 · 발주 가능 표시는 접수 보장이 아니며 확정 때 다시 검증</span>
-        {criteria.delivery_date === guidanceNow.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }) ? <span className="rd-text-warn" role="status">당일 납품 선택 · D-1 이상 품목은 납품일자 변경 요망</span> : null}
-      </p>
-    </details>
+    </section> : null}
 
     {error ? <p className="rd-alert" role="alert">{error}</p> : null}
 
@@ -146,16 +153,19 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
           <div>
             <h2 className="rd-h2">{dayLabel(criteria.delivery_date || day(1))} {criteria.source === 'STOCK' ? '지금 부족한 식재료' : criteria.source === 'INVENTORY' ? '사용량 기준 부족 예상' : criteria.source === 'DRAFT' ? '구성 중인 식단에 모자란 식재료' : '식단에 모자란 식재료'} {allRows.length}개</h2>
             <p className="rd-muted rd-fs-sm">{criteria.source === 'STOCK' ? '현재고가 없거나 안전재고보다 적어요. 사용 이력이 없으면 수량을 직접 정해 주세요.' : criteria.source === 'INVENTORY' ? '최근 평균 사용량 × 확보일수 + 안전재고 기준이에요. 사용 확정 이력이 없으면 0으로 계산돼요.' : '필요량에서 지금 재고와 들어올 예정 수량을 빼고 계산했어요. 수량만 고치면 됩니다.'}</p>
+            <span className="rd-order__tools-end">
+              <select className="rd-input" aria-label="줄 순서" value={rowSort} onChange={e => setRowSort(e.target.value as RowSort)}>
+                <option value="default">모자란 순</option><option value="amount_desc">금액 높은 순</option><option value="amount_asc">금액 낮은 순</option>
+              </select>
+              <input className="rd-input" aria-label="부족 식재료 검색" placeholder="식재료 찾기" value={keyword} onChange={e => setKeyword(e.target.value)} />
+            </span>
           </div>
+          {/* 도구 순서 = 자주 누르는 순: 모두 선택·해제 → 상태 거르기. 정렬·찾기는 제목 줄 오른쪽 */}
           <div className="rd-order__tools">
-            <select className="rd-input" aria-label="줄 순서" value={rowSort} onChange={e => setRowSort(e.target.value as RowSort)}>
-              <option value="default">기본 (모자란 순)</option><option value="amount_desc">금액 높은 순</option><option value="amount_asc">금액 낮은 순</option>
-            </select>
+            <button type="button" className="rd-btn is-selected" disabled={loading} title="보이는 품목 중 납품·마감 조건이 확인된 상품을 모두 선택합니다. 수량 직접 입력 품목은 최소 발주수량으로 담기니 수량을 확인하세요." onClick={() => setSelected(current => ({ ...(stockFilter || keyword ? current : {}), ...availableSelection(rows) }))}>바로 시킬 수 있는 것 모두 선택</button>
+            <button type="button" className="rd-btn is-ghost" disabled={!selectionCount} onClick={() => setSelected({})}>선택 해제</button>
             <div className="rd-pills" role="group" aria-label="재고 상태 필터">{([['', '전체'], ['RED', '모자람'], ['YELLOW', '안전재고 미달'], ['CHECK', '확인 필요']] as const).map(([value, label]) =>
               <button key={value} type="button" aria-pressed={stockFilter === value} className={stockFilter === value ? 'is-active' : ''} onClick={() => setStockFilter(value)}>{label} {stockCounts[value]}</button>)}</div>
-            <input className="rd-input" aria-label="부족 식재료 검색" placeholder="식재료 찾기" value={keyword} onChange={e => setKeyword(e.target.value)} />
-            <button type="button" className="rd-btn" disabled={loading} title="보이는 품목 중 납품·마감 조건이 확인된 상품을 모두 선택합니다. 수량 직접 입력 품목은 최소 발주수량으로 담기니 수량을 확인하세요." onClick={() => setSelected(current => ({ ...(stockFilter || keyword ? current : {}), ...availableSelection(rows) }))}>바로 시킬 수 있는 것 모두 선택</button>
-            <button type="button" className="rd-btn is-ghost" onClick={() => setSelected({})}>선택 해제</button>
           </div>
         </div>
         <div className="rd-order__scroll"><div className="rd-order__table">

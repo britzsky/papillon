@@ -264,3 +264,7 @@ body.workspace-ui div.header-shell { padding: 6px 24px; }
 body.workspace-ui .header-bar.header-bar--one-line { height: auto; min-height: 48px; padding: 0; flex-wrap: nowrap; gap: 12px; }
 body.workspace-ui .header-bar--one-line > .header-breadcrumbs { flex: 1 1 auto; min-width: 0; padding: 0; background: transparent; }
 @media (max-width: 760px) { body.workspace-ui .header-bar.header-bar--one-line { flex-wrap: wrap; } }
+
+/* 경로 마지막 = 지금 화면 이름(굵고 진하게). 본문 큰 제목(rd-h1)을 숨겨 이 자리가 화면 이름을 맡는다 (2026-10-16 사용자 요청) */
+body.workspace-ui .header-breadcrumbs .header-breadcrumbs__current.is-page { color: #14231b !important; font-size: 15px !important; font-weight: 800 !important; }
+body.workspace-ui .header-breadcrumbs .header-breadcrumbs__link { font-weight: 600; }

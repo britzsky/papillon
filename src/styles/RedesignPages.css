@@ -309,3 +309,6 @@ body.workspace-ui > :is(#root, :not(#root)) .rd.rd-page .rd-page__actions .rd-in
 .rd.rd-vs .rd-page__head:has(> .deadline-alert.is-inline) .rd-vs__ai { flex: 0 1 auto; min-width: 90px; }
 .rd.rd-vs .rd-page__head:has(> .deadline-alert.is-inline) .rd-vs__ai p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rd.rd-vs .rd-page__head:has(> .deadline-alert.is-inline) .rd-page__actions > .rd-btn { flex: none; }
+
+/* 본문 제목을 숨긴 머리 줄: 제목만 있던 칸은 자리를 차지하지 않게(알림·버튼이 왼쪽부터) */
+.rd :is(.rd-page__head, .rd-home__head) > div:first-child:has(> .rd-sr-only:only-child) { display: contents; }

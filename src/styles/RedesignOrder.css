@@ -324,6 +324,51 @@ body.workspace-ui > :is(#root, :not(#root)) .rd.rd .pos-card .rd-stepper input {
 @media (max-width: 1100px) { .rd .rd-meals__side { max-width: none; } .rd .rd-meals__draft .table-meals-week-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* 발주하기 머리 줄에 발주 마감 알림이 있을 때: 제목·기준 탭·알림·추천/검색을 한 줄에(검색 칸이 줄어든다) */
-.rd.rd-order__head:has(> .deadline-alert.is-inline) > .rd-order__head-right:last-child:not(.deadline-alert) { flex: 1 1 280px; max-width: 440px; flex-wrap: nowrap; min-width: 0; }
-.rd.rd-order__head:has(> .deadline-alert.is-inline) .rd-order__search { flex: 1 1 auto; min-width: 130px; }
+.rd.rd-order__head:has(> .deadline-alert.is-inline) > .rd-order__head-right:last-child:not(.deadline-alert) { flex: 1 1 220px; max-width: 340px; flex-wrap: nowrap; min-width: 0; }
+.rd.rd-order__head:has(> .deadline-alert.is-inline) .rd-order__search { flex: 1 1 auto; min-width: 120px; }
 .rd.rd-order__head:has(> .deadline-alert.is-inline) .rd-order__head-right > .rd-btn { flex: none; white-space: nowrap; }
+
+/* ---- 발주하기 정리(2026-10-16 사용자 요청) ----
+   ① 납품일 줄: m버전 납품일 칸처럼 한 줄(요일·날짜·오늘/내일/모레 또는 마감 품목) + 오른쪽 상품 준비·조회 조건 버튼
+   ② 목록 도구: 모두 선택·해제 → 상태 → (오른쪽 끝) 정렬·찾기 */
+.rd .rd-order__bar { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.rd .rd-daystrip { display: flex; flex: 1 1 auto; gap: 8px; min-width: 0; overflow-x: auto; padding: 2px; scrollbar-width: thin; }
+.rd .rd-daystrip__day { position: relative; display: flex; flex: 1 0 104px; flex-direction: column; align-items: flex-start; gap: 1px; min-height: 58px; padding: 8px 12px; border: 1px solid var(--rd-line); border-radius: 12px; background: #fff; color: var(--rd-ink); text-align: left; cursor: pointer; --button-height: auto; --button-width: 0; }
+.rd .rd-daystrip__day:hover { border-color: var(--rd-green); }
+.rd .rd-daystrip__day strong { --rd-fs: 14px; font-weight: 800; }
+.rd .rd-daystrip__day small { --rd-fs: 11px; color: var(--rd-muted); }
+.rd .rd-daystrip__day.is-due { border-color: var(--rd-orange-line); }
+.rd .rd-daystrip__day.is-active { border-color: var(--rd-green); background: var(--rd-green); color: #fff; }
+.rd .rd-daystrip__day.is-active small { color: rgba(255, 255, 255, .85); }
+.rd .rd-daystrip__badge { position: absolute; top: 6px; right: 8px; padding: 1px 7px; border-radius: 999px; background: var(--rd-yellow-soft); color: var(--rd-yellow-ink); --rd-fs: 10px; font-weight: 700; }
+.rd .rd-daystrip__badge.is-due { position: static; margin-top: 2px; background: var(--rd-orange-soft); color: var(--rd-orange); }
+.rd .rd-daystrip__day.is-active .rd-daystrip__badge { background: #fff; color: var(--rd-green-dark); }
+.rd .rd-order__bar-side { display: flex; flex: none; align-items: center; gap: 10px; }
+.rd .rd-order__prep { max-width: 260px; color: var(--rd-muted); }
+.rd .rd-order__today { margin: -8px 0 0; }
+.rd .rd-order__filters { padding: 12px 16px; }
+.rd .rd-order__filters .shortage-order-filters { margin-top: 0; }
+.rd .rd-order__tools { align-items: center; }
+.rd .rd-order__tools-end { display: inline-flex; gap: 8px; margin-left: auto; }
+.rd .rd-order__tools-end .rd-input { width: 150px; }
+.rd .rd-order__list-head { align-items: center; }
+.rd .rd-order__list-head > div:first-child { flex: 1 1 260px; }
+.rd .rd-order__tools { flex: 1 1 560px; justify-content: flex-start; }
+@media (max-width: 1280px) { .rd .rd-order__bar { flex-wrap: wrap; } .rd .rd-order__bar-side { margin-left: auto; } }
+/* 납품일 칸: 전역 button 규칙(!important 변수) 덮기 — 고른 날은 초록 */
+.rd .rd-daystrip__day { --button-bg: #fff; --button-bg-hover: #fff; --button-text: var(--rd-ink); min-height: 0; height: auto; }
+.rd .rd-daystrip__day.is-active { --button-bg: var(--rd-green); --button-bg-hover: var(--rd-green); --button-text: #fff; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-daystrip__day { background: #fff !important; color: var(--rd-ink) !important; border-color: var(--rd-line) !important; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-daystrip__day.is-due { border-color: var(--rd-orange-line) !important; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-daystrip__day:hover:not(:disabled) { background: #F2F8F3 !important; border-color: var(--rd-green) !important; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-daystrip__day.is-active { background: var(--rd-green) !important; color: #fff !important; border-color: var(--rd-green) !important; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-daystrip__day.is-active small { color: rgba(255, 255, 255, .85) !important; }
+/* 마감 품목 수도 오른쪽 위 작은 표시(칸 높이를 m버전처럼 낮게) */
+.rd .rd-daystrip__badge.is-due { position: absolute; margin: 0; white-space: nowrap; }
+.rd .rd-daystrip__day { flex-basis: 96px; }
+.rd .rd-daystrip__day.is-due { flex-basis: 150px; }
+/* 목록 머리: 제목 한 줄, 그 아래 도구 한 줄 */
+.rd .rd-order__list-head { flex-direction: column; align-items: stretch; gap: 10px; padding: 14px 20px; }
+.rd .rd-order__list-head > div:first-child { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; flex: none; }
+.rd .rd-order__list-head > div:first-child p { margin: 0; }
+.rd .rd-order__tools { flex: none; flex-wrap: wrap; }

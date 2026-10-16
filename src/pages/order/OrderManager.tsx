@@ -56,7 +56,7 @@ function OrderManager() {
           <div className="rd rd-page rd-om">
           <header className="rd-page__head">
             <div>
-              <h1 className="rd-h1">발주 관리</h1>
+              <h1 className="rd-sr-only">발주 관리</h1>
               <p className="rd-muted">발주·발주서·공급사 연동 화면으로 이동합니다.</p>
             </div>
             <DeadlineAlertSlot />

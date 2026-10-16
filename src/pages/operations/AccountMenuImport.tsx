@@ -28,7 +28,7 @@ function AccountMenuImport() {
           <div className="rd rd-page rd-mi">
             <header className="rd-page__head">
               <div>
-                <h1 className="rd-h1">본사 메뉴 가져오기</h1>
+                <h1 className="rd-sr-only">본사 메뉴 가져오기</h1>
                 <p className="rd-muted">본사 메뉴는 읽기 전용입니다. 고른 메뉴를 본사 분류·레시피 그대로 거래처 메뉴로 등록합니다.</p>
               </div>
               <DeadlineAlertSlot />

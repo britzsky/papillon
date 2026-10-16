@@ -29,7 +29,7 @@ function AccountManager() {
       <div className="rd rd-page rd-acc">
         <header className="rd-page__head">
           <div>
-            <h1 className="rd-h1">고객사 관리</h1>
+            <h1 className="rd-sr-only">고객사 관리</h1>
             <p className="rd-muted">{accountName ? `${accountName}에서 제공하는 식사와 기본 식사 구성을 정합니다.` : "머리 줄의 '관리 거래처'에서 고객사를 고르면 식사구분을 설정할 수 있습니다."}</p>
           </div>
           <DeadlineAlertSlot />
