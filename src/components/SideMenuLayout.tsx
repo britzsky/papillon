@@ -5,7 +5,7 @@ import logo from '../assets/logo/thefull.png'
 import WorkspaceIcon, { type WorkspaceIconName } from './WorkspaceIcon'
 import DeadlineAlertBanner from './DeadlineAlertBanner'
 import WorkflowBar from './WorkflowBar'
-import { matchesBase, workflowSteps } from '../features/workspace/workflow'
+import { matchesBase } from '../features/workspace/workflow'
 
 type SideMenuLayoutProps = {
   children: ReactNode
@@ -25,29 +25,43 @@ type MajorMenu = {
   items: SubMenuItem[]
 }
 
-/** 업무 순서 아래: 기준정보(메뉴·식재료·공급사) → 위생 → 본사 */
+/**
+ * 카테고리는 업무 순서대로(2026-10-16 사용자 결정: 식단표부터 발주까지 클릭 5번 안).
+ * 운영관리(식단표) → 발주관리(발주하기·발주서) → 재고관리(재고) 순서이고, 각 카테고리 첫 메뉴가 그 단계의 화면이다.
+ */
 const majorMenus: MajorMenu[] = [
   {
     key: 'operations',
-    label: '메뉴·식재료',
-    basePaths: ['/operations/menu', '/operations/account-menu', '/inventory/account-ingredients', '/inventory/ingredients', '/inventory/history'],
+    label: '운영관리',
+    basePaths: ['/operations/table-meals', '/operations/menu', '/operations/account-menu'],
     items: [
+      { label: '식단표 관리', to: '/operations/table-meals', exact: true },
       { label: '거래처 메뉴 관리', to: '/operations/account-menu', exact: true },
       { label: '본사 메뉴 가져오기', to: '/operations/account-menu/import', exact: true },
-      { label: '거래처 재고 관리', to: '/inventory/account-ingredients', exact: true },
-      { label: '재고 변동 이력', to: '/inventory/history', exact: true },
       { label: '메뉴 관리', to: '/operations/menu', exact: true },
-      { label: '식자재 관리', to: '/inventory/ingredients', exact: true },
     ],
   },
   {
     key: 'order',
-    label: '공급사',
-    basePaths: ['/order_manager/suppliers', '/order_manager/supplier-sites', '/order_manager/welstory'],
+    label: '발주관리',
+    basePaths: ['/order_manager'],
     items: [
+      { label: '발주하기', to: '/order_manager/order', exact: true },
+      { label: '발주서·입고 관리', to: '/order_manager/orders', exact: true },
       { label: '공급사 통합 연동', to: '/order_manager/suppliers', exact: true },
       { label: '공급사 사업장 매핑', to: '/order_manager/supplier-sites', exact: true },
       { label: '거래명세서 관리' },
+    ],
+  },
+  {
+    key: 'inventory',
+    label: '재고관리',
+    basePaths: ['/inventory'],
+    items: [
+      { label: '재고', to: '/inventory/account', exact: true },
+      { label: '거래처 재고 관리', to: '/inventory/account-ingredients', exact: true },
+      { label: '재고 변동 이력', to: '/inventory/history', exact: true },
+      { label: '식자재 관리', to: '/inventory/ingredients', exact: true },
     ],
   },
   {
@@ -67,6 +81,10 @@ const majorMenus: MajorMenu[] = [
   },
 ]
 
+/** 업무 흐름 카테고리는 처음부터 펼쳐 둔다(식단표 → 발주하기로 넘어갈 때 다시 펼치는 클릭이 없게) */
+const FLOW_MENU_KEYS = ['operations', 'order', 'inventory']
+const initialOpenKeys = (pathname: string) => new Set([...FLOW_MENU_KEYS, findActiveMenuKey(pathname)].filter(Boolean))
+
 function findActiveMenuKey(pathname: string) {
   // '/operations/account'는 '/operations/account-menu'의 앞부분이라 정확히 비교한다
   const matchedMenu = majorMenus.find((menu) => menu.basePaths.some((basePath) =>
@@ -79,7 +97,7 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const [openMenuKey, setOpenMenuKey] = useState(() => findActiveMenuKey(location.pathname))
+  const [openMenuKeys, setOpenMenuKeys] = useState(() => initialOpenKeys(location.pathname))
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -100,7 +118,7 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
   const [menuPath, setMenuPath] = useState(location.pathname)
   if (menuPath !== location.pathname) {
     setMenuPath(location.pathname)
-    setOpenMenuKey(findActiveMenuKey(location.pathname))
+    setOpenMenuKeys((current) => { const key = findActiveMenuKey(location.pathname); return key && !current.has(key) ? new Set([...current, key]) : current })
   }
 
   useEffect(() => {
@@ -216,27 +234,8 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
 
 
 
-          <div className="side-layout__flow" aria-label="업무 순서">
-            <span className="side-layout__flow-title">업무 순서</span>
-            {workflowSteps.map((step) => {
-              const active = step.basePaths.some((basePath) => matchesBase(location.pathname, basePath))
-              return (
-                <NavLink
-                  key={step.to}
-                  to={withAccount(step.to)}
-                  data-side-nav-to={withAccount(step.to)}
-                  onClick={(event) => handleNavigate(event, withAccount(step.to))}
-                  className={`side-layout__flow-link${active ? ' is-active' : ''}`}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  <span className="side-layout__flow-no">{step.no}</span><span>{step.label}</span>
-                </NavLink>
-              )
-            })}
-          </div>
-
           {majorMenus.filter(menu => localStorage.getItem('user_type') !== '3' || menu.key !== 'headquarters').map((menu) => {
-            const isOpen = openMenuKey === menu.key
+            const isOpen = openMenuKeys.has(menu.key)
             const isActive = activeMenuKey === menu.key
 
             return (
@@ -247,7 +246,7 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
                 <button
                   type="button"
                   className={`side-layout__major-button${isActive ? ' is-active' : ''}`}
-                  onClick={() => setOpenMenuKey((current) => (current === menu.key ? '' : menu.key))}
+                  onClick={() => setOpenMenuKeys((current) => { const next = new Set(current); if (next.has(menu.key)) next.delete(menu.key); else next.add(menu.key); return next })}
                   aria-expanded={isOpen}
                 >
                   <WorkspaceIcon name={menu.key as WorkspaceIconName} /><span>{menu.label}</span>

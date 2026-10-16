@@ -1,7 +1,7 @@
 /*
  * 업무 순서 클릭 수 검사(2026-10-16 사용자 결정: 식단표부터 발주까지 클릭 5번 안).
  * 모의 API로 실제 화면을 열어 사용자가 누르는 횟수를 센다. 화면을 고친 뒤 넘으면 실패(종료코드 1).
- *   ① 새 주: 홈 → 사이드 '① 식단표' → 자동 식단표 제작 → 저장하고 발주하기 → 발주서 확인 → 발주 보내기  (5번 이하)
+ *   ① 새 주: 홈 → 사이드 '운영관리 > 식단표 관리'(펼쳐져 있음) → 자동 식단표 제작 → 저장하고 발주하기 → 발주서 확인 → 발주 보내기  (5번 이하)
  *   ② 식단 있음: 홈 '오늘 할 일'의 발주하기 → 발주서 확인 → 발주 보내기                                  (3번 이하)
  * 실행: npm run dev -- --port 5191  (다른 창)  →  node scripts/flow-clicks.cjs [스크린샷 폴더]
  * playwright가 없으면: npx -y playwright@1.56.1 install chromium 후 NODE_PATH에 playwright 위치를 주거나 PLAYWRIGHT_MODULE=경로
@@ -72,7 +72,7 @@ async function run(name, limit, steps) {
 (async () => {
   const results = [
     await run('new-week', 5, async (page, click) => {
-      await click(page.locator('.side-layout__flow-link', { hasText: '식단표' }), "사이드 '① 식단표'");
+      await click(page.locator('.side-layout__sublink', { hasText: '식단표 관리' }), "사이드 운영관리 > 식단표 관리");
       await click(page.getByRole('button', { name: '자동 식단표 제작' }), '자동 식단표 제작');
       await page.waitForTimeout(1500);
       await click(page.getByRole('button', { name: /저장하고 발주하기/ }).last(), '저장하고 발주하기');

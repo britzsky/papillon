@@ -1,5 +1,5 @@
 /**
- * 업무 순서(2026-10-16 사용자 결정: 식단표부터 발주까지 클릭 5번 안). 펼치지 않아도 늘 보이게 맨 위에 번호로 둔다.
+ * 업무 순서(2026-10-16 사용자 결정: 식단표부터 발주까지 클릭 5번 안). 화면 위 진행 표시줄(WorkflowBar)이 쓴다.
  * 재고는 식단 사용 확정·입고로 자동 반영되므로 마지막 확인 단계.
  */
 export const workflowSteps: { no: number; label: string; to: string; basePaths: string[] }[] = [
