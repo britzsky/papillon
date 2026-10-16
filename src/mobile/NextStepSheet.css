@@ -1,0 +1,41 @@
+/* m버전 홈 '다음 할 일' 시트 — 기존 t-sheet 틀(TouchLayout.css)에 진행 표시·식단 요약·공급사별 발주서만 더한다 */
+.ns-sheet { width: min(720px, 100%); }
+.ns-steps { list-style: none; margin: 0 0 10px; padding: 0; display: flex; gap: 6px; }
+.ns-steps li { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--t-surface-2); color: var(--t-muted); font-weight: 700; font-size: 13px; }
+.ns-steps b { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: #fff; font-size: 12px; }
+.ns-steps li.is-current { background: var(--t-accent); color: #fff; }
+.ns-steps li.is-current b { color: var(--t-accent); }
+.ns-steps li.is-done { background: var(--t-accent-soft); color: var(--t-accent-strong); }
+.ns-days { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ns-days li { display: grid; grid-template-columns: 76px 1fr; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--t-surface-2); font-size: 14px; }
+.ns-days span { color: var(--t-text); line-height: 1.45; }
+.ns-note { display: flex; align-items: center; gap: 8px; margin: 8px 0; padding: 12px 14px; border-radius: 12px; background: var(--t-accent-softer); color: var(--t-accent-strong); font-weight: 700; font-size: 14px; }
+.ns-note.is-warn { background: var(--t-warn-soft); color: var(--t-warn); }
+.ns-note a { color: inherit; text-decoration: underline; }
+.ns-servings { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; margin-bottom: 12px; }
+.ns-servings label { display: flex; flex-direction: column; gap: 6px; font-weight: 700; }
+.ns-servings small { flex-basis: 100%; color: var(--t-muted); }
+.ns-order { margin: 0 0 12px; border: 1px solid var(--t-line); border-radius: 14px; overflow: hidden; }
+.ns-order > header { display: flex; align-items: baseline; gap: 8px; padding: 10px 14px; background: var(--t-surface-2); }
+.ns-order > header span { flex: 1; color: var(--t-muted); font-size: 13px; }
+.ns-order ul { list-style: none; margin: 0; padding: 0; }
+.ns-order li { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 10px 14px; border-top: 1px solid var(--t-line); font-size: 14px; }
+.ns-order li > span:first-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ns-order small { color: var(--t-muted); font-size: 12px; }
+.ns-order .ns-issue { color: var(--t-warn); }
+.ns-main { flex: 2 !important; }
+
+/* 홈 맨 위 큰 버튼 카드 */
+.ht-next { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin: 0 0 18px; padding: 18px 20px; border-radius: 20px; background: var(--t-accent); color: #fff; }
+.ht-next__text { flex: 1 1 260px; display: flex; flex-direction: column; gap: 4px; }
+.ht-next__text small { opacity: .85; font-size: 14px; }
+.ht-next__text strong { font-size: 20px; }
+.ht-next .t-btn { min-width: 220px; background: #fff; color: var(--t-accent-strong); border-color: #fff; font-size: 17px; }
+.ht-next.is-quiet { background: var(--t-surface); color: var(--t-text); border: 1px solid var(--t-line); }
+.ht-next.is-quiet .t-btn { background: var(--t-accent-soft); color: var(--t-accent-strong); border-color: var(--t-accent-soft); }
+.ht-next.is-warn { background: var(--t-warn-soft); color: var(--t-warn); }
+/* 휴대폰: 큰 버튼은 한 줄을 다 쓰고 맨 위, 보조 버튼은 아래 한 줄 */
+@media (max-width: 600px) {
+  .ns-sheet .t-sheet__actions { flex-wrap: wrap; }
+  .ns-sheet .t-sheet__actions .ns-main { order: -1; flex: 1 1 100% !important; }
+}

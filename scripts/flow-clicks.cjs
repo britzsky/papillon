@@ -3,7 +3,8 @@
  * 모의 API로 실제 화면을 열어 사용자가 누르는 횟수를 센다. 화면을 고친 뒤 넘으면 실패(종료코드 1).
  *   ① 새 주: 홈 → 사이드 '운영관리 > 식단표 관리'(펼쳐져 있음) → 자동 식단표 제작 → 저장하고 발주하기 → 발주서 확인 → 발주 보내기  (5번 이하)
  *   ② 식단 있음: 홈 '오늘 할 일'의 발주하기 → 발주서 확인 → 발주 보내기                                  (3번 이하)
- * 실행: npm run dev -- --port 5191  (다른 창)  →  node scripts/flow-clicks.cjs [스크린샷 폴더]
+ *   m버전(휴대폰·태블릿): 홈 큰 버튼 → 저장하고 발주서 보기 → 공급사에 발주 (3번 이하), 식단 있음: 홈 큰 버튼 → 발주 (2번 이하)
+ * 실행: npm run dev -- --port 5191  (다른 창)  →  node scripts/flow-clicks.cjs [스크린샷 폴더]  (FLOW_SHOTS=1이면 클릭마다 화면 저장)
  * playwright가 없으면: npx -y playwright@1.56.1 install chromium 후 NODE_PATH에 playwright 위치를 주거나 PLAYWRIGHT_MODULE=경로
  */
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
@@ -21,9 +22,12 @@ const shortage = criteria => ({ criteria, unconfigured_count: 0, checked_at: new
   ['I1', '돼지고기 앞다리', offer(11, '돼지앞다리 2kg', 'WELSTORY')], ['I2', '시금치', offer(12, '시금치 1kg', 'OURHOME')], ['I3', '양파', offer(13, '양파 1kg', 'WELSTORY')],
 ].map(([id, name, o]) => ({ ingredient_id: id, ingredient_name: name, base_unit: 'g', required_qty: 3000, safe_stock_qty: 0, current_qty: 500, incoming_qty: 0, shortage_qty: 2500, stock_status: 'RED', menu_names: ['제육볶음'], issues: [], offers: [o] })) });
 
-async function run(name, limit, steps) {
+/** opts.device: 'pc' | 'phone' | 'tablet' (터치 화면), opts.meals: 다음 7일에 식단이 있는지 */
+async function run(name, limit, steps, opts = {}) {
   const b = await chromium.launch({ headless: true });
-  const page = await (await b.newContext({ viewport: { width: 1600, height: 960 } })).newPage();
+  const device = opts.device || 'pc';
+  const viewport = device === 'phone' ? { width: 430, height: 900 } : device === 'tablet' ? { width: 1180, height: 820 } : { width: 1600, height: 960 };
+  const page = await (await b.newContext({ viewport, hasTouch: device !== 'pc', isMobile: device !== 'pc' })).newPage();
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   page.on('dialog', d => { errors.push('DIALOG ' + d.message().slice(0, 80)); d.accept(); });
   await page.addInitScript(() => { localStorage.setItem('user_type', '3'); localStorage.setItem('user_id', 'u1'); localStorage.setItem('user_name', '김영양'); localStorage.setItem('account_id', 'A1'); localStorage.setItem('account_name', '우리누리'); localStorage.setItem('planned-servings:A1', '50'); });
@@ -48,7 +52,7 @@ async function run(name, limit, steps) {
     else if (p.endsWith('/Procurement/OrdersBatch')) { const j = json(); sent.push(j); body = { request_key: j.request_key, orders: [{ supplier_code: 'WELSTORY', supplier_name: '웰스토리', external_site_code: 'A0199240', delivery_date: '2026-10-18', purchase_order_id: 'PO1', status: 'ORDERED' }, { supplier_code: 'OURHOME', supplier_name: '아워홈', external_site_code: 'FU0UR', delivery_date: '2026-10-18', purchase_order_id: 'PO2', status: 'ORDERED' }] }; }
     else if (p.endsWith('/v2/supplier-integration/sites')) body = [{ supplier_account_site_id: 1, supplier_code: 'WELSTORY', supplier_name: '웰스토리', external_site_code: 'A0199240', external_site_name: '우리누리' }, { supplier_account_site_id: 2, supplier_code: 'OURHOME', supplier_name: '아워홈', external_site_code: 'FU0UR', external_site_name: '우리누리' }];
     else if (p.endsWith('/v2/workspace/tasks')) body = { accounts: [{ account_id: 'A1', account_name: '우리누리', pending_orders: 0, due_receipts: 0, pending_meals: 0, supplier_notices: 0, mapped_suppliers: 2 }] };
-    else if (p.endsWith('/v2/workspace/calendar')) body = { days: [] };
+    else if (p.endsWith('/v2/workspace/calendar')) body = { days: opts.meals ? [0, 1, 2, 3, 4].map(n => { const d = kst(); d.setUTCDate(d.getUTCDate() + n); return { date: ymd(d), received: 0, open_orders: 0, meals: 3 } }) : [] };
     else if (p.endsWith('/v2/workspace/account-summary')) body = { account_id: 'A1', month: '2026-10', account_name: '우리누리', user_name: '김영양', manager_name: null, manager_tel: null, budget: { status: 'NONE' } };
     else if (p.endsWith('/v2/workspace/notifications') || p.endsWith('/v2/workspace/notifications/refresh')) body = [];
     else if (p.endsWith('/Procurement/DeadlineAlerts')) body = { alerts: [] };
@@ -57,9 +61,10 @@ async function run(name, limit, steps) {
   });
 
   let clicks = 0;
-  const click = async (locator, label) => { await locator.first().waitFor({ timeout: 15000 }); await locator.first().click(); clicks++; console.log(`  ${name} click ${clicks}: ${label}`); await page.waitForTimeout(1200); };
+  const click = async (locator, label) => { await locator.first().waitFor({ timeout: 15000 }); await locator.first().click(); clicks++; console.log(`  ${name} click ${clicks}: ${label}`); await page.waitForTimeout(1200); if (process.env.FLOW_SHOTS) await page.screenshot({ path: `${out}/flow-${name}-${clicks}.png` }); };
   try {
     await page.goto(BASE + '/home'); await page.waitForTimeout(2500);
+    if (process.env.FLOW_SHOTS) await page.screenshot({ path: `${out}/flow-${name}-0.png` });
     await steps(page, click);
     await page.waitForTimeout(1500);
     await page.screenshot({ path: `${out}/flow-${name}.png` });
@@ -87,5 +92,20 @@ async function run(name, limit, steps) {
       await click(page.getByRole('button', { name: /곳에 발주 보내기/ }), '발주 보내기');
     }),
   ];
+  // m버전(터치): 홈 큰 버튼 하나가 다음 할 일 — 새 주 3번, 식단 있음 2번(2026-10-16 사용자 결정)
+  for (const device of ['phone', 'tablet']) {
+    results.push(await run(`touch-${device}-new-week`, 3, async (page, click) => {
+      await click(page.locator('.ht-next button'), '홈 큰 버튼(식단 만들기 시작)');
+      await page.waitForTimeout(2500);
+      await click(page.getByRole('button', { name: '저장하고 발주서 보기' }), '저장하고 발주서 보기');
+      await page.waitForTimeout(3000);
+      await click(page.getByRole('button', { name: /곳에 발주/ }), '공급사에 발주');
+    }, { device }));
+    results.push(await run(`touch-${device}-plan-exists`, 2, async (page, click) => {
+      await click(page.locator('.ht-next button'), '홈 큰 버튼(발주서 보기)');
+      await page.waitForTimeout(3000);
+      await click(page.getByRole('button', { name: /곳에 발주/ }), '공급사에 발주');
+    }, { device, meals: true }));
+  }
   process.exit(results.every(Boolean) ? 0 : 1);
 })().catch(e => { console.error(e); process.exit(1); });

@@ -1,3 +1,4 @@
+import { rememberWorkspaceAccount, workspaceAccountId } from '../features/workspace/workspaceAccount'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { logout } from '../api/auth'
@@ -67,7 +68,8 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, children,
   const [searchParams, setSearchParams] = useSearchParams()
   const [openGroup, setOpenGroup] = useState('')
   const [accounts, setAccounts] = useState<AccountOption[]>([])
-  const accountId = searchParams.get('account_id') || localStorage.getItem('account_id') || ''
+  // 관리 거래처(PC와 같은 규칙: 거래처 계정 고정, 본사는 주소 → 마지막 선택)
+  const accountId = workspaceAccountId(searchParams)
   const accountUser = isAccountUser()
 
   useTouchBody()
@@ -99,10 +101,8 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, children,
     else setOpenGroup(current => current === group.key ? '' : group.key)
   }
   const changeAccount = (value: string) => {
-    // 비우면(전체 거래처) 다른 화면이 예전 거래처로 돌아가지 않게 기억도 지운다
-    if (value) localStorage.setItem('account_id', value); else localStorage.removeItem('account_id')
-    const name = accounts.find(option => option.value === value)?.text
-    if (name) localStorage.setItem('account_name', name)
+    // 로그인한 사람의 거래처 정보(account_id·account_name)는 건드리지 않고 '관리 거래처'만 바꾼다(비우면 전체 거래처)
+    rememberWorkspaceAccount(value)
     const next = new URLSearchParams(searchParams)
     if (value) next.set('account_id', value); else next.delete('account_id')
     setSearchParams(next, { replace: true })

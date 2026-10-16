@@ -1,8 +1,12 @@
+import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import TouchLayout from '../TouchLayout'
 import TouchIcon, { type TouchIconName } from '../TouchIcon'
 import { TASKS, accountHref, needsSite, taskCount, useDailyWork, type TaskTile } from '../../features/workspace/useDailyWork'
 import HomeSearchTouch from './HomeSearchTouch'
+import NextStepSheet, { type NextStep } from '../NextStepSheet'
+import { useUpcomingMealDays } from '../../features/workspace/useWorkspaceCalendar'
+import { isHeadquarters, rememberWorkspaceAccount, workspaceAccountId } from '../../features/workspace/workspaceAccount'
 import './HomeTouch.css'
 
 const TILE_ICON: Record<string, TouchIconName> = { prepare: 'order', pending_orders: 'alert', due_receipts: 'truck', pending_meals: 'meals' }
@@ -23,21 +27,30 @@ const QUICK: { label: string; hint: string; to: string; icon: TouchIconName }[] 
 export default function HomeTouch() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
-  // 위 거래처 선택(TouchLayout)과 같은 기준. 비우면 본사는 모든 거래처를 본다
-  const account = params.get('account_id') || localStorage.getItem('account_id') || ''
+  // 관리 거래처(PC와 같은 규칙). 본사가 비우면 모든 거래처를 본다
+  const account = workspaceAccountId(params)
   const { data, error, rows, single, busy, tiles, refresh } = useDailyWork(account)
   const userName = localStorage.getItem('user_name') || ''
 
   const withAccount = (to: string) => account ? accountHref(to, account) : to
-  const pickAccount = (accountId: string, name: string) => {
-    localStorage.setItem('account_id', accountId)
-    localStorage.setItem('account_name', name)
+  const pickAccount = (accountId: string) => {
+    rememberWorkspaceAccount(accountId)
     navigate(accountHref('/home', accountId))
   }
+  const upcomingMealDays = useUpcomingMealDays(single?.account_id || '')
+  const [sheet, setSheet] = useState<NextStep | null>(null)
+  const next = single ? nextAction(single.account_id, needsSite(single), upcomingMealDays, tiles.find(tile => tile.key === 'prepare')) : null
 
   const toolbar = <button type="button" className="t-btn is-small" onClick={refresh}>새로고침</button>
 
   return <TouchLayout title={userName ? `${userName}님, 안녕하세요` : '오늘 할 일'} subtitle={single ? single.account_name : rows.length > 1 ? `거래처 ${rows.length}곳` : undefined} toolbar={toolbar}>
+    {/* 큰 버튼 하나가 다음 할 일(새 주: 식단 → 발주서 → 발주 3번, 식단 있음: 발주서 → 발주 2번) */}
+    {next && <section className={`ht-next${next.tone ? ` is-${next.tone}` : ''}`} aria-label="다음 할 일">
+      <div className="ht-next__text"><small>{next.eyebrow}</small><strong>{next.title}</strong>{next.hint && <small>{next.hint}</small>}</div>
+      {next.step ? <button type="button" className="t-btn is-large" onClick={() => setSheet(next.step!)}>{next.action}</button>
+        : next.to ? <Link className="t-btn is-large" to={next.to}>{next.action}</Link> : null}
+    </section>}
+    {sheet && single && <NextStepSheet accountId={single.account_id} step={sheet} onClose={() => { setSheet(null); refresh() }} />}
     <HomeSearchTouch />
     <h2 className="t-section-title">
       오늘 할 일
@@ -53,7 +66,7 @@ export default function HomeTouch() {
       <h2 className="t-section-title">확인할 일이 있는 거래처 {busy.length}곳</h2>
       <ul className="ht-accounts">
         {busy.map(row => <li key={row.account_id}>
-          <button type="button" className="t-card ht-account" onClick={() => pickAccount(row.account_id, row.account_name)}>
+          <button type="button" className="t-card ht-account" onClick={() => pickAccount(row.account_id)}>
             <span className="t-dot">{row.account_name.slice(0, 1)}</span>
             <strong>{row.account_name}</strong>
             <span className="ht-account__chips">
@@ -89,4 +102,24 @@ function Tile({ tile }: { tile: TaskTile }) {
   </>
   const className = `t-card ht-tile is-${tile.tone}`
   return tile.to ? <Link className={className} to={tile.to}>{body}</Link> : <div className={className}>{body}</div>
+}
+
+type NextAction = { eyebrow: string; title: string; hint?: string; action: string; step?: NextStep; to?: string; tone?: 'quiet' | 'warn' }
+
+/** 홈 맨 위 큰 버튼: 사업장 지정 → 다음 7일 식단 → 급한 발주(마감·재고 부족) → 식단 기준 발주 순서로 지금 할 일 하나 */
+function nextAction(accountId: string, siteMissing: boolean, upcomingMealDays: number | null, prepare?: TaskTile): NextAction | null {
+  if (siteMissing) return { eyebrow: '발주 준비', title: '공급사 사업장이 지정되지 않았어요', hint: isHeadquarters() ? '사업장을 지정하면 상품·판가를 받아 발주할 수 있어요' : '본사에 공급사 사업장 지정을 요청하세요', tone: 'warn',
+    action: '사업장 지정', to: isHeadquarters() ? accountHref('/order_manager/supplier-sites', accountId) : undefined }
+  if (upcomingMealDays === null) return null
+  if (upcomingMealDays === 0) return { eyebrow: '다음 7일 식단표가 없어요', title: '다음 주 식단 만들고 발주', hint: '자동 식단 → 저장 → 모자란 재료 발주서까지 이어서',
+    action: '식단 만들기 시작', step: { kind: 'meal' } }
+  if (prepare?.to && prepare.tone !== 'done') {
+    const query = new URLSearchParams(prepare.to.split('?')[1] || '')
+    const override: Record<string, string> = { account_id: accountId, autoselect: '1' }
+    query.forEach((value, key) => { if (key !== 'tab') override[key] = value })
+    if (query.get('tab') === 'stock') override.source = 'STOCK'
+    return { eyebrow: prepare.label, title: `발주서 보기 · ${prepare.value}`, hint: prepare.hint, action: '발주서 보기', step: { kind: 'order', override, title: prepare.label } }
+  }
+  return { eyebrow: '급한 발주 없음', title: '식단 기준으로 발주서 보기', hint: '저장된 식단에서 모자란 재료만 골라 발주서를 만들어요', tone: 'quiet',
+    action: '발주서 보기', step: { kind: 'order', override: { account_id: accountId, source: 'PLAN', autoselect: '1' }, title: '식단 기준 발주서' } }
 }
