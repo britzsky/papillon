@@ -1,4 +1,4 @@
-import { useId, type MouseEvent, type PointerEvent } from 'react'
+import { useEffect, useId, type MouseEvent, type PointerEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { logout } from '../api/auth'
 import userIcon from '../assets/image/user.png'
@@ -20,6 +20,8 @@ type HeaderBarProps = {
 function HeaderBar({ title = 'Home', breadcrumbs = [] }: HeaderBarProps) {
   const navigate = useNavigate()
   const userInfoId = useId()
+  // 머리 줄에서 뺀 화면 이름은 브라우저 탭 제목으로
+  useEffect(() => { document.title = title && title !== 'Home' ? `${title} · 더채움` : '더채움' }, [title])
   const userInfo = [
     ['이름', localStorage.getItem('user_name')],
     ['아이디', localStorage.getItem('user_id')],
@@ -65,11 +67,33 @@ function HeaderBar({ title = 'Home', breadcrumbs = [] }: HeaderBarProps) {
 
   return (
     <div className="header-shell">
-      <header className="header-bar">
-        <div className="header-bar__brand">
-          {/* <img src={logo} alt="The Full logo" /> */}
-        </div>
-        <h1 className="header-bar__status">{title}</h1>
+      {/* 한 줄: 왼쪽 경로, 오른쪽 관리 거래처·알림·계정 정보·로그아웃. 화면 이름은 본문 큰 제목(2026-10-16 사용자 요청) */}
+      <header className="header-bar header-bar--one-line">
+        {breadcrumbs.length > 0 ? (
+          <nav className="header-breadcrumbs" aria-label="breadcrumb">
+            {breadcrumbs.map((item, index) => (
+              <span key={`${item.label}-${index}`} className="header-breadcrumbs__item">
+                {item.to ? (
+                  <Link
+                    to={item.to}
+                    className="header-breadcrumbs__link"
+                    onClick={(event) => handleNavigate(event, item.to!)}
+                    onPointerDown={(event) => handlePointerDown(event, item.to!)}
+                  >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <span className="header-breadcrumbs__current">{item.label}</span>
+                )}
+                {index < breadcrumbs.length - 1 ? (
+                  <span className="header-breadcrumbs__separator" aria-hidden="true">
+                    /
+                  </span>
+                ) : null}
+              </span>
+            ))}
+          </nav>
+        ) : <span className="header-breadcrumbs" />}
         <div className="header-bar__actions">
           <WorkspaceAccountPicker />
           <HeaderAlerts />
@@ -106,31 +130,6 @@ function HeaderBar({ title = 'Home', breadcrumbs = [] }: HeaderBarProps) {
         </div>
       </header>
 
-      {breadcrumbs.length > 0 ? (
-        <nav className="header-breadcrumbs" aria-label="breadcrumb">
-          {breadcrumbs.map((item, index) => (
-            <span key={`${item.label}-${index}`} className="header-breadcrumbs__item">
-              {item.to ? (
-                <Link
-                  to={item.to}
-                  className="header-breadcrumbs__link"
-                  onClick={(event) => handleNavigate(event, item.to!)}
-                  onPointerDown={(event) => handlePointerDown(event, item.to!)}
-                >
-                  {item.label}
-                </Link>
-              ) : (
-                <span className="header-breadcrumbs__current">{item.label}</span>
-              )}
-              {index < breadcrumbs.length - 1 ? (
-                <span className="header-breadcrumbs__separator" aria-hidden="true">
-                  /
-                </span>
-              ) : null}
-            </span>
-          ))}
-        </nav>
-      ) : null}
     </div>
   )
 }

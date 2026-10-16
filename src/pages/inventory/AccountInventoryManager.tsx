@@ -331,11 +331,11 @@ function AccountInventoryManager() {
         <SideMenuLayout
           header={
             <HeaderBar
-              title="거래처 재고관리"
+              title="재고"
               breadcrumbs={[
                 { label: 'Home', to: '/home' },
                 { label: '재고관리', to: '/inventory/account' },
-                { label: '거래처 재고관리' },
+                { label: '재고' },
               ]}
             />
           }

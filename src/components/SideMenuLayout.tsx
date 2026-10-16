@@ -70,7 +70,7 @@ const majorMenus: MajorMenu[] = [
     key: 'sanitation',
     label: '위생관리',
     basePaths: ['/sanitation'],
-    items: [{ label: '거래처별 위생관리', to: '/sanitation/vendor', exact: true }],
+    items: [{ label: '위생 점검 관리', to: '/sanitation/vendor', exact: true }],
   },
   {
     key: 'headquarters',

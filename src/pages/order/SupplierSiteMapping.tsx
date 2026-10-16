@@ -12,7 +12,7 @@ export default function SupplierSiteMapping() {
     mappingOf, selectable, names, rows, unassigned, excluded, save, sync, toggleUse, busy,
   } = useSiteMapping()
 
-  return <div className="supplier-integration-page"><SideMenuLayout header={<HeaderBar title="공급사 사업장 매핑" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주 관리', to: '/order_manager' }, { label: '공급사 사업장 매핑' }]} />}>
+  return <div className="supplier-integration-page"><SideMenuLayout header={<HeaderBar title="공급사 사업장 매핑" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주관리', to: '/order_manager' }, { label: '공급사 사업장 매핑' }]} />}>
     {syncing ? <LoadingScreen overlay message={`${SUPPLIERS.find(item => item.code === syncing)?.label} 사업장 목록을 받아오고 있습니다.`} /> : null}
     <div className="rd rd-page rd-sup rd-map">
     <header className="rd-page__head">

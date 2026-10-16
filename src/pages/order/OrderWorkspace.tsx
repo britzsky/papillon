@@ -47,9 +47,10 @@ export default function OrderWorkspace({ initialTab }: { initialTab?: OrderTab |
   }
   const BASIS: { key: OrderTab; label: string }[] = [{ key: 'plan', label: '식단표 기준' }, { key: 'stock', label: '지금 부족한 재고' }, { key: 'usage', label: '최근 사용량' }]
 
-  return <div className="order-workspace"><SideMenuLayout header={<HeaderBar title="발주하기" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주 관리', to: '/order_manager' }, { label: '발주하기' }]} />}>
+  return <div className="order-workspace"><SideMenuLayout header={<HeaderBar title="발주하기" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주관리', to: '/order_manager' }, { label: '발주하기' }]} />}>
     {/* 2026-10-15 개편(시안 ② 발주하기): 기준 3개 전환 + 추천 발주안·상품 검색은 오른쪽 */}
     <header className="rd rd-order__head">
+      <h1 className="rd-h1">발주하기</h1>
       <div role="tablist" aria-label="무엇을 기준으로 시킬까요" className="rd-seg">
         {BASIS.map(item => <button key={item.key} type="button" role="tab" aria-selected={tab === item.key} className={tab === item.key ? 'is-active' : ''}
           title={TABS.find(t => t.key === item.key)?.hint} onClick={() => select(item.key)}>{item.label}</button>)}

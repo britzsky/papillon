@@ -174,5 +174,5 @@ function ProductOrderContent({ accountId, initialSource, embedded }: { accountId
     <BatchOrderResults result={result} accountId={accountId} />
   </div>
   if (embedded) return <div className="mixed-product-order">{body}</div>
-  return <div className="menu-manager-page mixed-product-order"><main className="menu-manager-content"><SideMenuLayout header={<HeaderBar title="상품발주" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주 관리' }, { label: '상품발주' }]} />}>{body}</SideMenuLayout></main></div>
+  return <div className="menu-manager-page mixed-product-order"><main className="menu-manager-content"><SideMenuLayout header={<HeaderBar title="상품발주" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주관리' }, { label: '상품발주' }]} />}>{body}</SideMenuLayout></main></div>
 }

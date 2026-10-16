@@ -60,7 +60,7 @@ function TableMealsManager() {
               title="식단표 관리"
               breadcrumbs={[
                 { label: 'Home', to: '/home' },
-                { label: '운영 관리', to: '/operations/table-meals' },
+                { label: '운영관리', to: '/operations/table-meals' },
                 { label: '식단표 관리' },
               ]}
             />
@@ -69,7 +69,7 @@ function TableMealsManager() {
           {/* 2026-10-15 개편(시안 ⑧): 고른 식단표를 본문에 바로(예전 상세 창 내용 그대로), 오른쪽에 저장된 식단표·모자란 재료·새 식단 */}
           <div className="rd rd-meals">
           <header className="rd-meals__head">
-            <div className="rd-meals__title"><h1 className="rd-h1">식단표</h1>{selectedAccountName ? <span className="rd-chip is-ok">{selectedAccountName}</span> : null}</div>
+            <div className="rd-meals__title"><h1 className="rd-h1">식단표 관리</h1>{selectedAccountName ? <span className="rd-chip is-ok">{selectedAccountName}</span> : null}</div>
             <div className="rd-meals__actions">
 
               <button type="button" className="table-meals-upload-button" onClick={handleUploadClick} title="식단표 PDF의 글자를 읽어 요일·식사별로 불러옵니다(파일은 서버에 저장하지 않음)">

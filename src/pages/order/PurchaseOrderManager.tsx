@@ -106,10 +106,10 @@ export default function PurchaseOrderManager() {
   const receivable = Boolean(selected && RECEIVABLE_STATUSES.includes(selected.status))
   const note = !selected ? '' : !receivable ? '' : changedCount ? `공급사가 주문과 다른 수량을 출고한 품목 ${changedCount}개 · 받은 수량을 출고 수량으로 미리 채워뒀어요` : shippedCount && shippedCount === live.length ? '주문한 수량 그대로 출고됐어요' : '물건이 도착하면 받은 수량만 확인해 주세요'
 
-  return <main className="purchase-orders"><SideMenuLayout header={<HeaderBar title="발주서·입고" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주 관리', to: '/order_manager' }, { label: '발주서·입고' }]} />}>
+  return <main className="purchase-orders"><SideMenuLayout header={<HeaderBar title="발주서·입고 관리" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주관리', to: '/order_manager' }, { label: '발주서·입고 관리' }]} />}>
     <div className="rd rd-recv">
       <header className="rd-recv__head">
-        <h1 className="rd-h1">발주서·입고</h1>
+        <h1 className="rd-h1">발주서·입고 관리</h1>
         <div className="rd-recv__head-actions">
           {accountId ? <Link className="rd-btn" to={`/inventory/account?${new URLSearchParams({ account_id: accountId })}`}>재고·직접구매 등록</Link> : null}
           {selected ? <button type="button" className="rd-btn print-button" disabled={busy} title="선택한 공급사 발주서 인쇄" onClick={() => window.print()}><PrintIcon />발주서 인쇄</button> : null}

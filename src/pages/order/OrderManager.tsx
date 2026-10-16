@@ -46,7 +46,7 @@ function OrderManager() {
               title="발주 관리"
               breadcrumbs={[
                 { label: 'Home', to: '/home' },
-                { label: '발주 관리' },
+                { label: '발주관리' },
               ]}
             />
           }

@@ -75,7 +75,7 @@ function SupplierWorkspace({ accountId }: { accountId: string }) {
   } = useWelstoryWorkspace(accountId)
   const ourhome = useOurhomeSite(accountId)
 
-  return <div className="supplier-integration-page"><SideMenuLayout header={<HeaderBar title="공급사 통합 연동" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주 관리', to: '/order_manager' }, { label: '공급사 통합 연동' }]} />}>
+  return <div className="supplier-integration-page"><SideMenuLayout header={<HeaderBar title="공급사 통합 연동" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주관리', to: '/order_manager' }, { label: '공급사 통합 연동' }]} />}>
     <div className="rd rd-page rd-sup">
     <header className="rd-page__head">
       <div>
