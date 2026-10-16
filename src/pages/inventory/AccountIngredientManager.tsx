@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import HeaderBar from '../../components/HeaderBar'
 import SideMenuLayout from '../../components/SideMenuLayout'
+import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import IngredientProductLinkModal from '../../components/IngredientProductLinkModal'
 import BulkIngredientLinkModal from '../../components/BulkIngredientLinkModal'
 import { supplierInitial, useAccountIngredients, type AccountIngredient as Ingredient } from '../../features/inventory/useAccountIngredients'
@@ -44,6 +45,7 @@ function AccountIngredientContent({ accountId }: { accountId: string }) {
           <h1 className="rd-h1">거래처 재고 관리</h1>
           <p className="rd-muted">거래처 메뉴에 쓰는 식자재마다 실제로 살 상품을 연결합니다. 같은 식자재를 쓰는 모든 메뉴에 함께 적용됩니다.</p>
         </div>
+        <DeadlineAlertSlot />
         <div className="rd-page__actions">
           {unlinkedCount > 0 && <button type="button" className="rd-btn is-primary" onClick={() => { setNotice(''); setBulkOpen(true) }}>미연결 {unlinkedCount}건 일괄 연결</button>}
           <Link className="rd-btn" to={`/inventory/account?account_id=${accountQuery}`}>재고 수량 조정</Link>

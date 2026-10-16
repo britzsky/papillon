@@ -5,6 +5,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { TASKS, accountHref as href, needsSite, taskCount as count, useDailyWork, type TaskTile, type TaskTone } from '../features/workspace/useDailyWork'
 import { useUpcomingMealDays, useWorkspaceCalendar } from '../features/workspace/useWorkspaceCalendar'
 import { useAccountSummary } from '../features/workspace/useAccountSummary'
+import DeadlineAlertSlot from './DeadlineAlertSlot'
 
 const won = (value: number) => Math.round(value).toLocaleString('ko-KR')
 /** 예산 묶음 하나(예산·사용·여유 + 사용 막대) */
@@ -82,6 +83,7 @@ export default function DailyWork({ search, shortcuts }: { search: ReactNode; sh
         <div className="rd-muted">{today}{data?.checked_at ? ` · ${data.checked_at.slice(11, 16)} 기준` : ''}{single ? ` · ${single.account_name}` : ''}</div>
         <h1 className="rd-h1">{title}</h1>
       </div>
+      <DeadlineAlertSlot />
       {search}
     </header>
 

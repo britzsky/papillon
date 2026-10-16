@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import HeaderBar from '../../components/HeaderBar'
 import SideMenuLayout from '../../components/SideMenuLayout'
+import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import OrderPreferenceChanges from '../../components/OrderPreferenceChanges'
 import SupplierOrderPrint from './SupplierOrderPrint'
 import { PrintIcon } from '../../components/ActionIcons'
@@ -110,6 +111,7 @@ export default function PurchaseOrderManager() {
     <div className="rd rd-recv">
       <header className="rd-recv__head">
         <h1 className="rd-h1">발주서·입고 관리</h1>
+        <DeadlineAlertSlot />
         <div className="rd-recv__head-actions">
           {accountId ? <Link className="rd-btn" to={`/inventory/account?${new URLSearchParams({ account_id: accountId })}`}>재고·직접구매 등록</Link> : null}
           {selected ? <button type="button" className="rd-btn print-button" disabled={busy} title="선택한 공급사 발주서 인쇄" onClick={() => window.print()}><PrintIcon />발주서 인쇄</button> : null}

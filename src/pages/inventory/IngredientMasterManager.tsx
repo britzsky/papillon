@@ -2,6 +2,7 @@ import { useState } from 'react'
 import HeaderBar from '../../components/HeaderBar'
 import LoadingScreen from '../../components/LoadingScreen'
 import SideMenuLayout from '../../components/SideMenuLayout'
+import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import AppAlert, { type AppAlertState } from '../../components/AppAlert'
 import { STORAGE_OPTIONS as storageOptions, isIngredientChanged as isChanged, useIngredientMaster } from '../../features/inventory/useIngredientMaster'
 import { MENU_PAGE_SIZE, qtyUnitOptions } from '../operations/menuManagerShared'
@@ -39,6 +40,7 @@ function IngredientMasterManager() {
                 <h1 className="rd-h1">식자재 관리</h1>
                 <p className="rd-muted">본사 표준 식자재를 관리합니다. 실제로 살 상품 연결은 거래처 재고 관리에서 거래처별로 합니다.</p>
               </div>
+              <DeadlineAlertSlot />
               <div className="rd-page__actions">
                 <button type="button" className="rd-btn" onClick={() => { addRow(); setCurrentPage(1) }}>+ 행 추가</button>
                 <button type="button" className="rd-btn is-primary" disabled={isSaving} onClick={() => void handleSave()}>{isSaving ? '저장 중...' : dirtyCount > 0 ? `저장 (${dirtyCount})` : '저장'}</button>

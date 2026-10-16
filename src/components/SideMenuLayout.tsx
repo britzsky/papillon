@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import './SideMenuLayout.css'
 import logo from '../assets/logo/thefull.png'
 import WorkspaceIcon, { type WorkspaceIconName } from './WorkspaceIcon'
 import DeadlineAlertBanner from './DeadlineAlertBanner'
+import { DeadlineSlotContext } from './deadlineSlot'
 import WorkflowBar from './WorkflowBar'
 import WorkspaceAccountPicker from './WorkspaceAccountPicker'
 import { isHeadquarters, workspaceAccountId } from '../features/workspace/workspaceAccount'
@@ -12,8 +13,6 @@ import { matchesBase } from '../features/workspace/workflow'
 type SideMenuLayoutProps = {
   children: ReactNode
   header?: ReactNode
-  /** 화면이 발주 마감 알림을 직접 자리에 넣을 때(예: 재고 머리 줄) 본문 위 공용 알림을 숨긴다 */
-  hideDeadlineAlert?: boolean
 }
 
 type SubMenuItem = {
@@ -114,10 +113,13 @@ function findActiveMenuKey(pathname: string) {
   return matchedMenu?.key ?? ''
 }
 
-function SideMenuLayout({ children, header, hideDeadlineAlert = false }: SideMenuLayoutProps) {
+function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const [isCollapsed, setIsCollapsed] = useState(false)
+  // 화면 머리 줄에 마감 알림 자리(DeadlineAlertSlot)가 있으면 본문 위 공용 알림은 그리지 않는다
+  const [deadlineSlots, setDeadlineSlots] = useState(0)
+  const registerDeadlineSlot = useCallback((present: boolean) => setDeadlineSlots(count => count + (present ? 1 : -1)), [])
   const [openMenuKeys, setOpenMenuKeys] = useState(() => initialOpenKeys(location.pathname))
 
   useEffect(() => {
@@ -331,7 +333,7 @@ function SideMenuLayout({ children, header, hideDeadlineAlert = false }: SideMen
             </button>
           </div>
         ) : null}
-        <div className="side-layout__content"><WorkflowBar />{hideDeadlineAlert ? null : <DeadlineAlertBanner />}{needsAccountChoice ? <AccountChoiceNotice /> : children}</div>
+        <div className="side-layout__content"><WorkflowBar />{deadlineSlots > 0 ? null : <DeadlineAlertBanner />}<DeadlineSlotContext.Provider value={registerDeadlineSlot}>{needsAccountChoice ? <AccountChoiceNotice /> : children}</DeadlineSlotContext.Provider></div>
       </section>
     </div>
   )

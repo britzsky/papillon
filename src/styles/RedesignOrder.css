@@ -240,12 +240,10 @@ body.workspace-ui > :is(#root, :not(#root)) .rd.rd .pos-card .rd-stepper input {
 .rd .account-inventory-layout { flex: 1 1 0; min-height: 320px; }
 .rd .account-inventory-layout .menu-manager-panel { height: 100% !important; }
 /* 머리 줄 한 줄: 제목 · 발주 마감 알림(약 2/3) · 직접구매·기초재고·이력 (2026-10-16 사용자 요청) */
-.rd .rd-inv__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+.rd .rd-inv__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
 .rd .rd-inv__head > .rd-h1 { flex: none; }
-.rd .rd-inv__head > .deadline-alert { flex: 0 1 66.6%; min-width: 0; margin-right: auto; }
 .rd .rd-inv__actions { display: flex; flex: none; flex-wrap: nowrap; gap: 8px; }
 .rd .rd-inv__actions .rd-btn { white-space: nowrap; }
-@media (max-width: 1280px) { .rd .rd-inv__head { flex-wrap: wrap; } .rd .rd-inv__head > .deadline-alert { order: 3; flex-basis: 100%; } }
 .rd .rd-inv__tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .rd .rd-inv__tile { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px 16px; text-align: left; cursor: pointer; --rd-btn-radius: 14px; --rd-btn-line: var(--rd-line); --button-height: auto; --button-width: 0; }
 .rd .rd-inv__tile-label { --rd-fs: 13px; }
@@ -324,3 +322,8 @@ body.workspace-ui > :is(#root, :not(#root)) .rd.rd .pos-card .rd-stepper input {
 .rd .rd-meals__item { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; text-align: left; cursor: pointer; --rd-btn-radius: 10px; --rd-btn-line: var(--rd-line); --button-height: auto; --button-width: 0; }
 .rd .rd-meals__item.is-selected { --rd-btn-bg: #F2F8F3; --rd-btn-line: var(--rd-green); --rd-btn-hover-bg: #F2F8F3; }
 @media (max-width: 1100px) { .rd .rd-meals__side { max-width: none; } .rd .rd-meals__draft .table-meals-week-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* 발주하기 머리 줄에 발주 마감 알림이 있을 때: 제목·기준 탭·알림·추천/검색을 한 줄에(검색 칸이 줄어든다) */
+.rd.rd-order__head:has(> .deadline-alert.is-inline) > .rd-order__head-right:last-child:not(.deadline-alert) { flex: 1 1 280px; max-width: 440px; flex-wrap: nowrap; min-width: 0; }
+.rd.rd-order__head:has(> .deadline-alert.is-inline) .rd-order__search { flex: 1 1 auto; min-width: 130px; }
+.rd.rd-order__head:has(> .deadline-alert.is-inline) .rd-order__head-right > .rd-btn { flex: none; white-space: nowrap; }

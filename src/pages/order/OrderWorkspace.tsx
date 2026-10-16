@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import HeaderBar from '../../components/HeaderBar'
 import SideMenuLayout from '../../components/SideMenuLayout'
+import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import QuickOrder from './QuickOrder'
 import FoodOrder from './FoodOrder'
 import ProductOrder from './ProductOrder'
@@ -55,6 +56,7 @@ export default function OrderWorkspace({ initialTab }: { initialTab?: OrderTab |
         {BASIS.map(item => <button key={item.key} type="button" role="tab" aria-selected={tab === item.key} className={tab === item.key ? 'is-active' : ''}
           title={TABS.find(t => t.key === item.key)?.hint} onClick={() => select(item.key)}>{item.label}</button>)}
       </div>
+      <DeadlineAlertSlot />
       <div className="rd-order__head-right">
         <button type="button" className={`rd-btn${tab === 'recommended' ? ' is-selected' : ''}`} aria-pressed={tab === 'recommended'} title={TABS[0].hint} onClick={() => select('recommended')}>추천 발주안</button>
         <form className="rd-order__search" role="search" onSubmit={event => { event.preventDefault(); go('products', search.trim() ? { q: search.trim() } : undefined) }}>

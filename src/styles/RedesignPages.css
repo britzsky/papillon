@@ -303,3 +303,9 @@ body.workspace-ui > :is(#root, :not(#root)) .rd.rd-page .rd-page__actions .rd-in
 .rd .rd-account-choice { margin-top: 24px; gap: 12px; }
 .rd .rd-account-choice .workspace-account { margin: 0; }
 .rd .rd-account-choice .workspace-account__pop { right: auto; left: 50%; transform: translateX(-50%); text-align: left; }
+
+/* 머리 줄에 발주 마감 알림이 있을 때: AI 안내는 줄어들며 말줄임(마우스를 올리면 전체), 버튼과 함께 한 줄 */
+.rd.rd-vs .rd-page__head:has(> .deadline-alert.is-inline) > .rd-page__actions { flex: 1 1 360px; flex-wrap: nowrap; justify-content: flex-end; min-width: 0; }
+.rd.rd-vs .rd-page__head:has(> .deadline-alert.is-inline) .rd-vs__ai { flex: 0 1 auto; min-width: 90px; }
+.rd.rd-vs .rd-page__head:has(> .deadline-alert.is-inline) .rd-vs__ai p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rd.rd-vs .rd-page__head:has(> .deadline-alert.is-inline) .rd-page__actions > .rd-btn { flex: none; }

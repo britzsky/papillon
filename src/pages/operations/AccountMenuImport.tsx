@@ -3,6 +3,7 @@ import HeaderBar from '../../components/HeaderBar'
 import AppAlert from '../../components/AppAlert'
 import LoadingScreen from '../../components/LoadingScreen'
 import SideMenuLayout from '../../components/SideMenuLayout'
+import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import MenuThumbnail from './MenuThumbnail'
 import { mealCategoryOptions, mealPlanTypeOptions, menuGubunOptions, menuTypeOptions } from './menuManagerShared'
 import { IMPORT_PAGE_SIZE, useAccountMenuImport } from '../../features/operations/useAccountMenuImport'
@@ -30,6 +31,7 @@ function AccountMenuImport() {
                 <h1 className="rd-h1">본사 메뉴 가져오기</h1>
                 <p className="rd-muted">본사 메뉴는 읽기 전용입니다. 고른 메뉴를 본사 분류·레시피 그대로 거래처 메뉴로 등록합니다.</p>
               </div>
+              <DeadlineAlertSlot />
               <div className="rd-page__actions">
                 <Link className="rd-btn" to={`/operations/account-menu${accountQuery}`}>거래처 메뉴 관리</Link>
               </div>

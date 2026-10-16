@@ -279,5 +279,18 @@ a.rd-tile:hover { border-color: var(--rd-green); }
 .rd.deadline-alert.is-inline .deadline-alert__text strong { --rd-fs: 14px; }
 .rd.deadline-alert.is-inline .deadline-alert__actions { flex: none; flex-wrap: nowrap; }
 .rd.deadline-alert.is-inline .deadline-alert__actions .rd-btn { min-height: 34px; white-space: nowrap; }
-.rd.deadline-alert.is-inline .deadline-alert__groups { position: absolute; z-index: 30; top: calc(100% + 6px); left: 0; right: 0; max-height: 60vh; overflow-y: auto; margin: 0; padding: 10px; border: 1px solid var(--rd-orange-line); border-radius: 14px; background: #fff; box-shadow: 0 12px 32px rgba(0, 0, 0, .14); }
-.rd.deadline-alert.is-inline.is-urgent .deadline-alert__groups { border-color: var(--rd-red-line); }
+.rd.deadline-alert.is-inline .deadline-alert__pop { position: absolute; z-index: 30; top: calc(100% + 6px); left: 0; right: 0; min-width: 420px; max-height: 60vh; overflow-y: auto; padding: 10px; border: 1px solid var(--rd-orange-line); border-radius: 14px; background: #fff; box-shadow: 0 12px 32px rgba(0, 0, 0, .14); }
+.rd.deadline-alert.is-inline.is-urgent .deadline-alert__pop { border-color: var(--rd-red-line); }
+.rd.deadline-alert.is-inline .deadline-alert__tools { display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 8px; }
+.rd.deadline-alert.is-inline .deadline-alert__groups { margin: 0; }
+
+/* 머리 줄에 마감 알림(DeadlineAlertSlot)이 들어간 화면: 제목 · 알림(약 2/3) · 버튼을 한 줄에. 자리가 모자라면 알림이 다음 줄로.
+   제목 밑 설명은 한 줄 말줄임. 대상: 개편 화면 머리 줄 전부(rd-page·재고·식단표·발주하기·발주서·입고·홈) */
+.rd :is(.rd-page__head, .rd-inv__head, .rd-meals__head, .rd-recv__head, .rd-home__head):has(> .deadline-alert.is-inline),
+.rd.rd-order__head:has(> .deadline-alert.is-inline) { flex-wrap: wrap; align-items: center; column-gap: 14px; }
+.rd :is(.rd-page__head, .rd-inv__head, .rd-meals__head, .rd-recv__head, .rd-home__head) > .deadline-alert.is-inline,
+.rd.rd-order__head > .deadline-alert.is-inline { flex: 1 1 320px; max-width: 66.6%; min-width: 0; }
+.rd :is(.rd-page__head, .rd-home__head):has(> .deadline-alert.is-inline) > div:first-child { flex: 0 1 auto; max-width: 32%; }
+.rd :is(.rd-page__head, .rd-home__head):has(> .deadline-alert.is-inline) > div:first-child :is(p, .rd-muted) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rd :is(.rd-page__head, .rd-inv__head, .rd-meals__head, .rd-recv__head, .rd-home__head):has(> .deadline-alert.is-inline) > :last-child:not(.deadline-alert),
+.rd.rd-order__head:has(> .deadline-alert.is-inline) > :last-child:not(.deadline-alert) { flex: none; margin-left: auto; }

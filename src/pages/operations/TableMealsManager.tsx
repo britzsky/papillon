@@ -10,6 +10,7 @@ import { Fragment, useEffect, useState } from 'react'
 import HeaderBar from '../../components/HeaderBar'
 import LoadingScreen from '../../components/LoadingScreen'
 import SideMenuLayout from '../../components/SideMenuLayout'
+import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import AppAlert from '../../components/AppAlert'
 import RecipeActionMenu from '../../components/RecipeActionMenu'
 import RecipeRegisterModal from '../../components/RecipeRegisterModal'
@@ -70,6 +71,7 @@ function TableMealsManager() {
           <div className="rd rd-meals">
           <header className="rd-meals__head">
             <div className="rd-meals__title"><h1 className="rd-h1">식단표 관리</h1>{selectedAccountName ? <span className="rd-chip is-ok">{selectedAccountName}</span> : null}</div>
+            <DeadlineAlertSlot />
             <div className="rd-meals__actions">
 
               <button type="button" className="table-meals-upload-button" onClick={handleUploadClick} title="식단표 PDF의 글자를 읽어 요일·식사별로 불러옵니다(파일은 서버에 저장하지 않음)">

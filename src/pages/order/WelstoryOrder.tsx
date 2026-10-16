@@ -1,5 +1,6 @@
 import HeaderBar from '../../components/HeaderBar'
 import SideMenuLayout from '../../components/SideMenuLayout'
+import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import ProductImage from '../../components/ProductImage'
 import { Link } from 'react-router-dom'
 import './WelstoryOrder.css'
@@ -15,6 +16,7 @@ function WelstoryOrder() {
         <h1 className="rd-h1">웰스토리 원문 조회</h1>
         <p className="rd-muted">웰스토리가 보내 준 상품·주문·입고·반품 원문을 그대로 봅니다. 주문은 발주하기에서 합니다.</p>
       </div>
+      <DeadlineAlertSlot />
       <div className="rd-page__actions">
         <Link className="rd-btn" to="/order_manager/order">발주하기로 이동</Link>
       </div>

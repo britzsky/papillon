@@ -1,6 +1,7 @@
 ﻿import { Link } from 'react-router-dom'
 import HeaderBar from '../../components/HeaderBar'
 import SideMenuLayout from '../../components/SideMenuLayout'
+import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import order from '../../assets/image/icons8-order-100-Photoroom.png'
 import hygiene from '../../assets/image/icons8-hygiene-64-Photoroom.png'
 import operation from '../../assets/image/icons8-capability-64-Photoroom.png'
@@ -58,6 +59,7 @@ function OrderManager() {
               <h1 className="rd-h1">발주 관리</h1>
               <p className="rd-muted">발주·발주서·공급사 연동 화면으로 이동합니다.</p>
             </div>
+            <DeadlineAlertSlot />
           </header>
           <section className="order-manager-grid" aria-label="발주 관리 메뉴">
             {orderMenus.map((menu) => {

@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import HeaderBar from '../../components/HeaderBar'
 import SideMenuLayout from '../../components/SideMenuLayout'
+import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import type { InventoryMovement } from '../../api/inventory'
 import {
   HISTORY_PAGE_SIZE as PAGE_SIZE, TYPE_META, TYPE_TABS, historyQty as qty, historyWon as won, movementTime, referenceText, shortDate, signed, useInventoryHistory,
@@ -41,6 +42,7 @@ export default function InventoryHistory() {
                 <h1 className="rd-h1">재고 변동 이력</h1>
                 <p className="rd-muted">입고·사용·조정·폐기로 재고가 언제 얼마나 바뀌었는지 봅니다. 상품 이름을 누르면 그 상품 이력만 봅니다.</p>
               </div>
+              <DeadlineAlertSlot />
               <div className="rd-page__actions">
                 {accountId ? <Link className="rd-btn" to={`/inventory/account?${new URLSearchParams({ account_id: accountId })}`}>재고 화면</Link> : null}
               </div>

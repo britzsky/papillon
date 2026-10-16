@@ -1,5 +1,6 @@
 import HeaderBar from '../../components/HeaderBar'
 import SideMenuLayout from '../../components/SideMenuLayout'
+import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import LoadingScreen from '../../components/LoadingScreen'
 import { SITE_SUPPLIERS as SUPPLIERS, rankSites as rank, siteLabel, useSiteMapping } from '../../features/order/useSiteMapping'
 import './SupplierIntegrationDashboard.css'
@@ -20,6 +21,7 @@ export default function SupplierSiteMapping() {
         <h1 className="rd-h1">공급사 사업장 매핑</h1>
         <p className="rd-muted">거래처마다 공급사별 사업장을 한 번 지정하면 상품 연결·판가 동기화·발주가 이 사업장 코드로 처리됩니다. 비슷한 이름 후보는 위에 보이지만 자동 저장하지 않습니다.</p>
       </div>
+      <DeadlineAlertSlot />
       <div className="rd-page__actions">
         {SUPPLIERS.map(({ code, label }) => <button type="button" className="rd-btn" key={code} disabled={busy} onClick={() => void sync(code)}>{label} 사업장 목록 갱신</button>)}
       </div>

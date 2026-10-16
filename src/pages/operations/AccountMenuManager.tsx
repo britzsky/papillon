@@ -5,6 +5,7 @@ import HeaderBar from '../../components/HeaderBar'
 import AppAlert from '../../components/AppAlert'
 import LoadingScreen from '../../components/LoadingScreen'
 import SideMenuLayout from '../../components/SideMenuLayout'
+import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import RecipeActionMenu from '../../components/RecipeActionMenu'
 import RecipeRegisterModal from '../../components/RecipeRegisterModal'
 import RecipeViewModal from '../../components/RecipeViewModal'
@@ -56,6 +57,7 @@ function AccountMenuManager() {
                 <h1 className="rd-h1">거래처 메뉴 관리</h1>
                 <p className="rd-muted">거래처에 등록된 메뉴의 분류·레시피·원가를 거래처 기준으로 고칩니다. 본사 메뉴는 바뀌지 않습니다.</p>
               </div>
+              <DeadlineAlertSlot />
               <div className="rd-page__actions">
                 <Link className="rd-btn" to={importLink}>+ 본사 메뉴 가져오기</Link>
                 <button type="button" className="rd-btn" onClick={() => void handleOpenFavoriteIngredientModal()} disabled={isSaving}>나만의 식자재</button>

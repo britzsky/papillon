@@ -4,6 +4,7 @@ import HeaderBar from '../../components/HeaderBar'
 import AppAlert from '../../components/AppAlert'
 import LoadingScreen from '../../components/LoadingScreen'
 import SideMenuLayout from '../../components/SideMenuLayout'
+import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import RecipeActionMenu from '../../components/RecipeActionMenu'
 import RecipeRegisterModal from '../../components/RecipeRegisterModal'
 import RecipeViewModal from '../../components/RecipeViewModal'
@@ -39,6 +40,7 @@ function MenuManager() {
               <h1 className="rd-h1">메뉴 관리</h1>
               <p className="rd-muted">본사 메뉴 마스터와 본사 레시피를 관리합니다. 거래처로 옮기는 일은 '본사 메뉴 가져오기'에서 합니다.</p>
             </div>
+            <DeadlineAlertSlot />
             <div className="rd-page__actions">
               <Link className="rd-btn" to="/operations/account-menu/import">본사 메뉴 가져오기</Link>
               <button type="button" className="rd-btn" onClick={handleAddRow}>+ 메뉴 추가</button>

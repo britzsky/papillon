@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import HeaderBar from '../../components/HeaderBar'
 import LoadingScreen from '../../components/LoadingScreen'
 import SideMenuLayout from '../../components/SideMenuLayout'
+import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import { useSearchParams } from 'react-router-dom'
 import { workspaceAccountId } from '../../features/workspace/workspaceAccount'
 import { getAccountOptions, type AccountOption } from '../../api/operations'
@@ -31,6 +32,7 @@ function AccountManager() {
             <h1 className="rd-h1">고객사 관리</h1>
             <p className="rd-muted">{accountName ? `${accountName}에서 제공하는 식사와 기본 식사 구성을 정합니다.` : "머리 줄의 '관리 거래처'에서 고객사를 고르면 식사구분을 설정할 수 있습니다."}</p>
           </div>
+          <DeadlineAlertSlot />
           <div className="rd-page__actions">
             <button type="button" className="rd-btn is-primary" onClick={() => void save()} disabled={!accountId || loading || saving}>
               {saving ? '저장 중' : '저장'}

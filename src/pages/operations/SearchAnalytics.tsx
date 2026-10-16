@@ -1,5 +1,6 @@
 import HeaderBar from '../../components/HeaderBar'
 import SideMenuLayout from '../../components/SideMenuLayout'
+import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import { INTENT_NAMES, useSearchDashboard } from '../../features/operations/useSearchDashboard'
 import './SearchAnalytics.css'
 
@@ -17,6 +18,7 @@ function SearchAnalytics() {
           <h1 className="rd-h1">검색어 관리</h1>
           <p className="rd-muted">고객이 무엇을 찾고, 어떤 검색에서 결과를 얻지 못했는지 확인합니다.</p>
         </div>
+        <DeadlineAlertSlot />
         <div className="rd-page__actions">
           <div className="rd-seg" role="group" aria-label="조회 기간">
             {[7, 30, 90].map((value) => <button type="button" key={value} className={days === value ? 'is-active' : ''} onClick={() => setDays(value)}>최근 {value}일</button>)}

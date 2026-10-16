@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import HeaderBar from '../../components/HeaderBar'
 import SideMenuLayout from '../../components/SideMenuLayout'
+import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import LoadingScreen from '../../components/LoadingScreen'
 import { useWelstoryWorkspace } from '../../features/order/useWelstoryWorkspace'
 import { useOurhomeSite } from '../../features/order/useOurhomeSite'
@@ -82,6 +83,7 @@ function SupplierWorkspace({ accountId }: { accountId: string }) {
         <h1 className="rd-h1">공급사 통합 연동</h1>
         <p className="rd-muted">공급사 사업장·상품·판가·입고를 받아 오고, 동기화 결과를 확인합니다.</p>
       </div>
+      <DeadlineAlertSlot />
       <div className="rd-page__actions">
         <nav className="rd-seg" aria-label="공급사 선택">
           {Object.entries(SUPPLIER_NAMES).map(([code, name]) => <button type="button" key={code} className={supplier === code ? 'is-active' : ''} aria-pressed={supplier === code} onClick={() => setSupplier(code)}>{name}</button>)}

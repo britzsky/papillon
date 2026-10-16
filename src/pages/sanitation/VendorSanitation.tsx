@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import AppAlert, { type AppAlertState } from '../../components/AppAlert'
 import HeaderBar from '../../components/HeaderBar'
 import SideMenuLayout from '../../components/SideMenuLayout'
+import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import SanitationCategoryModal from './SanitationCategoryModal'
 import './VendorSanitation.css'
 import {
@@ -130,6 +131,7 @@ function VendorSanitation() {
                 <h1 className="rd-h1">위생 점검 관리</h1>
                 <p className="rd-muted">거래처별 조치 전 · 조치 후 사진으로 위생 상태를 확인합니다.</p>
               </div>
+              <DeadlineAlertSlot />
               <div className="rd-page__actions">
                 <div className="vs-ai-banner rd-vs__ai"><span className="rd-chip is-info">AI</span><p>{aiNoteMessage || '조치 전 사진과 전달 메모를 기준으로 조치 요청 문구를 자동 생성하고, 담당자가 수정할 수 있습니다.'}</p></div>
                 <button type="button" className="rd-btn" onClick={() => setCategoryModal(true)} disabled={!accountId}>카테고리 관리</button>

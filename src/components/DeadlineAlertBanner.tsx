@@ -22,7 +22,7 @@ const orderLink = deadlineOrderPath
 /**
  * 발주 마감 알림. 마감 5시간 전부터 화면 상단에 표시하고, 브라우저 알림을 켜면 5·4·3·2·1시간, 30분 전에 한 번씩 알린다.
  * 발주를 마치면 서버 부족량에서 빠져 사라지고, '오늘 안 함'을 누르면 그날은 표시·알림을 멈춘다.
- * inline: 화면 머리 줄 안에 한 줄로(글이 길면 말줄임), '품목 보기'는 아래로 떠서 화면을 밀지 않는다.
+ * inline(DeadlineAlertSlot): 화면 머리 줄 안에 한 줄로(글이 길면 말줄임). '품목 보기'를 누르면 알림 켜기·오늘 안 함과 품목 목록이 아래로 떠서 화면을 밀지 않는다.
  */
 export default function DeadlineAlertBanner({ inline = false }: { inline?: boolean } = {}) {
   const location = useLocation()
@@ -90,6 +90,12 @@ export default function DeadlineAlertBanner({ inline = false }: { inline?: boole
   const names = visible.flatMap(({ alert }) => alert.items.map(item => item.ingredient_name))
   const nameText = names.slice(0, 4).join(', ') + (names.length > 4 ? ` 외 ${names.length - 4}개` : '')
 
+  // 머리 줄 안(inline)에서는 자리를 아끼려 '브라우저 알림 켜기'·'오늘 안 함'을 '품목 보기' 펼침 안으로 옮긴다
+  const secondary = <>
+    {permission === 'default' ? <button type="button" className="rd-btn is-ghost" onClick={() => void Notification.requestPermission().then(setPermission)}>브라우저 알림 켜기</button> : null}
+    <button type="button" className="rd-btn is-ghost" onClick={() => { write(snoozeKey, '1'); setSnoozed(true) }}>오늘 안 함</button>
+  </>
+
   return <section className={`rd deadline-alert${urgent ? ' is-urgent' : ''}${inline ? ' is-inline' : ''}`} role="status" aria-live="polite" aria-label="발주 마감 알림">
     <div className="deadline-alert__summary">
       <div className="deadline-alert__clock"><small>마감까지</small><strong>{clock}</strong></div>
@@ -100,11 +106,12 @@ export default function DeadlineAlertBanner({ inline = false }: { inline?: boole
       <div className="deadline-alert__actions">
         <button type="button" className="rd-btn is-primary" onClick={() => navigate(orderLink(accountId, first.alert))}>{itemCount}개 바로 발주</button>
         <button type="button" className="rd-btn is-ghost" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>{expanded ? '접기' : '품목 보기'}</button>
-        {permission === 'default' ? <button type="button" className="rd-btn is-ghost" onClick={() => void Notification.requestPermission().then(setPermission)}>브라우저 알림 켜기</button> : null}
-        <button type="button" className="rd-btn is-ghost" onClick={() => { write(snoozeKey, '1'); setSnoozed(true) }}>오늘 안 함</button>
+        {inline ? null : secondary}
       </div>
     </div>
-    {expanded ? <ul className="deadline-alert__groups">
+    {expanded ? <div className={inline ? 'deadline-alert__pop' : undefined}>
+    {inline ? <div className="deadline-alert__tools">{secondary}</div> : null}
+    <ul className="deadline-alert__groups">
       {visible.map(({ alert, minutes }) => <li key={alert.alert_key}>
         <div><strong>{alert.supplier_name} · {alert.external_site_name || alert.external_site_code}</strong>
           <span>{alert.deadline.replace('T', ' ')} 마감 ({remainingLabel(minutes)}) · {alert.delivery_date} 납품 · {alert.rule}</span>
@@ -113,6 +120,6 @@ export default function DeadlineAlertBanner({ inline = false }: { inline?: boole
           {item.ingredient_name} <small>{item.product_name} · 부족 {Number(item.shortage_qty).toLocaleString('ko-KR', { maximumFractionDigits: 3 })}{item.base_unit}
             {item.late ? ` · 필요일 ${item.needed_by}보다 늦은 납품` : ` · ${item.needed_by} 필요`}</small></li>)}</ul>
       </li>)}
-    </ul> : null}
+    </ul></div> : null}
   </section>
 }
