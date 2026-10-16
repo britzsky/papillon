@@ -129,7 +129,6 @@ function VendorSanitation() {
             <header className="rd-page__head">
               <div>
                 <h1 className="rd-sr-only">위생 점검 관리</h1>
-                <p className="rd-muted">거래처별 조치 전 · 조치 후 사진으로 위생 상태를 확인합니다.</p>
               </div>
               <DeadlineAlertSlot />
               <div className="rd-page__actions">
@@ -160,9 +159,7 @@ function VendorSanitation() {
               </label>
             </section>
 
-
             <section className="vs-list" aria-label="점검 항목">
-              <div className="vs-list__head"><h2 className="rd-h2">점검 항목 <span className="rd-chip is-done">{categories.length}개 카테고리</span></h2><small className="rd-muted">조치 전 → 조치 후 비교 · 사진 4:3 비율, 최대 {MAX_PHOTOS}장 · 미리보기는 잘려 보이고 누르면 원본 전체를 봅니다</small></div>
               {visibleCategories.map(category => <SanitationCard key={category.id} category={category} item={itemOf(category.id)} board={board} />)}
               {!visibleCategories.length ? <p className="vs-empty">{categories.length ? '선택한 조건에 해당하는 점검 항목이 없습니다.' : '카테고리가 없습니다. 카테고리 관리에서 추가해주세요.'}</p> : null}
             </section>
