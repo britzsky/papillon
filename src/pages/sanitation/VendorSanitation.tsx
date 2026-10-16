@@ -140,6 +140,10 @@ function VendorSanitation() {
             </header>
 
             <section className="rd-card rd-page__filters">
+              <div className="rd-pills rd-vs__cats" role="group" aria-label="카테고리">
+                <button type="button" className={!categoryFilter ? 'is-active' : ''} aria-pressed={!categoryFilter} onClick={() => setCategoryFilter('')}>전체</button>
+                {categories.map(category => <button type="button" key={category.id} className={categoryFilter === category.id ? 'is-active' : ''} aria-pressed={categoryFilter === category.id} onClick={() => setCategoryFilter(category.id)}>{category.name}</button>)}
+              </div>
               <label className="rd-vs__field"><span>거래처</span>
                 <select className="rd-input" value={accountId} onChange={event => { setAccountId(event.target.value); setCategoryFilter('') }}>
                   {!accounts.length ? <option value={accountId}>{accountName || '거래처 불러오는 중'}</option> : null}
@@ -158,17 +162,11 @@ function VendorSanitation() {
                   {(Object.keys(STATUS_LABEL) as SanitationStatus[]).map(key => <option key={key} value={key}>{STATUS_LABEL[key]}</option>)}
                 </select>
               </label>
-              <span className="rd-vs__guide"><strong>사진 4:3 비율 · 최대 {MAX_PHOTOS}장</strong><small className="rd-muted">미리보기는 잘려 보이고, 누르면 원본 전체를 봅니다</small></span>
             </section>
-
-            <div className="rd-pills" role="group" aria-label="카테고리">
-              <button type="button" className={!categoryFilter ? 'is-active' : ''} aria-pressed={!categoryFilter} onClick={() => setCategoryFilter('')}>전체</button>
-              {categories.map(category => <button type="button" key={category.id} className={categoryFilter === category.id ? 'is-active' : ''} aria-pressed={categoryFilter === category.id} onClick={() => setCategoryFilter(category.id)}>{category.name}</button>)}
-            </div>
 
 
             <section className="vs-list" aria-label="점검 항목">
-              <div className="vs-list__head"><h2 className="rd-h2">점검 항목 <span className="rd-chip is-done">{categories.length}개 카테고리</span></h2><small className="rd-muted">조치 전 → 조치 후 비교 중심 보기</small></div>
+              <div className="vs-list__head"><h2 className="rd-h2">점검 항목 <span className="rd-chip is-done">{categories.length}개 카테고리</span></h2><small className="rd-muted">조치 전 → 조치 후 비교 · 사진 4:3 비율, 최대 {MAX_PHOTOS}장 · 미리보기는 잘려 보이고 누르면 원본 전체를 봅니다</small></div>
               {visibleCategories.map(category => <SanitationCard key={category.id} category={category} item={itemOf(category.id)} board={board} />)}
               {!visibleCategories.length ? <p className="vs-empty">{categories.length ? '선택한 조건에 해당하는 점검 항목이 없습니다.' : '카테고리가 없습니다. 카테고리 관리에서 추가해주세요.'}</p> : null}
             </section>

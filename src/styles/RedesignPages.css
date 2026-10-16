@@ -267,8 +267,10 @@ body.workspace-ui > :is(#root, :not(#root)) .rd.rd-page .rd-page__actions .rd-in
 .rd .rd-am__product { min-width: 220px; }
 @media (max-width: 1919px) { .rd .rd-am .rd-am__list .rd-page__scroll { max-height: 380px; min-height: 0; } .rd .rd-am .rd-am__detail .rd-page__scroll { max-height: none; } }
 /* 위생 점검: AI 안내는 머리 줄 버튼 왼쪽, 거르기 이름은 입력칸 왼쪽(같은 줄) — 2026-10-16 사용자 요청 */
-.rd.rd-vs .rd-vs__ai { display: flex; align-items: center; gap: 8px; max-width: 460px; margin: 0; padding: 8px 12px; border: 1px solid #C9DCF2; border-radius: 12px; background: var(--rd-blue-soft); }
+.rd.rd-vs .rd-vs__ai { display: flex; align-items: center; gap: 8px; max-width: 530px; margin: 0; padding: 8px 12px; border: 1px solid #C9DCF2; border-radius: 12px; background: var(--rd-blue-soft); }
 .rd.rd-vs .rd-vs__ai p { margin: 0; --rd-fs: 12px; line-height: 1.4; }
 .rd.rd-vs .rd-page__filters label.rd-vs__field { flex-direction: row; align-items: center; gap: 8px; }
 .rd.rd-vs .rd-vs__field > span { flex: none; font-weight: 700; color: var(--rd-soft-ink); }
 .rd.rd-vs .rd-vs__ai p { color: var(--rd-blue-ink); }
+/* 위생 점검: 카테고리 알약을 조회조건 왼쪽에(같은 카드) — 2026-10-16 사용자 요청 */
+.rd.rd-vs .rd-vs__cats { padding-right: 12px; margin-right: 4px; border-right: 1px solid var(--rd-line); }
