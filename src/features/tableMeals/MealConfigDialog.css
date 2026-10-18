@@ -1,0 +1,43 @@
+.meal-config-backdrop { position: fixed; inset: 0; z-index: 1300; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(15, 23, 42, .42); }
+.meal-config { width: min(860px, 100%); max-height: calc(100vh - 48px); display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: #fff; color: #0f172a; box-shadow: 0 28px 60px rgba(15, 23, 42, .28); }
+.meal-config__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 16px 20px; border-bottom: 1px solid #e2e8f0; }
+.meal-config__head h2 { margin: 0; font-size: 18px; }
+.meal-config__head p { margin: 4px 0 0; color: #64748b; font-size: 13px; }
+.meal-config__type { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; text-align: right; }
+.meal-config__type strong { color: #166534; font-size: 14px; }
+.meal-config__type small { margin-top: 2px; color: #64748b; font-size: 11px; }
+.meal-config__body { flex: 1; overflow: auto; padding: 16px 20px; }
+.meal-config__body h3 { margin: 0 0 8px; font-size: 14px; }
+.meal-config__body h3 small { margin-left: 6px; color: #64748b; font-size: 12px; font-weight: 400; }
+.meal-config__body h3 + * { margin-bottom: 18px; }
+.meal-config__slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.meal-config__slot { display: flex; align-items: stretch; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; overflow: hidden; }
+.meal-config__slot.is-selected { border: 2px solid #166534; background: #f0fdf4; }
+.meal-config__slot-main { flex: 1; min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 0; background: transparent; font: inherit; text-align: left; cursor: pointer; }
+.meal-config__num { width: 22px; height: 22px; flex-shrink: 0; display: grid; place-items: center; border: 1px solid #94a3b8; border-radius: 6px; background: #fff; color: #fff; font-size: 12px; font-weight: 700; }
+.meal-config__slot.is-selected .meal-config__num { border-color: #166534; background: #166534; }
+.meal-config__order { display: flex; flex-direction: column; border-left: 1px solid #bbf7d0; }
+.meal-config__order button { flex: 1; width: 32px; border: 0; background: transparent; color: #166534; font-size: 11px; cursor: pointer; }
+.meal-config__order button + button { border-top: 1px solid #bbf7d0; }
+.meal-config__order button:disabled { color: #cbd5e1; cursor: default; }
+.meal-config__table-scroll { overflow-x: auto; }
+.meal-config__table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.meal-config__table th, .meal-config__table td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: middle; }
+.meal-config__table thead th { color: #475569; font-size: 12px; background: #f8fafc; }
+.meal-config__table select { height: 34px; min-width: 110px; padding: 0 8px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; font: inherit; }
+.meal-config__table .is-num { text-align: right; white-space: nowrap; }
+.meal-config__table td.is-num strong { display: block; color: #166534; }
+.meal-config__table td.is-num small { color: #64748b; font-size: 11px; }
+.meal-config__empty { margin: 0; padding: 16px; color: #64748b; text-align: center; }
+.meal-config__message { margin: 0; padding: 10px 12px; border-radius: 8px; background: #f0fdf4; color: #166534; font-size: 13px; }
+.meal-config__message.is-error { background: #fef2f2; color: #b91c1c; }
+.meal-config__actions { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid #e2e8f0; }
+.meal-config__button { min-width: 80px; height: 40px; padding: 0 16px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; color: #0f172a; font: inherit; font-weight: 700; cursor: pointer; }
+.meal-config__button.is-primary { border: 0; background: #166534; color: #fff; }
+.meal-config__button:disabled { opacity: .5; cursor: default; }
+@media (max-width: 640px) {
+  .meal-config-backdrop { padding: 0; align-items: flex-end; }
+  .meal-config { max-height: 92vh; border-radius: 16px 16px 0 0; }
+  .meal-config__head { flex-direction: column; }
+  .meal-config__type { align-items: flex-start; text-align: left; }
+}

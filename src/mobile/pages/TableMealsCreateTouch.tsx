@@ -4,6 +4,7 @@ import TouchIcon, { type TouchIconName } from '../TouchIcon'
 import MealCalories from '../../features/tableMeals/MealCalories'
 import MealPlanImpact from '../../components/MealPlanImpact'
 import PdfMenuRegisterModal from '../../pages/operations/PdfMenuRegisterModal'
+import MealConfigDialog from '../../features/tableMeals/MealConfigDialog'
 import { mealPlanTypeOptions } from '../../pages/operations/menuManagerShared'
 import { formatQty } from '../../utils/formatQty'
 import { formatDateValue } from '../../features/tableMeals/tableMealsView'
@@ -29,6 +30,7 @@ export default function TableMealsCreateTouch({ onClose }: { onClose: () => void
   void _restored
   const [method, setMethod] = useState<Method>('auto')
   const [weeklyOpen, setWeeklyOpen] = useState(false)
+  const [mealConfigOpen, setMealConfigOpen] = useState(false)
   const [y, mo] = w.selectedTableMonth.split('-').map(Number)
   const shiftMonth = (delta: number) => { const d = new Date(y, mo - 1 + delta, 1); w.setSelectedTableMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`) }
   const ready = Boolean(w.selectedAccountId) && Number(w.plannedServings) > 0
@@ -58,7 +60,10 @@ export default function TableMealsCreateTouch({ onClose }: { onClose: () => void
         <span>주간 식사 편성 · {Object.keys(w.weeklyMealSettings).length > 0 ? `기본값에서 ${Object.keys(w.weeklyMealSettings).length}개 바꿈` : '고객사 기본값'}</span>
         <button type="button" className="t-btn is-small is-soft" onClick={() => setWeeklyOpen(true)}>편성 바꾸기</button>
       </div>}
-      {w.selectedAccountId && w.configuredMealSlotRows.length === 0 && <p className="t-msg is-warn">고객사 관리에서 제공할 식사를 먼저 정해 주세요.</p>}
+      {w.selectedAccountId && <div className="tc-weekly">
+        <span>식사 구성 · {w.configuredMealSlotRows.length > 0 ? w.configuredMealSlotRows.map(slot => slot.label).join(' · ') : '아직 정하지 않음 — 제공할 식사를 먼저 정해 주세요'}</span>
+        <button type="button" className="t-btn is-small is-soft" onClick={() => setMealConfigOpen(true)}>식사 구성</button>
+      </div>}
     </section>
 
     {!w.selectedAccountId && <p className="t-msg">위에서 거래처를 고르세요.</p>}
@@ -100,6 +105,7 @@ export default function TableMealsCreateTouch({ onClose }: { onClose: () => void
     </section>}
 
     {weeklyOpen && w.selectedAutoWeek && <WeeklySheet w={w} onClose={() => setWeeklyOpen(false)} />}
+    {mealConfigOpen && <MealConfigDialog accountId={w.selectedAccountId} accountName={w.selectedAccountName} onClose={() => setMealConfigOpen(false)} onSaved={w.reloadMealConfiguration} />}
     {w.registerTarget && <PdfMenuRegisterModal accountId={w.selectedAccountId} accountName={w.selectedAccountName} pdfText={w.registerTarget.text} context={w.registerTarget.context}
       slotCode={w.registerTarget.slotCode} mealPlanType={w.selectedMealPlanType} accountMenus={w.accountMenuItems} onClose={() => w.setRegisterTarget(null)} onLinked={w.handleRegisteredMenu} />}
     <StockCheckSheet w={w} />

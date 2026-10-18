@@ -94,10 +94,11 @@ export function useAccountMealConfig(accountId: string) {
     return a.display_order - b.display_order
   })
 
+  /** 저장 성공이면 true */
   const save = async () => {
     if (!accountId || current.selectedCodes.length === 0) {
       setMessage('고객사와 하나 이상의 식사구분을 선택해 주세요.')
-      return
+      return false
     }
     setSaving(true)
     setMessage('')
@@ -115,8 +116,10 @@ export function useAccountMealConfig(accountId: string) {
       const refreshed = await getAccountMealConfiguration(accountId)
       edit({ configuration: refreshed, profiles: Object.fromEntries(refreshed.profiles.map((profile) => [profile.meal_slot_code, profile])) })
       setMessage('급식형식과 기본 식사 구성을 함께 저장했습니다.')
+      return true
     } catch (error) {
       setMessage(error instanceof Error ? error.message : '저장에 실패했습니다.')
+      return false
     } finally {
       setSaving(false)
     }

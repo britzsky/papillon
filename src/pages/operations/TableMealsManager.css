@@ -1462,8 +1462,8 @@
     display: none !important;
   }
 }
-.table-meals-weekly-summary { min-height: 48px; margin: 8px 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 7px 12px; border: 1px solid #b8c7d4; background: #f5f9fc; }
-.table-meals-weekly-summary > div { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.table-meals-weekly-summary { min-height: 48px; margin: 8px 0; display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 7px 12px; border: 1px solid #b8c7d4; background: #f5f9fc; }
+.table-meals-weekly-summary > div { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0; }
 .table-meals-weekly-summary strong { color: #244661; font-size: 13px; white-space: nowrap; }
 .table-meals-weekly-summary span { color: #6a7b8c; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .table-meals-weekly-summary button { min-height: 32px; flex: 0 0 auto; border: 1px solid #3777a8; background: #fff; color: #245e91; padding: 0 13px; font-weight: 700; cursor: pointer; }

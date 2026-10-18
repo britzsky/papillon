@@ -4,7 +4,7 @@ import { buildApiUrl } from '../../config/api'
 import { parseMealTable, WEEKDAYS, type ParsedMealTable, type PdfTextItem } from '../../pages/operations/pdfMealParser'
 import { getMenuAliases, saveMenuAliases, type MenuAlias } from '../../api/menuAliases'
 import { getShortages, type ShortageResult, type ShortageCriteria } from '../../api/shortageProcurement'
-import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist'
 import { type AppAlertState } from '../../components/AppAlert'
@@ -613,6 +613,9 @@ export function useTableMealsWorkspace() {
   const [accountOptions, setAccountOptions] = useState<AccountOption[]>([])
   const [accountMealSlots, setAccountMealSlots] = useState<AccountMealSlot[]>([])
   const [accountMealConfiguration, setAccountMealConfiguration] = useState<AccountMealConfiguration | null>(null)
+  // 식단표 화면에서 식사 구성을 저장하면 올려서 식사 구분·기본 구성을 다시 불러온다
+  const [mealConfigRevision, setMealConfigRevision] = useState(0)
+  const reloadMealConfiguration = useCallback(() => setMealConfigRevision(value => value + 1), [])
   const [weeklyMealSettings, setWeeklyMealSettings] = useState<WeeklyMealSettings>({})
   const [isWeeklySettingsOpen, setIsWeeklySettingsOpen] = useState(false)
   const [accountError, setAccountError] = useState('')
@@ -930,7 +933,7 @@ export function useTableMealsWorkspace() {
       })
 
     return () => { isMounted = false }
-  }, [selectedAccountId])
+  }, [selectedAccountId, mealConfigRevision])
 
   useEffect(() => {
     try {
@@ -1313,7 +1316,7 @@ export function useTableMealsWorkspace() {
     if (!parsedPdfResult) return
     setPdfLinkMessage('')
     if (!selectedAccountId || !selectedAutoWeek) { setPdfLinkMessage('식단을 넣을 거래처와 주차를 먼저 선택해주세요.'); return }
-    if (configuredMealSlotRows.length === 0) { setPdfLinkMessage('고객사 관리에서 제공할 식사구분을 먼저 설정해 주세요.'); return }
+    if (configuredMealSlotRows.length === 0) { setPdfLinkMessage("'식사 구성'에서 제공할 식사구분을 먼저 설정해 주세요."); return }
     // PDF에 연도까지 적힌 날짜가 있으면 선택한 주차와 같은 주인지 확인한다(다른 주에 저장되는 실수 방지)
     const weekDates = selectedAutoWeek.dates.map(formatDateValue)
     const pdfDates = parsedPdfResult.days.map(day => day.date).filter(date => /^\d{4}-/.test(date)).sort()
@@ -1479,7 +1482,7 @@ export function useTableMealsWorkspace() {
       setAccountMenuItems(items)
       setMealEditorSource('manual')
       if (configuredMealSlotRows.length === 0) {
-        setManualMessage('고객사 관리에서 제공할 식사구분을 먼저 설정해 주세요.')
+        setManualMessage("'식사 구성'에서 제공할 식사구분을 먼저 설정해 주세요.")
         return
       }
       setManualDays(createConfiguredManualTableMealsDays(selectedAutoWeek, configuredMealSlotRows))
@@ -1715,7 +1718,7 @@ export function useTableMealsWorkspace() {
     }
 
     if (configuredMealSlotRows.length === 0) {
-      setAutoGenerateMessage('고객사 관리에서 제공할 식사구분을 먼저 설정해 주세요.')
+      setAutoGenerateMessage("'식사 구성'에서 제공할 식사구분을 먼저 설정해 주세요.")
       return
     }
 
@@ -1854,5 +1857,5 @@ export function useTableMealsWorkspace() {
       })),
   })
 
-  return { pdfMenuOverrides, setPdfMenuOverrides, menuAliases, setMenuAliases, rememberPdfLinks, setRememberPdfLinks, pdfLinkMessage, setPdfLinkMessage, navigate, searchParams, initialAccountId, fileInputRef, selectedAccountId, setSelectedAccountId, selectedTableMonth, setSelectedTableMonth, selectedMealPlanType, setSelectedMealPlanType, accountOptions, setAccountOptions, accountMealSlots, setAccountMealSlots, accountMealConfiguration, setAccountMealConfiguration, weeklyMealSettings, setWeeklyMealSettings, isWeeklySettingsOpen, setIsWeeklySettingsOpen, accountError, setAccountError, tableMeals, setTableMeals, setMenuItems, accountMenuItems, setAccountMenuItems, menuError, setMenuError, accountMenuError, setAccountMenuError, tableError, setTableError, isTableLoading, setIsTableLoading, isAccountMenuLoading, setIsAccountMenuLoading, isPdfParsing, setIsPdfParsing, pdfError, setPdfError, uploadedFileName, setUploadedFileName, pdfText, setPdfText, registerTarget, setRegisterTarget, originRevision, setOriginRevision, selectedTableMeal, setSelectedTableMeal, tableMealDetailItems, setTableMealDetailItems, tableMealDetailError, setTableMealDetailError, isTableMealDetailLoading, setIsTableMealDetailLoading, selectedDetailMenu, setSelectedDetailMenu, detailItems, setDetailItems, menuShortageById, setMenuShortageById, tableMealShortageById, setTableMealShortageById, detailError, setDetailError, isDetailLoading, setIsDetailLoading, recipeMenuState, setRecipeMenuState, recipeViewRequest, setRecipeViewRequest, recipeViewMode, setRecipeViewMode, recipeRegisterRequest, setRecipeRegisterRequest, aiMatchMessage, setAiMatchMessage, aiMatchedMenuIdsByText, setAiMatchedMenuIdsByText, isAiMatching, setIsAiMatching, autoWeekValue, setAutoWeekValue, autoGeneratedResult, setAutoGeneratedResult, autoGenerateMessage, setAutoGenerateMessage, isTableSaving, setIsTableSaving, tableSaveMessage, setTableSaveMessage, plannedServings, setPlannedServings, draftSessionAccount, setDraftSessionAccount, restoredSettings, savedStockCheck, setSavedStockCheck, persistPlan, saveAndOrder, saveCurrentAndOrder, createDraftCriteria, preparePlan, isManualEditorOpen, setIsManualEditorOpen, mealEditorSource, setMealEditorSource, manualDays, setManualDays, manualEveningSnackItems, setManualEveningSnackItems, manualTarget, setManualTarget, manualSearchText, setManualSearchText, manualFoodTypeFilter, setManualFoodTypeFilter, manualMenuTypeFilter, setManualMenuTypeFilter, manualMessage, setManualMessage, alert, setAlert, rawParsedResult, parsedPdfResult, updateWeeklyMealSetting, currentMonthWeeks, selectedAutoWeek, displayedMealResult, displayedMenuIds, selectedAccountName, configuredMealSlotRows, selectedTableMonthParts, matchedCount, tableMealDetailDays, manualSelectedDay, filteredManualMenus, closeAlert, handleUploadClick, openTableMealDetail, closeTableMealDetail, tableMealAccountName, printTableMealDetail, handleFileChange, transferPdfToEditor, setPdfOverride, openRegisterModal, handleRegisteredMenu, getExtractedMenuTexts, handleAiMatch, refreshTableMeals, openManualEditor, closeManualEditor, openAutoEditor, getManualMealItems, addManualMenu, removeManualMenu, clearManualMeal, fillManualWithAutoRecommendation, saveManualTableMeals, handleAutoGenerate, handleSaveAutoTableMeals, getAiMatchedMenu, getMenuShortageClass, getTableMealShortageClass, currentDraftPayload, keepDraft, openDraftProcurement, goToSavedFoodOrder, goToFoodOrder, checkCurrentDraftStock, createShortageOrder, buildRecipeRequest }
+  return { pdfMenuOverrides, setPdfMenuOverrides, menuAliases, setMenuAliases, rememberPdfLinks, setRememberPdfLinks, pdfLinkMessage, setPdfLinkMessage, navigate, searchParams, initialAccountId, fileInputRef, selectedAccountId, setSelectedAccountId, selectedTableMonth, setSelectedTableMonth, selectedMealPlanType, setSelectedMealPlanType, accountOptions, setAccountOptions, accountMealSlots, setAccountMealSlots, accountMealConfiguration, setAccountMealConfiguration, reloadMealConfiguration, weeklyMealSettings, setWeeklyMealSettings, isWeeklySettingsOpen, setIsWeeklySettingsOpen, accountError, setAccountError, tableMeals, setTableMeals, setMenuItems, accountMenuItems, setAccountMenuItems, menuError, setMenuError, accountMenuError, setAccountMenuError, tableError, setTableError, isTableLoading, setIsTableLoading, isAccountMenuLoading, setIsAccountMenuLoading, isPdfParsing, setIsPdfParsing, pdfError, setPdfError, uploadedFileName, setUploadedFileName, pdfText, setPdfText, registerTarget, setRegisterTarget, originRevision, setOriginRevision, selectedTableMeal, setSelectedTableMeal, tableMealDetailItems, setTableMealDetailItems, tableMealDetailError, setTableMealDetailError, isTableMealDetailLoading, setIsTableMealDetailLoading, selectedDetailMenu, setSelectedDetailMenu, detailItems, setDetailItems, menuShortageById, setMenuShortageById, tableMealShortageById, setTableMealShortageById, detailError, setDetailError, isDetailLoading, setIsDetailLoading, recipeMenuState, setRecipeMenuState, recipeViewRequest, setRecipeViewRequest, recipeViewMode, setRecipeViewMode, recipeRegisterRequest, setRecipeRegisterRequest, aiMatchMessage, setAiMatchMessage, aiMatchedMenuIdsByText, setAiMatchedMenuIdsByText, isAiMatching, setIsAiMatching, autoWeekValue, setAutoWeekValue, autoGeneratedResult, setAutoGeneratedResult, autoGenerateMessage, setAutoGenerateMessage, isTableSaving, setIsTableSaving, tableSaveMessage, setTableSaveMessage, plannedServings, setPlannedServings, draftSessionAccount, setDraftSessionAccount, restoredSettings, savedStockCheck, setSavedStockCheck, persistPlan, saveAndOrder, saveCurrentAndOrder, createDraftCriteria, preparePlan, isManualEditorOpen, setIsManualEditorOpen, mealEditorSource, setMealEditorSource, manualDays, setManualDays, manualEveningSnackItems, setManualEveningSnackItems, manualTarget, setManualTarget, manualSearchText, setManualSearchText, manualFoodTypeFilter, setManualFoodTypeFilter, manualMenuTypeFilter, setManualMenuTypeFilter, manualMessage, setManualMessage, alert, setAlert, rawParsedResult, parsedPdfResult, updateWeeklyMealSetting, currentMonthWeeks, selectedAutoWeek, displayedMealResult, displayedMenuIds, selectedAccountName, configuredMealSlotRows, selectedTableMonthParts, matchedCount, tableMealDetailDays, manualSelectedDay, filteredManualMenus, closeAlert, handleUploadClick, openTableMealDetail, closeTableMealDetail, tableMealAccountName, printTableMealDetail, handleFileChange, transferPdfToEditor, setPdfOverride, openRegisterModal, handleRegisteredMenu, getExtractedMenuTexts, handleAiMatch, refreshTableMeals, openManualEditor, closeManualEditor, openAutoEditor, getManualMealItems, addManualMenu, removeManualMenu, clearManualMeal, fillManualWithAutoRecommendation, saveManualTableMeals, handleAutoGenerate, handleSaveAutoTableMeals, getAiMatchedMenu, getMenuShortageClass, getTableMealShortageClass, currentDraftPayload, keepDraft, openDraftProcurement, goToSavedFoodOrder, goToFoodOrder, checkCurrentDraftStock, createShortageOrder, buildRecipeRequest }
 }
