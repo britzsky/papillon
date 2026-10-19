@@ -551,7 +551,7 @@ function TableMealsManager() {
                 </div>
 
                 <details className="table-meals-manual__recommendations"><summary>추천 메뉴 보기</summary>
-                <MenuRecommendations accountId={selectedAccountId} mealDate={manualSelectedDay?.date || selectedAutoWeek?.dates[0]?.toLocaleDateString('sv-SE')} disabled={!manualTarget} onSelect={id => { const menu = accountMenuItems.find(item => item.menu_id === id); if (menu) addManualMenu(menu) }} />
+                <MenuRecommendations accountId={selectedAccountId} mealDate={manualSelectedDay?.id.replace(/^manual-/, '') || (selectedAutoWeek?.dates[0] ? formatDateValue(selectedAutoWeek.dates[0]) : undefined)} disabled={!manualTarget} onSelect={id => { const menu = accountMenuItems.find(item => item.menu_id === id); if (menu) addManualMenu(menu) }} />
                 </details>
                 <p className="table-meals-manual__count">검색 결과 {filteredManualMenus.length}개 · 누르면 선택한 식사에 추가됩니다.</p>
                 <div className="table-meals-manual__menu-list">
