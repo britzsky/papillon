@@ -1,0 +1,218 @@
+/* 미등록 메뉴 한꺼번에 정리 창. 틀은 table-meals-modal + pdf-menu-register(PdfMenuRegisterModal.css) */
+
+.table-meals-modal.pdf-menu-register.pdf-bulk {
+  width: min(1040px, 100%);
+}
+
+.pdf-bulk__group + .pdf-bulk__group {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.pdf-bulk__group-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pdf-bulk__group-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.pdf-bulk__group-actions button,
+.pdf-bulk__add {
+  padding: 4px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.pdf-bulk__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}
+
+.pdf-bulk__list li {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) minmax(120px, 1fr) minmax(220px, 1.3fr);
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid #e2e8f0;
+  border-left-width: 4px;
+  border-radius: 8px;
+}
+
+.pdf-bulk__list li.is-standard,
+.pdf-bulk__list li.is-account { border-left-color: #0f766e; }
+.pdf-bulk__list li.is-ai { border-left-color: #2563eb; }
+.pdf-bulk__list li.is-exclude { border-left-color: #94a3b8; opacity: 0.75; }
+.pdf-bulk__list li.is-later { border-left-color: #f59e0b; }
+
+.pdf-bulk__list small {
+  color: #64748b;
+}
+
+.pdf-bulk__list select {
+  min-width: 0;
+  width: 100%;
+  padding: 5px 6px;
+}
+
+.pdf-bulk__footer {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.pdf-bulk__footer > .pdf-menu-register__hint {
+  flex: 1 1 320px;
+  margin: 0;
+}
+
+.pdf-bulk__progress {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.pdf-bulk__notice {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f0fdfa;
+  color: #0f2f2a;
+}
+
+.pdf-bulk__drafts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.pdf-bulk__draft {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+}
+
+.pdf-bulk__draft.is-off {
+  opacity: 0.55;
+}
+
+.pdf-bulk__draft-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.pdf-bulk__draft-head > input {
+  flex: 1 1 200px;
+  font-weight: 600;
+}
+
+.pdf-bulk__draft-head small {
+  color: #64748b;
+}
+
+.pdf-bulk__check,
+.pdf-bulk__kcal {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.pdf-bulk__kcal input {
+  width: 80px;
+}
+
+.pdf-bulk__kinds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pdf-bulk__rows {
+  display: grid;
+  gap: 6px;
+}
+
+.pdf-bulk__row {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(180px, 1.2fr) auto auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.pdf-bulk__row > small {
+  grid-column: 1 / -1;
+}
+
+.pdf-bulk__new {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pdf-bulk__new input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pdf-bulk__warn {
+  color: #b45309;
+}
+
+.pdf-bulk__similar {
+  color: #475569;
+}
+
+.pdf-bulk__similar button {
+  margin-left: 6px;
+}
+
+.pdf-bulk__add {
+  justify-self: start;
+}
+
+@media (max-width: 760px) {
+  .pdf-bulk__list li,
+  .pdf-bulk__row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 목록이 길어도(수십 종) 적용·등록 버튼이 늘 보이게 */
+.pdf-bulk__footer {
+  position: sticky;
+  bottom: -1px;
+  z-index: 2;
+  margin: 12px -4px 0;
+  padding: 10px 4px;
+  border-top: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.pdf-bulk__row > .pdf-menu-register__link {
+  justify-self: start;
+  width: auto;
+  min-width: 0;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+}

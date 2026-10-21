@@ -1783,3 +1783,31 @@ body.workspace-ui .table-meals-toolbar > .table-meals-toolbar__actions { margin-
 .table-meals-alias-note button, .table-meals-exclude-button, .table-meals-menu-excluded button { margin-left: 4px; padding: 0 6px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; color: #334155; cursor: pointer; }
 .table-meals-menu-excluded { color: #94a3b8; }
 @media print { .table-meals-alias-note, .table-meals-exclude-button, .table-meals-pdf-transfer { display: none !important; } }
+
+/* PDF 분석 요약: 미등록 메뉴 한꺼번에 정리 */
+.table-meals-bulk-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-weight: 600;
+}
+
+.table-meals-bulk-cta button {
+  padding: 5px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.table-meals-bulk-cta small {
+  font-weight: 500;
+  color: #7c2d12;
+}

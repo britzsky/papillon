@@ -69,3 +69,26 @@ export async function getPromotePreview(accountId: string, menuId: string): Prom
   if (!response.ok || !payload) throw new Error(payload?.message || '본사 반영 내용을 확인하지 못했습니다.')
   return payload
 }
+
+/** AI 레시피 초안의 식재료 한 줄. ingredient_id가 있으면 이름이 같은 거래처 식재료에 연결된 것, 없으면 새 식재료 후보 */
+export type AiDraftIngredient = {
+  ai_name: string
+  qty: string
+  unit: 'g' | 'ml' | 'EA' | string
+  category: string
+  ingredient_id: string | null
+  ingredient_name?: string
+  base_unit?: string
+  /** AI 단위와 거래처 식재료 기준단위가 달라 사용량을 고쳐야 함 */
+  unit_mismatch: boolean
+}
+
+export type AiMenuDraft = { text: string; menu_name: string; calories_per_serving: number | null; ingredients: AiDraftIngredient[]; error?: string }
+
+/** 한 번에 보낼 수 있는 메뉴 수(서버 MenuRecipeDraftService.MAX_MENUS) */
+export const AI_DRAFT_BATCH = 10
+
+/** 미등록 메뉴 레시피 초안을 AI로 만든다(저장 안 함). 토큰 사용량은 서버가 AI 사용 이력에 남긴다 */
+export function requestAiRecipeDrafts(accountId: string, texts: string[]) {
+  return post<{ drafts: AiMenuDraft[]; model: string }>('/v2/menu-management/menus/ai-recipe-draft', { account_id: accountId, menus: texts.map(text => ({ text })) }, 'AI 레시피 초안을 만들지 못했습니다.')
+}

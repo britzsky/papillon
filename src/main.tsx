@@ -27,6 +27,7 @@ import WelstoryOrder from './pages/order/WelstoryOrder.tsx'
 import SupplierIntegrationDashboard from './pages/order/SupplierIntegrationDashboard.tsx'
 import SupplierSiteMapping from './pages/order/SupplierSiteMapping.tsx'
 import SearchAnalytics from './pages/operations/SearchAnalytics.tsx'
+import AiUsage from './pages/operations/AiUsage.tsx'
 import { DeviceRoute } from './mobile/deviceMode'
 import OrderWorkspaceTouch from './mobile/pages/OrderWorkspaceTouch'
 import HomeTouch from './mobile/pages/HomeTouch'
@@ -40,6 +41,7 @@ import SiteMappingTouch from './mobile/pages/SiteMappingTouch'
 import SupplierTouch from './mobile/pages/SupplierTouch'
 import AccountConfigTouch from './mobile/pages/AccountConfigTouch'
 import SearchAnalyticsTouch from './mobile/pages/SearchAnalyticsTouch'
+import AiUsageTouch from './mobile/pages/AiUsageTouch'
 import MenuManagerTouch from './mobile/pages/MenuManagerTouch'
 import AccountMenuTouch from './mobile/pages/AccountMenuTouch'
 import LoginTouch from './mobile/pages/LoginTouch'
@@ -99,6 +101,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/operations/account-menu/import" element={<DeviceRoute pc={<AccountMenuImport />} touch={<AccountMenuTouch />} />} />
         <Route path="/operations/table-meals" element={<DeviceRoute pc={<TableMealsManager />} touch={<TableMealsTouch />} />} />
         <Route path="/operations/search-analytics" element={<DeviceRoute pc={<SearchAnalytics />} touch={<SearchAnalyticsTouch />} />} />
+        <Route path="/operations/ai-usage" element={<DeviceRoute pc={<AiUsage />} touch={<AiUsageTouch />} />} />
         <Route path="/sanitation/vendor" element={<DeviceRoute pc={<VendorSanitation />} touch={<SanitationTouch />} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes></WorkspaceBoundary>

@@ -76,16 +76,17 @@ const majorMenus: MajorMenu[] = [
   {
     key: 'headquarters',
     label: '본사관리',
-    basePaths: ['/operations/account', '/operations/search-analytics'],
+    basePaths: ['/operations/account', '/operations/search-analytics', '/operations/ai-usage'],
     items: [
       { label: '고객사 관리', to: '/operations/account', exact: true },
       { label: '검색어 관리', to: '/operations/search-analytics', exact: true },
+      { label: 'AI 사용 이력', to: '/operations/ai-usage', exact: true },
     ],
   },
 ]
 
 /** 거래처를 고르지 않아도 되는 화면(본사 공통 기준정보·전체 현황) */
-const ACCOUNT_FREE_PATHS = ['/home', '/home/sidebar', '/operations/menu', '/inventory/ingredients', '/operations/search-analytics', '/order_manager/supplier-sites', '/order_manager/welstory', '/order_manager']
+const ACCOUNT_FREE_PATHS = ['/home', '/home/sidebar', '/operations/menu', '/inventory/ingredients', '/operations/search-analytics', '/operations/ai-usage', '/order_manager/supplier-sites', '/order_manager/welstory', '/order_manager']
 
 function AccountChoiceNotice() {
   return (

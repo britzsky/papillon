@@ -4,6 +4,7 @@ import TouchIcon, { type TouchIconName } from '../TouchIcon'
 import MealCalories from '../../features/tableMeals/MealCalories'
 import MealPlanImpact from '../../components/MealPlanImpact'
 import PdfMenuRegisterModal from '../../pages/operations/PdfMenuRegisterModal'
+import PdfUnmatchedBulkModal from '../../pages/operations/PdfUnmatchedBulkModal'
 import MealConfigDialog from '../../features/tableMeals/MealConfigDialog'
 import { mealPlanTypeOptions } from '../../pages/operations/menuManagerShared'
 import { formatQty } from '../../utils/formatQty'
@@ -31,6 +32,7 @@ export default function TableMealsCreateTouch({ onClose }: { onClose: () => void
   const [method, setMethod] = useState<Method>('auto')
   const [weeklyOpen, setWeeklyOpen] = useState(false)
   const [mealConfigOpen, setMealConfigOpen] = useState(false)
+  const [bulkOpen, setBulkOpen] = useState(false)
   const [y, mo] = w.selectedTableMonth.split('-').map(Number)
   const shiftMonth = (delta: number) => { const d = new Date(y, mo - 1 + delta, 1); w.setSelectedTableMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`) }
   const ready = Boolean(w.selectedAccountId) && Number(w.plannedServings) > 0
@@ -93,7 +95,7 @@ export default function TableMealsCreateTouch({ onClose }: { onClose: () => void
       <p>PDF 글자를 읽어 요일·식사별로 나눕니다. 파일은 서버에 저장하지 않습니다.</p>
       <div className="tc-action__buttons">
         <label className="t-btn is-primary is-large tc-file">PDF 고르기<input ref={fileInputRef} type="file" accept=".pdf,application/pdf" onChange={w.handleFileChange} /></label>
-        <button type="button" className="t-btn is-large" disabled={!w.rawParsedResult || w.isAiMatching} onClick={() => void w.handleAiMatch()}>{w.isAiMatching ? 'AI 매칭 중…' : 'AI로 메뉴 맞추기'}</button>
+        <button type="button" className="t-btn is-large" disabled={!w.parsedPdfResult || w.unmatchedPdfMenus.length === 0} onClick={() => setBulkOpen(true)}>미등록 메뉴 정리{w.parsedPdfResult && w.unmatchedPdfMenus.length ? ` (${w.unmatchedPdfMenus.length}종)` : ''}</button>
         <button type="button" className="t-btn is-soft is-large" disabled={!w.parsedPdfResult} onClick={() => void w.transferPdfToEditor()}>편집기로 옮기기</button>
       </div>
       <button type="button" className={`tc-toggle${w.rememberPdfLinks ? ' is-on' : ''}`} aria-pressed={w.rememberPdfLinks} onClick={() => w.setRememberPdfLinks(!w.rememberPdfLinks)}>
@@ -108,6 +110,8 @@ export default function TableMealsCreateTouch({ onClose }: { onClose: () => void
     {mealConfigOpen && <MealConfigDialog accountId={w.selectedAccountId} accountName={w.selectedAccountName} onClose={() => setMealConfigOpen(false)} onSaved={w.reloadMealConfiguration} />}
     {w.registerTarget && <PdfMenuRegisterModal accountId={w.selectedAccountId} accountName={w.selectedAccountName} pdfText={w.registerTarget.text} context={w.registerTarget.context}
       slotCode={w.registerTarget.slotCode} mealPlanType={w.selectedMealPlanType} accountMenus={w.accountMenuItems} onClose={() => w.setRegisterTarget(null)} onLinked={w.handleRegisteredMenu} />}
+    {bulkOpen && w.parsedPdfResult && <PdfUnmatchedBulkModal accountId={w.selectedAccountId} accountName={w.selectedAccountName} mealPlanType={w.selectedMealPlanType} unmatched={w.unmatchedPdfMenus}
+      accountMenus={w.accountMenuItems} onClose={() => setBulkOpen(false)} onLinked={w.handleBulkLinkedMenus} onExclude={w.excludePdfTexts} />}
     <StockCheckSheet w={w} />
   </TouchLayout>
 }

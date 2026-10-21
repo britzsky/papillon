@@ -1,0 +1,7 @@
+/* AI 사용 이력(PC). 틀은 Redesign .rd-page */
+.ai-usage-page { height: 100vh; }
+.rd-ai-usage .rd-page__actions select { height: 34px; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 7px; background: #fff; }
+.rd-ai-usage .rd-table small { color: #64748b; font-weight: 400; }
+.rd-ai-usage .rd-table td .rd-chip { margin-left: 6px; }
+.rd-ai-usage .rd-page__box { margin-bottom: 12px; }
+.rd-ai-usage .rd-page__list-head { flex-wrap: wrap; gap: 8px; }

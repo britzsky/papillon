@@ -36,11 +36,12 @@ const NAV: NavGroup[] = [
   { key: 'hq', label: '본사', icon: 'hq', hqOnly: true, items: [
     { label: '고객사 관리', to: '/operations/account', hint: '고객사 · 식사 설정' },
     { label: '검색어 관리', to: '/operations/search-analytics', hint: '검색 기록 분석' },
+    { label: 'AI 사용 이력', to: '/operations/ai-usage', hint: 'AI 토큰 · 예상 비용' },
   ] },
 ]
 
 /** 거래처 계정(user_type 3)에게 숨기는 본사 화면(WorkspaceBoundary의 hqOnly와 같은 목록) */
-const HQ_ONLY = ['/order_manager/suppliers', '/order_manager/supplier-sites', '/order_manager/welstory', '/inventory/ingredients', '/operations/menu', '/operations/account', '/operations/search-analytics']
+const HQ_ONLY = ['/order_manager/suppliers', '/order_manager/supplier-sites', '/order_manager/welstory', '/inventory/ingredients', '/operations/menu', '/operations/account', '/operations/search-analytics', '/operations/ai-usage']
 const isAccountUser = () => localStorage.getItem('user_type') === '3'
 
 const todayLabel = () => new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })
