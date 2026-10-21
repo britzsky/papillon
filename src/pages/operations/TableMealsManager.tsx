@@ -92,11 +92,11 @@ function TableMealsManager() {
             <DeadlineAlertSlot />
             <div className="rd-meals__actions">
 
-              <button type="button" className="table-meals-upload-button" onClick={handleUploadClick} title="식단표 PDF·엑셀(.xlsx)을 읽어 요일·식사별로 불러옵니다(파일은 서버에 저장하지 않음)">
-                식단표 불러오기(PDF·엑셀)
-              </button>
               <button type="button" className="table-meals-upload-button" onClick={downloadMealTemplate} title="읽히지 않는 엑셀은 이 양식에 옮겨 올려주세요">
                 <span aria-hidden="true">📄</span> 표준 양식 받기
+              </button>
+              <button type="button" className="table-meals-upload-button" onClick={handleUploadClick} title="식단표 PDF·엑셀(.xlsx)을 읽어 요일·식사별로 불러옵니다(파일은 서버에 저장하지 않음)">
+                식단표 불러오기(PDF·엑셀)
               </button>
                 <button
                 type="button"
