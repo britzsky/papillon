@@ -252,3 +252,38 @@ body.workspace-ui .menu-manager-search-select__option.menu-manager-search-select
   font-weight: 700;
   border-bottom: 1px solid #e2e8f0 !important;
 }
+
+/* 새 메뉴 등록: AI로 채우기 */
+.pdf-menu-register__new-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+body.workspace-ui .pdf-menu-register__ai,
+.pdf-menu-register__ai {
+  padding: 5px 12px !important;
+  border: 1px solid #a5b4fc !important;
+  background: #eef2ff !important;
+  color: #3730a3 !important;
+  font-weight: 700;
+}
+
+body.workspace-ui .pdf-menu-register__ai:hover:not(:disabled) {
+  background: #e0e7ff !important;
+}
+
+.pdf-menu-register__ai-note {
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 12px;
+}
+
+.pdf-menu-register__row-hint.is-warn {
+  color: #b45309;
+}

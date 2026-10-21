@@ -7,6 +7,7 @@ import {
   promoteAccountMenu,
   registerAccountIngredient,
   registerAccountMenu,
+  requestAiRecipeDrafts,
   type AccountIngredient,
   type PromotePreview,
 } from '../../api/accountMenuRegistration'
@@ -33,7 +34,7 @@ type Props = {
 }
 
 /** 식재료 한 줄: 목록에서 고른 거래처 식재료(ingredient_id) 또는 이름을 입력한 새 식재료(newName — 등록할 때 함께 만든다) */
-type IngredientRow = { key: string; ingredient_id: string; qty: string; newName: string | null; newUnit: string }
+type IngredientRow = { key: string; ingredient_id: string; qty: string; newName: string | null; newUnit: string; aiHint?: string }
 
 /** 새 식재료 기준단위 추정(사람이 바꿀 수 있음): 액체는 ml, 낱개는 EA, 나머지 g */
 function guessUnit(name: string) {
@@ -180,6 +181,28 @@ export default function PdfMenuRegisterModal({ accountId, accountName, pdfText, 
     })
   }
 
+  /** AI 초안으로 칼로리·식재료를 채운다(저장 안 함). 이름이 같은 거래처 식재료는 연결, 없으면 새 식재료 줄. 단위가 다르면 사용량은 비우고 안내 */
+  const [aiMessage, setAiMessage] = useState('')
+  const fillWithAi = () => run(async () => {
+    setAiMessage('')
+    const result = await requestAiRecipeDrafts(accountId, [pdfText])
+    const draft = result.drafts[0]
+    if (!draft || draft.error || draft.ingredients.length === 0) { setAiMessage(draft?.error || 'AI가 식재료를 찾지 못했습니다. 직접 입력해주세요.'); return }
+    if (draft.menu_name && (!name.trim() || name.trim() === pdfText.trim())) setName(draft.menu_name)
+    if (draft.calories_per_serving) setCalories(String(draft.calories_per_serving))
+    setRows(draft.ingredients.map(item => {
+      if (item.ingredient_id) {
+        const row = newRow(item.ingredient_id)
+        return item.unit_mismatch
+          ? { ...row, aiHint: `AI 제안 ${item.qty}${item.unit} — 기준단위(${item.base_unit})로 사용량을 입력해주세요.` }
+          : { ...row, qty: item.qty }
+      }
+      return { ...newRow('', item.ai_name), newUnit: ['g', 'ml', 'EA'].includes(item.unit) ? item.unit : 'g', qty: item.qty }
+    }))
+    const added = draft.ingredients.filter(item => !item.ingredient_id).length
+    setAiMessage(`AI 초안을 채웠습니다. 칼로리·식재료·사용량을 확인하고 고친 뒤 등록하세요.${added ? ` 거래처에 없는 식재료 ${added}개는 '새 식재료'로 넣었습니다.` : ''}`)
+  })
+
   const updateRow = (key: string, patch: Partial<IngredientRow>) => setRows(current => current.map(item => item.key === key ? { ...item, ...patch } : item))
 
   const finish = (promote: boolean) => {
@@ -264,7 +287,13 @@ export default function PdfMenuRegisterModal({ accountId, accountName, pdfText, 
             </section>
 
             <section className="pdf-menu-register__section" aria-labelledby="pdf-new-title">
-              <h3 id="pdf-new-title">새 메뉴로 등록 <small>이 거래처 메뉴 관리에 저장됩니다</small></h3>
+              <div className="pdf-menu-register__new-head">
+                <h3 id="pdf-new-title">새 메뉴로 등록 <small>이 거래처 메뉴 관리에 저장됩니다</small></h3>
+                <button type="button" className="pdf-menu-register__ai" disabled={busy} onClick={() => void fillWithAi()} title="메뉴 하나에 약 5~10원(예상), 사용량은 AI 사용 이력에 남습니다">
+                  <span aria-hidden="true">✨</span> AI로 칼로리·식재료 채우기
+                </button>
+              </div>
+              {aiMessage && <p className="pdf-menu-register__ai-note" role="status">{aiMessage}</p>}
               <div className="pdf-menu-register__grid">
                 <label className="table-meals-modal__field is-wide"><span>메뉴명</span>
                   <input id="pdf-register-name" value={name} maxLength={100} onChange={e => setName(e.target.value)} /></label>
@@ -329,6 +358,7 @@ export default function PdfMenuRegisterModal({ accountId, accountName, pdfText, 
                         </label>
                         <button type="button" className="pdf-menu-register__remove" disabled={rows.length === 1} onClick={() => setRows(current => current.filter(item => item.key !== row.key))}>삭제</button>
                       </div>
+                      {row.aiHint && !row.qty && <small className="pdf-menu-register__row-hint is-warn">{row.aiHint}</small>}
                       {(similar.length > 0 || (typing && ingredients.length > 0)) && (
                         <small className="pdf-menu-register__row-hint">
                           {similar.length > 0 && <>이미 있는 식재료: {similar.map(({ item }) => <button type="button" key={item.ingredient_id} className="pdf-menu-register__link" onClick={() => updateRow(row.key, { ingredient_id: item.ingredient_id, newName: null })}>{item.ingredient_name}({item.base_unit})</button>)} </>}
