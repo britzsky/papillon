@@ -996,7 +996,7 @@ export function useTableMealsWorkspace() {
   )
   const rawParsedResult = useMemo(() => {
     const slots = toMealSlotRows(accountMealSlots)
-    if (pdfText) return parseMealTable(pdfText.items, pdfText.pageCount, slots)
+    if (pdfText) return parseMealTable(pdfText.items, pdfText.pageCount, slots, excludedCourses)
     const sheet = excelSheets?.find(item => item.name === excelSheetName)
     return sheet ? parseMealSheet(sheet, slots, excludedCourses) : null
   }, [pdfText, excelSheets, excelSheetName, excludedCourses, accountMealSlots])

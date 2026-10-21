@@ -14,6 +14,7 @@ import {
   slotCodeOf,
   splitMenuText,
   SLOT_LABELS,
+  weekdayOfMonthDay,
   WEEKDAYS,
   type MealSlotTarget,
   type ParsedMealDay,
@@ -57,12 +58,8 @@ function serialDate(value: SheetCell) {
   return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`
 }
 
-const WEEKDAY_BY_UTC_DAY = ['일', '월', '화', '수', '목', '금', '토']
-
-function weekdayOfDate(date: string) {
-  const match = date.match(/^(\d{4})-(\d{2})-(\d{2})$/)
-  return match ? WEEKDAY_BY_UTC_DAY[new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))).getUTCDay()] : ''
-}
+/** 'YYYY-MM-DD'·'MM-DD'(연도는 오늘과 가까운 해)의 요일 */
+const weekdayOfDate = (date: string) => weekdayOfMonthDay(date)
 
 /**
  * 머리줄 칸 하나: '월요일', '월', '1/6(월)', '2024-12-02⏎월요일', 날짜만(요일은 날짜로 계산)
@@ -88,7 +85,7 @@ function headerCell(value: SheetCell, allowSerial = false): { weekday: string; d
   return { weekday: weekday || weekdayOfDate(date), date }
 }
 
-const isHeaderCell = (value: SheetCell) => { const cell = headerCell(value); return Boolean(cell.weekday || /^\d{4}-/.test(cell.date)) }
+const isHeaderCell = (value: SheetCell) => { const cell = headerCell(value); return Boolean(cell.weekday || cell.date) }
 
 type Section = { code: number; order: number }
 
@@ -130,11 +127,14 @@ export function parseMealSheet(grid: SheetGrid, slots: MealSlotTarget[], exclude
   const sections: Section[] = []
   const rowSection: Array<{ section: number; course: string } | null | undefined> = []
   let section = -1, group = '', course = ''
-  for (let r = lastHeaderRow + 1; r < rows.length; r++) {
+  let ended = false
+  for (let r = lastHeaderRow + 1; r < rows.length && !ended; r++) {
     let skip = false
     for (let c = 0; c < firstDayCol; c++) {
       const text = at(r, c)
       if (!/\p{L}/u.test(text)) continue // 빈 칸·기호만 있는 칸
+      // '<원산지>' 줄부터는 원산지 표라 읽지 않는다
+      if (/원산지/.test(compact(text))) { ended = true; skip = true; break }
       const code = looseSlotCode(text, slots)
       if (code !== null) {
         sections.push({ code, order: sections.length }); section = sections.length - 1; group = ''; course = ''
@@ -146,6 +146,7 @@ export function parseMealSheet(grid: SheetGrid, slots: MealSlotTarget[], exclude
       // 첫 열의 모르는 이름(간편식 등)은 묶음, 그 오른쪽 열은 코스
       if (c === 0) { group = compact(text); course = '' } else course = compact(text)
     }
+    if (ended) break
     // 맨 아래 '* 이 식단은 …' 같은 안내가 메뉴 열까지 이어진 줄도 건너뛴다
     if (!skip && dayCols.some(col => isNoticeText(at(r, col)) && compact(at(r, col)).length > 30)) skip = true
     // 첫 식사 이름 전의 메뉴 줄은 잠시 비워 두고(undefined) 첫 식사가 나오면 그 식사로 넣는다

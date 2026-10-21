@@ -63,7 +63,26 @@ export function normalizeDate(text: string) {
 }
 
 export function isOriginText(text: string) {
-  return /(원산지|국내산|수입산|외국산|산지|알레르기|kcal|칼로리)/i.test(text)
+  // '호주산'·'닭국산,돼지국산'·'배추 중국산'처럼 '○○산' 낱말도 원산지 글자다
+  return /(원산지|국내산|수입산|외국산|산지|알레르기|kcal|칼로리)/i.test(text) || /(^|[\s,(:·])[가-힣]{1,5}산(?=$|[\s,).·])/.test(text.trim())
+}
+
+/** 연도 없는 'MM-DD'의 요일. 오늘과 가장 가까운 해(작년·올해·내년)로 계산한다 */
+export function weekdayOfMonthDay(date: string, today = new Date()) {
+  const match = date.match(/^(?:(\d{4})-)?(\d{2})-(\d{2})$/)
+  if (!match) return ''
+  const years = match[1] ? [Number(match[1])] : [today.getFullYear() - 1, today.getFullYear(), today.getFullYear() + 1]
+  const candidates = years.map(year => new Date(year, Number(match[2]) - 1, Number(match[3])))
+    .filter(day => day.getMonth() === Number(match[2]) - 1)
+    .sort((a, b) => Math.abs(a.getTime() - today.getTime()) - Math.abs(b.getTime() - today.getTime()))
+  return candidates.length ? '일월화수목금토'[candidates[0].getDay()] : ''
+}
+
+/** 왼쪽 열의 식사 아닌 짧은 이름('죽'·'일반식'·'A코스') — 코스로 본다 */
+export function isCourseLabel(text: string) {
+  const value = compact(text)
+  return value.length >= 1 && value.length <= 8 && /\p{L}/u.test(value) && !isDateText(value) && !weekdayOf(value)
+    && !isOriginText(value) && !isNoticeText(text) && !/[:：<>]/.test(value)
 }
 
 /** 안내 문구·제목 등 메뉴가 아닌 글자: '*'·'※'로 시작하는 안내, 띄어쓰기가 많은 문장 */
@@ -95,8 +114,9 @@ export function splitMenuText(text: string, slots: MealSlotTarget[] = []) {
 
 const centerX = (item: PdfTextItem) => item.x + (item.width ?? 0) / 2
 
-export type Anchor = { code: number; y: number }
-type RowGroup = { code: number; top: number; bottom: number }
+/** 식사 구간의 기준 글자. course가 있으면 그 식사 안의 코스('죽' 등) */
+export type Anchor = { code: number; y: number; course?: string }
+type RowGroup = { code: number; top: number; bottom: number; course?: string }
 
 /** 같은 높이(±tolerance)의 글자를 한 행으로 묶어 위→아래 순서의 행 y 목록을 만든다 */
 function rowYs(items: PdfTextItem[], tolerance = 3) {
@@ -113,7 +133,7 @@ function rowYs(items: PdfTextItem[], tolerance = 3) {
 function partitionRows(rows: number[], anchors: Anchor[]): RowGroup[] {
   const n = rows.length, k = anchors.length
   if (k === 0 || n === 0) return []
-  if (n < k) return anchors.map(anchor => ({ code: anchor.code, top: anchor.y, bottom: anchor.y }))
+  if (n < k) return anchors.map(anchor => ({ code: anchor.code, top: anchor.y, bottom: anchor.y, course: anchor.course }))
   const solve = (cost: (start: number, end: number, anchor: Anchor) => number) => {
     // best[j][i]: 앞의 i개 행을 앞의 j개 식사로 나눌 때 최소 비용
     const best = Array.from({ length: k + 1 }, () => new Array<number>(n + 1).fill(Infinity))
@@ -128,7 +148,7 @@ function partitionRows(rows: number[], anchors: Anchor[]): RowGroup[] {
     const groups: RowGroup[] = []
     for (let j = k, i = n; j > 0; j--) {
       const s = cut[j][i]
-      groups.unshift({ code: anchors[j - 1].code, top: rows[s], bottom: rows[i - 1] })
+      groups.unshift({ code: anchors[j - 1].code, top: rows[s], bottom: rows[i - 1], course: anchors[j - 1].course })
       i = s
     }
     return { total: best[k][n], groups }
@@ -160,49 +180,82 @@ export function resolveSnacks(anchors: Anchor[], slots: MealSlotTarget[]) {
   })
 }
 
-export function parseMealTable(items: PdfTextItem[], pageCount: number, slots: MealSlotTarget[]): ParsedMealTable {
+/**
+ * excludedCourses: 빼는 코스('석식 죽' 형식). 코스는 왼쪽 열에서 식사 이름 아래에 있는 짧은 이름이다.
+ * 머리줄은 요일 글자 줄, 요일이 없으면 날짜가 3개 이상인 가장 위 줄(요일은 날짜로 계산).
+ * '<원산지>' 아래(원산지 표)는 읽지 않는다.
+ */
+export function parseMealTable(items: PdfTextItem[], pageCount: number, slots: MealSlotTarget[], excludedCourses: string[] = []): ParsedMealTable {
   const pages = [...new Set(items.map(item => item.page))].sort((a, b) => a - b)
   const days: ParsedMealDay[] = []
   const unconfigured = new Set<string>()
   const slotKey = (code: number) => String(code)
   const configuredCodes = new Set(slots.map(slot => slot.code))
+  const excluded = new Set(excludedCourses)
+  const courses: string[] = []
   let carriedGroups: RowGroup[] = []
   let carriedHeaderY: number | null = null
 
   for (const page of pages) {
-    const pageItems = items.filter(item => item.page === page)
-    // 요일 머리글: 페이지에서 가장 위에 있는 요일 글자 줄
-    const weekdayItems = pageItems.filter(item => weekdayOf(item.text))
-    const headerY: number | null = weekdayItems.length ? Math.max(...weekdayItems.map(item => item.y)) : carriedHeaderY
-    const headers = weekdayItems.filter(item => headerY !== null && Math.abs(item.y - headerY) <= 6)
+    const allPageItems = items.filter(item => item.page === page)
+    // 요일 머리글: 페이지에서 가장 위에 있는 요일 글자 줄. 요일이 없으면 날짜가 3개 이상 나란한 가장 위 줄
+    const weekdayItems = allPageItems.filter(item => weekdayOf(item.text))
+    let headerItems = weekdayItems
+    if (!weekdayItems.length) {
+      const dateItems = allPageItems.filter(item => isDateText(item.text))
+      const rowY = [...dateItems].sort((a, b) => b.y - a.y).find(item => dateItems.filter(other => Math.abs(other.y - item.y) <= 6).length >= 3)?.y
+      headerItems = rowY === undefined ? [] : dateItems.filter(item => Math.abs(item.y - rowY) <= 6)
+    }
+    const headerY: number | null = headerItems.length ? Math.max(...headerItems.map(item => item.y)) : carriedHeaderY
+    const headers = headerItems.filter(item => headerY !== null && Math.abs(item.y - headerY) <= 6)
       .sort((a, b) => centerX(a) - centerX(b))
     if (!headers.length || headerY === null) continue
     carriedHeaderY = headerY
+
+    // '<원산지>' 표시 아래는 원산지 표라 읽지 않는다
+    const originMarks = allPageItems.filter(item => /원산지/.test(compact(item.text)) && item.y < headerY).map(item => item.y)
+    const cutoffY = originMarks.length ? Math.max(...originMarks) : -Infinity
+    const pageItems = allPageItems.filter(item => item.y > cutoffY + 2)
 
     // 식사 이름 글자(왼쪽 열). 없으면 앞 페이지의 행 구분을 그대로 쓴다(한 주가 두 쪽으로 나뉜 표)
     const labelItems = pageItems
       .map(item => ({ item, code: slotCodeOf(item.text, slots) }))
       .filter((entry): entry is { item: PdfTextItem; code: number } => entry.code !== null && entry.item.y < headerY)
     const leftMost = labelItems.length ? Math.min(...labelItems.map(entry => entry.item.x)) : 0
-    const anchors = resolveSnacks(
+    const slotAnchors = resolveSnacks(
       labelItems.filter(entry => entry.item.x - leftMost <= 60)
         .sort((a, b) => b.item.y - a.item.y)
         .map(entry => ({ code: entry.code, y: entry.item.y })),
       slots,
     )
+    // 왼쪽 열의 식사 아닌 짧은 이름('죽' 등)은 바로 위 식사의 코스
+    // 날짜 열 왼쪽 경계: 첫 열 가운데에서 열 너비 절반만큼 왼쪽. 코스 이름은 이보다 왼쪽에 끝나야 한다(첫 열 메뉴를 코스로 잘못 보지 않게)
+    const columnWidth = headers.length > 1 ? (centerX(headers[headers.length - 1]) - centerX(headers[0])) / (headers.length - 1) : 80
+    const tableLeft = centerX(headers[0]) - columnWidth / 2
+    const topSlotY = slotAnchors.length ? slotAnchors[0].y : null
+    const courseItems = topSlotY === null ? [] : pageItems
+      .filter(item => Math.abs(item.x - leftMost) <= 60 && item.x + (item.width ?? 0) < tableLeft && item.y < topSlotY
+        && slotCodeOf(item.text, slots) === null && isCourseLabel(item.text))
+    const courseAnchors: Anchor[] = courseItems.map(item => ({
+      code: [...slotAnchors].reverse().find(anchor => anchor.y > item.y)?.code ?? slotAnchors[0].code,
+      y: item.y,
+      course: compact(item.text),
+    }))
+    const anchors: Anchor[] = [...slotAnchors, ...courseAnchors].sort((a, b) => b.y - a.y)
     // 원산지·안내 줄은 '/'로 쪼개기 전에 통째로 뺀다(쪼개면 일부가 메뉴처럼 보이고, 표 행 계산도 어긋난다)
-    const menuItems = pageItems.filter(item => item.y < headerY - 2 && !isDateText(item.text)
+    const menuItems = pageItems.filter(item => item.y < headerY - 2 && !isDateText(item.text) && !courseItems.includes(item)
       && !isOriginText(item.text) && !isNoticeText(item.text) && splitMenuText(item.text, slots).length > 0)
     const groups = anchors.length ? partitionRows(rowYs(menuItems), anchors) : carriedGroups
     if (anchors.length) carriedGroups = groups
     if (!groups.length) continue
 
     const columnDays = headers.map((header, index) => {
-      const label = weekdayOf(header.text)
-      const dateItem = pageItems
+      const dateItem = isDateText(header.text) ? header : pageItems
         .filter(item => isDateText(item.text) && item.y < headerY && headerY - item.y < 40)
         .sort((a, b) => Math.abs(centerX(a) - centerX(header)) - Math.abs(centerX(b) - centerX(header)))[0]
-      const day: ParsedMealDay = { id: `pdf-${page}-${index}-${label}`, label, date: dateItem ? normalizeDate(dateItem.text) : '', meals: {} }
+      const date = dateItem ? normalizeDate(dateItem.text) : ''
+      const label = weekdayOf(header.text) || weekdayOfMonthDay(date)
+      const day: ParsedMealDay = { id: `pdf-${page}-${index}-${label}`, label, date, meals: {} }
       groups.forEach(group => { day.meals[slotKey(group.code)] = [] })
       return { header, day }
     })
@@ -212,6 +265,11 @@ export function parseMealTable(items: PdfTextItem[], pageCount: number, slots: M
         Math.abs(centerX(current.header) - centerX(item)) < Math.abs(centerX(closest.header) - centerX(item)) ? current : closest)
       const group = groupOf(item.y, groups)
       if (!group) return
+      if (group.course) {
+        const name = `${SLOT_LABELS[group.code] ?? group.code} ${group.course}`
+        if (!courses.includes(name)) courses.push(name)
+        if (excluded.has(name)) return
+      }
       const list = column.day.meals[slotKey(group.code)]
       splitMenuText(item.text, slots).forEach(menu => {
         if (!list.some(existing => compact(existing) === compact(menu))) list.push(menu)
@@ -230,7 +288,7 @@ export function parseMealTable(items: PdfTextItem[], pageCount: number, slots: M
 
   const originTexts = [...new Set(items.filter(item => isOriginText(item.text) && compact(item.text).length > 4).map(item => item.text.trim()))]
   days.sort((a, b) => (a.date && b.date ? a.date.localeCompare(b.date) : WEEKDAYS.indexOf(a.label as never) - WEEKDAYS.indexOf(b.label as never)))
-  return { pageCount, textItemCount: items.length, originTexts, days, unconfiguredSlots: [...unconfigured] }
+  return { source: 'pdf', courses, pageCount, textItemCount: items.length, originTexts, days, unconfiguredSlots: [...unconfigured] }
 }
 
 export const SLOT_LABELS: Record<number, string> = { 0: '조식', 1: '오전간식', 2: '중식', 3: '오후간식', 4: 'DC', 5: '석식', 6: '저녁간식', 7: '기타간식', 8: '킨더간식' }
