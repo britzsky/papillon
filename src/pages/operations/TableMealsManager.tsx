@@ -2,7 +2,8 @@ import MealPlanImpact from '../../components/MealPlanImpact'
 import { formatQty } from '../../utils/formatQty'
 import MealUsageControls from '../../components/MealUsageControls'
 import MenuOrigins from './MenuOrigins'
-import PdfMenuRecommendations from './PdfMenuRecommendations'
+import PdfMenuLine, { SlotCalories } from './PdfMenuLine'
+import { similarMenus } from './menuSimilarity'
 import PdfMenuRegisterModal from './PdfMenuRegisterModal'
 import PdfUnmatchedBulkModal from './PdfUnmatchedBulkModal'
 import { createPortal } from 'react-dom'
@@ -33,6 +34,8 @@ function TableMealsManager() {
   const [isMealConfigOpen, setIsMealConfigOpen] = useState(false)
   /** PDF 미등록 메뉴 한꺼번에 정리 창 */
   const [isBulkOpen, setIsBulkOpen] = useState(false)
+  /** 처리 창이 열린 메뉴 줄(한 번에 하나) */
+  const [openLineKey, setOpenLineKey] = useState('')
   useEffect(() => { if (displayedMealResult) setView('draft') }, [displayedMealResult])
   const showDraft = Boolean(displayedMealResult) && (view === 'draft' || !selectedTableMeal)
   // 처음 들어오면 가장 최근 식단표를 바로 보여준다(예전에는 목록에서 눌러야 상세 창이 열림)
@@ -213,6 +216,11 @@ function TableMealsManager() {
                     </div>}
                     <MenuOrigins accountId={selectedAccountId} menuIds={displayedMealResult.days.flatMap(day => Object.values(day.meals).flatMap(items => items.flatMap(item => item.matchedMenu ? [item.matchedMenu.menu_id] : [])))} />
 
+                    {parsedPdfResult ? <p className="pdf-legend" aria-label="메뉴 색 안내">
+                      <span><i />거래처 메뉴로 연결됨</span>
+                      <span><i className="is-unmatched" />미등록 — 눌러서 추천·등록·제외</span>
+                      <span><i className="is-excluded" />이번 식단에서 뺌</span>
+                    </p> : null}
                     <div className="table-meals-week-grid">
                       {displayedMealResult.days.map((day) => (
                         <article key={day.id} className="table-meals-day-card">
@@ -227,28 +235,50 @@ function TableMealsManager() {
                                 return null
                               }
 
+                              const profile = accountMealConfiguration?.profiles.find(p => p.meal_slot_code === configuredMealSlotRows.find(s => s.key === mealKey)?.code)
+                              const slotMenus = accountMenuItems.filter(m => (m.meal_plan_type ?? 0) === (profile?.default_meal_plan_type ?? selectedMealPlanType))
                               return (
-                                <div key={mealKey}>
-                                  <dt>{mealLabel}</dt>
-                                  <dd className="table-meals-day-card__menus">
-                                    <MealCalories menus={mealItems.map(item => item.matchedMenu)} />
+                                <div key={mealKey} className="pdf-slot">
+                                  <div className="pdf-slot__head">
+                                    <dt>{mealLabel}</dt>
+                                    <SlotCalories menus={mealItems.filter(item => !item.excluded).map(item => item.matchedMenu)} />
+                                  </div>
+                                  <dd>
+                                    <ul className="pdf-lines">
                                     {mealItems.map((item, itemIndex) => {
                                       const matchedMenu = item.matchedMenu
-                                      const profile = accountMealConfiguration?.profiles.find(p => p.meal_slot_code === configuredMealSlotRows.find(s => s.key === mealKey)?.code)
-                                      const known = mealItems.filter(i => i !== item && i.matchedMenu).map(i => i.matchedMenu!)
-                                      const remainingBudget = profile?.budget_per_person != null && known.every(m => getAutoMenuCost(m) > 0) ? profile.budget_per_person - known.reduce((sum, m) => sum + getAutoMenuCost(m), 0) : undefined
-
-                                      if (item.excluded) return <span key={`${mealKey}-${itemIndex}`} className="table-meals-menu-excluded"><s>{item.text}</s> <button type="button" onClick={() => setPdfOverride(day.id, mealKey, itemIndex, null)}>되돌리기</button></span>
+                                      const lineKey = `${day.id}/${mealKey}/${itemIndex}`
                                       const pdfOverride = pdfMenuOverrides[`${selectedAccountId}/${day.id}/${mealKey}/${itemIndex}`]
-                                      return matchedMenu ? (
-                                        <span key={`${mealKey}-${itemIndex}`}><button type="button" className={`table-meals-menu-text is-matched${getMenuShortageClass(matchedMenu)}`} {...createAiRecipeGestureHandlers(buildRecipeRequest(item.text, matchedMenu), setRecipeMenuState)} onClick={() => setSelectedDetailMenu(matchedMenu)}>{matchedMenu.menu_name}</button>
-                                        {(item.aliasMatched || pdfOverride) && normalizeMenuText(item.text) !== normalizeMenuText(matchedMenu.menu_name) && <small className="table-meals-alias-note">PDF 표기 '{item.text}'{item.aliasMatched ? ' · 저장된 연결' : ''} <button type="button" onClick={() => setPdfOverride(day.id, mealKey, itemIndex, item.aliasMatched ? PDF_UNLINKED : null)}>{item.aliasMatched ? '이번만 다른 메뉴' : '선택 취소'}</button></small>}</span>
-                                      ) : (
-                                        <span key={`${mealKey}-${itemIndex}`}><button type="button" className="table-meals-menu-text is-unmatched" onClick={() => openRegisterModal(item.text, day, mealKey)}>{item.text}</button>
-                                        <button type="button" className="table-meals-exclude-button" title="행사·안내 문구처럼 메뉴가 아닌 글자는 이번 식단에서 뺍니다" onClick={() => setPdfOverride(day.id, mealKey, itemIndex, PDF_EXCLUDED)}>이번만 제외</button>
-                                        <PdfMenuRecommendations text={item.text} menus={accountMenuItems.filter(m => (m.meal_plan_type ?? 0) === (profile?.default_meal_plan_type ?? selectedMealPlanType))} remainingBudget={remainingBudget} usedIds={known.map(m => m.menu_id)} onSelect={menu => setPdfOverride(day.id, mealKey, itemIndex, menu.menu_id)} /></span>
+                                      const known = mealItems.filter(i => i !== item && i.matchedMenu && !i.excluded).map(i => i.matchedMenu!)
+                                      const remainingBudget = profile?.budget_per_person != null && known.every(m => getAutoMenuCost(m) > 0) ? profile.budget_per_person - known.reduce((sum, m) => sum + getAutoMenuCost(m), 0) : undefined
+                                      const usedIds = new Set(known.map(m => m.menu_id))
+                                      const relinked = Boolean(matchedMenu && (item.aliasMatched || pdfOverride) && normalizeMenuText(item.text) !== normalizeMenuText(matchedMenu.menu_name))
+                                      return (
+                                        <PdfMenuLine
+                                          key={lineKey}
+                                          text={item.text}
+                                          matchedMenu={matchedMenu}
+                                          excluded={item.excluded}
+                                          linkSource={relinked ? (item.aliasMatched ? 'alias' : 'picked') : undefined}
+                                          shortage={Boolean(matchedMenu && getMenuShortageClass(matchedMenu))}
+                                          open={openLineKey === lineKey}
+                                          onToggle={open => setOpenLineKey(open ? lineKey : '')}
+                                          nameProps={matchedMenu ? createAiRecipeGestureHandlers(buildRecipeRequest(item.text, matchedMenu), setRecipeMenuState) : undefined}
+                                          onShowDetail={matchedMenu ? () => setSelectedDetailMenu(matchedMenu) : undefined}
+                                          similar={matchedMenu ? undefined : similarMenus(item.text, slotMenus.filter(m => !usedIds.has(m.menu_id)), 5).map(entry => entry.menu)}
+                                          budgetPicks={matchedMenu || remainingBudget == null ? undefined : slotMenus
+                                            .filter(m => !usedIds.has(m.menu_id) && m.menu_cost_complete !== false && Number(m.menu_cost_per_person) > 0 && Number(m.menu_cost_per_person) <= remainingBudget)
+                                            .sort((a, b) => Number(a.menu_cost_per_person) - Number(b.menu_cost_per_person)).slice(0, 6)}
+                                          remainingBudget={matchedMenu ? undefined : remainingBudget}
+                                          onPick={menu => setPdfOverride(day.id, mealKey, itemIndex, menu.menu_id)}
+                                          onRegister={() => openRegisterModal(item.text, day, mealKey)}
+                                          onExclude={() => setPdfOverride(day.id, mealKey, itemIndex, PDF_EXCLUDED)}
+                                          onRestore={parsedPdfResult ? () => setPdfOverride(day.id, mealKey, itemIndex, null) : undefined}
+                                          onUnlink={parsedPdfResult ? () => setPdfOverride(day.id, mealKey, itemIndex, item.aliasMatched ? PDF_UNLINKED : null) : undefined}
+                                        />
                                       )
                                     })}
+                                    </ul>
                                   </dd>
                                 </div>
                               )
