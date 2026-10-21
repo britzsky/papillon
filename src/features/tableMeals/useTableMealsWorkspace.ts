@@ -2,6 +2,7 @@ import { workspaceAccountId } from '../workspace/workspaceAccount'
 import { type PlanImpact } from '../../components/MealPlanImpact'
 import { buildApiUrl } from '../../config/api'
 import { parseMealTable, WEEKDAYS, type ParsedMealTable, type PdfTextItem } from '../../pages/operations/pdfMealParser'
+import { mealSheets, parseMealSheet, type SheetGrid } from '../../pages/operations/excelMealParser'
 import { getMenuAliases, saveMenuAliases, type MenuAlias } from '../../api/menuAliases'
 import { getShortages, type ShortageResult, type ShortageCriteria } from '../../api/shortageProcurement'
 import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -38,6 +39,9 @@ export type ParsedDay = {
 }
 
 export type ParsedPdfResult = {
+  /** 엑셀이면 'excel'과 시트 이름 */
+  source?: 'pdf' | 'excel'
+  sheetName?: string
   pageCount: number
   textItemCount: number
   originTexts: string[]
@@ -566,6 +570,8 @@ export function matchPdfMenu(text: string, menuItems: MenuManagerItem[], aliasMe
 export function buildParsedPdfResult(raw: ParsedMealTable, menuItems: MenuManagerItem[], aliasMenuIds: Map<string, string>): ParsedPdfResult {
   const match = (text: string) => matchPdfMenu(text, menuItems, aliasMenuIds)
   return {
+    source: raw.source,
+    sheetName: raw.sheetName,
     pageCount: raw.pageCount,
     textItemCount: raw.textItemCount,
     originTexts: raw.originTexts,
@@ -576,6 +582,16 @@ export function buildParsedPdfResult(raw: ParsedMealTable, menuItems: MenuManage
     })),
   }
 }
+
+/** 엑셀(.xlsx) 시트별 칸 값. 요일·식사 해석은 거래처 식사 설정이 필요해 excelMealParser에서 따로 한다(라이브러리는 엑셀을 올릴 때만 불러온다) */
+export async function extractExcelSheets(file: File): Promise<SheetGrid[]> {
+  if (/\.xls$/i.test(file.name)) throw new Error("예전 엑셀 형식(.xls)은 읽을 수 없습니다. 엑셀에서 '다른 이름으로 저장 → Excel 통합 문서(.xlsx)'로 저장해 올려주세요.")
+  const { default: readXlsxFile } = await import('read-excel-file/browser')
+  const sheets = await readXlsxFile(file)
+  return sheets.map(sheet => ({ name: sheet.sheet, rows: sheet.data as SheetGrid['rows'] }))
+}
+
+export const isExcelFile = (file: File) => /\.(xlsx|xlsm|xls)$/i.test(file.name) || file.type.includes('spreadsheet')
 
 /** PDF 글자와 위치만 뽑는다. 요일·식사 해석은 거래처 식사 설정이 필요해 pdfMealParser에서 따로 한다 */
 export async function extractPdfText(file: File): Promise<{ items: PdfTextItem[]; pageCount: number }> {
@@ -650,6 +666,10 @@ export function useTableMealsWorkspace() {
   const [uploadedFileName, setUploadedFileName] = useState('업로드한 PDF가 없습니다.')
   // PDF에서 뽑은 글자·위치. 요일·식사 해석은 거래처 식사 설정이 바뀌면 다시 한다(rawParsedResult)
   const [pdfText, setPdfText] = useState<{ items: PdfTextItem[]; pageCount: number } | null>(null)
+  // 엑셀 식단표: 시트별 칸 값, 고른 시트, 빼는 코스('중식 다이어트식' 형식)
+  const [excelSheets, setExcelSheets] = useState<SheetGrid[] | null>(null)
+  const [excelSheetName, setExcelSheetName] = useState('')
+  const [excludedCourses, setExcludedCourses] = useState<string[]>([])
   /** PDF 미등록 메뉴 등록 창 대상(표기·요일·식사) */
   const [registerTarget, setRegisterTarget] = useState<{ text: string; context: string; slotCode: number | null } | null>(null)
   const [originRevision, setOriginRevision] = useState(0)
@@ -969,10 +989,17 @@ export function useTableMealsWorkspace() {
     } catch { /* A stale draft does not prevent normal editing. */ }
   }, [selectedAccountId])
 
-  const rawParsedResult = useMemo(
-    () => (pdfText ? parseMealTable(pdfText.items, pdfText.pageCount, toMealSlotRows(accountMealSlots)) : null),
-    [pdfText, accountMealSlots],
+  /** 엑셀에서 식단표로 읽히는 시트(이름·날짜) */
+  const excelSheetOptions = useMemo(
+    () => (excelSheets ? mealSheets(excelSheets, toMealSlotRows(accountMealSlots)) : []),
+    [excelSheets, accountMealSlots],
   )
+  const rawParsedResult = useMemo(() => {
+    const slots = toMealSlotRows(accountMealSlots)
+    if (pdfText) return parseMealTable(pdfText.items, pdfText.pageCount, slots)
+    const sheet = excelSheets?.find(item => item.name === excelSheetName)
+    return sheet ? parseMealSheet(sheet, slots, excludedCourses) : null
+  }, [pdfText, excelSheets, excelSheetName, excludedCourses, accountMealSlots])
   const parsedPdfResult = useMemo(
     () => {
       if (!rawParsedResult) return null
@@ -1321,9 +1348,24 @@ export function useTableMealsWorkspace() {
     setAiMatchedMenuIdsByText({})
     setAiMatchMessage('')
 
+    setExcelSheets(null)
+    setExcelSheetName('')
+    setExcludedCourses([])
+
     try {
       setIsPdfParsing(true)
-      setPdfText(await extractPdfText(file))
+      if (isExcelFile(file)) {
+        const sheets = await extractExcelSheets(file)
+        const options = mealSheets(sheets, toMealSlotRows(accountMealSlots))
+        if (!options.length) throw new Error("엑셀에서 요일(월~일)이 적힌 줄과 식사 이름(조식·중식·석식 등)이 있는 식단표를 찾지 못했습니다. '표준 양식 받기'로 내려받은 양식에 옮겨 올려주세요.")
+        // 선택한 주차와 날짜가 겹치는 시트를 먼저, 없으면 첫 식단표 시트
+        const weekDates = selectedAutoWeek ? selectedAutoWeek.dates.map(formatDateValue) : []
+        const matched = options.find(option => option.dates.some(date => weekDates.includes(date)))
+        setExcelSheets(sheets)
+        setExcelSheetName((matched ?? options[0]).name)
+      } else {
+        setPdfText(await extractPdfText(file))
+      }
     } catch (error) {
       setPdfError(error instanceof Error ? error.message : 'PDF를 분석하지 못했습니다.')
     } finally {
@@ -1797,6 +1839,7 @@ export function useTableMealsWorkspace() {
     )
 
     setPdfText(null)
+    setExcelSheets(null)
     setAiMatchedMenuIdsByText({})
     setAiMatchMessage('')
     setPdfError('')
@@ -1918,5 +1961,5 @@ export function useTableMealsWorkspace() {
       })),
   })
 
-  return { pdfMenuOverrides, setPdfMenuOverrides, menuAliases, setMenuAliases, rememberPdfLinks, setRememberPdfLinks, pdfLinkMessage, setPdfLinkMessage, navigate, searchParams, initialAccountId, fileInputRef, selectedAccountId, setSelectedAccountId, selectedTableMonth, setSelectedTableMonth, selectedMealPlanType, setSelectedMealPlanType, accountOptions, setAccountOptions, accountMealSlots, setAccountMealSlots, accountMealConfiguration, setAccountMealConfiguration, reloadMealConfiguration, weeklyMealSettings, setWeeklyMealSettings, isWeeklySettingsOpen, setIsWeeklySettingsOpen, accountError, setAccountError, tableMeals, setTableMeals, setMenuItems, accountMenuItems, setAccountMenuItems, menuError, setMenuError, accountMenuError, setAccountMenuError, tableError, setTableError, isTableLoading, setIsTableLoading, isAccountMenuLoading, setIsAccountMenuLoading, isPdfParsing, setIsPdfParsing, pdfError, setPdfError, uploadedFileName, setUploadedFileName, pdfText, setPdfText, registerTarget, setRegisterTarget, originRevision, setOriginRevision, selectedTableMeal, setSelectedTableMeal, tableMealDetailItems, setTableMealDetailItems, tableMealDetailError, setTableMealDetailError, isTableMealDetailLoading, setIsTableMealDetailLoading, selectedDetailMenu, setSelectedDetailMenu, detailItems, setDetailItems, menuShortageById, setMenuShortageById, tableMealShortageById, setTableMealShortageById, detailError, setDetailError, isDetailLoading, setIsDetailLoading, recipeMenuState, setRecipeMenuState, recipeViewRequest, setRecipeViewRequest, recipeViewMode, setRecipeViewMode, recipeRegisterRequest, setRecipeRegisterRequest, aiMatchMessage, setAiMatchMessage, aiMatchedMenuIdsByText, setAiMatchedMenuIdsByText, isAiMatching, setIsAiMatching, autoWeekValue, setAutoWeekValue, autoGeneratedResult, setAutoGeneratedResult, autoGenerateMessage, setAutoGenerateMessage, isTableSaving, setIsTableSaving, tableSaveMessage, setTableSaveMessage, plannedServings, setPlannedServings, draftSessionAccount, setDraftSessionAccount, restoredSettings, savedStockCheck, setSavedStockCheck, persistPlan, saveAndOrder, saveCurrentAndOrder, createDraftCriteria, preparePlan, isManualEditorOpen, setIsManualEditorOpen, mealEditorSource, setMealEditorSource, manualDays, setManualDays, manualEveningSnackItems, setManualEveningSnackItems, manualTarget, setManualTarget, manualSearchText, setManualSearchText, manualFoodTypeFilter, setManualFoodTypeFilter, manualMenuTypeFilter, setManualMenuTypeFilter, manualMessage, setManualMessage, alert, setAlert, rawParsedResult, parsedPdfResult, updateWeeklyMealSetting, currentMonthWeeks, selectedAutoWeek, displayedMealResult, displayedMenuIds, selectedAccountName, configuredMealSlotRows, selectedTableMonthParts, matchedCount, tableMealDetailDays, manualSelectedDay, filteredManualMenus, closeAlert, handleUploadClick, openTableMealDetail, closeTableMealDetail, tableMealAccountName, printTableMealDetail, handleFileChange, transferPdfToEditor, setPdfOverride, openRegisterModal, handleRegisteredMenu, unmatchedPdfMenus, handleBulkLinkedMenus, excludePdfTexts, getExtractedMenuTexts, handleAiMatch, refreshTableMeals, openManualEditor, closeManualEditor, openAutoEditor, getManualMealItems, addManualMenu, removeManualMenu, clearManualMeal, fillManualWithAutoRecommendation, saveManualTableMeals, handleAutoGenerate, handleSaveAutoTableMeals, getAiMatchedMenu, getMenuShortageClass, getTableMealShortageClass, currentDraftPayload, keepDraft, openDraftProcurement, goToSavedFoodOrder, goToFoodOrder, checkCurrentDraftStock, createShortageOrder, buildRecipeRequest }
+  return { pdfMenuOverrides, setPdfMenuOverrides, menuAliases, setMenuAliases, rememberPdfLinks, setRememberPdfLinks, pdfLinkMessage, setPdfLinkMessage, navigate, searchParams, initialAccountId, fileInputRef, selectedAccountId, setSelectedAccountId, selectedTableMonth, setSelectedTableMonth, selectedMealPlanType, setSelectedMealPlanType, accountOptions, setAccountOptions, accountMealSlots, setAccountMealSlots, accountMealConfiguration, setAccountMealConfiguration, reloadMealConfiguration, weeklyMealSettings, setWeeklyMealSettings, isWeeklySettingsOpen, setIsWeeklySettingsOpen, accountError, setAccountError, tableMeals, setTableMeals, setMenuItems, accountMenuItems, setAccountMenuItems, menuError, setMenuError, accountMenuError, setAccountMenuError, tableError, setTableError, isTableLoading, setIsTableLoading, isAccountMenuLoading, setIsAccountMenuLoading, isPdfParsing, setIsPdfParsing, pdfError, setPdfError, uploadedFileName, setUploadedFileName, pdfText, setPdfText, registerTarget, setRegisterTarget, originRevision, setOriginRevision, selectedTableMeal, setSelectedTableMeal, tableMealDetailItems, setTableMealDetailItems, tableMealDetailError, setTableMealDetailError, isTableMealDetailLoading, setIsTableMealDetailLoading, selectedDetailMenu, setSelectedDetailMenu, detailItems, setDetailItems, menuShortageById, setMenuShortageById, tableMealShortageById, setTableMealShortageById, detailError, setDetailError, isDetailLoading, setIsDetailLoading, recipeMenuState, setRecipeMenuState, recipeViewRequest, setRecipeViewRequest, recipeViewMode, setRecipeViewMode, recipeRegisterRequest, setRecipeRegisterRequest, aiMatchMessage, setAiMatchMessage, aiMatchedMenuIdsByText, setAiMatchedMenuIdsByText, isAiMatching, setIsAiMatching, autoWeekValue, setAutoWeekValue, autoGeneratedResult, setAutoGeneratedResult, autoGenerateMessage, setAutoGenerateMessage, isTableSaving, setIsTableSaving, tableSaveMessage, setTableSaveMessage, plannedServings, setPlannedServings, draftSessionAccount, setDraftSessionAccount, restoredSettings, savedStockCheck, setSavedStockCheck, persistPlan, saveAndOrder, saveCurrentAndOrder, createDraftCriteria, preparePlan, isManualEditorOpen, setIsManualEditorOpen, mealEditorSource, setMealEditorSource, manualDays, setManualDays, manualEveningSnackItems, setManualEveningSnackItems, manualTarget, setManualTarget, manualSearchText, setManualSearchText, manualFoodTypeFilter, setManualFoodTypeFilter, manualMenuTypeFilter, setManualMenuTypeFilter, manualMessage, setManualMessage, alert, setAlert, rawParsedResult, parsedPdfResult, updateWeeklyMealSetting, currentMonthWeeks, selectedAutoWeek, displayedMealResult, displayedMenuIds, selectedAccountName, configuredMealSlotRows, selectedTableMonthParts, matchedCount, tableMealDetailDays, manualSelectedDay, filteredManualMenus, closeAlert, handleUploadClick, openTableMealDetail, closeTableMealDetail, tableMealAccountName, printTableMealDetail, handleFileChange, transferPdfToEditor, setPdfOverride, openRegisterModal, handleRegisteredMenu, excelSheetOptions, excelSheetName, setExcelSheetName, excludedCourses, setExcludedCourses, unmatchedPdfMenus, handleBulkLinkedMenus, excludePdfTexts, getExtractedMenuTexts, handleAiMatch, refreshTableMeals, openManualEditor, closeManualEditor, openAutoEditor, getManualMealItems, addManualMenu, removeManualMenu, clearManualMeal, fillManualWithAutoRecommendation, saveManualTableMeals, handleAutoGenerate, handleSaveAutoTableMeals, getAiMatchedMenu, getMenuShortageClass, getTableMealShortageClass, currentDraftPayload, keepDraft, openDraftProcurement, goToSavedFoodOrder, goToFoodOrder, checkCurrentDraftStock, createShortageOrder, buildRecipeRequest }
 }

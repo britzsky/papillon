@@ -18,7 +18,7 @@ type Method = 'auto' | 'manual' | 'pdf'
 const METHODS: { key: Method; label: string; hint: string; icon: TouchIconName }[] = [
   { key: 'auto', label: '자동으로 만들기', hint: '거래처 메뉴와 예산으로 한 주를 채웁니다', icon: 'refresh' },
   { key: 'manual', label: '직접 만들기', hint: '칸을 누르고 메뉴를 골라 넣습니다', icon: 'meals' },
-  { key: 'pdf', label: 'PDF 불러오기', hint: '받은 식단표 PDF의 글자를 읽어 옵니다', icon: 'box' },
+  { key: 'pdf', label: '파일 불러오기', hint: '받은 식단표 PDF·엑셀을 읽어 옵니다', icon: 'box' },
 ]
 
 /**
@@ -92,16 +92,16 @@ export default function TableMealsCreateTouch({ onClose }: { onClose: () => void
     </section>}
 
     {method === 'pdf' && <section className="t-card tc-action">
-      <p>PDF 글자를 읽어 요일·식사별로 나눕니다. 파일은 서버에 저장하지 않습니다.</p>
+      <p>식단표 PDF·엑셀(.xlsx)을 읽어 요일·식사별로 나눕니다. 파일은 서버에 저장하지 않습니다. 엑셀이 읽히지 않으면 <a href={`${import.meta.env.BASE_URL}templates/weekly-meal-plan-template.xlsx`} download="주간식단표_표준양식.xlsx">표준 양식</a>에 옮겨 올려주세요.</p>
       <div className="tc-action__buttons">
-        <label className="t-btn is-primary is-large tc-file">PDF 고르기<input ref={fileInputRef} type="file" accept=".pdf,application/pdf" onChange={w.handleFileChange} /></label>
+        <label className="t-btn is-primary is-large tc-file">파일 고르기<input ref={fileInputRef} type="file" accept=".pdf,application/pdf,.xlsx,.xlsm,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={w.handleFileChange} /></label>
         <button type="button" className="t-btn is-large" disabled={!w.parsedPdfResult || w.unmatchedPdfMenus.length === 0} onClick={() => setBulkOpen(true)}>미등록 메뉴 정리{w.parsedPdfResult && w.unmatchedPdfMenus.length ? ` (${w.unmatchedPdfMenus.length}종)` : ''}</button>
         <button type="button" className="t-btn is-soft is-large" disabled={!w.parsedPdfResult} onClick={() => void w.transferPdfToEditor()}>편집기로 옮기기</button>
       </div>
       <button type="button" className={`tc-toggle${w.rememberPdfLinks ? ' is-on' : ''}`} aria-pressed={w.rememberPdfLinks} onClick={() => w.setRememberPdfLinks(!w.rememberPdfLinks)}>
-        <span className="tc-toggle__box">{w.rememberPdfLinks && <TouchIcon name="check" size={16} />}</span>직접 고른 메뉴 연결 기억(다음 PDF부터 자동 연결)
+        <span className="tc-toggle__box">{w.rememberPdfLinks && <TouchIcon name="check" size={16} />}</span>직접 고른 메뉴 연결 기억(다음 파일부터 자동 연결)
       </button>
-      {w.isPdfParsing && <p className="t-msg" role="status">PDF를 읽는 중…</p>}
+      {w.isPdfParsing && <p className="t-msg" role="status">식단표 파일을 읽는 중…</p>}
       {w.pdfError && <p className="t-msg is-error">{w.pdfError}</p>}
       {w.parsedPdfResult && <PdfResult w={w} />}
     </section>}
@@ -123,7 +123,11 @@ function PdfResult({ w }: { w: W }) {
   const result = w.displayedMealResult
   if (!result) return null
   return <div className="tc-pdf">
-    <p className="tc-hint">텍스트 {result.textItemCount}건 · 맞춘 메뉴 {w.matchedCount}건{result.unconfiguredSlots?.length ? ` · ${result.unconfiguredSlots.join(', ')}는 이 거래처 식사 설정에 없어 빠집니다` : ''}</p>
+    {w.excelSheetOptions.length > 1 && <label className="tc-hint tc-excel-pick">시트 <select value={w.excelSheetName} onChange={event => w.setExcelSheetName(event.target.value)}>
+      {w.excelSheetOptions.map(option => <option key={option.name} value={option.name}>{option.name}{option.dates.length ? ` (${option.dates[0]} ~ ${option.dates[option.dates.length - 1]})` : ''}</option>)}
+    </select></label>}
+    {w.rawParsedResult?.courses?.length ? <div className="tc-hint tc-excel-pick">가져올 코스 {w.rawParsedResult.courses.map(course => <label key={course}><input type="checkbox" checked={!w.excludedCourses.includes(course)} onChange={event => w.setExcludedCourses(current => event.target.checked ? current.filter(item => item !== course) : [...current, course])} /> {course}</label>)}</div> : null}
+    <p className="tc-hint">{result.source === 'excel' ? `엑셀 '${result.sheetName}' 칸` : '텍스트'} {result.textItemCount}건 · 맞춘 메뉴 {w.matchedCount}건{result.unconfiguredSlots?.length ? ` · ${result.unconfiguredSlots.join(', ')}는 이 거래처 식사 설정에 없어 빠집니다` : ''}</p>
     <div className="tc-pdf__days">{result.days.map(day => <article key={day.id} className="tc-pdf__day">
       <header><strong>{day.label}</strong><small>{day.date}</small></header>
       {w.configuredMealSlotRows.map(slot => {

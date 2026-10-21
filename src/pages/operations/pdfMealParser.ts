@@ -13,6 +13,11 @@ export type ParsedMealDay = {
   meals: Record<string, string[]>
 }
 export type ParsedMealTable = {
+  /** 엑셀이면 시트 정보·코스가 붙는다(PDF는 없음) */
+  source?: 'pdf' | 'excel'
+  sheetName?: string
+  /** 엑셀 코스(일반식·다이어트식·간편식 A코스 …). '식사 코스' 형식 */
+  courses?: string[]
   pageCount: number
   textItemCount: number
   originTexts: string[]
@@ -37,7 +42,7 @@ const SLOT_NAMES: Array<[RegExp, number]> = [
 ]
 const SNACK_CODES = [1, 3, 6, 7, 8]
 
-const compact = (value: string) => value.normalize('NFKC').replace(/\s+/g, '').trim()
+export const compact = (value: string) => value.normalize('NFKC').replace(/\s+/g, '').trim()
 
 /** '월', '월요일', '월(10/19)'처럼 요일만 적힌 글자. '바지락수제비'처럼 요일 글자가 든 메뉴는 아니다 */
 export function weekdayOf(text: string) {
@@ -49,7 +54,7 @@ export function isDateText(text: string) {
   return /^\d{1,2}[./-]\d{1,2}\.?$/.test(value) || /^\d{4}[./-]\d{1,2}[./-]\d{1,2}\.?$/.test(value) || /^\d{1,2}월\d{1,2}일$/.test(value)
 }
 
-function normalizeDate(text: string) {
+export function normalizeDate(text: string) {
   const value = compact(text)
   const full = value.match(/^(\d{4})[./-](\d{1,2})[./-](\d{1,2})/)
   if (full) return `${full[1]}-${full[2].padStart(2, '0')}-${full[3].padStart(2, '0')}`
@@ -62,12 +67,12 @@ export function isOriginText(text: string) {
 }
 
 /** 안내 문구·제목 등 메뉴가 아닌 글자: '*'·'※'로 시작하는 안내, 띄어쓰기가 많은 문장 */
-function isNoticeText(text: string) {
+export function isNoticeText(text: string) {
   const value = text.trim()
   return /^[*※#]/.test(value) || (value.match(/\s+/g)?.length ?? 0) >= 3 || compact(value).length > 30
 }
 
-function slotCodeOf(text: string, slots: MealSlotTarget[]) {
+export function slotCodeOf(text: string, slots: MealSlotTarget[]) {
   const value = compact(text)
   const custom = slots.find(slot => compact(slot.label) === value)
   if (custom) return custom.code
@@ -90,7 +95,7 @@ export function splitMenuText(text: string, slots: MealSlotTarget[] = []) {
 
 const centerX = (item: PdfTextItem) => item.x + (item.width ?? 0) / 2
 
-type Anchor = { code: number; y: number }
+export type Anchor = { code: number; y: number }
 type RowGroup = { code: number; top: number; bottom: number }
 
 /** 같은 높이(±tolerance)의 글자를 한 행으로 묶어 위→아래 순서의 행 y 목록을 만든다 */
@@ -144,7 +149,7 @@ function groupOf(y: number, groups: RowGroup[], tolerance = 4) {
 }
 
 /** 그냥 '간식'은 거래처 간식 설정이 하나면 그것, 아니면 위치(중식 앞 오전·석식 뒤 저녁·그 사이 오후)로 정한다 */
-function resolveSnacks(anchors: Anchor[], slots: MealSlotTarget[]) {
+export function resolveSnacks(anchors: Anchor[], slots: MealSlotTarget[]) {
   const configured = slots.map(slot => slot.code).filter(code => SNACK_CODES.includes(code))
   return anchors.map((anchor, index) => {
     if (anchor.code !== -1) return anchor
@@ -228,4 +233,4 @@ export function parseMealTable(items: PdfTextItem[], pageCount: number, slots: M
   return { pageCount, textItemCount: items.length, originTexts, days, unconfiguredSlots: [...unconfigured] }
 }
 
-const SLOT_LABELS: Record<number, string> = { 0: '조식', 1: '오전간식', 2: '중식', 3: '오후간식', 4: 'DC', 5: '석식', 6: '저녁간식', 7: '기타간식', 8: '킨더간식' }
+export const SLOT_LABELS: Record<number, string> = { 0: '조식', 1: '오전간식', 2: '중식', 3: '오후간식', 4: 'DC', 5: '석식', 6: '저녁간식', 7: '기타간식', 8: '킨더간식' }
