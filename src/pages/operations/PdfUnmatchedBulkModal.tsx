@@ -414,7 +414,8 @@ export default function PdfUnmatchedBulkModal({ accountId, accountName, mealPlan
                       return (
                         <div key={row.key} className="pdf-bulk__row">
                           <IngredientSearchSelect options={ingredients} placeholder="거래처 식재료에서 고르기" selectedName={option?.ingredient_name ?? ''} value={row.ingredientId}
-                            onChange={ingredientId => updateRow(index, row.key, { ingredientId })} />
+                            onChange={ingredientId => updateRow(index, row.key, { ingredientId })}
+                            onCreate={typed => updateRow(index, row.key, { ingredientId: '', newName: typed })} />
                           {option ? (
                             <button type="button" className="pdf-menu-register__link" onClick={() => updateRow(index, row.key, { ingredientId: '', newName: row.newName || row.aiName })}>새 식재료로</button>
                           ) : (

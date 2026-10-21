@@ -12,7 +12,7 @@ import {
 } from '../../api/accountMenuRegistration'
 import IngredientSearchSelect from './IngredientSearchSelect'
 import { mealCategoryOptions, mealPlanTypeOptions, menuGubunOptions, menuTypeOptions, toFoodType } from './menuManagerShared'
-import { similarMenus } from './menuSimilarity'
+import { menuSimilarity, similarMenus } from './menuSimilarity'
 import { guessKinds } from './menuKindGuess'
 import './PdfMenuRegisterModal.css'
 
@@ -32,12 +32,23 @@ type Props = {
   onLinked: (menuId: string, notice: string) => Promise<void> | void
 }
 
-type IngredientRow = { key: string; ingredient_id: string; qty: string }
+/** 식재료 한 줄: 목록에서 고른 거래처 식재료(ingredient_id) 또는 이름을 입력한 새 식재료(newName — 등록할 때 함께 만든다) */
+type IngredientRow = { key: string; ingredient_id: string; qty: string; newName: string | null; newUnit: string }
+
+/** 새 식재료 기준단위 추정(사람이 바꿀 수 있음): 액체는 ml, 낱개는 EA, 나머지 g */
+function guessUnit(name: string) {
+  const text = name.replace(/\s+/g, '')
+  if (/(우유|주스|쥬스|간장|식초|식용유|기름|물엿|올리고당|육수|드레싱|요구르트|요거트|두유|음료|맛술|액젓|소주|청주)$/.test(text)) return 'ml'
+  if (/(계란|달걀|메추리알|빵|번|컵|팩|개입|봉)$/.test(text)) return 'EA'
+  return 'g'
+}
 
 const toOption = (item: AccountIngredient): IngredientOption => ({ ingredient_id: item.ingredient_id, ingredient_name: item.ingredient_name, category_name: item.category_name, base_unit: item.base_unit, menu_usage_count: 0 })
 
 let rowSeq = 0
-const newRow = (ingredientId = ''): IngredientRow => ({ key: `row-${++rowSeq}`, ingredient_id: ingredientId, qty: '' })
+const newRow = (ingredientId = '', newName: string | null = null): IngredientRow =>
+  ({ key: `row-${++rowSeq}`, ingredient_id: ingredientId, qty: '', newName, newUnit: newName ? guessUnit(newName) : 'g' })
+const nameKey = (value: string) => value.replace(/\s+/g, '').toLowerCase()
 
 export default function PdfMenuRegisterModal({ accountId, accountName, pdfText, context, slotCode, mealPlanType, accountMenus, onClose, onLinked }: Props) {
   const guess = useMemo(() => guessKinds(pdfText, slotCode), [pdfText, slotCode])
@@ -56,8 +67,7 @@ export default function PdfMenuRegisterModal({ accountId, accountName, pdfText, 
   /** 새로 등록한 메뉴. 있으면 '본사 메뉴에도 반영할까요?' 단계 */
   const [registered, setRegistered] = useState<{ menu_id: string; menu_name: string } | null>(null)
   const [preview, setPreview] = useState<PromotePreview | null>(null)
-  /** 목록에 없는 거래처 식재료 추가 입력 */
-  const [draftIngredient, setDraftIngredient] = useState<{ name: string; unit: string; category: string } | null>(null)
+  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -76,6 +86,9 @@ export default function PdfMenuRegisterModal({ accountId, accountName, pdfText, 
           .filter((option, index, list) => !list.slice(0, index).some(longer => longer.ingredient_name.includes(option.ingredient_name)))
           .slice(0, 4)
         if (found.length) setRows(found.map(option => newRow(option.ingredient_id)))
+        // 거래처 식재료가 아직 없으면 검색할 것이 없으니 처음부터 이름 입력 칸으로
+        else if (!options.length) setRows([newRow('', '')])
+        setLoaded(true)
       })
       .catch(e => { if (active) setLoadError(e instanceof Error ? e.message : '메뉴·식재료 목록을 불러오지 못했습니다.') })
     return () => { active = false }
@@ -102,20 +115,51 @@ export default function PdfMenuRegisterModal({ accountId, accountName, pdfText, 
     await onLinked(menu.menu_id, `본사 메뉴 '${menu.menu_name}'을(를) 거래처 메뉴로 가져와 연결했습니다.`)
   })
 
+  const filledRows = () => rows.filter(row => row.ingredient_id || row.newName?.trim())
   const validate = () => {
     if (!name.trim()) return '메뉴명을 입력해주세요.'
     if (!(Number(calories) > 0)) return '1인분 칼로리(kcal)를 입력해주세요.'
-    const filled = rows.filter(row => row.ingredient_id)
-    if (filled.length === 0) return '재고 관리를 위해 식재료를 1개 이상 선택해주세요.'
-    if (filled.some(row => !(Number(row.qty) > 0))) return '선택한 식재료마다 1인분 사용량을 입력해주세요.'
-    if (new Set(filled.map(row => row.ingredient_id)).size !== filled.length) return '같은 식재료가 두 번 들어 있습니다.'
+    const filled = filledRows()
+    if (filled.length === 0) return '재고 관리를 위해 식재료를 1개 이상 넣어주세요. 목록에 없으면 이름을 입력하면 새로 만듭니다.'
+    if (filled.some(row => !(Number(row.qty) > 0))) return '식재료마다 1인분 사용량을 입력해주세요.'
+    const keys = filled.map(row => row.ingredient_id || `new:${nameKey(row.newName ?? '')}`)
+    if (new Set(keys).size !== keys.length) return '같은 식재료가 두 번 들어 있습니다.'
     return ''
   }
 
+  /** 이름만 입력한 새 식재료를 거래처 식재료로 만든다(같은 이름이 이미 있으면 그것을 쓴다). 만든 것은 줄에 반영해 다시 눌러도 두 번 만들지 않는다 */
+  const createNewIngredients = async () => {
+    let options = ingredients
+    const created: string[] = []
+    const resolved = new Map<string, IngredientOption>()
+    for (const row of rows.filter(item => !item.ingredient_id && item.newName?.trim())) {
+      const key = nameKey(row.newName!)
+      let option = resolved.get(key) ?? options.find(item => nameKey(item.ingredient_name) === key)
+      if (!option) {
+        option = toOption(await registerAccountIngredient(accountId, { ingredient_name: row.newName!.trim(), base_unit: row.newUnit }))
+        options = [...options, option]
+        created.push(option.ingredient_name)
+      }
+      resolved.set(key, option)
+    }
+    if (resolved.size) {
+      setIngredients([...options].sort((a, b) => a.ingredient_name.localeCompare(b.ingredient_name)))
+      setRows(current => current.map(row => {
+        const option = !row.ingredient_id && row.newName?.trim() ? resolved.get(nameKey(row.newName)) : undefined
+        return option ? { ...row, ingredient_id: option.ingredient_id, newName: null } : row
+      }))
+    }
+    return { options, resolved, created }
+  }
+
+  const [createdNames, setCreatedNames] = useState<string[]>([])
   const register = () => {
     const problem = validate()
     if (problem) { setError(problem); return }
     void run(async () => {
+      const { options, resolved, created } = await createNewIngredients()
+      if (created.length) setCreatedNames(current => [...current, ...created])
+      const byId = new Map(options.map(option => [option.ingredient_id, option]))
       const result = await registerAccountMenu({
         account_id: accountId,
         menu_name: name.trim(),
@@ -125,9 +169,9 @@ export default function PdfMenuRegisterModal({ accountId, accountName, pdfText, 
         menu_type: Number(menuType),
         menu_gubun: Number(gubun),
         meal_plan_type: Number(planType),
-        ingredients: rows.filter(row => row.ingredient_id).map(row => {
-          const option = optionById.get(row.ingredient_id)
-          return { ingredient_id: row.ingredient_id, ingredient_name_raw: option?.ingredient_name, qty_num: Number(row.qty), qty_unit: option?.base_unit ?? '' }
+        ingredients: filledRows().map(row => {
+          const option = row.ingredient_id ? byId.get(row.ingredient_id) : resolved.get(nameKey(row.newName ?? ''))
+          return { ingredient_id: option?.ingredient_id ?? row.ingredient_id, ingredient_name_raw: option?.ingredient_name, qty_num: Number(row.qty), qty_unit: option?.base_unit ?? row.newUnit }
         }),
       })
       setRegistered(result)
@@ -136,25 +180,13 @@ export default function PdfMenuRegisterModal({ accountId, accountName, pdfText, 
     })
   }
 
-  const categories = useMemo(() => [...new Set(ingredients.map(option => option.category_name).filter(Boolean))].sort(), [ingredients])
-  const addIngredient = () => {
-    if (!draftIngredient) return
-    if (!draftIngredient.name.trim()) { setError('추가할 식재료 이름을 입력해주세요.'); return }
-    void run(async () => {
-      const created = toOption(await registerAccountIngredient(accountId, { ingredient_name: draftIngredient.name.trim(), base_unit: draftIngredient.unit, category_name: draftIngredient.category.trim() || undefined }))
-      setIngredients(current => [...current, created].sort((a, b) => a.ingredient_name.localeCompare(b.ingredient_name)))
-      // 비어 있는 첫 줄에 넣고, 없으면 줄을 추가한다
-      setRows(current => current.some(row => !row.ingredient_id)
-        ? current.map((row, index) => index === current.findIndex(item => !item.ingredient_id) ? { ...row, ingredient_id: created.ingredient_id } : row)
-        : [...current, newRow(created.ingredient_id)])
-      setDraftIngredient(null)
-    })
-  }
+  const updateRow = (key: string, patch: Partial<IngredientRow>) => setRows(current => current.map(item => item.key === key ? { ...item, ...patch } : item))
 
   const finish = (promote: boolean) => {
     if (!registered) return
     void run(async () => {
       let notice = `'${registered.menu_name}'을(를) ${accountName || '거래처'} 메뉴로 등록했습니다.`
+      if (createdNames.length) notice += ` 새 식재료 ${createdNames.join(', ')}은(는) 거래처 재고 관리에서 공급사 상품을 연결해야 재고·발주에 잡힙니다.`
       if (promote) {
         try {
           await promoteAccountMenu(accountId, registered.menu_id)
@@ -260,39 +292,53 @@ export default function PdfMenuRegisterModal({ accountId, accountName, pdfText, 
               <div className="pdf-menu-register__ingredients">
                 <div className="pdf-menu-register__ingredients-head">
                   <strong>식재료 (1인분 기준, 필수)</strong>
-                  <button type="button" onClick={() => setRows(current => [...current, newRow()])}>식재료 추가</button>
+                  <button type="button" onClick={() => setRows(current => [...current, ingredients.length ? newRow() : newRow('', '')])}>식재료 추가</button>
                 </div>
+                {loaded && ingredients.length === 0 && (
+                  <p className="pdf-menu-register__hint">이 거래처에는 아직 등록된 식재료가 없습니다. 식재료 이름을 입력하면 거래처 식재료로 함께 만듭니다.</p>
+                )}
                 {rows.map((row, index) => {
-                  const option = optionById.get(row.ingredient_id)
+                  const option = row.ingredient_id ? optionById.get(row.ingredient_id) : undefined
+                  const typing = row.newName !== null && !row.ingredient_id
+                  const unit = option?.base_unit ?? (typing ? row.newUnit : '단위')
+                  const similar = typing && row.newName?.trim()
+                    ? ingredients.map(item => ({ item, score: menuSimilarity(row.newName!, item.ingredient_name) })).filter(entry => entry.score >= 0.5).sort((a, b) => b.score - a.score).slice(0, 2)
+                    : []
                   return (
-                    <div key={row.key} className="pdf-menu-register__ingredient">
-                      <IngredientSearchSelect options={ingredients} placeholder="식재료 검색" selectedName={option?.ingredient_name ?? ''} value={row.ingredient_id}
-                        onChange={ingredientId => setRows(current => current.map(item => item.key === row.key ? { ...item, ingredient_id: ingredientId } : item))} />
-                      <label className="pdf-menu-register__qty">
-                        <input aria-label={`${option?.ingredient_name ?? `${index + 1}번째 식재료`} 1인분 사용량`} type="number" min="0" step="0.1" inputMode="decimal" value={row.qty}
-                          onChange={e => setRows(current => current.map(item => item.key === row.key ? { ...item, qty: e.target.value } : item))} placeholder="사용량" />
-                        <span>{option?.base_unit ?? '단위'}</span>
-                      </label>
-                      <button type="button" className="pdf-menu-register__remove" disabled={rows.length === 1} onClick={() => setRows(current => current.filter(item => item.key !== row.key))}>삭제</button>
+                    <div key={row.key} className="pdf-menu-register__ingredient-block">
+                      <div className="pdf-menu-register__ingredient">
+                        {typing ? (
+                          <span className="pdf-menu-register__new-name">
+                            <span className="pdf-menu-register__badge">새 식재료</span>
+                            <input aria-label={`${index + 1}번째 새 식재료 이름`} value={row.newName ?? ''} maxLength={100} placeholder="식재료 이름 (예: 애호박)"
+                              onChange={e => updateRow(row.key, { newName: e.target.value })}
+                              onBlur={e => { if (e.target.value.trim() && row.newUnit === 'g') updateRow(row.key, { newUnit: guessUnit(e.target.value) }) }} />
+                            <select aria-label="기준단위" value={row.newUnit} onChange={e => updateRow(row.key, { newUnit: e.target.value })}>
+                              <option value="g">g</option><option value="ml">ml</option><option value="EA">EA</option>
+                            </select>
+                          </span>
+                        ) : (
+                          <IngredientSearchSelect options={ingredients} placeholder="식재료 검색 · 없으면 이름 입력" selectedName={option?.ingredient_name ?? ''} value={row.ingredient_id}
+                            onChange={ingredientId => updateRow(row.key, { ingredient_id: ingredientId, newName: null })}
+                            onCreate={typed => updateRow(row.key, { ingredient_id: '', newName: typed, newUnit: guessUnit(typed) })} />
+                        )}
+                        <label className="pdf-menu-register__qty">
+                          <input aria-label={`${option?.ingredient_name ?? (row.newName || `${index + 1}번째 식재료`)} 1인분 사용량`} type="number" min="0" step="0.1" inputMode="decimal" value={row.qty}
+                            onChange={e => updateRow(row.key, { qty: e.target.value })} placeholder="사용량" />
+                          <span>{unit}</span>
+                        </label>
+                        <button type="button" className="pdf-menu-register__remove" disabled={rows.length === 1} onClick={() => setRows(current => current.filter(item => item.key !== row.key))}>삭제</button>
+                      </div>
+                      {(similar.length > 0 || (typing && ingredients.length > 0)) && (
+                        <small className="pdf-menu-register__row-hint">
+                          {similar.length > 0 && <>이미 있는 식재료: {similar.map(({ item }) => <button type="button" key={item.ingredient_id} className="pdf-menu-register__link" onClick={() => updateRow(row.key, { ingredient_id: item.ingredient_id, newName: null })}>{item.ingredient_name}({item.base_unit})</button>)} </>}
+                          {typing && ingredients.length > 0 && <button type="button" className="pdf-menu-register__link" onClick={() => updateRow(row.key, { newName: null })}>목록에서 고르기</button>}
+                        </small>
+                      )}
                     </div>
                   )
                 })}
-                {draftIngredient ? (
-                  <div className="pdf-menu-register__new-ingredient" role="group" aria-label="거래처 식재료 추가">
-                    <input id="pdf-new-ingredient-name" aria-label="추가할 식재료 이름" value={draftIngredient.name} maxLength={100} placeholder="식재료 이름 (예: 궁채)"
-                      onChange={e => setDraftIngredient({ ...draftIngredient, name: e.target.value })} />
-                    <select id="pdf-new-ingredient-unit" aria-label="기준단위" value={draftIngredient.unit} onChange={e => setDraftIngredient({ ...draftIngredient, unit: e.target.value })}>
-                      <option value="g">g</option><option value="ml">ml</option><option value="EA">EA</option>
-                    </select>
-                    <input id="pdf-new-ingredient-category" aria-label="분류" list="pdf-ingredient-categories" value={draftIngredient.category} placeholder="분류 (선택)"
-                      onChange={e => setDraftIngredient({ ...draftIngredient, category: e.target.value })} />
-                    <datalist id="pdf-ingredient-categories">{categories.map(category => <option key={category} value={category} />)}</datalist>
-                    <button type="button" disabled={busy} onClick={addIngredient}>추가</button>
-                    <button type="button" disabled={busy} onClick={() => setDraftIngredient(null)}>취소</button>
-                  </div>
-                ) : (
-                  <p className="pdf-menu-register__hint">목록에 없는 식재료는 <button type="button" className="pdf-menu-register__link" onClick={() => setDraftIngredient({ name: '', unit: 'g', category: '' })}>이 거래처 식재료로 추가</button>할 수 있습니다. 기준단위(g·ml·EA)로 재고와 발주를 계산합니다.</p>
-                )}
+                <p className="pdf-menu-register__hint">{ingredients.length ? "목록에 없는 식재료는 검색 칸에 이름을 입력하고 '새 식재료로 쓰기'를 누르세요. " : ''}새 식재료는 메뉴를 등록할 때 거래처 식재료로 함께 만들고 기준단위(g·ml·EA)로 재고와 발주를 계산합니다. 나중에 거래처 재고 관리에서 공급사 상품을 연결해야 발주에 잡힙니다.</p>
               </div>
             </section>
 

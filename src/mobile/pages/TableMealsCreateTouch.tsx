@@ -92,7 +92,7 @@ export default function TableMealsCreateTouch({ onClose }: { onClose: () => void
     </section>}
 
     {method === 'pdf' && <section className="t-card tc-action">
-      <p>식단표 PDF·엑셀(.xlsx)을 읽어 요일·식사별로 나눕니다. 파일은 서버에 저장하지 않습니다. 엑셀이 읽히지 않으면 <a href={`${import.meta.env.BASE_URL}templates/weekly-meal-plan-template.xlsx`} download="주간식단표_표준양식.xlsx">표준 양식</a>에 옮겨 올려주세요.</p>
+      <p>식단표 PDF·엑셀(.xlsx)을 읽어 요일·식사별로 나눕니다. 파일은 서버에 저장하지 않습니다. 엑셀이 읽히지 않으면 <a href={`${import.meta.env.BASE_URL}templates/weekly-meal-plan-template.xlsx`} download="주간식단표_표준양식.xlsx">📄 표준 양식</a>에 옮겨 올려주세요.</p>
       <div className="tc-action__buttons">
         <label className="t-btn is-primary is-large tc-file">파일 고르기<input ref={fileInputRef} type="file" accept=".pdf,application/pdf,.xlsx,.xlsm,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={w.handleFileChange} /></label>
         <button type="button" className="t-btn is-large" disabled={!w.parsedPdfResult || w.unmatchedPdfMenus.length === 0} onClick={() => setBulkOpen(true)}>미등록 메뉴 정리{w.parsedPdfResult && w.unmatchedPdfMenus.length ? ` (${w.unmatchedPdfMenus.length}종)` : ''}</button>

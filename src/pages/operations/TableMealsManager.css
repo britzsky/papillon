@@ -1812,15 +1812,7 @@ body.workspace-ui .table-meals-toolbar > .table-meals-toolbar__actions { margin-
   color: #7c2d12;
 }
 
-/* 엑셀 식단표: 표준 양식 링크, 시트·코스 고르기 */
-.table-meals-template-link {
-  align-self: center;
-  font-size: 12px;
-  color: #2563eb;
-  text-decoration: underline;
-  white-space: nowrap;
-}
-
+/* 엑셀 식단표: 시트·코스 고르기 */
 .table-meals-excel-pick {
   display: flex;
   flex-wrap: wrap;

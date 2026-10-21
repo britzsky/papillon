@@ -9,6 +9,8 @@ type IngredientSearchSelectProps = {
   selectedName: string
   value: string
   onChange: (ingredientId: string) => void
+  /** 있으면 검색어가 목록에 없을 때 '＋ 검색어 새 식재료로 쓰기'를 보여 준다(식단표 미등록 메뉴 등록 창) */
+  onCreate?: (name: string) => void
 }
 
 const searchPlaceholder = '\uAC80\uC0C9'
@@ -21,6 +23,7 @@ function IngredientSearchSelect({
   selectedName,
   value,
   onChange,
+  onCreate,
 }: IngredientSearchSelectProps) {
   const searchInputId = useId()
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -93,6 +96,9 @@ function IngredientSearchSelect({
     return options.filter((option) => option.ingredient_name.toLowerCase().includes(normalizedQuery))
   }, [options, query])
 
+  const typed = query.trim()
+  const canCreate = Boolean(onCreate && typed && !options.some(option => option.ingredient_name.replace(/\s+/g, '').toLowerCase() === typed.replace(/\s+/g, '').toLowerCase()))
+
   const handleSelect = (ingredientId: string) => {
     onChange(ingredientId)
     close()
@@ -126,8 +132,17 @@ function IngredientSearchSelect({
             placeholder={searchPlaceholder}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => {
+              // 목록에 없는 이름을 치고 Enter → 새 식재료로 쓰기
+              if (event.key === 'Enter' && canCreate && filteredOptions.length === 0) { event.preventDefault(); onCreate?.(typed); close() }
+            }}
           />
           <div className="menu-manager-search-select__options">
+            {canCreate ? (
+              <button type="button" className="menu-manager-search-select__option menu-manager-search-select__create" onClick={() => { onCreate?.(typed); close() }}>
+                ＋ '{typed}' 새 식재료로 쓰기
+              </button>
+            ) : null}
             <button
               type="button"
               className={`menu-manager-search-select__option${value === '' ? ' is-selected' : ''}`}

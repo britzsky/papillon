@@ -212,3 +212,43 @@
     grid-template-columns: minmax(0, 1fr) 80px;
   }
 }
+
+/* 식재료 줄: 목록에서 고르거나, 이름을 입력한 새 식재료 */
+.pdf-menu-register__ingredient-block {
+  display: grid;
+  gap: 2px;
+}
+
+.pdf-menu-register__new-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pdf-menu-register__new-name input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pdf-menu-register__new-name select {
+  flex: none;
+  width: 64px;
+}
+
+.pdf-menu-register__row-hint {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.pdf-menu-register__row-hint .pdf-menu-register__link {
+  margin-left: 6px;
+}
+
+/* 식재료 검색 목록의 '새 식재료로 쓰기' */
+body.workspace-ui .menu-manager-search-select__option.menu-manager-search-select__create,
+.menu-manager-search-select__option.menu-manager-search-select__create {
+  color: #1d4ed8 !important;
+  font-weight: 700;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
