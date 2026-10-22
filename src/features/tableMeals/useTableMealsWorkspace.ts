@@ -124,20 +124,6 @@ export function normalizeMenuText(value: string) {
     .toLowerCase()
 }
 
-export function findMatchedMenu(text: string, menuItems: MenuManagerItem[]) {
-  const normalizedText = normalizeMenuText(text)
-  if (normalizedText.length < 2) {
-    return null
-  }
-
-  const exactMatch = menuItems.find((menu) => normalizeMenuText(menu.menu_name) === normalizedText) ?? null
-  if (exactMatch) {
-    return exactMatch
-  }
-
-  return null
-}
-
 export function dedupeTexts(values: string[]) {
   const seen = new Set<string>()
   return values.filter((value) => {
@@ -560,16 +546,30 @@ export function buildTableMealsSavePayload(
   }
 }
 
-export function matchPdfMenu(text: string, menuItems: MenuManagerItem[], aliasMenuIds: Map<string, string>): ExtractedMenuItem {
-  const exact = findMatchedMenu(text, menuItems)
+/** 메뉴 찾기용 색인(이름 정규화는 메뉴마다 한 번만). 본사 메뉴 4,800여 개를 표기마다 다시 정규화하면 식단표 한 장에 수십만 번이라 느렸다 */
+export type MenuLookup = { byName: Map<string, MenuManagerItem>; byId: Map<string, MenuManagerItem> }
+export function buildMenuLookup(menuItems: MenuManagerItem[]): MenuLookup {
+  const byName = new Map<string, MenuManagerItem>()
+  const byId = new Map<string, MenuManagerItem>()
+  for (const menu of menuItems) {
+    const key = normalizeMenuText(menu.menu_name)
+    if (key.length >= 2 && !byName.has(key)) byName.set(key, menu) // 앞의 메뉴(본사 메뉴)가 먼저
+    if (!byId.has(menu.menu_id)) byId.set(menu.menu_id, menu)
+  }
+  return { byName, byId }
+}
+
+export function matchPdfMenu(text: string, lookup: MenuLookup, aliasMenuIds: Map<string, string>): ExtractedMenuItem {
+  const key = normalizeMenuText(text)
+  const exact = key.length >= 2 ? lookup.byName.get(key) : undefined
   if (exact) return { text, matchedMenu: exact }
-  const aliasMenuId = aliasMenuIds.get(normalizeMenuText(text))
-  const aliasMenu = aliasMenuId ? menuItems.find((menu) => menu.menu_id === aliasMenuId) ?? null : null
+  const aliasMenuId = aliasMenuIds.get(key)
+  const aliasMenu = aliasMenuId ? lookup.byId.get(aliasMenuId) ?? null : null
   return aliasMenu ? { text, matchedMenu: aliasMenu, aliasMatched: true } : { text, matchedMenu: null }
 }
 
-export function buildParsedPdfResult(raw: ParsedMealTable, menuItems: MenuManagerItem[], aliasMenuIds: Map<string, string>): ParsedPdfResult {
-  const match = (text: string) => matchPdfMenu(text, menuItems, aliasMenuIds)
+export function buildParsedPdfResult(raw: ParsedMealTable, lookup: MenuLookup, aliasMenuIds: Map<string, string>): ParsedPdfResult {
+  const match = (text: string) => matchPdfMenu(text, lookup, aliasMenuIds)
   return {
     source: raw.source,
     sheetName: raw.sheetName,
@@ -1036,20 +1036,21 @@ export function useTableMealsWorkspace() {
     const hqIds = new Set(editorMenus.map(menu => menu.menu_id))
     return [...editorMenus, ...accountMenuItems.filter(menu => !hqIds.has(menu.menu_id))]
   }, [editorMenus, accountMenuItems])
+  const planMenuLookup = useMemo(() => buildMenuLookup(planMenus), [planMenus])
 
   const parsedPdfResult = useMemo(
     () => {
       if (!rawParsedResult) return null
       const aliasMenuIds = new Map(menuAliases.map(alias => [normalizeMenuText(alias.alias_name), alias.menu_id]))
-      const result = buildParsedPdfResult(rawParsedResult, planMenus, aliasMenuIds)
+      const result = buildParsedPdfResult(rawParsedResult, planMenuLookup, aliasMenuIds)
       result.days.forEach(day => Object.entries(day.meals).forEach(([slot, items]) => items.forEach((item, index) => {
         const id = pdfMenuOverrides[`${selectedAccountId}/${day.id}/${slot}/${index}`]
         if (id === PDF_EXCLUDED) { item.matchedMenu = null; item.aliasMatched = false; item.excluded = true }
-        else if (id) { item.matchedMenu = planMenus.find(menu => menu.menu_id === id) || null; item.aliasMatched = false }
+        else if (id) { item.matchedMenu = planMenuLookup.byId.get(id) ?? null; item.aliasMatched = false }
       })))
       return result
     },
-    [rawParsedResult, planMenus, menuAliases, pdfMenuOverrides, selectedAccountId],
+    [rawParsedResult, planMenuLookup, menuAliases, pdfMenuOverrides, selectedAccountId],
   )
 
   useEffect(() => {
@@ -1177,7 +1178,7 @@ export function useTableMealsWorkspace() {
     menu_id: menuId, menu_name: menuName, meal_category: '', menu_type: '', menu_gubun: '', account_id: selectedAccountId, account_name: '',
     meal_plan_type: selectedMealPlanType, ...extra,
   })
-  const findEditorMenu = (menuId: string) => planMenus.find(menu => menu.menu_id === menuId)
+  const findEditorMenu = (menuId: string) => planMenuLookup.byId.get(menuId)
 
   // 편집기에 넣은 메뉴는 넣을 때의 메뉴 정보(원가 포함)를 들고 있다. 본사 메뉴 원가는 거래처를 고른 뒤 따로 불러오므로
   // (실거래처 2초 안팎) 그보다 먼저 템플릿·저장된 식단표를 열면 1인 원가가 빈 채로 남았다 → 원가가 오면 같은 메뉴를 새 정보로 바꾼다.
@@ -2081,7 +2082,7 @@ export function useTableMealsWorkspace() {
 
   const getAiMatchedMenu = (text: string) => {
     const matchedMenuId = aiMatchedMenuIdsByText[normalizeMenuText(text)]
-    return matchedMenuId ? planMenus.find((menu) => menu.menu_id === matchedMenuId) ?? null : null
+    return matchedMenuId ? planMenuLookup.byId.get(matchedMenuId) ?? null : null
   }
 
   const getMenuShortageClass = (menu: Pick<MenuManagerItem, 'menu_id'> | null | undefined) =>
