@@ -12,7 +12,7 @@ type Preview = {
 const won = (value: number) => `${Number(value).toLocaleString('ko-KR', { maximumFractionDigits: 4 })}원`
 
 /**
- * 메뉴 편성 단가(거래처 식재료 단위, 2026-10-22). 자동 단가 = 이 거래처 입고 단가(재고 평균, 없으면 최근 입고), 입고 전이면 본사 표준 단가.
+ * 메뉴 편성 단가(거래처 식재료 단위, 2026-10-22). 자동 단가 = 공급사 판가(이 식재료로 입고·발주한 상품, 거래처 사업장 → 공통) → 입고 단가(재고 평균, 없으면 최근 입고) → 본사 표준 단가.
  * 필요할 때만 직접 입력한다.
  */
 export default function PlanningCostEditor({ accountId, ingredientId, disabled = false, onSaved }: {
@@ -50,7 +50,7 @@ export default function PlanningCostEditor({ accountId, ingredientId, disabled =
 
   return <section className="ingredient-link-selection" aria-label="메뉴 편성 단가">
     <strong>메뉴 편성 단가</strong>
-    <p>식단 예상 원가 계산에 쓰는 단가입니다. 기본은 이 거래처에 들어온 입고 단가, 입고 전이면 본사 표준 단가로 자동 계산합니다. 맞지 않을 때만 직접 입력하세요. 저장된 식단과 실제 사용 원가는 바뀌지 않습니다.</p>
+    <p>식단 예상 원가 계산에 쓰는 단가입니다. 기본은 이 식재료로 입고·발주한 웰스토리·아워홈 상품의 판가, 판가가 없으면 입고 단가, 그다음 본사 표준 단가로 자동 계산합니다. 맞지 않을 때만 직접 입력하세요. 저장된 식단과 실제 사용 원가는 바뀌지 않습니다.</p>
     {error && <p role="alert">{error} <button type="button" onClick={() => setRevision(r => r + 1)} disabled={busy || disabled}>다시 조회</button></p>}
     {!data && !error && <p>단가 조회 중…</p>}
     {data && <>
