@@ -1172,6 +1172,43 @@ export function useTableMealsWorkspace() {
   })
   const findEditorMenu = (menuId: string) => editorMenus.find(menu => menu.menu_id === menuId) ?? accountMenuItems.find(menu => menu.menu_id === menuId)
 
+  // 편집기에 넣은 메뉴는 넣을 때의 메뉴 정보(원가 포함)를 들고 있다. 본사 메뉴 원가는 거래처를 고른 뒤 따로 불러오므로
+  // (실거래처 2초 안팎) 그보다 먼저 템플릿·저장된 식단표를 열면 1인 원가가 빈 채로 남았다 → 원가가 오면 같은 메뉴를 새 정보로 바꾼다.
+  useEffect(() => {
+    if (editorMenus.length === 0) return
+    const byId = new Map(editorMenus.map(menu => [menu.menu_id, menu]))
+    const refresh = (items: ExtractedMenuItem[]) => {
+      let changed = false
+      const next = items.map(item => {
+        const latest = item.matchedMenu ? byId.get(item.matchedMenu.menu_id) : undefined
+        if (!latest || latest === item.matchedMenu) return item
+        changed = true
+        return { ...item, matchedMenu: latest }
+      })
+      return changed ? next : items
+    }
+    const refreshGroup = <T extends Record<string, ExtractedMenuItem[]>>(group: T): T => {
+      let changed = false
+      const next = Object.fromEntries(Object.entries(group).map(([key, items]) => {
+        const updated = refresh(items)
+        if (updated !== items) changed = true
+        return [key, updated]
+      })) as T
+      return changed ? next : group
+    }
+    setManualDays(days => {
+      let changed = false
+      const next = days.map(day => {
+        const meals = refreshGroup(day.meals)
+        if (meals === day.meals) return day
+        changed = true
+        return { ...day, meals }
+      })
+      return changed ? next : days
+    })
+    setManualEveningSnackItems(current => refreshGroup(current))
+  }, [editorMenus])
+
   /** 금액대 템플릿 불러오기 창 열기: 거래처 1일 식단가와 같은 금액대(1,000원 단위 올림)의 템플릿만 */
   const openTemplatePicker = async () => {
     if (!selectedAccountId) { setManualMessage('거래처를 먼저 선택해주세요.'); return }
