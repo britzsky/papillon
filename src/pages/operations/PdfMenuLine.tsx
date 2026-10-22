@@ -73,7 +73,7 @@ export default function PdfMenuLine(props: Props) {
         )}
         {open && showSource && (
           <LinePopover anchor={anchorRef} onClose={() => onToggle(false)} title={`표기 '${text}'`}>
-            <p className="pdf-pop__note">거래처 메뉴 '{matchedMenu.menu_name}'(으)로 {linkSource === 'alias' ? '저장된 연결에 따라' : '이번에 골라'} 연결했습니다.</p>
+            <p className="pdf-pop__note">메뉴 '{matchedMenu.menu_name}'(으)로 {linkSource === 'alias' ? '저장된 연결에 따라' : '이번에 골라'} 연결했습니다.</p>
             <div className="pdf-pop__actions">
               <button type="button" className="pdf-pop__secondary" onClick={() => { props.onUnlink?.(); onToggle(false) }}>
                 {linkSource === 'alias' ? '이번만 다른 메뉴로' : '선택 취소'}
@@ -94,10 +94,10 @@ export default function PdfMenuLine(props: Props) {
       </button>
       {open && (
         <LinePopover anchor={anchorRef} onClose={() => onToggle(false)} title={`'${text}' 처리`}>
-          <p className="pdf-pop__note">거래처 메뉴에 없는 표기입니다. 아래에서 하나를 고르세요.</p>
+          <p className="pdf-pop__note">본사 메뉴에 없는 표기입니다. 아래에서 하나를 고르세요.</p>
           {similar.length > 0 && (
             <section>
-              <h4>이름이 비슷한 거래처 메뉴로 바꾸기</h4>
+              <h4>이름이 비슷한 본사 메뉴로 바꾸기</h4>
               <ul className="pdf-pop__list">
                 {similar.map(menu => (
                   <li key={menu.menu_id}><button type="button" onClick={() => { props.onPick?.(menu); onToggle(false) }}><span>{menu.menu_name}</span><small>{won(menu)}</small></button></li>
@@ -114,10 +114,10 @@ export default function PdfMenuLine(props: Props) {
                     <li key={menu.menu_id}><button type="button" onClick={() => { props.onPick?.(menu); onToggle(false) }}><span>{menu.menu_name}</span><small>{won(menu)}</small></button></li>
                   ))}
                 </ul>
-              ) : <p className="pdf-pop__empty">식단가 안에 맞는 거래처 메뉴가 없습니다.</p>}
+              ) : <p className="pdf-pop__empty">식단가 안에 맞는 본사 메뉴가 없습니다.</p>}
             </section>
           )}
-          {!similar.length && props.remainingBudget == null && <p className="pdf-pop__empty">이름이 비슷한 거래처 메뉴가 없습니다.</p>}
+          {!similar.length && props.remainingBudget == null && <p className="pdf-pop__empty">이름이 비슷한 본사 메뉴가 없습니다.</p>}
           <div className="pdf-pop__actions">
             <button type="button" className="pdf-pop__primary" onClick={() => { props.onRegister?.(); onToggle(false) }}>새 메뉴로 등록</button>
             <button type="button" className="pdf-pop__secondary" onClick={() => { props.onExclude?.(); onToggle(false) }} title="행사·안내 문구처럼 메뉴가 아닌 글자">메뉴 아님 · 이번만 제외</button>
