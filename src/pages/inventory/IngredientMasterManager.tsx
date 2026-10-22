@@ -38,7 +38,7 @@ function IngredientMasterManager() {
             <header className="rd-page__head">
               <div>
                 <h1 className="rd-sr-only">식자재 관리</h1>
-                <p className="rd-muted">본사 표준 식자재를 관리합니다. 실제로 살 상품 연결은 거래처 재고 관리에서 거래처별로 합니다.</p>
+                <p className="rd-muted">본사 표준 식자재와 표준 단가를 관리합니다. 표준 단가는 거래처에 입고 기록이 없을 때 식단 원가 계산에 씁니다(입고되면 그 거래처 입고 단가를 씁니다).</p>
               </div>
               <DeadlineAlertSlot />
               <div className="rd-page__actions">
@@ -63,7 +63,7 @@ function IngredientMasterManager() {
                 {!isLoading && error ? <p className="rd-alert">{error}</p> : null}
                 {!isLoading && !error && pagedItems.length > 0 ? (
                   <table className="rd-table menu-manager-table ingredient-master-table">
-                    <thead><tr><th>ID</th><th>식자재명</th><th>카테고리</th><th>보관유형</th><th>기준단위</th><th>비고</th></tr></thead>
+                    <thead><tr><th>ID</th><th>식자재명</th><th>카테고리</th><th>보관유형</th><th>기준단위</th><th title="기준단위 1당 원. 거래처에 입고 기록이 없을 때 식단 원가에 씁니다">표준 단가</th><th>비고</th></tr></thead>
                     <tbody>{pagedItems.map((item) => {
                       const dirty = isChanged(item, originals)
                       return <tr key={item.row_id} className={dirty ? 'is-dirty' : undefined}>
@@ -72,6 +72,7 @@ function IngredientMasterManager() {
                         <td><select className={`menu-manager-cell-input${dirty ? ' is-dirty' : ''}`} value={item.category_name} onChange={(event) => updateItem(item.row_id, { category_name: event.target.value })}><option value="">카테고리 선택</option>{categories.map((option) => <option key={option} value={option}>{option}</option>)}</select></td>
                         <td><select className={`menu-manager-cell-input${dirty ? ' is-dirty' : ''}`} value={item.storage_type} onChange={(event) => updateItem(item.row_id, { storage_type: event.target.value })}>{storageOptions.map((option) => <option key={option.value} value={option.value}>{option.text}</option>)}</select></td>
                         <td><select className={`menu-manager-cell-input${dirty ? ' is-dirty' : ''}`} value={item.base_unit} onChange={(event) => updateItem(item.row_id, { base_unit: event.target.value })}>{qtyUnitOptions.map((unit) => <option key={unit}>{unit}</option>)}</select></td>
+                        <td><span className="ingredient-master-cost"><input className={`menu-manager-cell-input${dirty ? ' is-dirty' : ''}`} type="number" min="0" step="0.01" inputMode="decimal" aria-label={`${item.ingredient_name} 표준 단가`} placeholder="미등록" value={item.standard_unit_cost} onChange={(event) => updateItem(item.row_id, { standard_unit_cost: event.target.value })} /><small>원/{item.base_unit || '단위'}</small></span></td>
                         <td><input className="menu-manager-cell-input" value={item.note} onChange={(event) => updateItem(item.row_id, { note: event.target.value })} /></td>
                       </tr>
                     })}</tbody>

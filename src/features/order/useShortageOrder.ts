@@ -43,7 +43,7 @@ export function deliveryWarning(offer: ShortageOffer, deliveryDate: string, now:
  * 부족 식재료 조회·자동 새로고침, 품목별 상품·수량 선택, 서버 검증 미리보기, 공급사별 혼합 발주.
  * fixedSource: 발주하기의 기준 탭이 정한 계산 기준.
  */
-export function useShortageOrder(fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY', override?: Record<string, string>) {
+export function useShortageOrder(fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY' | 'FAVORITE_MENU', override?: Record<string, string>) {
   // override: 주소 대신 쓰는 조회 조건(m버전 홈의 '다음 할 일' 시트가 화면 이동 없이 발주서를 열 때). 첫 렌더 값만 쓴다
   const [urlParams] = useSearchParams()
   const [frozen] = useState(() => {

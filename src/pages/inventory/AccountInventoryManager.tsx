@@ -14,7 +14,10 @@ import { MENU_PAGE_SIZE, parseNumber, qtyUnitOptions } from '../operations/menuM
 import { stockInputUnits } from '../../utils/quantityUnits'
 import OpeningStockModal from './OpeningStockModal'
 import DirectPurchaseModal from './DirectPurchaseModal'
+import PlanningCostEditor from '../../components/PlanningCostEditor'
+import { createPortal } from 'react-dom'
 import '../operations/MenuManager.css'
+import '../../components/IngredientProductLinkModal.css'
 import { LOCATION_OPTIONS as locationOptions, getInventoryStockStatus, getLocationName, inventoryOrderPath, matchesInventoryKeyword, orderStockFirst } from '../../features/inventory/inventoryView'
 
 type EditableAccountInventoryItem = AccountInventoryItem & {
@@ -150,6 +153,8 @@ function AccountInventoryManager() {
   const [isSaving, setIsSaving] = useState(false)
   const [alert, setAlert] = useState<AppAlertState | null>(null)
   const [isOpeningOpen, setIsOpeningOpen] = useState(false)
+  /** 식단 원가에 쓰는 예상(편성) 단가를 고칠 식재료 */
+  const [costTarget, setCostTarget] = useState<AccountInventoryItem | null>(null)
   // 식단 사용 확정에서 재고 부족 시 '직접 구매 입력'으로 바로 열 수 있게 한다(?direct_purchase=1).
   const [isDirectPurchaseOpen, setIsDirectPurchaseOpen] = useState(() => searchParams.get('direct_purchase') === '1')
 
@@ -417,8 +422,7 @@ function AccountInventoryManager() {
                         <th>카테고리</th>
                         <th>식자재명</th>
                         <th>재고상태</th>
-                        <th>공급상품</th>
-                        <th>포장가 / 기준단가</th>
+                        <th>최근 입고 상품</th>
                         <th>재고평균단가</th>
                         <th>재고금액</th>
                         <th>보관위치</th>
@@ -477,21 +481,13 @@ function AccountInventoryManager() {
                             ) : null}
                           </div>
                           </td>
+                          {/* 재고는 식재료 단위(2026-10-22). 상품은 최근에 들어온 것만 참고로 보여준다 */}
                           <td title={`${item.supplier_name ?? ''} ${item.product_name ?? ''}`}>
-                            <div className="product-name-with-image"><ProductImage compact src={item.image_url} name={item.product_name || item.ingredient_name} /><span>{item.product_name || '상품 미연결'}{item.supplier_code === 'DIRECT' && <small className="account-inventory-tag"> 직접구매</small>}{item.account_ingredient_product_id ? <Link className="account-inventory-history-link" to={`/inventory/history?${new URLSearchParams({ account_id: targetAccountId, account_ingredient_product_id: String(item.account_ingredient_product_id) })}`}>변동 이력</Link> : null}</span></div>
-                          </td>
-                          <td>
-                            {(item.purchase_price ?? 0) > 0
-                              ? `${Math.round(item.purchase_price ?? 0).toLocaleString('ko-KR')}원`
-                              : '가격 미등록'}
-                            <small className="rd-muted rd-inv__sub">
-                              {(item.purchase_price ?? 0) > 0 && (item.package_base_qty ?? 0) > 0
-                                ? `${((item.purchase_price ?? 0) / (item.package_base_qty ?? 1)).toLocaleString('ko-KR', { maximumFractionDigits: 2 })}원/${item.base_unit}`
-                                : '미산정'}
-                            </small>
+                            <div className="product-name-with-image"><ProductImage compact src={item.image_url} name={item.product_name || item.ingredient_name} /><span>{item.product_name || '입고 기록 없음'}{item.supplier_name ? <small className="rd-muted rd-inv__sub">{item.supplier_name}{item.recent_received_date ? ` · ${item.recent_received_date}` : ''}</small> : null}<Link className="account-inventory-history-link" to={`/inventory/history?${new URLSearchParams({ account_id: targetAccountId, ingredient_id: item.ingredient_id })}`}>변동 이력</Link></span></div>
                           </td>
                           <td>{(item.average_unit_cost ?? 0) > 0 ? `${(item.average_unit_cost ?? 0).toLocaleString('ko-KR', { maximumFractionDigits: 2 })}원/${item.base_unit}` : '입고 전'}
-                            {item.opening_cost_estimated && <small className="account-inventory-tag" title="기초재고를 공급가 기반 추정 단가로 등록했습니다. 입고·사용이 쌓이면 실제 단가로 평균이 바뀝니다."> 추정</small>}</td>
+                            <button type="button" className="account-inventory-history-link" onClick={() => setCostTarget(item)}>예상 단가</button>
+                            {item.opening_cost_estimated && <small className="account-inventory-tag" title="기초재고를 추정 단가(최근 입고·본사 표준 단가)로 등록했습니다. 입고·사용이 쌓이면 실제 단가로 평균이 바뀝니다."> 추정</small>}</td>
                           <td>{Math.round(item.inventory_amount ?? 0).toLocaleString('ko-KR')}원</td>
                           <td>
                             <select
@@ -616,12 +612,19 @@ function AccountInventoryManager() {
             setReloadVersion((current) => current + 1)
             setAlert({ type: 'success', title: '직접구매 등록', message: result.replayed
               ? '이미 기록된 직접구매입니다. 재고에 다시 더하지 않았습니다.'
-              : `${result.product_name} ${Number(result.base_qty).toLocaleString('ko-KR')}${result.base_unit}를 재고에 반영했습니다.${result.product_created ? ' (직접구매 상품 새로 등록)' : ''}` })
+              : `${result.product_name} ${Number(result.base_qty).toLocaleString('ko-KR')}${result.base_unit}를 재고에 반영했습니다.` })
           }}
         />
       )}
+      {costTarget ? createPortal(<div className="ingredient-link-overlay" onMouseDown={event => { if (event.target === event.currentTarget) setCostTarget(null) }}>
+        <section className="ingredient-link-dialog" role="dialog" aria-modal="true" aria-label={`${costTarget.ingredient_name} 예상 단가`} style={{ width: 'min(640px, 100%)' }}>
+          <header><div><h2>{costTarget.ingredient_name} · 식단 예상 단가</h2></div><button type="button" onClick={() => setCostTarget(null)}>닫기</button></header>
+          <PlanningCostEditor accountId={targetAccountId} ingredientId={costTarget.ingredient_id} />
+        </section>
+      </div>, document.body) : null}
       {isOpeningOpen && (
         <OpeningStockModal
+          accountId={targetAccountId}
           items={items}
           onClose={() => setIsOpeningOpen(false)}
           onDone={(saved, failed) => {

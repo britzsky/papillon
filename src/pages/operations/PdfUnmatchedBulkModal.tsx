@@ -456,7 +456,7 @@ export default function PdfUnmatchedBulkModal({ accountId, accountName, mealPlan
             {summary.length ? summary.map(line => <p key={line}>{line}</p>) : <p>바뀐 연결이 없습니다.</p>}
             {failures.map(text => <p key={text} role="alert" className="pdf-menu-register__error">{text}</p>)}
             {newIngredientCount > 0 && (
-              <p className="pdf-bulk__notice">새 거래처 식재료 {newIngredientCount}개는 아직 공급사 상품과 연결되지 않아 재고·발주 계산에서 '상품 연결 필요'로 나옵니다. <a href={`/inventory/account-ingredients?account_id=${encodeURIComponent(accountId)}`} target="_blank" rel="noreferrer">거래처 재고 관리에서 연결하기</a></p>
+              <p className="pdf-bulk__notice">새 거래처 식재료 {newIngredientCount}개가 추가됩니다. 재고는 식재료 단위로 쌓이고, 발주할 때 웰스토리·아워홈 상품을 골라 주문합니다.</p>
             )}
             <div className="table-meals-modal__actions">
               <button type="button" className="table-meals-modal__button is-primary" onClick={close}>확인</button>

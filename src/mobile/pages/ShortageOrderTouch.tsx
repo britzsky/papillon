@@ -20,13 +20,14 @@ const SOURCE_HINT = {
   STOCK: '현재고가 없거나 안전재고보다 적은 식자재. 사용 이력이 없으면 수량을 직접 넣습니다',
   INVENTORY: '최근 평균 사용량 × 확보일수 + 안전재고. 사용 확정 이력이 없으면 필요량 0',
   DRAFT: '저장하지 않은 식단의 메뉴·예정 식수로 계산',
+  FAVORITE_MENU: '나만의 메뉴(♥)에 쓰이는 식재료. 수량을 직접 넣어 주문합니다',
 } as const
 
 /**
  * 부족량 기준 발주(식단 기준·현재 부족·사용량 예상, 태블릿·휴대폰). 조건 → 상태 칸 → 식재료 카드(상품 고르기·수량 −/+),
  * 오른쪽 요약에서 발주서 확인 → 미리보기 창에서 공급사 발주. 로직은 PC 발주하기 탭과 같은 useShortageOrder.
  */
-export default function ShortageOrderTouch({ methodBar, fixedSource, title }: { methodBar: ReactNode; fixedSource: 'PLAN' | 'STOCK' | 'INVENTORY'; title: string }) {
+export default function ShortageOrderTouch({ methodBar, fixedSource, title }: { methodBar: ReactNode; fixedSource: 'PLAN' | 'STOCK' | 'INVENTORY' | 'FAVORITE_MENU'; title: string }) {
   const o = useShortageOrder(fixedSource)
   const prep = useCatalogPreparation(o.accountId, o.criteria.delivery_date, () => o.setRevision(n => n + 1))
   const busy = o.loading || o.previewing
@@ -148,7 +149,7 @@ export default function ShortageOrderTouch({ methodBar, fixedSource, title }: { 
               <small>{item.supplier_name} · {item.external_site_name || item.external_site_code}</small>
               <span>{item.orderable ? `${money(item.purchase_price)}원/${item.order_unit}` : item.availability_reason || '발주 불가'}</span>
             </button>)}
-          </div> : <p className="so-item__issue">선택한 사업장·납품일의 공급상품 연결을 확인해주세요.</p>}
+          </div> : <p className="so-item__issue">주문 가능한 공급사 상품이 없습니다. 상품 검색에서 직접 골라주세요.</p>}
           {offer && <p className="so-item__terms">1 {offer.order_unit} = {number(offer.package_base_qty)} {row.base_unit} · {taxLabel(offer.tax_type)} · {deliveryTerms(offer)}</p>}
           {warning && <p className="so-item__issue">{warning}</p>}
           {offer && <div className="so-qty">

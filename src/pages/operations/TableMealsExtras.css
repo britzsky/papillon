@@ -1,0 +1,46 @@
+/* 식단표 관리 추가 화면: 템플릿 불러오기·저장 창, 주간 식단가 정산 */
+.tmx-backdrop { position: fixed; inset: 0; z-index: 3100; background: rgba(0, 0, 0, 0.45); display: grid; place-items: center; padding: 20px; }
+.tmx-dialog { background: #fff; border-radius: 14px; width: min(720px, 96vw); max-height: 86vh; overflow: auto; padding: 22px 24px; display: flex; flex-direction: column; gap: 12px; }
+.tmx-dialog.is-small { width: min(480px, 96vw); }
+.tmx-dialog__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.tmx-dialog__head h2 { margin: 0; font-size: 20px; }
+body.workspace-ui .tmx-close { min-width: 36px; height: 36px; border-radius: 8px; font-size: 20px; line-height: 1; }
+.tmx-tier { margin: 0; font-size: 15px; }
+.tmx-tier small { color: #5b6660; }
+.tmx-warn { margin: 0; color: #b4441d; }
+.tmx-muted { color: #5b6660; margin: 0; font-size: 13px; }
+.tmx-foot { border-top: 1px solid #e3e8e4; padding-top: 10px; }
+.tmx-template-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.tmx-template-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid #e3e8e4; border-radius: 10px; padding: 10px 12px; }
+.tmx-template-list li > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tmx-template-list small { color: #5b6660; }
+body.workspace-ui .tmx-btn { padding: 8px 14px; border-radius: 8px; white-space: nowrap; }
+body.workspace-ui .tmx-btn.is-primary { background: #1f6f4a; color: #fff; border-color: #1f6f4a; }
+.tmx-form { display: flex; flex-direction: column; gap: 10px; }
+.tmx-form label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; }
+.tmx-form small { color: #5b6660; font-weight: 400; }
+.tmx-actions { display: flex; justify-content: flex-end; gap: 8px; }
+/* 주간 식단가 정산 막대(편집기 위) */
+.tmx-budget { border: 1px solid #d6e5dc; background: #f4faf6; border-radius: 10px; padding: 10px 14px; display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.tmx-budget.is-over { border-color: #f0c7b5; background: #fff6f2; }
+.tmx-budget__nums { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; }
+.tmx-budget__bar { display: block; height: 6px; background: #e3e8e4; border-radius: 3px; overflow: hidden; }
+.tmx-budget__bar > span { display: block; height: 100%; background: #1f6f4a; }
+.tmx-budget.is-over .tmx-budget__bar > span { background: #c4531f; }
+.tmx-text-over { color: #b4441d; font-weight: 700; }
+.tmx-text-ok { color: #1f6f4a; font-weight: 700; }
+.tmx-special { color: #7a4fb0; font-weight: 600; }
+/* 저장된 식단표 정산 카드 */
+.tmx-saved__nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 6px 0; }
+.tmx-saved__nums div { display: flex; flex-direction: column; }
+.tmx-saved__nums dt { color: #5b6660; font-size: 12px; }
+.tmx-saved__nums dd { margin: 0; font-weight: 700; }
+.tmx-saved.is-over { border-color: #f0c7b5; }
+/* 편집 칸의 특식 표시·메뉴 하트 */
+.table-meals-special { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; border: 1px solid #c9b6e4; color: #7a4fb0; border-radius: 999px; padding: 1px 7px; cursor: pointer; background: #fff; }
+.table-meals-special.is-on { background: #7a4fb0; color: #fff; border-color: #7a4fb0; }
+.table-meals-manual__menu-row { display: flex; align-items: stretch; gap: 4px; }
+.table-meals-manual__menu-row > .table-meals-manual__menu { flex: 1 1 auto; min-width: 0; }
+body.workspace-ui .table-meals-heart { min-width: 34px; padding: 0 6px; font-size: 18px; color: #c44a6a; background: #fff; }
+body.workspace-ui .table-meals-heart.is-on { background: #fdeef2; }
+.table-meals-manual__favorite { display: flex; align-items: center; gap: 6px; font-size: 13px; }

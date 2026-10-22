@@ -137,6 +137,13 @@ function OrderPanel({ po }: { po: ReturnType<typeof usePurchaseOrders> }) {
               <strong>{item.product_name}</strong>
               <small>주문 {qty(item.order_qty)} · 입고 {qty(item.received_order_qty)} · 남음 {qty(left)} {item.order_unit}</small>
               {item.supplier_error_message && <small className="od-items__error">사유: {item.supplier_error_message}</small>}
+              {!po.needsIngredient(item)
+                ? <small>재고 식재료: {item.ingredient_name || item.ingredient_id}</small>
+                : receivable && left > 0 ? <select className="t-input od-items__ingredient" aria-label={`${item.product_name} 재고에 넣을 식재료`} value={po.receiptChoice(item).ingredient_id} disabled={po.busy}
+                  onChange={e => po.setReceiptChoice(item, { ingredient_id: e.target.value })}>
+                  <option value="">재고에 넣을 식재료 선택</option>
+                  {po.ingredients.map(row => <option key={row.ingredient_id} value={row.ingredient_id}>{row.ingredient_name}{row.base_unit ? ` (${row.base_unit})` : ''}</option>)}
+                </select> : null}
             </div>
             {receivable && left > 0
               ? <div className="od-items__qty">

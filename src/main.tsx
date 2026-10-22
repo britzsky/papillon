@@ -12,7 +12,6 @@ import './index.css'
 import App from './App.tsx'
 import Home from './pages/Home.tsx'
 import AccountInventoryManager from './pages/inventory/AccountInventoryManager.tsx'
-import AccountIngredientManager from './pages/inventory/AccountIngredientManager.tsx'
 import IngredientMasterManager from './pages/inventory/IngredientMasterManager.tsx'
 import OrderManager from './pages/order/OrderManager.tsx'
 import AccountMenuManager from './pages/operations/AccountMenuManager.tsx'
@@ -28,6 +27,7 @@ import SupplierIntegrationDashboard from './pages/order/SupplierIntegrationDashb
 import SupplierSiteMapping from './pages/order/SupplierSiteMapping.tsx'
 import SearchAnalytics from './pages/operations/SearchAnalytics.tsx'
 import AiUsage from './pages/operations/AiUsage.tsx'
+import MealPlanTemplates from './pages/operations/MealPlanTemplates.tsx'
 import { DeviceRoute } from './mobile/deviceMode'
 import OrderWorkspaceTouch from './mobile/pages/OrderWorkspaceTouch'
 import HomeTouch from './mobile/pages/HomeTouch'
@@ -35,7 +35,6 @@ import TableMealsTouch from './mobile/pages/TableMealsTouch'
 import InventoryTouch from './mobile/pages/InventoryTouch'
 import OrdersTouch from './mobile/pages/OrdersTouch'
 import HistoryTouch from './mobile/pages/HistoryTouch'
-import AccountIngredientsTouch from './mobile/pages/AccountIngredientsTouch'
 import IngredientMasterTouch from './mobile/pages/IngredientMasterTouch'
 import SiteMappingTouch from './mobile/pages/SiteMappingTouch'
 import SupplierTouch from './mobile/pages/SupplierTouch'
@@ -93,12 +92,14 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/order_manager/suppliers" element={<DeviceRoute pc={<SupplierIntegrationDashboard />} touch={<SupplierTouch />} />} />
         <Route path="/order_manager/supplier-sites" element={<DeviceRoute pc={<SupplierSiteMapping />} touch={<SiteMappingTouch />} />} />
         <Route path="/inventory/account" element={<DeviceRoute pc={<AccountInventoryManager />} touch={<InventoryTouch />} />} />
-        <Route path="/inventory/account-ingredients" element={<DeviceRoute pc={<AccountIngredientManager />} touch={<AccountIngredientsTouch />} />} />
+        {/* 거래처 식재료-상품 연결 화면은 없어짐(2026-10-22: 재고는 식재료 단위). 예전 주소는 재고로 */}
+        <Route path="/inventory/account-ingredients" element={<Navigate to={`/inventory/account${window.location.search}`} replace />} />
         <Route path="/inventory/ingredients" element={<DeviceRoute pc={<IngredientMasterManager />} touch={<IngredientMasterTouch />} />} />
         <Route path="/operations/menu" element={<DeviceRoute pc={<MenuManager />} touch={<MenuManagerTouch />} />} />
         <Route path="/operations/account" element={<DeviceRoute pc={<AccountManager />} touch={<AccountConfigTouch />} />} />
         <Route path="/operations/account-menu" element={<DeviceRoute pc={<AccountMenuManager />} touch={<AccountMenuTouch />} />} />
         <Route path="/operations/account-menu/import" element={<DeviceRoute pc={<AccountMenuImport />} touch={<AccountMenuTouch />} />} />
+        <Route path="/operations/meal-plan-templates" element={<MealPlanTemplates />} />
         <Route path="/operations/table-meals" element={<DeviceRoute pc={<TableMealsManager />} touch={<TableMealsTouch />} />} />
         <Route path="/operations/search-analytics" element={<DeviceRoute pc={<SearchAnalytics />} touch={<SearchAnalyticsTouch />} />} />
         <Route path="/operations/ai-usage" element={<DeviceRoute pc={<AiUsage />} touch={<AiUsageTouch />} />} />

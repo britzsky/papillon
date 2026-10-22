@@ -29,7 +29,7 @@ export default function WelstoryRawTouch() {
   </label>
 
   const aside = <div className="wr-panel">
-    <div className="wr-panel__head"><h2>주문은 발주하기에서</h2><p>이 화면은 웰스토리 원문 조회 전용입니다. 여기서 주문하면 발주서·입고·재고·상품 연결에 남지 않아 주문 전송을 막았습니다.</p></div>
+    <div className="wr-panel__head"><h2>주문은 발주하기에서</h2><p>이 화면은 웰스토리 원문 조회 전용입니다. 여기서 주문하면 발주서·입고·재고에 남지 않아 주문 전송을 막았습니다.</p></div>
     <div className="wr-panel__body">
       <div className="t-summary">
         <div><span>사업장</span><span>{w.selectedWorkplace?.soldToNm || w.soldTo || '-'}</span></div>

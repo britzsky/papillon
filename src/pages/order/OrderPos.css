@@ -121,3 +121,8 @@ body.workspace-ui .order-workspace .quick-order__summary button:disabled { backg
 .shortage-offer-cell { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
 .shortage-offer-cell > div { min-width: 0; }
 @media print { .shortage-offer-cell .product-image { display: none; } }
+
+/* 나만의 식재료(상품 하트) — 사진 오른쪽 위 */
+.pos-card__image { position: relative; }
+body.workspace-ui .pos-card__heart { position: absolute; top: 6px; right: 6px; min-width: 34px; height: 34px; padding: 0; border-radius: 999px; font-size: 18px; line-height: 1; color: #c44a6a; background: rgba(255, 255, 255, 0.92); border: 1px solid #f0c7d3; }
+body.workspace-ui .pos-card__heart.is-on { background: #fdeef2; }

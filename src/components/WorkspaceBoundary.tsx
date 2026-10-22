@@ -1,3 +1,4 @@
+import { visibleForRole } from '../features/workspace/roleScreens'
 import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { buildApiUrl } from '../config/api'
@@ -24,8 +25,8 @@ function ProtectedWorkspace({ children }: { children: ReactNode }) {
   if (state === 'login') return <Navigate to="/" replace />
   if (state === 'loading') return <p role="status">로그인 정보를 확인하고 있습니다.</p>
   if (state === 'error') return <div role="alert"><p>서버 연결을 확인하지 못했습니다.</p><button onClick={() => { setState('loading'); setRevision(value => value + 1) }}>다시 확인</button></div>
-  const hqOnly = ['/order_manager/suppliers', '/order_manager/supplier-sites', '/order_manager/welstory', '/inventory/ingredients', '/operations/menu', '/operations/account', '/operations/search-analytics']
-  if (localStorage.getItem('user_type') === '3' && hqOnly.includes(location.pathname)) return <Navigate to="/home" replace />
+  // 역할에 맞지 않는 화면(현장 → 본사 전용, 본사 → 거래처 메뉴 관리 등)은 홈으로
+  if (!visibleForRole(location.pathname)) return <Navigate to="/home" replace />
   return <AccountScope>{children}</AccountScope>
 }
 

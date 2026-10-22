@@ -18,7 +18,7 @@ const dayTitle = (date: string) => {
 
 /**
  * 재고 변동 이력(태블릿·휴대폰). 위 구분 칸 → 날짜별 변동 카드, 오른쪽에 기간 합계. 로직은 PC와 같은 useInventoryHistory.
- * 상품 이름을 누르면 그 상품 이력만 본다(주소의 account_ingredient_product_id).
+ * 식재료 이름을 누르면 그 식재료 이력만 본다(주소의 ingredient_id). 재고는 식재료 단위(2026-10-22).
  */
 export default function HistoryTouch() {
   const [params, setParams] = useSearchParams()
@@ -43,7 +43,7 @@ export default function HistoryTouch() {
 
   const submit = (event: FormEvent) => { event.preventDefault(); h.setKeyword(keywordInput.trim()) }
   const choosePeriod = (days: number) => { setPeriod(days); h.setPeriod(days) }
-  const focusProduct = (row: InventoryMovement) => { h.setFocusName(row.ingredient_name || row.product_name || ''); setParams({ account_id: accountId, account_ingredient_product_id: String(row.account_ingredient_product_id) }) }
+  const focusProduct = (row: InventoryMovement) => { h.setFocusName(row.ingredient_name || row.product_name || ''); setParams({ account_id: accountId, ingredient_id: String(row.ingredient_id ?? '') }) }
 
   const toolbar = <>
     <form className="t-chip hs-search" onSubmit={submit}>

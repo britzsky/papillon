@@ -47,3 +47,8 @@
   .po-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .po-panel__body { overflow: visible; }
 }
+
+/* 나만의 식재료 하트 */
+.po-offer__top { position: relative; }
+.po-offer__heart { margin-left: auto; min-width: 40px; height: 40px; border-radius: 999px; border: 1px solid #f0c7d3; background: #fff; color: #c44a6a; font-size: 20px; }
+.po-offer__heart[aria-pressed='true'] { background: #fdeef2; }

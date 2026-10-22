@@ -55,7 +55,7 @@ function cheapestOther(row: ShortageRow, current: ShortageOffer) {
   return best ? { offer: best.offer, label: `${mine.per}당 ${money(Math.round(best.value))}원` } : null
 }
 
-function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY' }) {
+function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY' | 'FAVORITE_MENU' }) {
   const { accountId, focusIngredient, criteria, guidanceNow, plans, sites, result, selected, setSelected, keyword, setKeyword, stockFilter, setStockFilter, autoRefresh, setAutoRefresh, setRevision, loading, error, setError, message, batchResult, setBatchResult, preview, setPreview, previewing, submitting, setSubmitting, completed, setCompleted, update, stockCounts, rows, selectionCount, selectedAmount, makePreview, submit, closePreview } = useShortageOrder(fixedSource)
   // 납품일 카드: 72시간 안 발주 마감 알림(식단 기준 부족)을 납품일별로 묶어 품목 수·가장 빠른 마감을 보여준다
   const [dueByDate, setDueByDate] = useState<Record<string, { items: number; text: string; at: string }>>({})
@@ -151,8 +151,8 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
       <section className="rd-card rd-order__list" aria-label="시켜야 할 식재료">
         <div className="rd-order__list-head">
           <div>
-            <h2 className="rd-h2">{dayLabel(criteria.delivery_date || day(1))} {criteria.source === 'STOCK' ? '지금 부족한 식재료' : criteria.source === 'INVENTORY' ? '사용량 기준 부족 예상' : criteria.source === 'DRAFT' ? '구성 중인 식단에 모자란 식재료' : '식단에 모자란 식재료'} {allRows.length}개</h2>
-            <p className="rd-muted rd-fs-sm">{criteria.source === 'STOCK' ? '현재고가 없거나 안전재고보다 적어요. 사용 이력이 없으면 수량을 직접 정해 주세요.' : criteria.source === 'INVENTORY' ? '최근 평균 사용량 × 확보일수 + 안전재고 기준이에요. 사용 확정 이력이 없으면 0으로 계산돼요.' : '필요량에서 지금 재고와 들어올 예정 수량을 빼고 계산했어요. 수량만 고치면 됩니다.'}</p>
+            <h2 className="rd-h2">{dayLabel(criteria.delivery_date || day(1))} {criteria.source === 'FAVORITE_MENU' ? '나만의 메뉴 식재료' : criteria.source === 'STOCK' ? '지금 부족한 식재료' : criteria.source === 'INVENTORY' ? '사용량 기준 부족 예상' : criteria.source === 'DRAFT' ? '구성 중인 식단에 모자란 식재료' : '식단에 모자란 식재료'} {allRows.length}개</h2>
+            <p className="rd-muted rd-fs-sm">{criteria.source === 'FAVORITE_MENU' ? '나만의 메뉴(♥)에 쓰이는 식재료예요. 필요한 수량을 직접 넣어 주문하세요.' : criteria.source === 'STOCK' ? '현재고가 없거나 안전재고보다 적어요. 사용 이력이 없으면 수량을 직접 정해 주세요.' : criteria.source === 'INVENTORY' ? '최근 평균 사용량 × 확보일수 + 안전재고 기준이에요. 사용 확정 이력이 없으면 0으로 계산돼요.' : '필요량에서 지금 재고와 들어올 예정 수량을 빼고 계산했어요. 수량만 고치면 됩니다.'}</p>
             <span className="rd-order__tools-end">
               <select className="rd-input" aria-label="줄 순서" value={rowSort} onChange={e => setRowSort(e.target.value as RowSort)}>
                 <option value="default">모자란 순</option><option value="amount_desc">금액 높은 순</option><option value="amount_asc">금액 낮은 순</option>
@@ -202,7 +202,7 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
                     </select></div>
                     : <strong className="rd-text-warn">발주 가능한 상품 없음</strong>}
                   {offer ? <small className="rd-fs-sm">{money(offer.purchase_price)}원/{offer.order_unit}{per100(offer, row.base_unit) ? ` · ${per100(offer, row.base_unit)}` : ''} · {deliveryTerms(offer)}</small>
-                    : <small className="rd-text-warn rd-fs-xs">{row.offers.map(o => o.availability_reason).filter(Boolean).join(' / ') || '공급상품 연결 확인 요망'}</small>}
+                    : <small className="rd-text-warn rd-fs-xs">{row.offers.map(o => o.availability_reason).filter(Boolean).join(' / ') || '주문 가능한 공급사 상품 없음 — 상품 검색에서 직접 골라주세요'}</small>}
                   {warning ? <small className="rd-text-warn rd-fs-xs" role="status">{warning}</small> : null}
                   {cheaper ? <button type="button" className="rd-link" onClick={() => choose(row, cheaper.offer.supplier_offer_id)}>{cheaper.offer.supplier_name} {cheaper.offer.product_name} {cheaper.label}으로 바꾸기</button>
                     : offer && row.offers.filter(o => o.orderable).length > 1 ? <small className="rd-text-ok rd-fs-xs">지금 상품이 기준단위당 가장 저렴해요</small> : null}

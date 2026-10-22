@@ -50,7 +50,6 @@ export function matchesInventoryKeyword(item: AccountInventoryItem, keyword: str
 /** 발주하기 화면으로 가는 주소(재고 화면의 '발주하러 가기') */
 export function inventoryOrderPath(accountId: string, item: AccountInventoryItem) {
   const params = new URLSearchParams({ account_id: accountId, ingredient_id: item.ingredient_id })
-  if (item.account_ingredient_product_id) params.set('account_ingredient_product_id', String(item.account_ingredient_product_id))
   params.set('source', 'INVENTORY')
   return `/order_manager/food_order?${params.toString()}`
 }

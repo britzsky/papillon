@@ -5,9 +5,6 @@ import { convertQuantity, normalizeQuantityUnit } from '../../utils/quantityUnit
 import { newRequestKey } from '../../utils/requestKey'
 
 export type DirectPurchaseIngredient = { ingredient_id: string; ingredient_name: string; base_unit: string }
-type DirectProduct = { account_ingredient_product_id: number; product_name: string }
-
-export const NEW_PRODUCT = 'NEW'
 
 export function todayValue() {
   const now = new Date()
@@ -23,15 +20,14 @@ export function purchaseUnits(baseUnit: string) {
 }
 
 /**
- * 직접구매(마트·쿠팡 등) 기록 로직(PC 모달·터치 창 공용). 식재료·수량·결제 금액만 넣으면 서버가 거래처 자체
- * '직접구매' 상품을 처음 한 번 만들고 재고에 입고한다(이동평균·LOT). 같은 상품명이면 기존 직접구매 상품을 재사용한다.
+ * 직접구매(마트·쿠팡 등) 기록 로직(PC 모달·터치 창 공용). 식재료·수량·결제 금액을 넣으면 그 식재료 재고에 바로 입고한다
+ * (이동평균·LOT, 2026-10-22: 공급사 상품을 만들지 않는다). 산 물건 이름은 입고 기록에 남는다.
  */
 export function useDirectPurchase(accountId: string, items: AccountInventoryItem[], onDone: (result: DirectPurchaseResult) => void) {
   const [ingredients, setIngredients] = useState<DirectPurchaseIngredient[]>([])
   const [loadError, setLoadError] = useState('')
   const [query, setQuery] = useState('')
   const [ingredientId, setIngredientId] = useState('')
-  const [productChoice, setProductChoice] = useState(NEW_PRODUCT)
   const [productName, setProductName] = useState('')
   const [purchaseDate, setPurchaseDate] = useState(todayValue())
   const [quantity, setQuantity] = useState('')
@@ -77,20 +73,12 @@ export function useDirectPurchase(accountId: string, items: AccountInventoryItem
     const keyword = query.trim().toLowerCase()
     return keyword ? ingredients.filter(i => i.ingredient_name.toLowerCase().includes(keyword) || i.ingredient_id.toLowerCase().includes(keyword)) : ingredients
   }, [ingredients, query])
-  const directProducts = useMemo<DirectProduct[]>(() => {
-    const seen = new Map<number, DirectProduct>()
-    for (const item of items) if (item.supplier_code === 'DIRECT' && item.ingredient_id === ingredientId && item.account_ingredient_product_id)
-      seen.set(item.account_ingredient_product_id, { account_ingredient_product_id: item.account_ingredient_product_id, product_name: item.product_name || item.ingredient_name })
-    return [...seen.values()]
-  }, [items, ingredientId])
 
   const selectIngredient = (id: string) => {
     const next = ingredients.find(i => i.ingredient_id === id)
     setIngredientId(id)
     setError('')
     if (!next) return
-    const existing = items.find(item => item.supplier_code === 'DIRECT' && item.ingredient_id === id && item.account_ingredient_product_id)
-    setProductChoice(existing?.account_ingredient_product_id ? String(existing.account_ingredient_product_id) : NEW_PRODUCT)
     setProductName(next.ingredient_name)
     setUnit(purchaseUnits(next.base_unit)[0])
   }
@@ -99,7 +87,7 @@ export function useDirectPurchase(accountId: string, items: AccountInventoryItem
   const paid = Number(amount)
   const baseQty = ingredient && qty > 0 ? convertQuantity(qty, unit, ingredient.base_unit) : 0
   const unitCost = baseQty > 0 && paid > 0 ? paid / baseQty : 0
-  const ready = Boolean(ingredient && qty > 0 && paid > 0 && purchaseDate && (productChoice !== NEW_PRODUCT || productName.trim()))
+  const ready = Boolean(ingredient && qty > 0 && paid > 0 && purchaseDate)
 
   const save = async () => {
     if (!ingredient || !ready || saving) return
@@ -107,7 +95,7 @@ export function useDirectPurchase(accountId: string, items: AccountInventoryItem
     try {
       const result = await recordDirectPurchase({
         account_id: accountId, ingredient_id: ingredient.ingredient_id, ingredient_name: ingredient.ingredient_name,
-        ...(productChoice === NEW_PRODUCT ? { product_name: productName.trim() } : { account_ingredient_product_id: Number(productChoice) }),
+        product_name: productName.trim() || undefined,
         purchase_date: purchaseDate, quantity: qty, unit, total_amount: paid,
         ...(expirationDate ? { expiration_date: expirationDate } : {}), request_key: requestKey.current,
       })
@@ -122,7 +110,7 @@ export function useDirectPurchase(accountId: string, items: AccountInventoryItem
 
   return {
     ingredients, loadError, query, setQuery, filtered, ingredientId, ingredient, selectIngredient,
-    productChoice, setProductChoice, productName, setProductName, directProducts,
+    productName, setProductName,
     purchaseDate, setPurchaseDate, quantity, setQuantity, unit, setUnit, amount, setAmount, expirationDate, setExpirationDate,
     baseQty, unitCost, ready, saving, error, save,
   }

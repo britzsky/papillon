@@ -22,14 +22,14 @@ export type SupplierOffer = {
   supplier_offer_id: number
   supplier_product_id: number
   supplier_account_site_id: number
-  account_ingredient_product_id: number
   supplier_id: number
   supplier_code: string
   supplier_name: string
   ingredient_id: string
-  /** 이 거래처에서 상품이 실제로 연결된 식재료. 미연결이면 빈 값 (본사 식자재 분류와 무관) */
-  linked_ingredient_id: string
-  linked_ingredient_name: string
+  /** 나만의 식재료(하트). 현장=거래처, 본사=사용자 단위 */
+  favorite_yn: 'Y' | 'N'
+  /** 이 거래처가 이 상품으로 발주했던 식재료들(늘 쓰는 상품 표시·재고 식재료 기본값). 식재료와 상품을 연결하지는 않는다 */
+  usual_ingredient_ids: string[]
   supplier_item_code: string
   product_name: string
   order_unit: string
@@ -135,7 +135,7 @@ export async function getSupplierSites(accountId: string): Promise<SupplierSite[
 }
 
 /** 서버 검색 옵션: keyword(동의어 포함, 관련도순)·offerIds(지정 상품만)·limit. 사업장 전체 상품(1만여 건, 수십 MB)을 받지 않기 위해 화면에서는 가능한 한 지정한다. */
-export type OfferSearch = { keyword?: string; offerIds?: number[]; limit?: number }
+export type OfferSearch = { keyword?: string; offerIds?: number[]; limit?: number; favoriteOnly?: boolean }
 export async function getSupplierOffers(accountId: string, deliveryDate: string, requiredBaseQty?: number, externalSiteCode?: string, search?: OfferSearch): Promise<SupplierOffer[]> {
   const query = new URLSearchParams({ account_id: accountId, delivery_date: deliveryDate, orderable_only: 'N' })
   if (requiredBaseQty != null) query.set('required_base_qty', String(requiredBaseQty))
@@ -143,14 +143,16 @@ export async function getSupplierOffers(accountId: string, deliveryDate: string,
   if (search?.keyword?.trim()) query.set('keyword', search.keyword.trim())
   if (search?.offerIds) { if (!search.offerIds.length) return []; query.set('offer_ids', search.offerIds.join(',')) }
   if (search?.limit) query.set('limit', String(search.limit))
+  if (search?.favoriteOnly) query.set('favorite_only', 'Y')
   const rows = await getRows(`/v2/supplier-integration/offers?${query}`)
   return rows.map((row) => ({
     supplier_offer_id: number(row.supplier_offer_id), supplier_account_site_id: number(row.supplier_account_site_id),
     supplier_product_id: number(row.supplier_product_id),
     external_site_code: text(row.external_site_code), external_site_name: text(row.external_site_name),
-    account_ingredient_product_id: number(row.account_ingredient_product_id), supplier_id: number(row.supplier_id),
+    supplier_id: number(row.supplier_id),
     supplier_code: text(row.supplier_code), supplier_name: text(row.supplier_name), ingredient_id: text(row.ingredient_id),
-    linked_ingredient_id: text(row.linked_ingredient_id), linked_ingredient_name: text(row.linked_ingredient_name),
+    favorite_yn: text(row.favorite_yn) === 'Y' ? 'Y' : 'N',
+    usual_ingredient_ids: text(row.usual_ingredient_ids).split(',').map(id => id.trim()).filter(Boolean),
     supplier_item_code: text(row.supplier_item_code), product_name: text(row.product_name), order_unit: text(row.order_unit),
     base_qty: number(row.base_qty), base_unit: text(row.base_unit), purchase_price: number(row.purchase_price),
     pack_options: [
@@ -165,6 +167,16 @@ export async function getSupplierOffers(accountId: string, deliveryDate: string,
     image_url: text(row.image_url), thumbnail_url: text(row.thumbnail_url),
     lead_time_days: row.lead_time_days == null || row.lead_time_days === '' ? null : number(row.lead_time_days),
   }))
+}
+
+/** 나만의 식재료 지정·해제(상품 하트). 서버가 로그인으로 주인을 정한다(현장=거래처, 본사=사용자) */
+export async function setFavoriteProduct(accountId: string, supplierProductId: number, favorite: boolean) {
+  const response = await fetch(buildApiUrl('/v2/supplier-integration/favorites'), {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ account_id: accountId, supplier_product_id: supplierProductId, favorite: favorite ? 'Y' : 'N' }),
+  })
+  const body = await response.json().catch(() => null) as { message?: string } | null
+  if (!response.ok) throw new Error(body?.message || '나만의 식재료를 저장하지 못했습니다.')
 }
 
 export type IntegratedOrderItem = {

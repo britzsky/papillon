@@ -45,7 +45,7 @@ export default function SiteMappingTouch() {
   const aside = selected
     ? <AccountPanel account={selected} m={m} onClose={() => setSelectedId('')} />
     : <div className="sm-panel">
-      <div className="sm-panel__head"><h2>사업장 지정</h2><p>거래처마다 공급사별 사업장을 한 번 정하면 상품 연결·판가·발주가 그 사업장 코드로 처리됩니다.</p></div>
+      <div className="sm-panel__head"><h2>사업장 지정</h2><p>거래처마다 공급사별 사업장을 한 번 정하면 상품·판가·발주가 그 사업장 코드로 처리됩니다.</p></div>
       <div className="sm-panel__body">
         <div className="sm-stats">
           <div><span>거래처</span><strong>{m.accounts.length}</strong></div>

@@ -106,3 +106,9 @@ body.t-ui .tc-menus button { box-shadow: inset 0 0 0 1.5px var(--t-line); }
 .tc-excel-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0 0 6px; }
 .tc-excel-pick label { display: inline-flex; align-items: center; gap: 4px; }
 .tc-excel-pick select { max-width: 100%; min-height: 36px; }
+
+/* 본사 메뉴 하트(나만의 메뉴) */
+.tc-menus li { display: flex; gap: 6px; align-items: stretch; }
+.tc-menus li > button:first-child { flex: 1 1 auto; min-width: 0; }
+.tc-heart { min-width: 44px; border-radius: 10px; border: 1px solid #f0c7d3; background: #fff; color: #c44a6a; font-size: 20px; }
+.tc-heart[aria-pressed='true'] { background: #fdeef2; }

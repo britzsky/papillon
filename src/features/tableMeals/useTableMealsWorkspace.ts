@@ -11,7 +11,8 @@ import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist'
 import { type AppAlertState } from '../../components/AppAlert'
 import { type RecipeActionMenuState } from '../../components/RecipeActionMenu'
 import { type RecipeViewMode } from '../../components/RecipeViewModal'
-import { getAccountOptions, getAccountMenuManagerList, getAccountMenuDetailList, getAccountMealSlots, getAccountMealConfiguration, getMenuManagerList, getMealPlanAnalysis, getTableMealsDetailList, getTableMealsList, saveTableMeals, countConfirmedMeals, type AccountOption, type AccountMealSlot, type AccountMealConfiguration, type MenuIngredientItem, type MenuManagerItem, type TableMealsDetailItem, type TableMealsItem, type TableMealsSavePayload } from '../../api/operations'
+import { getHqMenuCosts, getTemplatesForAccount, getMealPlanTemplateDetail, saveMealPlanTemplate, type AccountTemplates, type HqMenuCost, type MealPlanTemplate, type MealPlanTemplateItem } from '../../api/mealPlanTemplates'
+import { getLikeMenuManagerList, saveLikeMenu, tableMealsId, getAccountOptions, getAccountMenuManagerList, getAccountMenuDetailList, getAccountMealSlots, getAccountMealConfiguration, getMenuManagerList, getMealPlanAnalysis, getTableMealsDetailList, getTableMealsList, saveTableMeals, countConfirmedMeals, type AccountOption, type AccountMealSlot, type AccountMealConfiguration, type MenuIngredientItem, type MenuManagerItem, type TableMealsDetailItem, type TableMealsItem, type TableMealsSavePayload } from '../../api/operations'
 import { type RecipeRequest } from '../../api/recipe'
 import { requestAiTableMealsMatch } from '../../api/ai'
 import { getIngredientStockStatus } from '../../utils/ingredientStockStatus'
@@ -540,7 +541,7 @@ export function buildTableMealsSavePayload(
     account_id: accountId,
     account_name: accountName,
     table_name: `${firstDate.getFullYear()}년 ${firstDate.getMonth() + 1}월 ${Number(week.value) + 1}주차 ${
-      source === 'manual' ? '수기' : '자동'
+      ({ manual: '수기', template: '템플릿', pdf: '파일', auto: '자동' } as Record<string, string>)[source] ?? ''
     } 식단표`,
     table_year: firstDate.getFullYear(),
     table_month: firstDate.getMonth() + 1,
@@ -654,7 +655,8 @@ export function useTableMealsWorkspace() {
   const [isWeeklySettingsOpen, setIsWeeklySettingsOpen] = useState(false)
   const [accountError, setAccountError] = useState('')
   const [tableMeals, setTableMeals] = useState<TableMealsItem[]>([])
-  const [, setMenuItems] = useState<MenuManagerItem[]>([])
+  /** 본사 메뉴 전체(식단표 편집의 메뉴 목록. 2026-10-22: 식단은 본사 메뉴로 만든다) */
+  const [hqMenuList, setMenuItems] = useState<MenuManagerItem[]>([])
   const [accountMenuItems, setAccountMenuItems] = useState<MenuManagerItem[]>([])
   const [menuError, setMenuError] = useState('')
   const [accountMenuError, setAccountMenuError] = useState('')
@@ -731,7 +733,7 @@ export function useTableMealsWorkspace() {
       const saved = await saveTableMeals(payload)
       const month = `${payload.table_year}-${String(payload.table_month).padStart(2, '0')}`
       setSelectedTableMonthState(month)
-      setSavedStockCheck(null); setIsManualEditorOpen(false)
+      setSavedStockCheck(null); setIsManualEditorOpen(false); setEditingTable(null); setEditingWeek(null)
       sessionStorage.removeItem(`plan-editor:${payload.account_id}`)
       sessionStorage.removeItem(`plan-procurement:${payload.account_id}`)
       setDraftSessionAccount('')
@@ -766,7 +768,7 @@ export function useTableMealsWorkspace() {
   const createDraftCriteria = (payload: TableMealsSavePayload): ShortageCriteria => {
     const dates = payload.meals.map(meal => meal.meal_date).sort()
     const today = new Date().toLocaleDateString('sv-SE')
-    return { account_id: payload.account_id, source: 'DRAFT', table_id: `${payload.account_id}_${payload.table_year}_${payload.table_month}_${payload.table_week}_${payload.source}_${payload.meal_plan_type}`,
+    return { account_id: payload.account_id, source: 'DRAFT', table_id: tableMealsId(payload),
       date_from: dates[0], date_to: dates[dates.length - 1] < today ? today : dates[dates.length - 1],
       delivery_date: dates[0] > today ? dates[0] : today, sold_to: '', average_days: 30, coverage_days: 1,
       draft_meals: payload.meals.flatMap(meal => meal.menus.map(menu => ({ menu_id: menu.menu_id, planned_servings: payload.planned_servings!, meal_date: meal.meal_date }))) }
@@ -798,6 +800,18 @@ export function useTableMealsWorkspace() {
   const [manualMenuTypeFilter, setManualMenuTypeFilter] = useState('')
   const [manualMessage, setManualMessage] = useState('')
   const [alert, setAlert] = useState<AppAlertState | null>(null)
+  /** 본사 메뉴의 이 거래처 기준 예상 원가(거래처 메뉴가 아닌 것만) */
+  const [hqMenuCosts, setHqMenuCosts] = useState<Record<string, HqMenuCost>>({})
+  /** 나만의 메뉴(현장=거래처, 본사=사용자) */
+  const [favoriteMenuIds, setFavoriteMenuIds] = useState<Set<string>>(new Set())
+  const [favoriteOnly, setFavoriteOnly] = useState(false)
+  /** 특식 표시. 키 `${날짜}:${식사코드}` */
+  const [specialMeals, setSpecialMeals] = useState<Record<string, boolean>>({})
+  /** 저장된 식단표를 고치는 중이면 그 식단표와 주(같은 식단표 ID로 다시 저장) */
+  const [editingTable, setEditingTable] = useState<TableMealsItem | null>(null)
+  const [editingWeek, setEditingWeek] = useState<MonthWeekOption | null>(null)
+  /** 금액대 템플릿 불러오기 창 */
+  const [templatePicker, setTemplatePicker] = useState<{ loading: boolean; data?: AccountTemplates; error?: string } | null>(null)
 
 
 
@@ -1089,11 +1103,28 @@ export function useTableMealsWorkspace() {
     [manualDays, manualTarget],
   )
 
+  // 본사 메뉴 + 원가(거래처 메뉴로 이미 있으면 거래처 레시피 원가, 아니면 본사 레시피 × 거래처 식재료 단가) + 나만의 메뉴 표시
+  const editorMenus = useMemo(() => {
+    const byAccount = new Map(accountMenuItems.map(menu => [menu.menu_id, menu]))
+    return hqMenuList.map(menu => {
+      const own = byAccount.get(menu.menu_id)
+      const cost = hqMenuCosts[menu.menu_id]
+      const merged: MenuManagerItem = own ? { ...menu, ...own } : {
+        ...menu,
+        menu_cost_per_person: cost?.menu_cost_per_person ?? undefined,
+        menu_cost_complete: cost ? cost.menu_cost_complete : undefined,
+        menu_cost_reason: cost?.menu_cost_reason,
+      }
+      return { ...merged, like: favoriteMenuIds.has(menu.menu_id) ? 'Y' : 'N' }
+    })
+  }, [hqMenuList, accountMenuItems, hqMenuCosts, favoriteMenuIds])
+
   const filteredManualMenus = useMemo(() => {
     const normalizedSearchText = normalizeMenuText(manualSearchText)
 
-    return accountMenuItems.filter((menu) => {
+    return editorMenus.filter((menu) => {
       if ((menu.meal_plan_type ?? 0) !== selectedMealPlanType) return false
+      if (favoriteOnly && menu.like !== 'Y') return false
       if (manualFoodTypeFilter !== '' && String(getMenuFoodTypeCode(menu)) !== manualFoodTypeFilter) {
         return false
       }
@@ -1108,7 +1139,123 @@ export function useTableMealsWorkspace() {
 
       return true
     })
-  }, [accountMenuItems, manualFoodTypeFilter, manualMenuTypeFilter, manualSearchText, selectedMealPlanType])
+  }, [editorMenus, favoriteOnly, manualFoodTypeFilter, manualMenuTypeFilter, manualSearchText, selectedMealPlanType])
+
+  // 거래처를 고르면 본사 메뉴 원가(이 거래처 단가 기준)와 나만의 메뉴를 불러온다
+  useEffect(() => {
+    if (!selectedAccountId) { setHqMenuCosts({}); return }
+    let alive = true
+    getHqMenuCosts(selectedAccountId)
+      .then(rows => { if (alive) setHqMenuCosts(Object.fromEntries(rows.map(row => [row.menu_id, row]))) })
+      .catch(() => { if (alive) setHqMenuCosts({}) })
+    getLikeMenuManagerList()
+      .then(rows => { if (alive) setFavoriteMenuIds(new Set(rows.map(row => row.menu_id))) })
+      .catch(() => { if (alive) setFavoriteMenuIds(new Set()) })
+    return () => { alive = false }
+  }, [selectedAccountId])
+
+  /** 나만의 메뉴 지정·해제(하트) */
+  const toggleFavoriteMenu = async (menu: MenuManagerItem) => {
+    const on = !favoriteMenuIds.has(menu.menu_id)
+    try {
+      await saveLikeMenu(menu.menu_id, on ? 'Y' : 'N')
+      setFavoriteMenuIds(current => { const next = new Set(current); if (on) next.add(menu.menu_id); else next.delete(menu.menu_id); return next })
+    } catch (error) {
+      setManualMessage(error instanceof Error ? error.message : '나만의 메뉴를 저장하지 못했습니다.')
+    }
+  }
+
+  /** 템플릿·저장 식단의 메뉴가 본사 메뉴 목록에 없을 때(삭제된 메뉴 등) 보여 줄 최소 정보 */
+  const fallbackMenu = (menuId: string, menuName: string, extra: Partial<MenuManagerItem> = {}): MenuManagerItem => ({
+    menu_id: menuId, menu_name: menuName, meal_category: '', menu_type: '', menu_gubun: '', account_id: selectedAccountId, account_name: '',
+    meal_plan_type: selectedMealPlanType, ...extra,
+  })
+  const findEditorMenu = (menuId: string) => editorMenus.find(menu => menu.menu_id === menuId) ?? accountMenuItems.find(menu => menu.menu_id === menuId)
+
+  /** 금액대 템플릿 불러오기 창 열기: 거래처 1일 식단가와 같은 금액대(1,000원 단위 올림)의 템플릿만 */
+  const openTemplatePicker = async () => {
+    if (!selectedAccountId) { setManualMessage('거래처를 먼저 선택해주세요.'); return }
+    setTemplatePicker({ loading: true })
+    try { setTemplatePicker({ loading: false, data: await getTemplatesForAccount(selectedAccountId, selectedMealPlanType) }) }
+    catch (error) { setTemplatePicker({ loading: false, error: error instanceof Error ? error.message : '템플릿을 불러오지 못했습니다.' }) }
+  }
+
+  /** 템플릿을 선택한 주차의 편집기로 가져온다(요일 1=월 → 그 주의 같은 요일, 식사는 거래처 식사 구성에 있는 것만) */
+  const applyTemplate = async (template: MealPlanTemplate) => {
+    if (!selectedAccountId || !selectedAutoWeek) { setTemplatePicker(current => current && { ...current, error: '거래처와 주차를 먼저 선택해주세요.' }); return }
+    if (configuredMealSlotRows.length === 0) { setTemplatePicker(current => current && { ...current, error: "'식사 구성'에서 제공할 식사구분을 먼저 설정해 주세요." }); return }
+    if (hasSameTableMealsWeek(await refreshTableMeals(), selectedAccountId, selectedAutoWeek)) {
+      setTemplatePicker(current => current && { ...current, error: '이 주차에는 이미 저장된 식단표가 있습니다. 오른쪽 목록에서 열어 \'이 식단표 수정\'으로 고쳐주세요.' })
+      return
+    }
+    let detail
+    try { detail = await getMealPlanTemplateDetail(template.meal_plan_template_id) }
+    catch (error) { setTemplatePicker(current => current && { ...current, error: error instanceof Error ? error.message : '템플릿을 불러오지 못했습니다.' }); return }
+    const days = createConfiguredManualTableMealsDays(selectedAutoWeek, configuredMealSlotRows)
+    const missing = new Set<string>()
+    detail.items.forEach((item: MealPlanTemplateItem) => {
+      const date = selectedAutoWeek.dates.find(value => ((value.getDay() + 6) % 7) + 1 === item.day_index)
+      const day = date ? days.find(value => value.id === `manual-${formatDateValue(date)}`) : undefined
+      if (!day) return
+      const key = String(item.meal_slot_code)
+      if (!(key in day.meals)) { missing.add(item.meal_slot_name || key); return }
+      const menu = findEditorMenu(item.menu_id) ?? fallbackMenu(item.menu_id, item.menu_name || item.menu_id, {
+        menu_type: String(item.menu_type ?? ''), menu_gubun: String(item.menu_gubun ?? ''), food_type: item.food_type, calories_per_serving: item.calories_per_serving ?? undefined })
+      day.meals[key] = [...day.meals[key], { text: menu.menu_name, matchedMenu: menu }]
+    })
+    setEditingTable(null); setEditingWeek(null); setSpecialMeals({})
+    setManualDays(days); setManualEveningSnackItems({}); setMealEditorSource('template')
+    setManualTarget(days[0] ? { dayId: days[0].id, rowId: configuredMealSlotRows[0].id, mealKey: configuredMealSlotRows[0].key } : null)
+    setTemplatePicker(null); setIsManualEditorOpen(true)
+    setManualMessage(`'${template.template_name}' 템플릿을 불러왔습니다. 메뉴를 바꾸고 예정 식수를 확인한 뒤 저장하세요.${missing.size ? ` (이 거래처 식사 구성에 없는 ${[...missing].join(', ')}은 빠졌습니다)` : ''}`)
+  }
+
+  /** 저장된 식단표를 편집기로 연다(메뉴는 본사 메뉴로 바꾼다. 저장하면 같은 식단표를 고친다) */
+  const openSavedPlanEditor = () => {
+    if (!selectedTableMeal || tableMealDetailItems.length === 0) return
+    if (configuredMealSlotRows.length === 0) { setManualMessage("'식사 구성'에서 제공할 식사구분을 먼저 설정해 주세요."); return }
+    const dates = [...new Set(tableMealDetailItems.map(item => item.meal_date.slice(0, 10)))].sort()
+    const first = new Date(`${dates[0]}T00:00:00`)
+    const monday = new Date(first); monday.setDate(first.getDate() - ((first.getDay() + 6) % 7))
+    const weekDates = Array.from({ length: 7 }, (_, index) => { const value = new Date(monday); value.setDate(monday.getDate() + index); return value })
+      .filter((value, index) => index < 5 || dates.includes(formatDateValue(value)))
+    const week: MonthWeekOption = { value: String(Math.max((selectedTableMeal.table_week ?? 1) - 1, 0)), label: selectedTableMeal.table_name, dates: weekDates }
+    const days = createConfiguredManualTableMealsDays(week, configuredMealSlotRows)
+    const specials: Record<string, boolean> = {}
+    for (const item of [...tableMealDetailItems].sort((a, b) => a.sort_order - b.sort_order)) {
+      const date = item.meal_date.slice(0, 10)
+      const day = days.find(value => value.id === `manual-${date}`)
+      const key = String(item.meal_slot_code ?? item.meal_slot)
+      if (!day || !(key in day.meals)) continue
+      const menu = findEditorMenu(item.menu_id) ?? fallbackMenu(item.menu_id, item.menu_name, { menu_type: String(item.menu_type), menu_gubun: String(item.menu_gubun), food_type: item.food_type })
+      day.meals[key] = [...day.meals[key], { text: item.menu_name, matchedMenu: menu }]
+      if (item.special_yn === 'Y') specials[`${date}:${key}`] = true
+    }
+    setEditingTable(selectedTableMeal); setEditingWeek(week); setSpecialMeals(specials)
+    setManualDays(days); setManualEveningSnackItems({}); setMealEditorSource(selectedTableMeal.source ?? 'manual')
+    setManualTarget(days[0] ? { dayId: days[0].id, rowId: configuredMealSlotRows[0].id, mealKey: configuredMealSlotRows[0].key } : null)
+    setManualMessage(`'${selectedTableMeal.table_name}'을(를) 고칩니다. 메뉴는 본사 메뉴에서 고르고, 저장하면 이 식단표를 바꿉니다.`)
+    setIsManualEditorOpen(true)
+  }
+
+  /** 특식 표시 켜기·끄기(식단가 초과분을 주 합계에서 빼고 따로 보여준다) */
+  const toggleSpecialMeal = (dayId: string, slotKey: string) => {
+    const key = `${dayId.replace(/^(auto|manual)-/, '')}:${slotKey}`
+    setSpecialMeals(current => ({ ...current, [key]: !current[key] }))
+  }
+  const isSpecialMeal = (dayId: string, slotKey: string) => Boolean(specialMeals[`${dayId.replace(/^(auto|manual)-/, '')}:${slotKey}`])
+
+  /** 본사: 편집 중인 식단을 금액대 템플릿으로 저장(요일은 월=1~일=7) */
+  const saveDraftAsTemplate = async (form: { price_tier: number; meal_plan_type: number; template_seq: number; template_name: string }) => {
+    const items = manualDays.flatMap(day => {
+      const date = new Date(`${day.id.replace(/^(auto|manual)-/, '')}T00:00:00`)
+      const dayIndex = ((date.getDay() + 6) % 7) + 1
+      return Object.entries(day.meals).flatMap(([slot, list]) => list.flatMap(item => item.matchedMenu && /^\d+$/.test(slot)
+        ? [{ day_index: dayIndex, meal_slot_code: Number(slot), menu_id: item.matchedMenu.menu_id }] : []))
+    })
+    if (!items.length) throw new Error('템플릿에 넣을 메뉴가 없습니다.')
+    return saveMealPlanTemplate({ ...form, items })
+  }
 
   useEffect(() => {
     let isMounted = true
@@ -1417,7 +1564,7 @@ export function useTableMealsWorkspace() {
       if (!source) return day
       return { ...day, meals: Object.fromEntries(Object.keys(day.meals).map(slot => [slot, (source.meals[slot] ?? []).filter(item => !item.excluded)])) }
     }))
-    setManualEveningSnackItems({}); setMealEditorSource('manual'); setIsManualEditorOpen(true)
+    setManualEveningSnackItems({}); setMealEditorSource('pdf'); setEditingTable(null); setEditingWeek(null); setSpecialMeals({}); setIsManualEditorOpen(true)
     setManualMessage('PDF 메뉴 선택 결과를 편집기로 가져왔습니다. 주차·예정 식수와 식사 합계를 확인한 뒤 저장하세요.')
   }
 
@@ -1607,6 +1754,8 @@ export function useTableMealsWorkspace() {
   const closeManualEditor = () => {
     setIsManualEditorOpen(false)
     setManualMessage('')
+    setEditingTable(null)
+    setEditingWeek(null)
   }
 
   const openAutoEditor = () => {
@@ -1901,10 +2050,18 @@ export function useTableMealsWorkspace() {
     if (!selectedAccountId || !selectedAutoWeek) throw new Error('거래처와 주차를 선택해주세요.')
     if (!Number.isInteger(Number(plannedServings)) || Number(plannedServings) <= 0) throw new Error('식사당 예정 식수를 입력해주세요.')
     const result = buildTableMealsResultFromDays(mergeManualEveningSnacks(manualDays, manualEveningSnackItems))
-    const payload = buildTableMealsSavePayload(result, selectedAutoWeek, selectedAccountId, selectedAccountName,
+    const built = buildTableMealsSavePayload(result, editingWeek ?? selectedAutoWeek, selectedAccountId, selectedAccountName,
       mealEditorSource, selectedMealPlanType, accountMealConfiguration, weeklyMealSettings)
-    if (!payload.meals.length) throw new Error('발주할 식단 메뉴를 먼저 구성해주세요.')
-    return { ...payload, planned_servings: Number(plannedServings) }
+    if (!built.meals.length) throw new Error('발주할 식단 메뉴를 먼저 구성해주세요.')
+    const payload: TableMealsSavePayload = {
+      ...built,
+      meals: built.meals.map(meal => ({ ...meal, special_yn: specialMeals[`${meal.meal_date}:${meal.meal_slot_code}`] ? 'Y' : 'N' })),
+      planned_servings: Number(plannedServings),
+    }
+    // 저장된 식단표 수정: 같은 식단표 ID·이름·주차로 다시 저장(서버가 그 주 식사를 바꾼다)
+    if (editingTable) Object.assign(payload, { table_id: editingTable.table_id, table_name: editingTable.table_name,
+      table_year: editingTable.table_year ?? payload.table_year, table_month: editingTable.table_month ?? payload.table_month, table_week: editingTable.table_week ?? payload.table_week })
+    return payload
   }
   const keepDraft = (criteria: ShortageCriteria) => {
     const key = `plan-procurement:${criteria.account_id}`
@@ -1961,5 +2118,5 @@ export function useTableMealsWorkspace() {
       })),
   })
 
-  return { pdfMenuOverrides, setPdfMenuOverrides, menuAliases, setMenuAliases, rememberPdfLinks, setRememberPdfLinks, pdfLinkMessage, setPdfLinkMessage, navigate, searchParams, initialAccountId, fileInputRef, selectedAccountId, setSelectedAccountId, selectedTableMonth, setSelectedTableMonth, selectedMealPlanType, setSelectedMealPlanType, accountOptions, setAccountOptions, accountMealSlots, setAccountMealSlots, accountMealConfiguration, setAccountMealConfiguration, reloadMealConfiguration, weeklyMealSettings, setWeeklyMealSettings, isWeeklySettingsOpen, setIsWeeklySettingsOpen, accountError, setAccountError, tableMeals, setTableMeals, setMenuItems, accountMenuItems, setAccountMenuItems, menuError, setMenuError, accountMenuError, setAccountMenuError, tableError, setTableError, isTableLoading, setIsTableLoading, isAccountMenuLoading, setIsAccountMenuLoading, isPdfParsing, setIsPdfParsing, pdfError, setPdfError, uploadedFileName, setUploadedFileName, pdfText, setPdfText, registerTarget, setRegisterTarget, originRevision, setOriginRevision, selectedTableMeal, setSelectedTableMeal, tableMealDetailItems, setTableMealDetailItems, tableMealDetailError, setTableMealDetailError, isTableMealDetailLoading, setIsTableMealDetailLoading, selectedDetailMenu, setSelectedDetailMenu, detailItems, setDetailItems, menuShortageById, setMenuShortageById, tableMealShortageById, setTableMealShortageById, detailError, setDetailError, isDetailLoading, setIsDetailLoading, recipeMenuState, setRecipeMenuState, recipeViewRequest, setRecipeViewRequest, recipeViewMode, setRecipeViewMode, recipeRegisterRequest, setRecipeRegisterRequest, aiMatchMessage, setAiMatchMessage, aiMatchedMenuIdsByText, setAiMatchedMenuIdsByText, isAiMatching, setIsAiMatching, autoWeekValue, setAutoWeekValue, autoGeneratedResult, setAutoGeneratedResult, autoGenerateMessage, setAutoGenerateMessage, isTableSaving, setIsTableSaving, tableSaveMessage, setTableSaveMessage, plannedServings, setPlannedServings, draftSessionAccount, setDraftSessionAccount, restoredSettings, savedStockCheck, setSavedStockCheck, persistPlan, saveAndOrder, saveCurrentAndOrder, createDraftCriteria, preparePlan, isManualEditorOpen, setIsManualEditorOpen, mealEditorSource, setMealEditorSource, manualDays, setManualDays, manualEveningSnackItems, setManualEveningSnackItems, manualTarget, setManualTarget, manualSearchText, setManualSearchText, manualFoodTypeFilter, setManualFoodTypeFilter, manualMenuTypeFilter, setManualMenuTypeFilter, manualMessage, setManualMessage, alert, setAlert, rawParsedResult, parsedPdfResult, updateWeeklyMealSetting, currentMonthWeeks, selectedAutoWeek, displayedMealResult, displayedMenuIds, selectedAccountName, configuredMealSlotRows, selectedTableMonthParts, matchedCount, tableMealDetailDays, manualSelectedDay, filteredManualMenus, closeAlert, handleUploadClick, openTableMealDetail, closeTableMealDetail, tableMealAccountName, printTableMealDetail, handleFileChange, transferPdfToEditor, setPdfOverride, openRegisterModal, handleRegisteredMenu, excelSheetOptions, excelSheetName, setExcelSheetName, excludedCourses, setExcludedCourses, unmatchedPdfMenus, handleBulkLinkedMenus, excludePdfTexts, getExtractedMenuTexts, handleAiMatch, refreshTableMeals, openManualEditor, closeManualEditor, openAutoEditor, getManualMealItems, addManualMenu, removeManualMenu, clearManualMeal, fillManualWithAutoRecommendation, saveManualTableMeals, handleAutoGenerate, handleSaveAutoTableMeals, getAiMatchedMenu, getMenuShortageClass, getTableMealShortageClass, currentDraftPayload, keepDraft, openDraftProcurement, goToSavedFoodOrder, goToFoodOrder, checkCurrentDraftStock, createShortageOrder, buildRecipeRequest }
+  return { editorMenus, favoriteOnly, setFavoriteOnly, toggleFavoriteMenu, templatePicker, setTemplatePicker, openTemplatePicker, applyTemplate, openSavedPlanEditor, editingTable, specialMeals, toggleSpecialMeal, isSpecialMeal, saveDraftAsTemplate, pdfMenuOverrides, setPdfMenuOverrides, menuAliases, setMenuAliases, rememberPdfLinks, setRememberPdfLinks, pdfLinkMessage, setPdfLinkMessage, navigate, searchParams, initialAccountId, fileInputRef, selectedAccountId, setSelectedAccountId, selectedTableMonth, setSelectedTableMonth, selectedMealPlanType, setSelectedMealPlanType, accountOptions, setAccountOptions, accountMealSlots, setAccountMealSlots, accountMealConfiguration, setAccountMealConfiguration, reloadMealConfiguration, weeklyMealSettings, setWeeklyMealSettings, isWeeklySettingsOpen, setIsWeeklySettingsOpen, accountError, setAccountError, tableMeals, setTableMeals, setMenuItems, accountMenuItems, setAccountMenuItems, menuError, setMenuError, accountMenuError, setAccountMenuError, tableError, setTableError, isTableLoading, setIsTableLoading, isAccountMenuLoading, setIsAccountMenuLoading, isPdfParsing, setIsPdfParsing, pdfError, setPdfError, uploadedFileName, setUploadedFileName, pdfText, setPdfText, registerTarget, setRegisterTarget, originRevision, setOriginRevision, selectedTableMeal, setSelectedTableMeal, tableMealDetailItems, setTableMealDetailItems, tableMealDetailError, setTableMealDetailError, isTableMealDetailLoading, setIsTableMealDetailLoading, selectedDetailMenu, setSelectedDetailMenu, detailItems, setDetailItems, menuShortageById, setMenuShortageById, tableMealShortageById, setTableMealShortageById, detailError, setDetailError, isDetailLoading, setIsDetailLoading, recipeMenuState, setRecipeMenuState, recipeViewRequest, setRecipeViewRequest, recipeViewMode, setRecipeViewMode, recipeRegisterRequest, setRecipeRegisterRequest, aiMatchMessage, setAiMatchMessage, aiMatchedMenuIdsByText, setAiMatchedMenuIdsByText, isAiMatching, setIsAiMatching, autoWeekValue, setAutoWeekValue, autoGeneratedResult, setAutoGeneratedResult, autoGenerateMessage, setAutoGenerateMessage, isTableSaving, setIsTableSaving, tableSaveMessage, setTableSaveMessage, plannedServings, setPlannedServings, draftSessionAccount, setDraftSessionAccount, restoredSettings, savedStockCheck, setSavedStockCheck, persistPlan, saveAndOrder, saveCurrentAndOrder, createDraftCriteria, preparePlan, isManualEditorOpen, setIsManualEditorOpen, mealEditorSource, setMealEditorSource, manualDays, setManualDays, manualEveningSnackItems, setManualEveningSnackItems, manualTarget, setManualTarget, manualSearchText, setManualSearchText, manualFoodTypeFilter, setManualFoodTypeFilter, manualMenuTypeFilter, setManualMenuTypeFilter, manualMessage, setManualMessage, alert, setAlert, rawParsedResult, parsedPdfResult, updateWeeklyMealSetting, currentMonthWeeks, selectedAutoWeek, displayedMealResult, displayedMenuIds, selectedAccountName, configuredMealSlotRows, selectedTableMonthParts, matchedCount, tableMealDetailDays, manualSelectedDay, filteredManualMenus, closeAlert, handleUploadClick, openTableMealDetail, closeTableMealDetail, tableMealAccountName, printTableMealDetail, handleFileChange, transferPdfToEditor, setPdfOverride, openRegisterModal, handleRegisteredMenu, excelSheetOptions, excelSheetName, setExcelSheetName, excludedCourses, setExcludedCourses, unmatchedPdfMenus, handleBulkLinkedMenus, excludePdfTexts, getExtractedMenuTexts, handleAiMatch, refreshTableMeals, openManualEditor, closeManualEditor, openAutoEditor, getManualMealItems, addManualMenu, removeManualMenu, clearManualMeal, fillManualWithAutoRecommendation, saveManualTableMeals, handleAutoGenerate, handleSaveAutoTableMeals, getAiMatchedMenu, getMenuShortageClass, getTableMealShortageClass, currentDraftPayload, keepDraft, openDraftProcurement, goToSavedFoodOrder, goToFoodOrder, checkCurrentDraftStock, createShortageOrder, buildRecipeRequest }
 }

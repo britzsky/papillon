@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom'
 import type { AccountInventoryItem, DirectPurchaseResult } from '../../api/inventory'
-import { NEW_PRODUCT, purchaseUnits, todayValue as today, useDirectPurchase } from '../../features/inventory/useDirectPurchase'
+import { purchaseUnits, todayValue as today, useDirectPurchase } from '../../features/inventory/useDirectPurchase'
 import '../../components/IngredientProductLinkModal.css'
 
 /**
@@ -11,7 +11,7 @@ export default function DirectPurchaseModal({ accountId, items, onClose, onDone 
 }) {
   const {
     loadError, query, setQuery, filtered, ingredientId, ingredient, selectIngredient,
-    productChoice, setProductChoice, productName, setProductName, directProducts,
+    productName, setProductName,
     purchaseDate, setPurchaseDate, quantity, setQuantity, unit, setUnit, amount, setAmount, expirationDate, setExpirationDate,
     baseQty, unitCost, ready, saving, error, save,
   } = useDirectPurchase(accountId, items, onDone)
@@ -19,7 +19,7 @@ export default function DirectPurchaseModal({ accountId, items, onClose, onDone 
   return createPortal(<div className="ingredient-link-overlay" onMouseDown={e => { if (e.target === e.currentTarget && !saving) onClose() }}>
     <section className="ingredient-link-dialog" role="dialog" aria-modal="true" aria-labelledby="direct-purchase-title" style={{ width: 'min(720px, 100%)' }}>
       <header><div><h2 id="direct-purchase-title">직접구매 등록</h2>
-        <p>마트·쿠팡 등에서 직접 산 식재료를 재고에 넣습니다. 처음 산 상품은 이 거래처 전용 '직접구매' 상품으로 자동 등록되고, 결제 금액 ÷ 수량이 입고 단가가 됩니다.</p></div>
+        <p>마트·쿠팡 등에서 직접 산 식재료를 그 식재료 재고에 바로 넣습니다. 결제 금액 ÷ 수량이 입고 단가가 되고, 산 물건 이름은 입고 기록에 남습니다.</p></div>
         <button type="button" disabled={saving} onClick={onClose}>닫기</button></header>
       {loadError && <p className="ingredient-link-error">{loadError} 재고에 있는 식재료만 표시합니다.</p>}
       <div className="ingredient-link-filters">
@@ -31,12 +31,8 @@ export default function DirectPurchaseModal({ accountId, items, onClose, onDone 
       </div>
       {ingredient && <>
         <div className="ingredient-link-filters" style={{ marginTop: 12 }}>
-          <label>상품<select aria-label="직접구매 상품" value={productChoice} disabled={saving} onChange={e => setProductChoice(e.target.value)}>
-            {directProducts.map(p => <option key={p.account_ingredient_product_id} value={p.account_ingredient_product_id}>{p.product_name}</option>)}
-            <option value={NEW_PRODUCT}>새 상품으로 등록</option>
-          </select></label>
-          {productChoice === NEW_PRODUCT && <label>상품명<input aria-label="직접구매 상품명" value={productName} maxLength={255} placeholder="예: 양파 (쿠팡)" disabled={saving}
-            onChange={e => setProductName(e.target.value)} /></label>}
+          <label>산 물건 이름 (선택)<input aria-label="직접구매 상품명" value={productName} maxLength={255} placeholder="예: 양파 (쿠팡)" disabled={saving}
+            onChange={e => setProductName(e.target.value)} /></label>
           <label>구매일<input type="date" aria-label="구매일" value={purchaseDate} max={today()} disabled={saving} onChange={e => setPurchaseDate(e.target.value)} /></label>
         </div>
         <div className="ingredient-link-filters" style={{ marginTop: 12 }}>
@@ -52,7 +48,7 @@ export default function DirectPurchaseModal({ accountId, items, onClose, onDone 
           {unitCost > 0 && ` · 입고 단가 ${unitCost.toLocaleString('ko-KR', { maximumFractionDigits: 2 })}원/${ingredient.base_unit}`}</p>
       </>}
       {error && <p className="ingredient-link-error" role="alert">{error}</p>}
-      <footer><span>{productChoice === NEW_PRODUCT ? '기존 발주 상품의 우선 순위는 바뀌지 않습니다.' : '선택한 직접구매 상품으로 입고합니다.'}</span>
+      <footer><span>공급사 상품과 연결하지 않고 식재료 재고에 더합니다.</span>
         <button type="button" className="menu-manager-save-button" disabled={!ready || saving} onClick={() => void save()}>{saving ? '등록 중…' : '재고에 반영'}</button></footer>
     </section>
   </div>, document.body)

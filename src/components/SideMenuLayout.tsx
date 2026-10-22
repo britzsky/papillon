@@ -9,6 +9,7 @@ import WorkflowBar from './WorkflowBar'
 import WorkspaceAccountPicker from './WorkspaceAccountPicker'
 import { isHeadquarters, workspaceAccountId } from '../features/workspace/workspaceAccount'
 import { matchesBase } from '../features/workspace/workflow'
+import { visibleForRole } from '../features/workspace/roleScreens'
 
 type SideMenuLayoutProps = {
   children: ReactNode
@@ -36,9 +37,10 @@ const majorMenus: MajorMenu[] = [
   {
     key: 'operations',
     label: '운영관리',
-    basePaths: ['/operations/table-meals', '/operations/menu', '/operations/account-menu'],
+    basePaths: ['/operations/table-meals', '/operations/menu', '/operations/account-menu', '/operations/meal-plan-templates'],
     items: [
       { label: '식단표 관리', to: '/operations/table-meals', exact: true },
+      { label: '금액대 식단표 템플릿', to: '/operations/meal-plan-templates', exact: true },
       { label: '거래처 메뉴 관리', to: '/operations/account-menu', exact: true },
       { label: '본사 메뉴 가져오기', to: '/operations/account-menu/import', exact: true },
       { label: '메뉴 관리', to: '/operations/menu', exact: true },
@@ -53,7 +55,6 @@ const majorMenus: MajorMenu[] = [
       { label: '발주서·입고 관리', to: '/order_manager/orders', exact: true },
       { label: '공급사 통합 연동', to: '/order_manager/suppliers', exact: true },
       { label: '공급사 사업장 매핑', to: '/order_manager/supplier-sites', exact: true },
-      { label: '거래명세서 관리' },
     ],
   },
   {
@@ -62,7 +63,6 @@ const majorMenus: MajorMenu[] = [
     basePaths: ['/inventory'],
     items: [
       { label: '재고', to: '/inventory/account', exact: true },
-      { label: '거래처 재고 관리', to: '/inventory/account-ingredients', exact: true },
       { label: '재고 변동 이력', to: '/inventory/history', exact: true },
       { label: '식자재 관리', to: '/inventory/ingredients', exact: true },
     ],
@@ -284,7 +284,7 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
 
                 {isOpen ? (
                   <div className="side-layout__submenu">
-                    {menu.items.filter(item => localStorage.getItem('user_type') !== '3' || !['/order_manager/suppliers', '/order_manager/supplier-sites', '/order_manager/welstory', '/inventory/ingredients', '/operations/menu'].includes(item.to || '')).map((item) =>
+                    {menu.items.filter(item => visibleForRole(item.to)).map((item) =>
                       item.to ? (
                         <NavLink
                           key={`${menu.key}-${item.label}`}

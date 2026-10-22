@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { buildApiUrl } from '../../config/api'
-import { getSupplierSites, getSupplierOffers, type SupplierOffer, type SupplierSite } from '../../api/supplierIntegration'
+import { getSupplierSites, getSupplierOffers, setFavoriteProduct, type SupplierOffer, type SupplierSite } from '../../api/supplierIntegration'
 import { submitMixedProcurement, recoverMixedProcurement, startNewMixedProcurement, type BatchResult } from '../../api/mixedProcurement'
 
 export type ProductIngredient = { ingredient_id: string; ingredient_name: string; product_name?: string }
@@ -9,7 +9,9 @@ export const lineKey = (line: CartLine) => `${line.offer.supplier_offer_id}:${li
 
 /**
  * 상품 검색 발주(PC 발주하기 '상품 검색' 탭·터치 화면 공용): 웰스토리·아워홈 상품을 검색(동의어 포함, 관련도순 300건)해
- * 장바구니에 담고 공급사·사업장·납품일별로 한 번에 발주한다. 담을 때 구매할 식재료(source)를 정하면 그 식재료로 연결된다.
+ * 장바구니에 담고 공급사·사업장·납품일별로 한 번에 발주한다. 담을 때 '재고에 넣을 식재료'(source)를 정하면 입고 때 그 식재료 재고로
+ * 들어간다(2026-10-22: 식재료와 상품을 연결하지 않음). 정하지 않으면 입고할 때 고른다.
+ * 하트(나만의 식재료)를 누른 상품은 검색 결과 맨 위에 오고, '나만의 식재료' 버튼으로 하트 상품만 볼 수 있다.
  */
 export function useProductOrder(accountId: string, initialSource: string) {
   const [sites, setSites] = useState<SupplierSite[]>([])
@@ -44,11 +46,12 @@ export function useProductOrder(accountId: string, initialSource: string) {
     }).catch(e => { if (active) setMessage(e.message) })
     return () => { active = false }
   }, [accountId, initialSource])
-  const search = async () => {
+  const [favoriteMode, setFavoriteMode] = useState(false)
+  const search = async (favoritesOnly = false) => {
     if (pending.current) return
-    pending.current = true; setBusy(true); setMessage(''); setOffers([]); setPage(1)
-    // 서버에서 검색어(동의어 포함)로 찾아 관련도순 최대 300건만 받는다
-    try { setOffers((await getSupplierOffers(accountId, date, undefined, undefined, { keyword: query, limit: 300 })).filter(o => ['WELSTORY', 'OURHOME'].includes(o.supplier_code))) }
+    pending.current = true; setBusy(true); setMessage(''); setOffers([]); setPage(1); setFavoriteMode(favoritesOnly)
+    // 서버에서 검색어(동의어 포함)로 찾아 관련도순 최대 300건만 받는다(나만의 식재료가 맨 위). 나만의 식재료 보기는 하트 상품만
+    try { setOffers((await getSupplierOffers(accountId, date, undefined, undefined, favoritesOnly ? { favoriteOnly: true, limit: 300 } : { keyword: query, limit: 300 })).filter(o => ['WELSTORY', 'OURHOME'].includes(o.supplier_code))) }
     catch (e) { setMessage(e instanceof Error ? e.message : '상품 조회 실패') }
     finally { pending.current = false; setBusy(false) }
   }
@@ -63,7 +66,9 @@ export function useProductOrder(accountId: string, initialSource: string) {
     pending.current = true; setBusy(true); setLocked(true); setMessage('')
     try {
       setResult(await (recover ? recoverMixedProcurement(accountId) : submitMixedProcurement({ account_id: accountId,
-        items: cart.map(line => ({ delivery_terms_confirmed: line.confirmed, supplier_offer_id: line.offer.supplier_offer_id, delivery_date: line.date, order_qty: line.quantity, expected_price: line.offer.purchase_price, source_ingredient_id: line.source || line.offer.linked_ingredient_id })) })))
+        items: cart.map(line => ({ delivery_terms_confirmed: line.confirmed, supplier_offer_id: line.offer.supplier_offer_id, delivery_date: line.date, order_qty: line.quantity, expected_price: line.offer.purchase_price,
+          // 재고에 넣을 식재료: 담을 때 고른 것 → 이 상품으로 발주했던 식재료가 하나뿐이면 그것 → 없으면 입고 때 선택
+          source_ingredient_id: line.source || (line.offer.usual_ingredient_ids.length === 1 ? line.offer.usual_ingredient_ids[0] : '') })) })))
     } catch (e) { setMessage(e instanceof Error ? e.message : '발주 결과 확인 실패') }
     finally { pending.current = false; setBusy(false) }
   }
@@ -80,6 +85,16 @@ export function useProductOrder(accountId: string, initialSource: string) {
     if (offer.orderability_status !== 'AVAILABLE' && !window.confirm(offer.product_name + ' · ' + date + '\n공급사에 납품 가능일과 마감 조건을 직접 확인하셨습니까?')) return
     setCart(current => [...current, { offer, date, source, quantity: offer.minimum_order_qty, confirmed: offer.orderability_status !== 'AVAILABLE' }])
   }
+  /** 하트: 나만의 식재료 지정·해제 */
+  const toggleFavorite = async (offer: SupplierOffer) => {
+    const on = offer.favorite_yn !== 'Y'
+    try {
+      await setFavoriteProduct(accountId, offer.supplier_product_id, on)
+      const patch = (o: SupplierOffer): SupplierOffer => o.supplier_product_id === offer.supplier_product_id ? { ...o, favorite_yn: on ? 'Y' : 'N' } : o
+      setOffers(current => favoriteMode && !on ? current.filter(o => o.supplier_product_id !== offer.supplier_product_id) : current.map(patch))
+      setCart(current => current.map(line => ({ ...line, offer: patch(line.offer) })))
+    } catch (e) { setMessage(e instanceof Error ? e.message : '나만의 식재료를 저장하지 못했습니다.') }
+  }
   const setLineQuantity = (line: CartLine, quantity: number) => setCart(current => current.map(l => lineKey(l) === lineKey(line) ? { ...l, quantity } : l))
   const removeLine = (line: CartLine) => setCart(current => current.filter(l => lineKey(l) !== lineKey(line)))
 
@@ -91,6 +106,6 @@ export function useProductOrder(accountId: string, initialSource: string) {
 
   return {
     sites, ingredients, source, chooseSource, site, setSite, date, changeDate, offers, query, setQuery, cart, busy, locked, message, result, page, setPage,
-    search, order, newCart, canAdd, addToCart, setLineQuantity, removeLine, filtered, groups, cartTotal, canOrder,
+    search, order, newCart, canAdd, addToCart, setLineQuantity, removeLine, filtered, groups, cartTotal, canOrder, toggleFavorite, favoriteMode,
   }
 }

@@ -152,7 +152,7 @@ export type TableMealsItem = {
   table_year?: number
   table_month?: number
   table_week?: number
-  source?: 'auto' | 'pdf' | 'manual'
+  source?: 'auto' | 'pdf' | 'manual' | 'template'
   file_name: string
   created_at?: string
   meal_plan_type: number
@@ -173,6 +173,11 @@ export type TableMealsDetailItem = {
   food_type: number
   menu_type: number
   menu_gubun: number
+  /** 식사구분 코드(조식 0·중식 2·석식 5 …) */
+  meal_slot_code?: number
+  /** 특식 여부(식단가 초과분을 주 합계에서 빼고 따로 보여준다) */
+  special_yn?: 'Y' | 'N'
+  special_note?: string
 }
 
 export type MealPlanAnalysisItem = {
@@ -211,15 +216,19 @@ export type TableMealsQueryPeriod = {
 
 export type TableMealsSavePayload = {
   planned_servings?: number
+  /** 저장된 식단표를 고쳐 다시 저장할 때 그 식단표 ID(없으면 거래처·연·월·주차·출처·유형으로 만든다) */
+  table_id?: string
   account_id: string
   account_name: string
   table_name: string
   table_year: number
   table_month: number
   table_week: number
-  source: 'auto' | 'pdf' | 'manual'
+  source: 'auto' | 'pdf' | 'manual' | 'template'
   meal_plan_type: number
   meals: Array<{
+    /** 특식(Y): 식단가 초과분을 주 합계에서 빼고 따로 보여준다 */
+    special_yn?: 'Y' | 'N'
     meal_date: string
     weekday: string
     meal_slot: string
@@ -730,6 +739,9 @@ function normalizeTableMealsDetailItem(record: RawRecord, index: number): TableM
     food_type: asNumber(record.food_type ?? record.foodType),
     menu_type: asNumber(record.menu_type ?? record.menuType),
     menu_gubun: asNumber(record.menu_gubun ?? record.menuGubun),
+    meal_slot_code: record.meal_slot_code == null ? undefined : asNumber(record.meal_slot_code),
+    special_yn: record.special_yn === 'Y' ? 'Y' : 'N',
+    special_note: record.special_note == null ? undefined : asText(record.special_note),
   }
 }
 
@@ -1002,29 +1014,6 @@ export async function getIngredientOptions(): Promise<IngredientOption[]> {
     .filter((item) => item.ingredient_id !== '' || item.ingredient_name !== '')
 }
 
-export async function getLikeIngredientOptions(accountId = getLocalAccountId()): Promise<IngredientOption[]> {
-  const searchParams = new URLSearchParams({
-    account_id: accountId,
-    user_id: getLocalUserId(),
-  })
-
-  const response = await fetch(`${buildApiUrl('/Menu/LikeIngredientsList')}?${searchParams.toString()}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
-
-  if (!response.ok) {
-    throw new Error('나만의 식자재 목록을 불러오지 못했습니다.')
-  }
-
-  const payload = await parseResponseBody(response)
-  return readArray(payload)
-    .map((item) => normalizeIngredientOption(item as RawRecord))
-    .filter((item) => item.ingredient_id !== '' || item.ingredient_name !== '')
-}
-
 export async function getTableMealsList(accountId: string, tableYear?: number, tableMonth?: number): Promise<TableMealsItem[]> {
   const searchParams = new URLSearchParams({
     account_id: accountId,
@@ -1177,7 +1166,7 @@ export async function getMealPlanShortages(accountId: string, tableId: string): 
   })
 }
 
-const tableMealsId = (payload: TableMealsSavePayload) =>
+export const tableMealsId = (payload: TableMealsSavePayload) => payload.table_id ||
   `${payload.account_id}_${payload.table_year}_${payload.table_month}_${payload.table_week}_${payload.source}_${payload.meal_plan_type}`
 
 /** 저장하려는 식단표(주)에 이미 사용 확정된 식사 수. 조회 실패 시 0(저장 자체가 서버 검증을 거친다). */
@@ -1245,22 +1234,6 @@ export async function saveLikeMenu(menuId: string, like: 'Y' | 'N') {
 
   if (!response.ok) {
     throw new Error('나만의 메뉴 저장에 실패했습니다.')
-  }
-
-  return parseResponseBody(response)
-}
-
-export async function saveLikeIngredient(ingredientId: string, like: 'Y' | 'N') {
-  const response = await fetch(buildApiUrl('/Menu/LikeIngredientsSave'), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(withLocalUserId({ ingredient_id: ingredientId, like, account_id: getLocalAccountId() })),
-  })
-
-  if (!response.ok) {
-    throw new Error('나만의 식자재 저장에 실패했습니다.')
   }
 
   return parseResponseBody(response)

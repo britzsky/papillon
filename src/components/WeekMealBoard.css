@@ -1,0 +1,24 @@
+/* 홈 '이번 주 식단표' — 현장 계정 홈의 가장 큰 영역 */
+.rd .rd-weekmeal { padding: 20px 22px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.rd .rd-weekmeal__head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rd .rd-weekmeal__head .rd-h2 { margin: 0; }
+.rd .rd-weekmeal__nav { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.rd .rd-weekmeal__empty { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 28px 16px; border: 1px dashed var(--rd-line, #d8ded9); border-radius: 12px; }
+.rd .rd-weekmeal__empty p { margin: 0; }
+.rd .rd-weekmeal__scroll { overflow-x: auto; }
+.rd .rd-weekmeal__table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; min-width: 640px; }
+.rd .rd-weekmeal__table th, .rd .rd-weekmeal__table td { border-bottom: 1px solid var(--rd-line, #e3e8e4); padding: 10px 10px; vertical-align: top; text-align: left; }
+.rd .rd-weekmeal__table thead th { font-weight: 700; background: var(--rd-surface-2, #f5f7f5); }
+.rd .rd-weekmeal__table thead th .rd-chip { margin-left: 6px; }
+.rd .rd-weekmeal__weekday { display: inline-block; margin-right: 6px; }
+.rd .rd-weekmeal__date { color: var(--rd-muted, #5b6660); font-weight: 500; }
+.rd .rd-weekmeal__slot { width: 76px; color: var(--rd-muted, #5b6660); font-weight: 700; }
+.rd .rd-weekmeal__table .is-today { background: var(--rd-today, #eef7f1); }
+.rd .rd-weekmeal__table ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.rd .rd-weekmeal__table li { line-height: 1.35; word-break: keep-all; }
+/* 현장 홈: 오늘 할 일은 작게 */
+.rd .rd-steps.is-compact { padding: 14px 16px; }
+.rd .rd-steps.is-compact > p { display: none; }
+.rd .rd-steps.is-compact ol { gap: 6px; }
+.rd .rd-steps.is-compact .rd-step { padding: 8px 10px; }
+.rd .rd-steps.is-compact .rd-step__text span { display: none; }

@@ -5,7 +5,6 @@ import { Link, useSearchParams } from 'react-router-dom'
 import HeaderBar from '../../components/HeaderBar'
 import SideMenuLayout from '../../components/SideMenuLayout'
 import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
-import OrderPreferenceChanges from '../../components/OrderPreferenceChanges'
 import SupplierOrderPrint from './SupplierOrderPrint'
 import { PrintIcon } from '../../components/ActionIcons'
 import { buildApiUrl } from '../../config/api'
@@ -35,6 +34,7 @@ export default function PurchaseOrderManager() {
     from, setFrom, to, setTo, status, setStatus, offset, setOffset, supplierId, setSupplierId, suppliers,
     orders, selected, selectOrder, busy, message, load, reconcile,
     receiptDate, setReceiptDate, receiptQuantity, setReceiptQuantity, receive,
+    ingredients, receiptChoice, setReceiptChoice, needsIngredient,
   } = usePurchaseOrders(accountId, focusedId)
 
   // 이번 주 칸(납품일 기준) — 고른 날이 없으면 오늘 들어올 발주서가 있을 때 오늘, 없으면 전체
@@ -175,7 +175,6 @@ export default function PurchaseOrderManager() {
             </div>
             <ol className="rd-recv__steps" aria-label="진행 단계">{steps.map(step => <li key={step.text} className={`rd-chip is-${step.tone}`}>{step.text}</li>)}</ol>
           </div>
-          <OrderPreferenceChanges key={`${accountId}/${selected.purchase_order_id}`} accountId={accountId} orderId={selected.purchase_order_id} changes={selected.preference_changes} />
           {UNCERTAIN_STATUSES.includes(selected.status) || selected.supplier_result_message ? <div className={`rd-recv__response${UNCERTAIN_STATUSES.includes(selected.status) ? ' is-urgent' : ''}`}>
             <span className="rd-fs-sm"><b>공급사 응답</b> {selected.supplier_result_message || '품목별 결과를 확인해 주세요.'}{selected.supplier_result_code ? ` (${selected.supplier_result_code})` : ''}{UNCERTAIN_STATUSES.includes(selected.status) ? ' · 접수 여부 확인 요망' : ''}</span>
             <button type="button" className="rd-btn" disabled={busy} onClick={() => void reconcile()}>공급사 접수 상태 다시 조회</button>
@@ -187,8 +186,15 @@ export default function PurchaseOrderManager() {
               return <tr key={item.client_ord_item} className={diff || line?.state === 'DELETED' ? 'is-diff' : ''}>
                 <td><strong>{item.product_name}</strong>
                   <small className="rd-muted">{item.supplier_item_code} · <OrderStatusBadge status={item.item_status} label={labels[item.item_status] || item.item_status} /></small>
-                  {item.ingredient_link_status === 'CONFLICT' && <small className="rd-text-warn" role="alert">식자재 연결이 바뀌어 자동 연결 확인 요망</small>}
-                  {item.ingredient_link_status === 'PENDING' && <small className="rd-muted">접수 확인 후 식자재 자동 연결 예정</small>}
+                  {!needsIngredient(item)
+                    ? <small className="rd-muted">재고 식재료: {item.ingredient_name || item.ingredient_id}</small>
+                    : receivable ? <span className="rd-recv__ingredient">
+                      <select className="rd-input" aria-label={`${item.product_name} 재고에 넣을 식재료`} value={receiptChoice(item).ingredient_id} onChange={e => setReceiptChoice(item, { ingredient_id: e.target.value })}>
+                        <option value="">재고에 넣을 식재료 선택</option>
+                        {ingredients.map(row => <option key={row.ingredient_id} value={row.ingredient_id}>{row.ingredient_name}{row.base_unit ? ` (${row.base_unit})` : ''}</option>)}
+                      </select>
+                      <input className="rd-input" type="number" min="0" step="0.001" aria-label={`${item.product_name} 1${item.order_unit}당 식재료 수량`} placeholder={`1${item.order_unit}당 수량(선택)`} value={receiptChoice(item).per_unit} onChange={e => setReceiptChoice(item, { per_unit: e.target.value })} />
+                    </span> : <small className="rd-muted">재고 식재료 미지정</small>}
                   {item.supplier_error_message ? <small className="rd-text-warn" role="note">사유: {item.supplier_error_message}{item.supplier_result_code ? ` (${item.supplier_result_code})` : ''}</small> : null}
                 </td>
                 <td className="is-num">{item.order_qty} {item.order_unit}</td>

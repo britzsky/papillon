@@ -3,7 +3,7 @@ import { buildApiUrl } from '../config/api'
 export type ShortageCriteria = {
   account_id: string
   /** PLAN=저장된 식단 필요량, STOCK=현재 부족 재고 바로 주문, INVENTORY=최근 사용량 기준 부족 예상, DRAFT=구성 중인 식단 */
-  source: 'PLAN' | 'INVENTORY' | 'DRAFT' | 'STOCK'
+  source: 'PLAN' | 'INVENTORY' | 'DRAFT' | 'STOCK' | 'FAVORITE_MENU'
   draft_meals?: Array<{ menu_id: string; planned_servings: number; meal_date?: string }>
   table_id: string
   date_from: string

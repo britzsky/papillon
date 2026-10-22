@@ -4,8 +4,8 @@ import { getProductImageUrl, getProductOriginalImageUrl } from '../utils/product
 
 export type AccountInventoryItem = {
   image_url?: string
+  /** 재고 행. 재고가 아직 없는 식재료는 0(기초재고·조정 때 서버가 만든다). 재고는 거래처 식재료 단위(2026-10-22) */
   inventory_balance_id?: number
-  account_ingredient_product_id?: number
   menu_id?: string
   menu_name?: string
   ingredient_id: string
@@ -43,9 +43,14 @@ export type AccountInventoryItem = {
   estimated_cost_date?: string
   /** 기초재고를 추정 단가로 등록했는지 */
   opening_cost_estimated?: boolean
-  /** 공급사 코드. DIRECT = 직접구매(마트·쿠팡 등) 거래처 자체 상품 */
+  /** 공급사 코드(예전 형식 호환) */
   supplier_code?: string
+  /** 최근에 들어온 상품명(참고 표시. 식재료와 상품을 연결하지 않는다) */
   product_name?: string
+  /** 최근 입고일 */
+  recent_received_date?: string
+  /** 설정한 안전재고(거래처 식재료) */
+  configured_safe_stock_qty?: number
   supplier_item_code?: string
   stock_status?: 'RED' | 'ORANGE' | 'YELLOW' | 'GREEN' | 'EMPTY' | 'UNKNOWN'
 }
@@ -81,6 +86,9 @@ export type IngredientMasterItem = {
   package_unit: string
   purchase_price: number
   package_base_qty: number
+  /** 본사 표준 단가(기준단위당 원, 입력값 그대로). 비우면 미등록. 거래처에 입고 기록이 없을 때 식단 원가에 쓴다 */
+  standard_unit_cost: string
+  standard_cost_mod_at?: string
   is_new?: boolean
 }
 
@@ -142,7 +150,6 @@ function normalizeAccountInventoryItem(record: RawRecord): AccountInventoryItem 
   return {
     image_url: getProductImageUrl(record, API_ORIGIN),
     inventory_balance_id: asNumber(record.inventory_balance_id ?? record.inventoryBalanceId),
-    account_ingredient_product_id: asNumber(record.account_ingredient_product_id ?? record.accountIngredientProductId),
     menu_id: asText(record.menu_id ?? record.menuId),
     menu_name: asText(record.menu_name ?? record.menuName),
     ingredient_id: asText(record.ingredient_id ?? record.ingredientId),
@@ -165,7 +172,7 @@ function normalizeAccountInventoryItem(record: RawRecord): AccountInventoryItem 
     average_usage_qty: asNumber(record.average_usage_qty ?? record.averageUsageQty ?? record.avg_daily_usage),
     total_capacity_qty: asNumber(record.total_capacity_qty ?? record.totalCapacityQty ?? record.max_stock_base_qty),
     last_used_at: asText(record.last_used_at ?? record.lastUsedAt ?? record.last_out_at),
-    supplier_name: asText(record.supplier_name ?? record.supplierName),
+    supplier_name: asText(record.recent_supplier_name ?? record.supplier_name ?? record.supplierName),
     supplier_product_id: asNumber(record.supplier_product_id ?? record.supplierProductId),
     purchase_price: asNumber(record.purchase_price ?? record.purchasePrice),
     package_base_qty: asNumber(record.package_base_qty ?? record.packageBaseQty),
@@ -177,7 +184,9 @@ function normalizeAccountInventoryItem(record: RawRecord): AccountInventoryItem 
     estimated_cost_date: asText(record.estimated_cost_date) || undefined,
     opening_cost_estimated: asText(record.opening_cost_estimated) === 'Y',
     supplier_code: asText(record.supplier_code ?? record.supplierCode) || undefined,
-    product_name: asText(record.product_name ?? record.productName),
+    product_name: asText(record.recent_product_name ?? record.product_name ?? record.productName),
+    recent_received_date: asText(record.recent_received_date) || undefined,
+    configured_safe_stock_qty: record.configured_safe_stock_qty == null ? undefined : asNumber(record.configured_safe_stock_qty),
     supplier_item_code: asText(record.supplier_item_code ?? record.supplierItemCode),
     stock_status: asText(record.stock_status ?? record.stockStatus, 'UNKNOWN') as AccountInventoryItem['stock_status'],
   }
@@ -185,8 +194,8 @@ function normalizeAccountInventoryItem(record: RawRecord): AccountInventoryItem 
 
 /** 추정 단가 출처 표시 이름 */
 export const ESTIMATED_COST_SOURCE_LABELS: Record<string, string> = {
-  MANUAL: '직접 입력한 예상 단가', SITE_PRICE: '거래처 공급가', COMMON_PRICE: '공통 공급가',
-  SITE_PRICE_NEAREST: '가까운 날짜 거래처 공급가', COMMON_PRICE_NEAREST: '가까운 날짜 공통 공급가', RECENT_RECEIPT: '최근 입고 단가',
+  MANUAL: '직접 입력한 예상 단가', RECENT_RECEIPT: '최근 입고 단가', STANDARD: '본사 표준 단가',
+  SITE_PRICE: '거래처 공급가', COMMON_PRICE: '공통 공급가', SITE_PRICE_NEAREST: '가까운 날짜 거래처 공급가', COMMON_PRICE_NEAREST: '가까운 날짜 공통 공급가',
 }
 
 /**
@@ -195,7 +204,8 @@ export const ESTIMATED_COST_SOURCE_LABELS: Record<string, string> = {
  * unit_cost를 생략하면 서버가 공급가 기반 추정 단가로 등록하고 '추정'으로 표시한다.
  */
 export async function registerOpeningStock(input: {
-  inventory_balance_id: number; current_qty: number; current_unit: string; unit_cost?: number
+  /** 재고 행이 없으면 생략하고 account_id·ingredient_id를 준다(서버가 재고 행을 만든다) */
+  inventory_balance_id?: number; account_id?: string; ingredient_id?: string; current_qty: number; current_unit: string; unit_cost?: number
 }) {
   const response = await fetch(buildApiUrl('/v2/inventory/opening'), {
     method: 'POST',
@@ -211,8 +221,7 @@ export type DirectPurchaseInput = {
   account_id: string
   ingredient_id: string
   ingredient_name?: string
-  /** 기존 직접구매 상품을 고르면 그 상품으로 기록. 없으면 product_name으로 찾거나 새로 만든다 */
-  account_ingredient_product_id?: number
+  /** 산 물건 이름(예: 양파 (쿠팡)). 재고는 식재료로 들어가고 이름은 입고 기록에 남는다 */
   product_name?: string
   purchase_date: string
   quantity: number
@@ -226,8 +235,6 @@ export type DirectPurchaseInput = {
 
 export type DirectPurchaseResult = {
   replayed: boolean
-  product_created: boolean
-  preferred?: boolean
   product_name: string
   base_qty: number
   base_unit: string
@@ -235,7 +242,7 @@ export type DirectPurchaseResult = {
   unit_cost: number
 }
 
-/** 마트·쿠팡 등 직접구매 기록. 첫 구매면 거래처 자체 '직접구매' 상품이 자동으로 만들어지고 재고에 입고된다. */
+/** 마트·쿠팡 등 직접구매 기록. 공급사 상품 없이 그 식재료 재고에 바로 입고된다(이동평균·LOT). */
 export async function recordDirectPurchase(input: DirectPurchaseInput): Promise<DirectPurchaseResult> {
   const response = await fetch(buildApiUrl('/v2/inventory/direct-purchases'), {
     method: 'POST',
@@ -272,17 +279,14 @@ export async function getAccountInventoryList(accountId = getLocalAccountId()): 
 export async function saveAccountInventory(payload: AccountInventorySavePayload) {
   const accountId = payload.account_id || getLocalAccountId()
   return Promise.all(payload.inventory_items.map(async (item) => {
-    const isUpdate = Boolean(item.inventory_balance_id)
-    if (!isUpdate && !item.account_ingredient_product_id) {
-      throw new Error('신규 재고는 먼저 거래처 공급처 상품을 선택해야 합니다.')
-    }
+    // 재고는 식재료 단위. 재고 행이 아직 없으면 서버가 거래처·식재료로 찾거나 만든다(PATCH 하나로 처리)
     const response = await fetch(buildApiUrl('/v2/inventory'), {
-      method: isUpdate ? 'PATCH' : 'POST',
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        inventory_balance_id: item.inventory_balance_id,
+        inventory_balance_id: item.inventory_balance_id || undefined,
         account_id: accountId,
-        account_ingredient_product_id: item.account_ingredient_product_id,
+        ingredient_id: item.ingredient_id,
         location_id: item.location_id || 'L999',
         current_qty: item.current_qty,
         current_unit: item.current_unit || item.base_unit,
@@ -324,6 +328,8 @@ function normalizeIngredientMasterItem(record: RawRecord): IngredientMasterItem 
     package_unit: asText(record.package_unit ?? record.packageUnit),
     purchase_price: asNumber(record.purchase_price ?? record.purchasePrice),
     package_base_qty: asNumber(record.package_base_qty ?? record.packageBaseQty),
+    standard_unit_cost: record.standard_unit_cost == null ? '' : String(Number(record.standard_unit_cost)),
+    standard_cost_mod_at: asText(record.standard_cost_mod_at) || undefined,
   }
 }
 
@@ -355,8 +361,9 @@ export type InventoryMovement = {
   movement_id: string
   movement_at: string
   movement_type: string
-  account_ingredient_product_id: number
   ingredient_id?: string
+  /** 근거 상품(입고면 실제 들어온 상품) */
+  supplier_product_id?: number
   ingredient_name?: string
   product_name?: string
   supplier_name?: string
@@ -398,7 +405,6 @@ export type InventoryMovementQuery = {
   keyword?: string
   /** 쉼표 목록. IN/OUT/ADJUST/RETURN/DISCARD/OPENING */
   movement_type?: string
-  account_ingredient_product_id?: string
   ingredient_id?: string
   limit?: number
   offset?: number

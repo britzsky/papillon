@@ -29,31 +29,31 @@ function estimateLabel(item: AccountInventoryItem) {
   return `추정: ${source}${item.estimated_cost_date ? ` (${item.estimated_cost_date})` : ''}`
 }
 
-export default function OpeningStockModal({ items, onClose, onDone }: {
-  items: AccountInventoryItem[]; onClose: () => void; onDone: (saved: number, failed: number) => void
+export default function OpeningStockModal({ accountId, items, onClose, onDone }: {
+  accountId: string; items: AccountInventoryItem[]; onClose: () => void; onDone: (saved: number, failed: number) => void
 }) {
-  const targets = useMemo(() => items.filter((item): item is AccountInventoryItem & { inventory_balance_id: number } =>
-    Boolean(item.opening_available && item.inventory_balance_id)), [items])
-  const [entries, setEntries] = useState<Record<number, Entry>>(() => Object.fromEntries(targets.map(item => [item.inventory_balance_id, {
+  // 식재료 단위(2026-10-22). 재고 행이 아직 없는 식재료도 등록할 수 있다(서버가 재고 행을 만든다)
+  const targets = useMemo(() => items.filter(item => Boolean(item.opening_available && item.ingredient_id)), [items])
+  const [entries, setEntries] = useState<Record<string, Entry>>(() => Object.fromEntries(targets.map(item => [item.ingredient_id, {
     include: item.current_base_qty > 0, qty: String(item.current_qty ?? 0), unit: item.current_unit || item.base_unit,
     cost: String(suggestedCost(item) || ''), edited: false, error: '', done: false,
   }])))
   const [saving, setSaving] = useState(false)
-  const update = (id: number, patch: Partial<Entry>) => setEntries(current => ({ ...current, [id]: { ...current[id], ...patch, error: '' } }))
-  const selected = targets.filter(item => entries[item.inventory_balance_id]?.include && !entries[item.inventory_balance_id]?.done)
-  const selectable = targets.filter(item => !entries[item.inventory_balance_id]?.done)
+  const update = (id: string, patch: Partial<Entry>) => setEntries(current => ({ ...current, [id]: { ...current[id], ...patch, error: '' } }))
+  const selected = targets.filter(item => entries[item.ingredient_id]?.include && !entries[item.ingredient_id]?.done)
+  const selectable = targets.filter(item => !entries[item.ingredient_id]?.done)
   const allSelected = selectable.length > 0 && selected.length === selectable.length
   const partiallySelected = selected.length > 0 && !allSelected
   const selectAll = (include: boolean) => setEntries(current => {
     const next = { ...current }
     for (const item of targets) {
-      const entry = current[item.inventory_balance_id]
-      if (entry && !entry.done) next[item.inventory_balance_id] = { ...entry, include }
+      const entry = current[item.ingredient_id]
+      if (entry && !entry.done) next[item.ingredient_id] = { ...entry, include }
     }
     return next
   })
   const total = selected.reduce((sum, item) => {
-    const entry = entries[item.inventory_balance_id]
+    const entry = entries[item.ingredient_id]
     return sum + toBaseQty(item, Number(entry.qty), entry.unit) * (Number(entry.cost) || 0)
   }, 0)
 
@@ -61,17 +61,17 @@ export default function OpeningStockModal({ items, onClose, onDone }: {
     setSaving(true)
     let saved = 0, failed = 0
     for (const item of selected) {
-      const entry = entries[item.inventory_balance_id]
+      const entry = entries[item.ingredient_id]
       try {
         // 추정 단가를 고치지 않았으면 단가를 보내지 않는다: 서버가 같은 기준으로 계산해 '추정'으로 기록한다.
         const useEstimate = !entry.edited && Boolean(item.estimated_unit_cost)
-        await registerOpeningStock({ inventory_balance_id: item.inventory_balance_id, current_qty: Number(entry.qty), current_unit: entry.unit,
+        await registerOpeningStock({ inventory_balance_id: item.inventory_balance_id || undefined, account_id: accountId, ingredient_id: item.ingredient_id, current_qty: Number(entry.qty), current_unit: entry.unit,
           ...(useEstimate ? {} : { unit_cost: Number(entry.cost) }) })
         saved++
-        setEntries(current => ({ ...current, [item.inventory_balance_id]: { ...current[item.inventory_balance_id], done: true, error: '' } }))
+        setEntries(current => ({ ...current, [item.ingredient_id]: { ...current[item.ingredient_id], done: true, error: '' } }))
       } catch (e) {
         failed++
-        setEntries(current => ({ ...current, [item.inventory_balance_id]: { ...current[item.inventory_balance_id], error: e instanceof Error ? e.message : '실패' } }))
+        setEntries(current => ({ ...current, [item.ingredient_id]: { ...current[item.ingredient_id], error: e instanceof Error ? e.message : '실패' } }))
       }
     }
     setSaving(false)
@@ -89,23 +89,23 @@ export default function OpeningStockModal({ items, onClose, onDone }: {
           checked={allSelected} ref={input => { if (input) input.indeterminate = partiallySelected }}
           disabled={saving || !selectable.length} onChange={e => selectAll(e.target.checked)} /> 전체 선택</label></th><th>상품</th><th>수량</th><th>단가 (기준단위당)</th><th>재고금액</th></tr></thead>
         <tbody>{targets.map(item => {
-          const entry = entries[item.inventory_balance_id]
+          const entry = entries[item.ingredient_id]
           const baseQty = toBaseQty(item, Number(entry.qty), entry.unit)
           const units = stockInputUnits(item.base_unit, item.order_unit, item.package_base_qty) ?? [item.base_unit]
-          return <tr key={item.inventory_balance_id}>
+          return <tr key={item.ingredient_id}>
             <td><input type="checkbox" aria-label={`${item.product_name || item.ingredient_name} 기초재고 등록`} checked={entry.include} disabled={saving || entry.done}
-              onChange={e => update(item.inventory_balance_id, { include: e.target.checked })} /></td>
+              onChange={e => update(item.ingredient_id, { include: e.target.checked })} /></td>
             <td>{item.ingredient_name}<small>{item.product_name}</small>
               {entry.done && <small className="ingredient-link-success">등록 완료</small>}
               {entry.error && <small className="ingredient-link-error">{entry.error}</small>}</td>
             <td><input type="number" min="0" step="0.01" aria-label="기초재고 수량" value={entry.qty} disabled={saving || entry.done}
-              onChange={e => update(item.inventory_balance_id, { qty: e.target.value })} style={{ width: 90 }} />
-              <select aria-label="수량 단위" value={entry.unit} disabled={saving || entry.done} onChange={e => update(item.inventory_balance_id, { unit: e.target.value })}>
+              onChange={e => update(item.ingredient_id, { qty: e.target.value })} style={{ width: 90 }} />
+              <select aria-label="수량 단위" value={entry.unit} disabled={saving || entry.done} onChange={e => update(item.ingredient_id, { unit: e.target.value })}>
                 {units.map(unit => <option key={unit} value={unit}>{unit === item.order_unit && item.package_base_qty ? `${unit} (${item.package_base_qty.toLocaleString()}${item.base_unit})` : unit}</option>)}
               </select>
               <small>= {baseQty.toLocaleString('ko-KR', { maximumFractionDigits: 3 })} {item.base_unit}</small></td>
             <td><input type="number" min="0" step="0.01" aria-label="기준단위당 단가" value={entry.cost} disabled={saving || entry.done}
-              onChange={e => update(item.inventory_balance_id, { cost: e.target.value, edited: true })} style={{ width: 100 }} /> 원/{item.base_unit}
+              onChange={e => update(item.ingredient_id, { cost: e.target.value, edited: true })} style={{ width: 100 }} /> 원/{item.base_unit}
               {item.estimated_unit_cost && !entry.edited ? <small>{estimateLabel(item)}</small>
                 : item.purchase_price ? <small>공급사 가격 {item.purchase_price.toLocaleString()}원 / {item.order_unit}</small> : <small>공급사 가격 없음 · 단가 입력 필요</small>}</td>
             <td>{Math.round(baseQty * (Number(entry.cost) || 0)).toLocaleString('ko-KR')}원</td>

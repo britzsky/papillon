@@ -5,7 +5,6 @@ import MenuThumbnail from '../../pages/operations/MenuThumbnail'
 import IngredientSearchSelect from '../../pages/operations/IngredientSearchSelect'
 import FavoriteListModal from '../../pages/operations/FavoriteListModal'
 import MenuLikeConfirmModal from '../../pages/operations/MenuLikeConfirmModal'
-import IngredientLikeConfirmModal from '../../pages/operations/IngredientLikeConfirmModal'
 import MenuAliasList from '../../components/MenuAliasList'
 import RecipeViewModal from '../../components/RecipeViewModal'
 import RecipeRegisterModal from '../../components/RecipeRegisterModal'
@@ -48,7 +47,6 @@ export default function AccountMenuTouch() {
       <input type="search" value={m.keywordFilter} placeholder="메뉴 검색" onChange={e => { m.setKeywordFilter(e.target.value); setLimit(PAGE) }} />
     </label>
     <button type="button" className="t-btn is-soft" disabled={m.isMenuLoading || m.isSaving} onClick={() => void m.handleOpenFavoriteMenuModal()}>나만의 메뉴</button>
-    <button type="button" className="t-btn is-soft" disabled={m.isSaving} onClick={() => void m.handleOpenFavoriteIngredientModal()}>나만의 식자재</button>
   </>
 
   const menu = m.activeMenu
@@ -99,11 +97,8 @@ export default function AccountMenuTouch() {
               </select>
               <IngredientSearchSelect options={m.ingredientOptions.filter(o => !item.category_name || o.category_name === item.category_name)}
                 placeholder="식자재 선택" selectedName={item.ingredient_name} value={item.ingredient_id} onChange={id => m.handleIngredientSelect(menu.menu_id, item.row_id, id)} />
-              <button type="button" className="am-like" aria-label="나만의 식자재" disabled={!item.ingredient_id} onClick={() => item.ingredient_id && m.setLikeTargetIngredientId(item.ingredient_id)}>
-                {(item.like ?? m.ingredientOptions.find(o => o.ingredient_id === item.ingredient_id)?.like) === 'Y' ? '♥' : '♡'}
-              </button>
             </div>
-            <p className={`am-product${item.product_name ? '' : ' is-missing'}`}>{item.product_name || '상품 연결 필요'}{item.supplier_name ? ` · ${item.supplier_name}` : ''}</p>
+            <p className={`am-product${item.cost_unit_cost == null ? ' is-missing' : ''}`}>{item.cost_unit_cost == null ? '단가 미확인' : `${Number(item.cost_unit_cost).toLocaleString('ko-KR')}원/${item.cost_base_unit || item.base_unit || ''}`}</p>
             <div className="am-ings__qty">
               <input type="text" inputMode="decimal" aria-label="1인분 사용량" value={item.qty_num ?? item.required_qty} onChange={e => m.handleIngredientQtyChange(menu.menu_id, item.row_id, e.target.value.replace(/[^0-9.]/g, ''))} />
               <select aria-label="단위" value={item.qty_unit ?? ''} onChange={e => m.handleIngredientUnitChange(menu.menu_id, item.row_id, e.target.value)}>
@@ -192,9 +187,7 @@ export default function AccountMenuTouch() {
     </>}
 
     {m.likeTargetMenu && <MenuLikeConfirmModal isSaving={m.isSavingLike} menu={m.likeTargetMenu} onCancel={() => m.setLikeTargetMenuId(null)} onConfirm={() => void m.handleLikeMenu()} />}
-    {m.likeTargetIngredient && <IngredientLikeConfirmModal isSaving={m.isSavingLike} ingredient={m.likeTargetIngredient} onCancel={() => m.setLikeTargetIngredientId(null)} onConfirm={() => void m.handleLikeIngredient()} />}
     {m.isFavoriteMenuModalOpen && <FavoriteListModal type="menu" title="나만의 메뉴" isLoading={m.isFavoriteMenuLoading} items={m.favoriteMenuItems} onClose={() => m.setIsFavoriteMenuModalOpen(false)} onSelect={m.handleSelectFavoriteMenu} />}
-    {m.isFavoriteIngredientModalOpen && <FavoriteListModal type="ingredient" title="나만의 식자재" isLoading={m.isFavoriteIngredientLoading} items={m.favoriteIngredientItems} onClose={() => m.setIsFavoriteIngredientModalOpen(false)} onSelect={m.handleSelectFavoriteIngredient} />}
     <RecipeViewModal request={m.recipeViewRequest} mode={m.recipeViewMode} onClose={() => m.setRecipeViewRequest(null)} onRegister={request => { m.setRecipeViewRequest(null); m.setRecipeRegisterRequest(request) }} />
     <RecipeRegisterModal request={m.recipeRegisterRequest} onClose={() => m.setRecipeRegisterRequest(null)} />
   </TouchLayout>

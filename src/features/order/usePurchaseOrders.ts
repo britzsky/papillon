@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { buildApiUrl } from '../../config/api'
-import type { PreferenceChange } from '../../api/mixedProcurement'
 import { getSupplierSites } from '../../api/supplierIntegration'
 import { newRequestKey } from '../../utils/requestKey'
 
-export type OrderItem = { unit_price_snapshot?: number; line_amount?: number; source_ingredient_id?: string; ingredient_link_status?: string; supplier_item_code?: string; client_ord_item: string; product_name: string; order_qty: number; received_order_qty: number; order_unit: string; item_status: string; supplier_result_code?: string; supplier_error_message?: string }
-export type PurchaseOrder = { supplier_id?: number | string; sold_to?: string; site_name?: string; account_name?: string; created_at?: string; client_note?: string; purchase_order_id: string; client_ord: string; supplier_name: string; status: string; requested_delivery_date: string; total_amount: number; items: OrderItem[]; supplier_result_code?: string; supplier_result_message?: string; preference_changes?: PreferenceChange[] }
+export type OrderItem = { unit_price_snapshot?: number; line_amount?: number; source_ingredient_id?: string; ingredient_id?: string | null; ingredient_name?: string | null; base_unit?: string; base_qty_per_order_unit?: number; product_base_unit?: string; supplier_item_code?: string; client_ord_item: string; product_name: string; order_qty: number; received_order_qty: number; order_unit: string; item_status: string; supplier_result_code?: string; supplier_error_message?: string }
+export type PurchaseOrder = { supplier_id?: number | string; sold_to?: string; site_name?: string; account_name?: string; created_at?: string; client_note?: string; purchase_order_id: string; client_ord: string; supplier_name: string; status: string; requested_delivery_date: string; total_amount: number; items: OrderItem[]; supplier_result_code?: string; supplier_result_message?: string}
 
 export const ORDER_STATUS_LABELS: Record<string, string> = { SENDING: '전송 중', UNKNOWN: '결과 확인 필요', ORDERED: '주문 접수', CONFIRMED: '주문 확인', PARTIAL_FAILED: '일부 품목 확인 필요', FAILED: '실패', PARTIAL_RECEIVED: '부분입고', RECEIVED: '입고완료', NOT_RECEIVED: '미입고', CANCELED: '취소' }
 /** 입고 확정을 할 수 있는 상태 */
@@ -48,6 +47,23 @@ export function usePurchaseOrders(accountId: string, focusedId: string) {
     return () => { active = false }
   }, [accountId])
   const receiptRequest = useRef<{ signature: string; key: string } | null>(null)
+  // 상품만 발주한 줄(재고에 넣을 식재료가 없음)은 입고할 때 식재료를 고른다(2026-10-22: 식재료와 상품을 연결하지 않음)
+  const [ingredients, setIngredients] = useState<Array<{ ingredient_id: string; ingredient_name: string; base_unit: string }>>([])
+  const [choices, setChoices] = useState<Record<string, { ingredient_id: string; per_unit: string }>>({})
+  useEffect(() => {
+    if (!accountId) return
+    let active = true
+    fetch(buildApiUrl(`/v2/menu-management/ingredients/account?${new URLSearchParams({ account_id: accountId })}`))
+      .then(async response => { const data = await response.json().catch(() => null); if (!response.ok || !Array.isArray(data)) throw new Error(); return data as Array<Record<string, unknown>> })
+      .then(rows => { if (active) setIngredients(rows.map(row => ({ ingredient_id: String(row.ingredient_id ?? ''), ingredient_name: String(row.ingredient_name ?? row.ingredient_name_std ?? row.ingredient_id ?? ''), base_unit: String(row.base_unit ?? '') }))
+        .filter(row => row.ingredient_id).sort((a, b) => a.ingredient_name.localeCompare(b.ingredient_name, 'ko'))) })
+      .catch(() => { if (active) setIngredients([]) })
+    return () => { active = false }
+  }, [accountId])
+  const receiptChoice = (item: OrderItem) => choices[item.client_ord_item] ?? { ingredient_id: '', per_unit: '' }
+  const setReceiptChoice = (item: OrderItem, patch: Partial<{ ingredient_id: string; per_unit: string }>) =>
+    setChoices(current => ({ ...current, [item.client_ord_item]: { ...receiptChoice(item), ...patch } }))
+  const needsIngredient = (item: OrderItem) => !item.ingredient_id
 
   const load = useCallback(async () => {
     if (!accountId) { setMessage('로그인한 고객사를 확인해 주세요.'); return }
@@ -70,7 +86,7 @@ export function usePurchaseOrders(accountId: string, focusedId: string) {
     return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name, 'ko'))
   }, [siteSuppliers, orders])
 
-  const selectOrder = (order: PurchaseOrder | null) => { setSelected(order); setQuantities({}); receiptRequest.current = null }
+  const selectOrder = (order: PurchaseOrder | null) => { setSelected(order); setQuantities({}); setChoices({}); receiptRequest.current = null }
 
   const reconcile = async () => {
     if (!selected) return
@@ -89,14 +105,18 @@ export function usePurchaseOrders(accountId: string, focusedId: string) {
 
   const receive = async () => {
     if (!selected) return
-    const items = selected.items.filter(item => Number(receiptQuantity(item)) > 0).map(item => ({ client_ord_item: item.client_ord_item, received_qty: Number(receiptQuantity(item)) }))
+    const receiving = selected.items.filter(item => Number(receiptQuantity(item)) > 0)
+    const missing = receiving.filter(item => needsIngredient(item) && !receiptChoice(item).ingredient_id)
+    if (missing.length) { setMessage(`재고에 넣을 식재료 선택 요망: ${missing.map(item => item.product_name).join(', ')}`); return }
+    const items = receiving.map(item => ({ client_ord_item: item.client_ord_item, received_qty: Number(receiptQuantity(item)),
+      ...(needsIngredient(item) ? { ingredient_id: receiptChoice(item).ingredient_id, ...(Number(receiptChoice(item).per_unit) > 0 ? { base_qty_per_order_unit: Number(receiptChoice(item).per_unit) } : {}) } : {}) }))
     if (!items.length) { setMessage('이번에 실제 입고된 수량을 입력해 주세요.'); return }
     const signature = JSON.stringify({ order: selected.purchase_order_id, receiptDate, items })
     if (receiptRequest.current?.signature !== signature) receiptRequest.current = { signature, key: newRequestKey() }
     setBusy(true)
     try {
       await request('/Procurement/Receive', { account_id: accountId, purchase_order_id: selected.purchase_order_id, receipt_date: receiptDate, receipt_key: receiptRequest.current.key, user_id: localStorage.getItem('user_id') || '', items })
-      setQuantities({}); receiptRequest.current = null
+      setQuantities({}); setChoices({}); receiptRequest.current = null
       await load(); setMessage('실제 입고수량을 재고에 반영했습니다.')
     } catch (error) { setMessage(error instanceof Error ? error.message : '입고 처리 실패') }
     finally { setBusy(false) }
@@ -106,5 +126,6 @@ export function usePurchaseOrders(accountId: string, focusedId: string) {
     from, setFrom, to, setTo, status, setStatus, offset, setOffset, supplierId, setSupplierId, suppliers,
     orders, selected, selectOrder, busy, message, load, reconcile,
     receiptDate, setReceiptDate, receiptQuantity, setReceiptQuantity, receive,
+    ingredients, receiptChoice, setReceiptChoice, needsIngredient,
   }
 }

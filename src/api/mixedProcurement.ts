@@ -4,18 +4,9 @@ import { newRequestKey } from '../utils/requestKey'
 
 export type BatchItem = { delivery_terms_confirmed?: boolean; supplier_offer_id: number; delivery_date: string; order_qty: number; expected_price: number; source_ingredient_id?: string }
 export type BatchInput = { account_id: string; items: BatchItem[]; shortage_criteria?: ShortageCriteria }
-export type PreferenceChange = { client_ord_item: string; ingredient_id: string; product_name: string; undone: boolean }
-export type BatchOrder = { supplier_code: string; supplier_name: string; external_site_code: string; delivery_date: string; purchase_order_id?: string; status: string; message?: string; replayed?: boolean; requires_reconciliation?: boolean; preference_changes?: PreferenceChange[] }
+export type BatchOrder = { supplier_code: string; supplier_name: string; external_site_code: string; delivery_date: string; purchase_order_id?: string; status: string; message?: string; replayed?: boolean; requires_reconciliation?: boolean }
 export type BatchResult = { request_key: string; orders: BatchOrder[] }
 
-export async function undoOrderPreference(accountId: string, orderId: string, item: string): Promise<void> {
-  const response = await fetch(buildApiUrl('/Procurement/UndoPreference'), {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ account_id: accountId, purchase_order_id: orderId, client_ord_item: item }),
-  })
-  const data = await response.json()
-  if (!response.ok) throw new Error(data.message || '우선 상품을 되돌리지 못했습니다.')
-}
 type Pending = { signature: string; body: BatchInput & { request_key: string; user_id: string }; resolved: boolean }
 const storageKey = (account: string) => `mixed-procurement:${account}`
 function pending(account: string): Pending | null {

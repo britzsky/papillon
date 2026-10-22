@@ -6,6 +6,8 @@ import { TASKS, accountHref as href, needsSite, taskCount as count, useDailyWork
 import { useUpcomingMealDays, useWorkspaceCalendar } from '../features/workspace/useWorkspaceCalendar'
 import { useAccountSummary } from '../features/workspace/useAccountSummary'
 import DeadlineAlertSlot from './DeadlineAlertSlot'
+import WeekMealBoard from './WeekMealBoard'
+import { isSiteUser } from '../features/workspace/roleScreens'
 
 const won = (value: number) => Math.round(value).toLocaleString('ko-KR')
 /** 예산 묶음 하나(예산·사용·여유 + 사용 막대) */
@@ -66,6 +68,8 @@ export default function DailyWork({ search, shortcuts }: { search: ReactNode; sh
     action: tile.key === 'prepare' ? (tile.value === '사업장 지정' ? '사업장 지정' : '발주하기') : tile.key === 'pending_orders' ? '확인' : tile.key === 'due_receipts' ? '입고 확인' : '사용 확정',
     to: tile.to as string,
   }))] : []
+  // 현장 계정(2026-10-22 사용자 요청): 자주 쓰는 화면 없음, 오늘 할 일은 작게, 이번 주 식단표를 크게. 예산·달력·검색은 그대로
+  const site = isSiteUser()
   const title = single ? (steps.length ? `오늘 할 일 ${steps.length}가지가 있어요` : '오늘 할 일을 모두 마쳤어요')
     : rows.length > 1 ? `거래처 ${rows.length}곳 · 확인할 곳 ${busy.length}곳` : '오늘 할 일'
   const today = new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })
@@ -96,8 +100,9 @@ export default function DailyWork({ search, shortcuts }: { search: ReactNode; sh
     {/* 거래처 한 곳: 왼쪽 = 칸 4개 + 순서 목록, 오른쪽 = 거래처 카드(담당자·예산) + 달력 */}
     {single && <div className="rd-home__grid">
       <div className="rd-home__main">
-      <section className="rd-tiles" aria-label="오늘 현황">{view.map(tileView)}</section>
-      <section className="rd-card rd-steps" aria-label="오늘 할 일 순서">
+      {site ? <WeekMealBoard accountId={single.account_id} editHref={href('/operations/table-meals', single.account_id)} />
+        : <section className="rd-tiles" aria-label="오늘 현황">{view.map(tileView)}</section>}
+      <section className={`rd-card rd-steps${site ? ' is-compact' : ''}`} aria-label="오늘 할 일 순서">
         {/* 제목 줄: 업무 알림 버튼도 여기(목록 아래 한 줄 절약). 펼치면 알림 패널은 제목 아래 한 줄 전체 */}
         <div className="rd-steps__head">
           <h2 className="rd-h2">오늘 순서대로 하면 돼요</h2>
@@ -111,7 +116,7 @@ export default function DailyWork({ search, shortcuts }: { search: ReactNode; sh
           <Link className="rd-btn" to={step.to}>{step.action}</Link>
         </li>)}</ol> : <div className="rd-steps__done">지금 할 일이 없어요. 새 일이 생기면 여기에 순서대로 나타납니다.</div>}
       </section>
-      {shortcuts}
+      {site ? null : shortcuts}
       </div>
 
       <aside className="rd-home__side" aria-label="거래처 정보와 달력">

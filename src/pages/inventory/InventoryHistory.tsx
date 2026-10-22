@@ -29,7 +29,7 @@ export default function InventoryHistory() {
 
 
   const productLink = (row: InventoryMovement) =>
-    `/inventory/history?${new URLSearchParams({ account_id: accountId, account_ingredient_product_id: String(row.account_ingredient_product_id) })}`
+    `/inventory/history?${new URLSearchParams({ account_id: accountId, ingredient_id: String(row.ingredient_id ?? '') })}`
   const submitKeyword = (event: FormEvent) => { event.preventDefault(); setKeyword(keywordInput.trim()) }
 
   return (

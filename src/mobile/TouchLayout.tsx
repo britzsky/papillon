@@ -1,3 +1,4 @@
+import { visibleForRole } from '../features/workspace/roleScreens'
 import { rememberWorkspaceAccount, workspaceAccountId } from '../features/workspace/workspaceAccount'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
@@ -17,6 +18,7 @@ const NAV: NavGroup[] = [
   { key: 'home', label: '홈', icon: 'home', items: [{ label: '오늘 할 일', to: '/home', hint: '' }] },
   { key: 'meals', label: '식단', icon: 'meals', items: [
     { label: '식단표', to: '/operations/table-meals', hint: '요일별 메뉴 보기 · 사용 확정' },
+    { label: '식단표 템플릿', to: '/operations/meal-plan-templates', hint: '본사 금액대별 식단표' },
     { label: '거래처 메뉴', to: '/operations/account-menu', hint: '거래처에서 쓰는 메뉴와 식재료' },
     { label: '메뉴 관리', to: '/operations/menu', hint: '본사 메뉴 등록' },
   ] },
@@ -27,9 +29,8 @@ const NAV: NavGroup[] = [
     { label: '사업장 매핑', to: '/order_manager/supplier-sites', hint: '거래처별 공급사 사업장' },
   ] },
   { key: 'inventory', label: '재고', icon: 'inventory', items: [
-    { label: '재고 현황', to: '/inventory/account', hint: '상품별 재고 · 직접 구매 · 조정' },
+    { label: '재고 현황', to: '/inventory/account', hint: '식재료별 재고 · 직접 구매 · 조정' },
     { label: '변동 이력', to: '/inventory/history', hint: '입고 · 사용 · 조정 기록' },
-    { label: '거래처 식재료', to: '/inventory/account-ingredients', hint: '거래처 식재료와 상품 연결' },
     { label: '식자재 관리', to: '/inventory/ingredients', hint: '본사 식자재 목록' },
   ] },
   { key: 'sanitation', label: '위생', icon: 'sanitation', items: [{ label: '위생 점검', to: '/sanitation/vendor', hint: '' }] },
@@ -40,8 +41,7 @@ const NAV: NavGroup[] = [
   ] },
 ]
 
-/** 거래처 계정(user_type 3)에게 숨기는 본사 화면(WorkspaceBoundary의 hqOnly와 같은 목록) */
-const HQ_ONLY = ['/order_manager/suppliers', '/order_manager/supplier-sites', '/order_manager/welstory', '/inventory/ingredients', '/operations/menu', '/operations/account', '/operations/search-analytics', '/operations/ai-usage']
+/** 역할별로 숨기는 화면은 features/workspace/roleScreens(PC 메뉴·주소 직접 입력과 같은 목록) */
 const isAccountUser = () => localStorage.getItem('user_type') === '3'
 
 const todayLabel = () => new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })
@@ -84,7 +84,7 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, children,
 
   const groups = NAV
     .filter(group => !(accountUser && group.hqOnly))
-    .map(group => ({ ...group, items: group.items.filter(item => !(accountUser && HQ_ONLY.includes(item.to))) }))
+    .map(group => ({ ...group, items: group.items.filter(item => visibleForRole(item.to)) }))
     .filter(group => group.items.length > 0)
   const activeGroup = groups.find(group => group.items.some(item => pathname === item.to || pathname.startsWith(`${item.to}/`)))?.key || ''
   const flyout = groups.find(group => group.key === openGroup)

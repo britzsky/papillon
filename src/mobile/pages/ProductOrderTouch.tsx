@@ -24,6 +24,7 @@ function Content({ accountId, initialSource, methodBar }: { accountId: string; i
   const p = useProductOrder(accountId, initialSource)
   const prep = useCatalogPreparation(accountId, p.date, () => void p.search())
   const [limit, setLimit] = useState(PAGE)
+  const [sort, setSort] = useState<'recommend' | 'price_asc' | 'price_desc'>('recommend')
   const submit = (event: FormEvent) => { event.preventDefault(); setLimit(PAGE); void p.search() }
   const bump = (line: CartLine, direction: number) => {
     const step = line.offer.order_increment_qty || 1
@@ -64,12 +65,15 @@ function Content({ accountId, initialSource, methodBar }: { accountId: string; i
     </div>
   </div>
 
-  const shown = p.filtered.slice(0, limit)
+  // 정렬(2026-10-22): 추천(나만의 식재료·늘 쓰는 상품 먼저) · 가격 낮은 순 · 가격 높은 순
+  const sorted = [...p.filtered].sort((a, b) => sort === 'price_asc' ? a.purchase_price - b.purchase_price : sort === 'price_desc' ? b.purchase_price - a.purchase_price
+    : Number(b.favorite_yn === 'Y') - Number(a.favorite_yn === 'Y') || Number(b.usual_ingredient_ids.length > 0) - Number(a.usual_ingredient_ids.length > 0))
+  const shown = sorted.slice(0, limit)
   return <TouchLayout title="발주하기" subtitle="상품 검색" aside={aside}>
     {methodBar}
     <form className="t-card po-filters" onSubmit={submit}>
-      <label className="po-field">구매할 식재료<select disabled={p.busy || p.locked} value={p.source} onChange={e => p.chooseSource(e.target.value)}>
-        <option value="">상품의 기존 연결 사용</option>{p.ingredients.map(i => <option key={i.ingredient_id} value={i.ingredient_id}>{i.ingredient_name}</option>)}
+      <label className="po-field">재고에 넣을 식재료<select disabled={p.busy || p.locked} value={p.source} onChange={e => p.chooseSource(e.target.value)}>
+        <option value="">입고할 때 고르기</option>{p.ingredients.map(i => <option key={i.ingredient_id} value={i.ingredient_id}>{i.ingredient_name}</option>)}
       </select></label>
       <label className="po-field">공급사 · 사업장<select disabled={p.busy} value={p.site} onChange={e => { p.setSite(e.target.value); setLimit(PAGE) }}>
         <option value="">전체</option>{p.sites.map(s => <option key={s.supplier_account_site_id} value={s.supplier_account_site_id}>{s.supplier_name} · {s.external_site_name || s.external_site_code}</option>)}
@@ -77,6 +81,10 @@ function Content({ accountId, initialSource, methodBar }: { accountId: string; i
       <label className="po-field">납품일<input type="date" disabled={p.busy} value={p.date} onChange={e => p.changeDate(e.target.value)} /></label>
       <label className="t-chip po-search"><TouchIcon name="search" /><input type="search" value={p.query} placeholder="상품명 · 코드 · 공급사" onChange={e => p.setQuery(e.target.value)} /></label>
       <button type="submit" className="t-btn is-primary" disabled={p.busy || !p.date || !accountId}>{p.busy && !p.locked ? '찾는 중…' : '상품 찾기'}</button>
+      <button type="button" className={`t-btn${p.favoriteMode ? ' is-primary' : ' is-soft'}`} disabled={p.busy || !p.date || !accountId} onClick={() => { setLimit(PAGE); void p.search(true) }}>♥ 나만의 식재료</button>
+      <label className="po-field">정렬<select value={sort} onChange={e => setSort(e.target.value as typeof sort)}>
+        <option value="recommend">추천순</option><option value="price_asc">가격 낮은 순</option><option value="price_desc">가격 높은 순</option>
+      </select></label>
       <div className="po-prep">
         {prep.result?.suppliers.map(s => <span key={s.supplier_code} className={`t-badge ${s.status === 'READY' ? 'is-ok' : 'is-warn'}`} title={s.message}>{s.supplier_name} {preparationLabel(s.status)}</span>)}
         {prep.needsRetry && <button type="button" className="t-btn is-small is-soft" onClick={prep.retry}>상품 준비 다시 확인</button>}
@@ -92,7 +100,8 @@ function Content({ accountId, initialSource, methodBar }: { accountId: string; i
         const blocked = o.orderable_yn !== 'Y' || o.minimum_order_qty <= 0
         const added = p.cart.some(l => l.offer.supplier_offer_id === o.supplier_offer_id && l.date === p.date)
         return <article key={o.supplier_offer_id} className={`t-card po-offer${added ? ' is-selected' : ''}`}>
-          <span className="po-offer__top"><span className="t-dot">{o.supplier_name.slice(0, 1)}</span><small>{o.supplier_name}<br />{o.external_site_name || o.external_site_code}</small></span>
+          <span className="po-offer__top"><span className="t-dot">{o.supplier_name.slice(0, 1)}</span><small>{o.supplier_name}<br />{o.external_site_name || o.external_site_code}</small>
+            <button type="button" className="po-offer__heart" aria-pressed={o.favorite_yn === 'Y'} aria-label={`${o.product_name} 나만의 식재료${o.favorite_yn === 'Y' ? ' 해제' : ' 지정'}`} onClick={() => void p.toggleFavorite(o)}>{o.favorite_yn === 'Y' ? '♥' : '♡'}</button></span>
           <strong>{o.product_name}</strong>
           <small>{o.supplier_item_code} · {o.base_qty}{o.base_unit}/{o.order_unit}</small>
           <span className="po-offer__price">{won(o.purchase_price)}</span>

@@ -1,3 +1,5 @@
+import WeekMealBoard from '../../components/WeekMealBoard'
+import { isSiteUser } from '../../features/workspace/roleScreens'
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import TouchLayout from '../TouchLayout'
@@ -52,6 +54,8 @@ export default function HomeTouch() {
     </section>}
     {sheet && single && <NextStepSheet accountId={single.account_id} step={sheet} onClose={() => { setSheet(null); refresh() }} />}
     <HomeSearchTouch />
+    {/* 현장 계정(2026-10-22): 이번 주 식단표를 크게 */}
+    {single && isSiteUser() && <div className="rd"><WeekMealBoard accountId={single.account_id} editHref={accountHref('/operations/table-meals', single.account_id)} /></div>}
     <h2 className="t-section-title">
       오늘 할 일
       {data?.checked_at && <small className="ht-checked">{data.checked_at.slice(11, 16)} 기준</small>}
@@ -81,7 +85,7 @@ export default function HomeTouch() {
     </>}
     {!single && rows.length > 0 && !busy.length && <p className="t-msg">모든 거래처에 지금 확인할 업무가 없습니다.</p>}
 
-    <h2 className="t-section-title">바로 가기</h2>
+    {!isSiteUser() && <><h2 className="t-section-title">바로 가기</h2>
     <div className="ht-quick">
       {QUICK.map(item => <Link key={item.to} className="t-card ht-quick__item" to={withAccount(item.to)}>
         <span className="ht-quick__cover"><TouchIcon name={item.icon} size={34} /></span>
@@ -89,7 +93,7 @@ export default function HomeTouch() {
         <small>{item.hint}</small>
         <span className="t-btn is-soft is-small is-block">열기</span>
       </Link>)}
-    </div>
+    </div></>}
   </TouchLayout>
 }
 
@@ -111,8 +115,8 @@ function nextAction(accountId: string, siteMissing: boolean, upcomingMealDays: n
   if (siteMissing) return { eyebrow: '발주 준비', title: '공급사 사업장이 지정되지 않았어요', hint: isHeadquarters() ? '사업장을 지정하면 상품·판가를 받아 발주할 수 있어요' : '본사에 공급사 사업장 지정을 요청하세요', tone: 'warn',
     action: '사업장 지정', to: isHeadquarters() ? accountHref('/order_manager/supplier-sites', accountId) : undefined }
   if (upcomingMealDays === null) return null
-  if (upcomingMealDays === 0) return { eyebrow: '다음 7일 식단표가 없어요', title: '다음 주 식단 만들고 발주', hint: '자동 식단 → 저장 → 모자란 재료 발주서까지 이어서',
-    action: '식단 만들기 시작', step: { kind: 'meal' } }
+  if (upcomingMealDays === 0) return { eyebrow: '다음 7일 식단표가 없어요', title: '다음 주 식단 만들기', hint: '금액대 식단표 템플릿 또는 식단표 파일을 불러와 저장하면 모자란 재료로 발주해요',
+    action: '식단표로 가기', to: accountHref('/operations/table-meals', accountId) }
   if (prepare?.to && prepare.tone !== 'done') {
     const query = new URLSearchParams(prepare.to.split('?')[1] || '')
     const override: Record<string, string> = { account_id: accountId, autoselect: '1' }

@@ -67,7 +67,7 @@ export function referenceText(row: InventoryMovement) {
  * 재고 변동 이력 조회(PC·터치 공용): 기간·검색어·구분·상품 지정 → 목록(페이지) + 구분별 합계.
  * 응답을 요청 키와 함께 보관해, 키가 다르면 '조회 중'으로 본다.
  */
-export function useInventoryHistory(accountId: string, productId: string, ingredientId: string) {
+export function useInventoryHistory(accountId: string, _productId: string, ingredientId: string) {
   const [from, setFrom] = useState(() => historyDaysAgo(30))
   const [to, setTo] = useState(() => dateText(new Date()))
   const [keyword, setKeyword] = useState('')
@@ -84,9 +84,9 @@ export function useInventoryHistory(accountId: string, productId: string, ingred
     date_to: to,
     keyword: keyword || undefined,
     movement_type: TYPE_TABS.find(item => item.key === tab)?.types || undefined,
-    account_ingredient_product_id: productId || undefined,
+    // 재고는 식재료 단위(2026-10-22): 예전 주소의 상품 조건(productId)은 쓰지 않는다
     ingredient_id: ingredientId || undefined,
-  }), [accountId, from, to, keyword, tab, productId, ingredientId])
+  }), [accountId, from, to, keyword, tab, ingredientId])
   // 조회 조건이 바뀌면 페이지는 자동으로 처음부터
   const queryKey = JSON.stringify(query)
   const offset = page.key === queryKey ? page.offset : 0
@@ -104,7 +104,7 @@ export function useInventoryHistory(accountId: string, productId: string, ingred
         if (controller.signal.aborted) return
         setResult({ key: requestKey, rows: list, error: '' })
         if (totals) setSummaryResult({ key: queryKey, items: totals })
-        if ((query.account_ingredient_product_id || query.ingredient_id) && list[0]) setFocusName(list[0].ingredient_name || list[0].product_name || '')
+        if (query.ingredient_id && list[0]) setFocusName(list[0].ingredient_name || list[0].product_name || '')
       })
       .catch(e => {
         if (controller.signal.aborted) return

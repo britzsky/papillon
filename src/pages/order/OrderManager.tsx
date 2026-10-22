@@ -29,12 +29,6 @@ const orderMenus = [
     description: '작성된 발주서를 확인하고 진행 상태를 관리합니다.',
     icon: hygiene,
   },
-  {
-    key: 'statement',
-    title: '거래명세서 관리',
-    description: '업체별 거래명세서 이력을 조회할 수 있습니다.',
-    icon: operation,
-  },
 ]
 
 function OrderManager() {

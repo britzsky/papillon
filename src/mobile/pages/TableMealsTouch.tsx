@@ -9,7 +9,7 @@ import type { TableMealsItem } from '../../api/operations'
 import TableMealsCreateTouch from './TableMealsCreateTouch'
 import './TableMealsTouch.css'
 
-const SOURCE_LABEL: Record<string, string> = { auto: '자동', pdf: 'PDF', manual: '수기' }
+const SOURCE_LABEL: Record<string, string> = { auto: '자동', pdf: '파일', manual: '수기', template: '템플릿' }
 const noop = () => {}
 const today = () => new Date().toLocaleDateString('sv-SE')
 const weekLabel = (table: TableMealsItem) => Number.isFinite(table.table_week) ? `${table.table_week}주차` : table.table_name

@@ -21,7 +21,7 @@ function snapshot(items: EditableIngredientMasterItem[]) {
 export function isIngredientChanged(item: EditableIngredientMasterItem, originals: Record<string, EditableIngredientMasterItem>) {
   const original = originals[item.row_id]
   if (!original) return true
-  return ['ingredient_name', 'category_name', 'storage_type', 'base_unit', 'note']
+  return ['ingredient_name', 'category_name', 'storage_type', 'base_unit', 'note', 'standard_unit_cost']
     .some((field) => item[field as keyof EditableIngredientMasterItem] !== original[field as keyof EditableIngredientMasterItem])
 }
 
@@ -48,6 +48,7 @@ export function createIngredientRow(index: number): EditableIngredientMasterItem
     package_unit: '',
     purchase_price: 0,
     package_base_qty: 0,
+    standard_unit_cost: '',
     is_new: true,
   }
 }

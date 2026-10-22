@@ -2236,3 +2236,8 @@ table .menu-manager-menu-cell .menu-manager-photo-button .menu-manager-thumbnail
   font-size: 11px;
   color: #197fac;
 }
+
+/* 본사 식자재 표준 단가 칸 */
+.ingredient-master-cost { display: inline-flex; align-items: center; gap: 4px; }
+.ingredient-master-cost input { width: 96px; }
+.ingredient-master-cost small { color: #5b6660; white-space: nowrap; }

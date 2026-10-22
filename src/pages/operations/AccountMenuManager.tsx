@@ -10,9 +10,7 @@ import RecipeActionMenu from '../../components/RecipeActionMenu'
 import RecipeRegisterModal from '../../components/RecipeRegisterModal'
 import RecipeViewModal from '../../components/RecipeViewModal'
 import { createAiRecipeGestureHandlers } from '../../components/aiRecipeGesture'
-import FavoriteListModal from './FavoriteListModal'
 import IngredientSearchSelect from './IngredientSearchSelect'
-import IngredientLikeConfirmModal from './IngredientLikeConfirmModal'
 import MenuLikeButton from './MenuLikeButton'
 import MenuThumbnail from './MenuThumbnail'
 import MenuLikeConfirmModal from './MenuLikeConfirmModal'
@@ -29,7 +27,7 @@ const won = (value: number) => `${Math.round(value).toLocaleString('ko-KR')}원`
  * 로직은 터치 화면과 같은 useAccountMenuManager.
  */
 function AccountMenuManager() {
-  const { selectedMealCategory, setSelectedMealCategory, keywordFilter, setKeywordFilter, selectedMenuType, setSelectedMenuType, selectedMenuGubun, setSelectedMenuGubun, selectedAccountId, accountError, ingredientOptions, ingredientError, favoriteIngredientItems, isFavoriteIngredientModalOpen, setIsFavoriteIngredientModalOpen, isFavoriteIngredientLoading, setSelectedMenuId, originalDetailsByMenuId, detailError, isDetailLoading, accountMenuError, isAccountMenuLoading, alert, setAlert, isSaving, setLikeTargetMenuId, setLikeTargetIngredientId, isSavingLike, recipeMenuState, setRecipeMenuState, recipeViewRequest, setRecipeViewRequest, recipeViewMode, setRecipeViewMode, recipeRegisterRequest, setRecipeRegisterRequest, assignedMenuIds, originalAssignedMenuIds, originalAssignedMenusById, assignedMenus, removedAssignedMenus, selectedAccountName, ingredientCategoryOptions, activeMenu, likeTargetMenu, likeTargetIngredient, activeDetailItems, activeMenuCost, handleRemoveAssignedMenu, handleAssignedMenuChange, handleRestoreRemovedMenu, handleLikeMenu, handleOpenFavoriteIngredientModal, handleSelectFavoriteIngredient, handleLikeIngredient, handleAddIngredient, handleIngredientCategoryChange, handleIngredientSelect, handleIngredientQtyChange, handleIngredientUnitChange, isRefreshingProducts, refreshLinkedProducts, handleSave, buildRecipeRequest } = useAccountMenuManager()
+  const { selectedMealCategory, setSelectedMealCategory, keywordFilter, setKeywordFilter, selectedMenuType, setSelectedMenuType, selectedMenuGubun, setSelectedMenuGubun, selectedAccountId, accountError, ingredientOptions, ingredientError, setSelectedMenuId, originalDetailsByMenuId, detailError, isDetailLoading, accountMenuError, isAccountMenuLoading, alert, setAlert, isSaving, setLikeTargetMenuId, isSavingLike, recipeMenuState, setRecipeMenuState, recipeViewRequest, setRecipeViewRequest, recipeViewMode, setRecipeViewMode, recipeRegisterRequest, setRecipeRegisterRequest, assignedMenuIds, originalAssignedMenuIds, originalAssignedMenusById, assignedMenus, removedAssignedMenus, selectedAccountName, ingredientCategoryOptions, activeMenu, likeTargetMenu, activeDetailItems, activeMenuCost, handleRemoveAssignedMenu, handleAssignedMenuChange, handleRestoreRemovedMenu, handleLikeMenu, handleAddIngredient, handleIngredientCategoryChange, handleIngredientSelect, handleIngredientQtyChange, handleIngredientUnitChange, isRefreshingProducts, refreshLinkedProducts, handleSave, buildRecipeRequest } = useAccountMenuManager()
   // 거르기는 거래처 메뉴에만 적용(본사 메뉴 목록은 이 화면에 없다)
   const visibleMenus = useMemo(() => assignedMenus.filter((item) => matchesMenuFilters(item, {
     mealCategory: selectedMealCategory, keyword: keywordFilter, menuType: selectedMenuType, menuGubun: selectedMenuGubun,
@@ -60,7 +58,6 @@ function AccountMenuManager() {
               <DeadlineAlertSlot />
               <div className="rd-page__actions">
                 <Link className="rd-btn" to={importLink}>+ 본사 메뉴 가져오기</Link>
-                <button type="button" className="rd-btn" onClick={() => void handleOpenFavoriteIngredientModal()} disabled={isSaving}>나만의 식자재</button>
                 <button type="button" className="rd-btn is-primary" onClick={() => void handleSave()} disabled={!selectedAccountId || isSaving}>{isSaving ? '저장 중...' : '저장'}</button>
               </div>
             </header>
@@ -229,7 +226,7 @@ function AccountMenuManager() {
                           <tr>
                             <th>카테고리</th>
                             <th>식자재</th>
-                            <th>거래처 사용상품</th>
+                            <th>원가 단가</th>
                             <th>1인 사용량</th>
                             <th className="is-num">1인 원가</th>
                           </tr>
@@ -238,12 +235,9 @@ function AccountMenuManager() {
                           {activeDetailItems.map((item) => {
                             const filteredIngredientOptions = ingredientOptions.filter((option) => item.category_name === '' || option.category_name === item.category_name)
                             const ingredientCost = accountIngredientCost(item)
-                            const productInfo = [
-                              item.supplier_name,
-                              `${item.package_qty || ''}${item.package_unit || ''}${item.order_unit ? ` / ${item.order_unit}` : ''}`,
-                              item.purchase_price == null ? '가격 미확인' : `포장 ${item.purchase_price.toLocaleString('ko-KR')}원`,
-                              item.origin_name || '원산지 미확인',
-                            ].filter((value) => value && value.trim()).join(' · ')
+                            // 재고·원가는 식재료 단위(2026-10-22): 상품 대신 원가 기준 단가를 보여준다
+                            const unitCostText = item.cost_unit_cost == null ? '' : `${Number(item.cost_unit_cost).toLocaleString('ko-KR')}원/${item.cost_base_unit || item.base_unit || ''}`
+                            const costSourceText = item.cost_source ? planningCostSourceLabels[item.cost_source] || item.cost_source : ''
                             return (
                               <tr key={item.row_id}>
                                 <td>
@@ -255,17 +249,14 @@ function AccountMenuManager() {
                                 </td>
                                 <td>
                                   <div className="menu-manager-ingredient-cell">
-                                    <MenuLikeButton isLiked={(item.like ?? ingredientOptions.find((option) => option.ingredient_id === item.ingredient_id)?.like) === 'Y'}
-                                      menuName={item.ingredient_name} onClick={() => item.ingredient_id && setLikeTargetIngredientId(item.ingredient_id)} />
                                     <IngredientSearchSelect className={isIngredientFieldDirty(item, originalDetailsByMenuId, 'ingredient_id') ? 'is-dirty' : ''}
                                       options={filteredIngredientOptions} placeholder="식자재 선택" selectedName={item.ingredient_name} value={item.ingredient_id}
                                       onChange={(ingredientId) => handleIngredientSelect(detailMenu.menu_id, item.row_id, ingredientId)} />
                                   </div>
                                 </td>
                                 <td className="rd-am__product">
-                                  {item.product_name ? <strong>{item.product_name}</strong> : <span className="rd-chip is-warn">상품 연결 필요</span>}
-                                  <small className="rd-muted">{productInfo}</small>
-                                  <Link className="rd-link" to={`/inventory/account-ingredients?account_id=${encodeURIComponent(selectedAccountId)}`}>거래처 식자재 설정</Link>
+                                  {unitCostText ? <strong>{unitCostText}</strong> : <span className="rd-chip is-warn">단가 미확인</span>}
+                                  <small className="rd-muted">{costSourceText || item.cost_reason || ''}</small>
                                 </td>
                                 <td>
                                   <div className="menu-manager-qty-editor">
@@ -303,24 +294,6 @@ function AccountMenuManager() {
           menu={likeTargetMenu}
           onCancel={() => setLikeTargetMenuId(null)}
           onConfirm={() => void handleLikeMenu()}
-        />
-      ) : null}
-      {likeTargetIngredient ? (
-        <IngredientLikeConfirmModal
-          isSaving={isSavingLike}
-          ingredient={likeTargetIngredient}
-          onCancel={() => setLikeTargetIngredientId(null)}
-          onConfirm={() => void handleLikeIngredient()}
-        />
-      ) : null}
-      {isFavoriteIngredientModalOpen ? (
-        <FavoriteListModal
-          type="ingredient"
-          title="나만의 식자재"
-          isLoading={isFavoriteIngredientLoading}
-          items={favoriteIngredientItems}
-          onClose={() => setIsFavoriteIngredientModalOpen(false)}
-          onSelect={handleSelectFavoriteIngredient}
         />
       ) : null}
       <RecipeActionMenu

@@ -45,7 +45,7 @@ function WelstoryOrder() {
         </article>)}{!filtered.length ? <p className="procurement-empty">{busy ? '상품을 불러오는 중입니다.' : products.length ? '검색어에 해당하는 상품이 없습니다.' : '사업장과 판가 연도·순기를 선택한 후 전체 판가를 조회해주세요.'}</p> : null}</div>
       </section>
       <section className="rd-card rd-page__box rd-wel__note"><h2 className="rd-h2">주문은 발주하기에서</h2>
-        <p className="rd-muted">이 화면은 웰스토리 원문 조회 전용입니다. 여기서 직접 주문하면 발주서·입고·재고·상품 연결에 남지 않아 중복 발주 위험이 있어 주문 전송을 막았습니다.</p>
+        <p className="rd-muted">이 화면은 웰스토리 원문 조회 전용입니다. 여기서 직접 주문하면 발주서·입고·재고에 남지 않아 중복 발주 위험이 있어 주문 전송을 막았습니다.</p>
         <Link className="rd-btn is-primary" to="/order_manager/order">발주하기로 이동</Link>
       </section>
     </div> : <section className="welstory-panel records"><div className="welstory-panel__head"><h2>{tab === 'orders' ? '주문 내역' : tab === 'receives' ? '입고 내역' : '반품·교환 내역'}</h2><span>{records.length}건</span></div><div className="record-cards">{records.map((row, index) => <article key={index}><div>{Object.entries(row).slice(0, 12).map(([key, value]) => <span key={key}><small>{key}</small><strong>{text(value)}</strong></span>)}</div>{tab === 'orders' && text(row.confirmYn) === 'Y' ? <em>확정됨 · 수정/삭제 불가</em> : null}</article>)}</div></section>}

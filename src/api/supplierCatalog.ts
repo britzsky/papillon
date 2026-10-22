@@ -43,7 +43,9 @@ export async function getSupplierProducts(requestedAccountId?: string, purpose: 
     || (typeof window !== 'undefined' ? localStorage.getItem('account_id')?.trim() ?? '' : '')
   const deliveryDate = new Date().toLocaleDateString('sv-SE')
   const query = new URLSearchParams({ account_id: accountId, delivery_date: deliveryDate, orderable_only: 'Y' })
-  const endpoint = purpose === 'menu' ? `/v2/catalog/account-products?${new URLSearchParams({ account_id: accountId, active_yn: 'Y' })}` : `/v2/supplier-integration/offers?${query}`
+  // 거래처별 상품 연결은 없어짐(2026-10-22). 메뉴 화면도 발주 가능한 공급사 상품을 그대로 쓴다
+  if (purpose === 'menu') query.delete('orderable_only')
+  const endpoint = `/v2/supplier-integration/offers?${query}`
   const response = await fetch(buildApiUrl(endpoint))
   if (!response.ok) throw new Error('공급처 상품 목록을 불러오지 못했습니다.')
   const payload = await response.json() as unknown
@@ -69,7 +71,7 @@ export async function getSupplierProducts(requestedAccountId?: string, purpose: 
   })
 }
 
-// Menu display uses only products already linked to this account.
+// Menu display: every supplier product offered to this account (no per-account product links).
 export function getMenuSupplierProducts(accountId: string): Promise<SupplierProductOption[]> {
   return getSupplierProducts(accountId, 'menu')
 }

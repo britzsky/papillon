@@ -113,6 +113,8 @@ function EditPanel({ item, categories, saving, dirty, message, onChange, onClose
       <span className="im-form__label">기준단위</span>
       <div className="im-units">{qtyUnitOptions.map(unit => <button key={unit} type="button" className={item.base_unit === unit ? 'is-active' : ''} onClick={() => onChange({ base_unit: unit })}>{unit}</button>)}</div>
 
+      <label className="im-form__label" htmlFor="im-cost">표준 단가 (원/{item.base_unit || '기준단위'})</label>
+      <input id="im-cost" className="im-input" type="number" min="0" step="0.01" inputMode="decimal" placeholder="미등록 · 입고 전 식단 원가에 씀" value={item.standard_unit_cost} onChange={e => onChange({ standard_unit_cost: e.target.value })} />
       <label className="im-form__label" htmlFor="im-note">비고</label>
       <input id="im-note" className="im-input" value={item.note} onChange={e => onChange({ note: e.target.value })} />
     </div>

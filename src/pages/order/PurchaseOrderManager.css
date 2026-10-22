@@ -79,3 +79,8 @@
   body.workspace-ui > #supplier-order-print .po-doc__info th { width:24mm !important; }
   body.workspace-ui > #supplier-order-print .po-doc__items .is-number { white-space:nowrap !important; }
 }
+
+/* 상품만 발주한 줄: 입고 때 재고 식재료 선택 */
+.rd-recv__ingredient { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+.rd-recv__ingredient select { min-width: 160px; }
+.rd-recv__ingredient input { width: 130px; }

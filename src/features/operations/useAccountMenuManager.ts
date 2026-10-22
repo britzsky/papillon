@@ -6,7 +6,7 @@ import { type AppAlertState } from '../../components/AppAlert'
 import { type RecipeActionMenuState } from '../../components/RecipeActionMenu'
 import { type RecipeViewMode } from '../../components/RecipeViewModal'
 import { type RecipeRequest } from '../../api/recipe'
-import { getAccountOptions, getAccountMenuManagerList, getIngredientOptions, getLikeIngredientOptions, getLikeMenuManagerList, getMenuDetailList, getAccountMenuDetailList, getMenuManagerList, saveLikeMenu, saveLikeIngredient, saveAccountMenuManager, type AccountOption, type IngredientOption, type MenuManagerItem } from '../../api/operations'
+import { getAccountOptions, getAccountMenuManagerList, getIngredientOptions, getLikeMenuManagerList, getMenuDetailList, getAccountMenuDetailList, getMenuManagerList, saveLikeMenu, saveAccountMenuManager, type AccountOption, type IngredientOption, type MenuManagerItem } from '../../api/operations'
 import { MENU_PAGE_SIZE, toBaseQuantity, buildAccountMenuSavePayload, buildDetailSnapshotMap, buildMenuSnapshotMap, createEmptyIngredientItem, formatQtyRaw, getReviewFlag, matchesMenuFilters, parseNumber, qtyUnitOptions, recalculateQuantities, toEditableDetailItem, type EditableMenuIngredientItem } from '../../pages/operations/menuManagerShared'
 
 /** 거래처 상품 기준 식자재 1인분 예상 원가(없으면 null) */
@@ -606,21 +606,6 @@ export function useAccountMenuManager() {
     }
   }
 
-  const handleOpenFavoriteIngredientModal = async () => {
-    try {
-      setIsFavoriteIngredientModalOpen(true)
-      setIsFavoriteIngredientLoading(true)
-      setAlert(null)
-      const items = await getLikeIngredientOptions()
-      setFavoriteIngredientItems(items)
-    } catch (error) {
-      const message = error instanceof Error ? error.message : '식자재 목록을 불러오지 못했습니다.'
-      setAlert({ type: 'error', title: '조회 실패', message })
-    } finally {
-      setIsFavoriteIngredientLoading(false)
-    }
-  }
-
   const handleSelectFavoriteMenu = (item: MenuManagerItem) => {
     setMenuItems((current) => {
       if (current.some((menu) => menu.menu_id === item.menu_id)) return current
@@ -629,46 +614,6 @@ export function useAccountMenuManager() {
     setOriginalMenusById((current) => (current[item.menu_id] ? current : { ...current, [item.menu_id]: item }))
     setSelectedMenuId(item.menu_id)
     setIsFavoriteMenuModalOpen(false)
-  }
-
-  const handleSelectFavoriteIngredient = (item: IngredientOption) => {
-    setIngredientOptions((current) => {
-      if (current.some((ingredient) => ingredient.ingredient_id === item.ingredient_id)) return current
-      return [...current, item].sort((a, b) => a.ingredient_name.localeCompare(b.ingredient_name))
-    })
-    setIsFavoriteIngredientModalOpen(false)
-  }
-
-  const handleLikeIngredient = async () => {
-    if (!likeTargetIngredient) return
-
-    const nextLike = likeTargetIngredient.like === 'Y' ? 'N' : 'Y'
-    setIsSavingLike(true)
-    try {
-      await saveLikeIngredient(likeTargetIngredient.ingredient_id, nextLike)
-      setIngredientOptions((current) =>
-        current.map((item) => (item.ingredient_id === likeTargetIngredient.ingredient_id ? { ...item, like: nextLike } : item)),
-      )
-      setDetailItemsByMenuId((current) =>
-        Object.fromEntries(
-          Object.entries(current).map(([menuId, items]) => [
-            menuId,
-            items.map((item) =>
-              item.ingredient_id === likeTargetIngredient.ingredient_id ? { ...item, like: nextLike } : item,
-            ),
-          ]),
-        ),
-      )
-      setLikeTargetIngredientId(null)
-    } catch (error) {
-      setAlert({
-        type: 'error',
-        title: '저장 실패',
-        message: error instanceof Error ? error.message : '나만의 식자재 저장에 실패했습니다.',
-      })
-    } finally {
-      setIsSavingLike(false)
-    }
   }
 
   const handleDragStart = (event: DragEvent<HTMLElement>, menuId: string) => {
@@ -934,5 +879,5 @@ export function useAccountMenuManager() {
     })),
   })
 
-  return { searchParams, initialSearchType, initialSearchId, initialKeywordFilter, initialAccountId, selectedMealCategory, setSelectedMealCategory, keywordFilter, setKeywordFilter, selectedMenuType, setSelectedMenuType, selectedMenuGubun, setSelectedMenuGubun, selectedAccountId, setSelectedAccountId, accountOptions, setAccountOptions, accountError, setAccountError, ingredientOptions, setIngredientOptions, ingredientError, setIngredientError, menuItems, setMenuItems, originalMenusById, setOriginalMenusById, menuError, setMenuError, isMenuLoading, setIsMenuLoading, favoriteMenuItems, setFavoriteMenuItems, isFavoriteMenuModalOpen, setIsFavoriteMenuModalOpen, isFavoriteMenuLoading, setIsFavoriteMenuLoading, favoriteIngredientItems, setFavoriteIngredientItems, isFavoriteIngredientModalOpen, setIsFavoriteIngredientModalOpen, isFavoriteIngredientLoading, setIsFavoriteIngredientLoading, selectedMenuId, setSelectedMenuId, selectedAvailableMenuIds, setSelectedAvailableMenuIds, detailItemsByMenuId, setDetailItemsByMenuId, originalDetailsByMenuId, setOriginalDetailsByMenuId, detailLoadedByMenuId, setDetailLoadedByMenuId, detailError, setDetailError, isDetailLoading, setIsDetailLoading, assignedMenuIdsByAccount, setAssignedMenuIdsByAccount, originalAssignedMenuIdsByAccount, setOriginalAssignedMenuIdsByAccount, assignedMenuEditsByAccount, setAssignedMenuEditsByAccount, originalAssignedMenuItemsByAccount, setOriginalAssignedMenuItemsByAccount, accountMenuError, setAccountMenuError, isAccountMenuLoading, setIsAccountMenuLoading, alert, setAlert, isSaving, setIsSaving, currentPage, setCurrentPage, isDragActive, setIsDragActive, likeTargetMenuId, setLikeTargetMenuId, likeTargetIngredientId, setLikeTargetIngredientId, isSavingLike, setIsSavingLike, recipeMenuState, setRecipeMenuState, recipeViewRequest, setRecipeViewRequest, recipeViewMode, setRecipeViewMode, recipeRegisterRequest, setRecipeRegisterRequest, handleOpenFavoriteMenuModal, filteredMenuItems, assignedMenuIds, originalAssignedMenuIds, assignedMenuEdits, originalAssignedMenusById, assignedMenus, removedAssignedMenus, selectedAccountName, ingredientCategoryOptions, totalMenuPages, pagedMenuItems, selectedAvailableAssignableMenuIds, pageSelectableMenuIds, isPageSelectionChecked, isPageSelectionIndeterminate, activeMenu, likeTargetMenu, likeTargetIngredient, activeDetailItems, activeMenuCost, toAccountEditableDetailItems, handleAssignMenus, handleAssignMenu, handleAssignSelectedMenus, handleToggleAvailableMenu, handleTogglePageSelection, handleRemoveAssignedMenu, handleAssignedMenuChange, handleRestoreRemovedMenu, handleLikeMenu, handleOpenFavoriteIngredientModal, handleSelectFavoriteMenu, handleSelectFavoriteIngredient, handleLikeIngredient, handleDragStart, handleDrop, handleAddIngredient, handleIngredientCategoryChange, handleIngredientSelect, handleIngredientQtyChange, handleIngredientUnitChange, isRefreshingProducts, setIsRefreshingProducts, refreshLinkedProducts, handleSave, buildRecipeRequest }
+  return { searchParams, initialSearchType, initialSearchId, initialKeywordFilter, initialAccountId, selectedMealCategory, setSelectedMealCategory, keywordFilter, setKeywordFilter, selectedMenuType, setSelectedMenuType, selectedMenuGubun, setSelectedMenuGubun, selectedAccountId, setSelectedAccountId, accountOptions, setAccountOptions, accountError, setAccountError, ingredientOptions, setIngredientOptions, ingredientError, setIngredientError, menuItems, setMenuItems, originalMenusById, setOriginalMenusById, menuError, setMenuError, isMenuLoading, setIsMenuLoading, favoriteMenuItems, setFavoriteMenuItems, isFavoriteMenuModalOpen, setIsFavoriteMenuModalOpen, isFavoriteMenuLoading, setIsFavoriteMenuLoading, favoriteIngredientItems, setFavoriteIngredientItems, isFavoriteIngredientModalOpen, setIsFavoriteIngredientModalOpen, isFavoriteIngredientLoading, setIsFavoriteIngredientLoading, selectedMenuId, setSelectedMenuId, selectedAvailableMenuIds, setSelectedAvailableMenuIds, detailItemsByMenuId, setDetailItemsByMenuId, originalDetailsByMenuId, setOriginalDetailsByMenuId, detailLoadedByMenuId, setDetailLoadedByMenuId, detailError, setDetailError, isDetailLoading, setIsDetailLoading, assignedMenuIdsByAccount, setAssignedMenuIdsByAccount, originalAssignedMenuIdsByAccount, setOriginalAssignedMenuIdsByAccount, assignedMenuEditsByAccount, setAssignedMenuEditsByAccount, originalAssignedMenuItemsByAccount, setOriginalAssignedMenuItemsByAccount, accountMenuError, setAccountMenuError, isAccountMenuLoading, setIsAccountMenuLoading, alert, setAlert, isSaving, setIsSaving, currentPage, setCurrentPage, isDragActive, setIsDragActive, likeTargetMenuId, setLikeTargetMenuId, likeTargetIngredientId, setLikeTargetIngredientId, isSavingLike, setIsSavingLike, recipeMenuState, setRecipeMenuState, recipeViewRequest, setRecipeViewRequest, recipeViewMode, setRecipeViewMode, recipeRegisterRequest, setRecipeRegisterRequest, handleOpenFavoriteMenuModal, filteredMenuItems, assignedMenuIds, originalAssignedMenuIds, assignedMenuEdits, originalAssignedMenusById, assignedMenus, removedAssignedMenus, selectedAccountName, ingredientCategoryOptions, totalMenuPages, pagedMenuItems, selectedAvailableAssignableMenuIds, pageSelectableMenuIds, isPageSelectionChecked, isPageSelectionIndeterminate, activeMenu, likeTargetMenu, likeTargetIngredient, activeDetailItems, activeMenuCost, toAccountEditableDetailItems, handleAssignMenus, handleAssignMenu, handleAssignSelectedMenus, handleToggleAvailableMenu, handleTogglePageSelection, handleRemoveAssignedMenu, handleAssignedMenuChange, handleRestoreRemovedMenu, handleLikeMenu, handleSelectFavoriteMenu, handleDragStart, handleDrop, handleAddIngredient, handleIngredientCategoryChange, handleIngredientSelect, handleIngredientQtyChange, handleIngredientUnitChange, isRefreshingProducts, setIsRefreshingProducts, refreshLinkedProducts, handleSave, buildRecipeRequest }
 }

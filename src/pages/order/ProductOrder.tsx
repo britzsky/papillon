@@ -46,7 +46,7 @@ function compareUnit(a: SupplierOffer, b: SupplierOffer, direction: 1 | -1) {
 }
 /** 상품 검색 정렬(2026-10-15 사용자 결정: 추천순 기본, 포장 가격과 100g당 가격을 구분해 이름에 표시) */
 const SORTS = {
-  recommend: { label: '추천순 (늘 쓰는 상품 먼저)', compare: (a: SupplierOffer, b: SupplierOffer) => Number(Boolean(b.linked_ingredient_id)) - Number(Boolean(a.linked_ingredient_id)) || compareUnit(a, b, 1) },
+  recommend: { label: '추천순 (나만의 식재료·늘 쓰는 상품 먼저)', compare: (a: SupplierOffer, b: SupplierOffer) => Number(b.favorite_yn === 'Y') - Number(a.favorite_yn === 'Y') || Number(b.usual_ingredient_ids.length > 0) - Number(a.usual_ingredient_ids.length > 0) || compareUnit(a, b, 1) },
   unit_asc: { label: '100g당 낮은 순', compare: (a: SupplierOffer, b: SupplierOffer) => compareUnit(a, b, 1) },
   unit_desc: { label: '100g당 높은 순', compare: (a: SupplierOffer, b: SupplierOffer) => compareUnit(a, b, -1) },
   price_asc: { label: '포장 가격 낮은 순', compare: (a: SupplierOffer, b: SupplierOffer) => a.purchase_price - b.purchase_price },
@@ -55,16 +55,18 @@ const SORTS = {
 type SortKey = keyof typeof SORTS
 
 /** 상품 카드: 사진 · 공급사 · D-N · 이름 · 규격 · 발주 상태 · 단가 · 담기 */
-function OfferCard({ offer, inCart, canAdd, onAdd, cheapest, line, onQty, disabled }: { offer: SupplierOffer; inCart: boolean; canAdd: boolean; onAdd: () => void; cheapest: boolean; line?: CartLine; onQty: (line: CartLine, quantity: number) => void; disabled: boolean }) {
+function OfferCard({ offer, inCart, canAdd, onAdd, cheapest, line, onQty, disabled, onFavorite }: { offer: SupplierOffer; inCart: boolean; canAdd: boolean; onAdd: () => void; cheapest: boolean; line?: CartLine; onQty: (line: CartLine, quantity: number) => void; disabled: boolean; onFavorite: () => void }) {
   const available = offer.orderability_status === 'AVAILABLE'
   const reason = offer.orderability_reason || offer.availability_reason
   const cost = unitCost(offer)
   return <article className={`pos-card${inCart ? ' is-in-cart' : ''}`}>
-    <div className="pos-card__image"><ProductImage src={offer.thumbnail_url || offer.image_url} fullSrc={offer.image_url} name={offer.product_name} zoomable /></div>
+    <div className="pos-card__image"><ProductImage src={offer.thumbnail_url || offer.image_url} fullSrc={offer.image_url} name={offer.product_name} zoomable />
+      <button type="button" className={`pos-card__heart${offer.favorite_yn === 'Y' ? ' is-on' : ''}`} aria-pressed={offer.favorite_yn === 'Y'}
+        aria-label={`${offer.product_name} 나만의 식재료${offer.favorite_yn === 'Y' ? ' 해제' : ' 지정'}`} title="나만의 식재료(하트)" onClick={onFavorite}>{offer.favorite_yn === 'Y' ? '♥' : '♡'}</button></div>
     <div className="pos-card__meta">
       <span className={`pos-chip ${supplierTone(offer.supplier_code)}`}>{offer.supplier_name}</span>
       {offer.lead_time_days != null && offer.lead_time_days > 0 && <span className="pos-chip">D-{offer.lead_time_days}</span>}
-      {cheapest ? <span className="rd-chip is-ok pos-card__tag">가장 저렴</span> : offer.linked_ingredient_id ? <span className="rd-chip is-done pos-card__tag">늘 쓰는 상품</span> : null}
+      {offer.favorite_yn === 'Y' ? <span className="rd-chip is-info pos-card__tag">나만의 식재료</span> : cheapest ? <span className="rd-chip is-ok pos-card__tag">가장 저렴</span> : offer.usual_ingredient_ids.length ? <span className="rd-chip is-done pos-card__tag">늘 쓰는 상품</span> : null}
     </div>
     <strong className="pos-card__name" title={offer.product_name}>{offer.product_name}</strong>
     <span className="pos-card__sub">{offer.supplier_item_code} · {offer.base_qty}{offer.base_unit}/{offer.order_unit}</span>
@@ -84,13 +86,13 @@ function OfferCard({ offer, inCart, canAdd, onAdd, cheapest, line, onQty, disabl
 function ProductOrderContent({ accountId, initialSource, embedded }: { accountId: string; initialSource: string; embedded: boolean }) {
   const {
     sites, ingredients, source, chooseSource, site, setSite, date, changeDate, query, setQuery, cart, busy, locked, message, result, page, setPage,
-    search, order, newCart, canAdd, addToCart, setLineQuantity, removeLine, filtered, groups, cartTotal, canOrder,
+    search, order, newCart, canAdd, addToCart, setLineQuantity, removeLine, filtered, groups, cartTotal, canOrder, toggleFavorite, favoriteMode,
   } = useProductOrder(accountId, initialSource)
   // 정렬은 보는 순서만 바꾼다(무엇을 발주할지는 담기로 사용자가 고름). 기본 추천순 = 늘 쓰는 상품 먼저 → 100g당 싼 순
   const [sort, setSort] = useState<SortKey>('recommend')
   const [onlyLinked, setOnlyLinked] = useState(false)
   const [onlyOrderable, setOnlyOrderable] = useState(false)
-  const shown = filtered.filter(o => (!onlyLinked || o.linked_ingredient_id) && (!onlyOrderable || (o.orderable_yn === 'Y' && o.orderability_status === 'AVAILABLE')))
+  const shown = filtered.filter(o => (!onlyLinked || o.usual_ingredient_ids.length > 0) && (!onlyOrderable || (o.orderable_yn === 'Y' && o.orderability_status === 'AVAILABLE')))
   const sorted = [...shown].sort(SORTS[sort].compare)
   const cheapestId = (() => {
     const orderable = shown.filter(o => o.orderable_yn === 'Y' && unitCost(o))
@@ -104,11 +106,12 @@ function ProductOrderContent({ accountId, initialSource, embedded }: { accountId
 
   const body = <div className="pos-order rd rd-pos">
     <section className="pos-filters" aria-label="상품 조회 조건">
-      <label>구매할 식재료<select disabled={busy || locked} value={source} onChange={e => chooseSource(e.target.value)}><option value="">상품의 기존 연결 사용</option>{ingredients.map(i => <option key={i.ingredient_id} value={i.ingredient_id}>{i.ingredient_name}</option>)}</select></label>
+      <label title="입고하면 이 식재료 재고로 들어갑니다. 비우면 입고할 때 고릅니다">재고에 넣을 식재료<select disabled={busy || locked} value={source} onChange={e => chooseSource(e.target.value)}><option value="">입고할 때 고르기</option>{ingredients.map(i => <option key={i.ingredient_id} value={i.ingredient_id}>{i.ingredient_name}</option>)}</select></label>
       <label>공급사 · 사업장<select disabled={busy} value={site} onChange={e => { setSite(e.target.value); setPage(1) }}><option value="">전체 공급사·사업장</option>{sites.map(s => <option key={s.supplier_account_site_id} value={s.supplier_account_site_id}>{s.supplier_name} · {s.external_site_name || s.external_site_code}</option>)}</select></label>
       <label>납품일<input disabled={busy} type="date" value={date} onChange={e => changeDate(e.target.value)} /></label>
       <label className="pos-filters__search">상품 검색<input placeholder="상품명 · 코드 · 공급사" value={query} onChange={e => { setQuery(e.target.value); setPage(1) }} onKeyDown={e => { if (e.key === 'Enter' && !busy && date && accountId) void search() }} /></label>
       <button type="button" className="is-primary" disabled={busy || !date || !accountId} onClick={() => void search()}>{busy ? '조회 중…' : '상품 조회'}</button>
+      <button type="button" className={favoriteMode ? 'is-primary' : ''} disabled={busy || !date || !accountId} onClick={() => void search(true)} title="하트를 누른 웰스토리·아워홈 상품만 봅니다">♥ 나만의 식재료</button>
     </section>
     <div className="pos-notes">
       <CatalogPreparation key={accountId + date} accountId={accountId} date={date} onReady={() => void search()} />
@@ -118,7 +121,7 @@ function ProductOrderContent({ accountId, initialSource, embedded }: { accountId
     <div className="pos-layout">
       <section className="pos-catalog" aria-label="공급상품">
         <header className="pos-catalog__head">
-          <h2 className="rd-h2">{query.trim() ? `'${query.trim()}' 상품 ${shown.length}개` : `공급상품 ${shown.length}개`}{shown.length !== filtered.length ? <small className="rd-muted rd-fs-sm"> / 전체 {filtered.length}</small> : null}</h2>
+          <h2 className="rd-h2">{favoriteMode ? `나만의 식재료 ${shown.length}개` : query.trim() ? `'${query.trim()}' 상품 ${shown.length}개` : `공급상품 ${shown.length}개`}{shown.length !== filtered.length ? <small className="rd-muted rd-fs-sm"> / 전체 {filtered.length}</small> : null}</h2>
           <div className="rd-pos__tools">
             <div className="rd-pills" role="group" aria-label="거르기">
               <button type="button" aria-pressed={onlyLinked} className={onlyLinked ? 'is-active' : ''} onClick={() => { setOnlyLinked(v => !v); setPage(1) }}>늘 쓰는 상품만</button>
@@ -132,8 +135,8 @@ function ProductOrderContent({ accountId, initialSource, embedded }: { accountId
         {shown.length ? <div className="pos-grid">
           {sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map(offer =>
             <OfferCard key={offer.supplier_offer_id} offer={offer} inCart={inCart(offer)} canAdd={canAdd(offer)} onAdd={() => addToCart(offer)}
-              cheapest={offer.supplier_offer_id === cheapestId} line={lineOf(offer)} onQty={setLineQuantity} disabled={busy || locked} />)}
-        </div> : <p className="pos-empty">{busy ? '상품 조회 중' : filtered.length ? '거르기 조건에 맞는 상품 없음 · 거르기 해제 요망' : '조회된 상품 없음 · 납품일 선택 후 상품 조회 요망'}</p>}
+              cheapest={offer.supplier_offer_id === cheapestId} line={lineOf(offer)} onQty={setLineQuantity} disabled={busy || locked} onFavorite={() => void toggleFavorite(offer)} />)}
+        </div> : <p className="pos-empty">{busy ? '상품 조회 중' : filtered.length ? '거르기 조건에 맞는 상품 없음 · 거르기 해제 요망' : favoriteMode ? '나만의 식재료가 없습니다 · 상품 카드의 ♡를 눌러 지정 요망' : '조회된 상품 없음 · 납품일 선택 후 상품 조회 요망'}</p>}
         {shown.length > PAGE_SIZE && <nav className="pos-pager" aria-label="상품 쪽 이동">
           <button type="button" disabled={page <= 1} onClick={() => setPage(page - 1)}>이전</button>
           <span>{page} / {pages}</span>

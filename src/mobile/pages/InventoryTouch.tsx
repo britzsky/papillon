@@ -6,14 +6,14 @@ import ProductImage from '../../components/ProductImage'
 import type { AccountInventoryItem } from '../../api/inventory'
 import { useAccountInventory } from '../../features/inventory/useAccountInventory'
 import { LOCATION_OPTIONS, getInventoryStockStatus, getLocationName, inventoryOrderPath, matchesInventoryKeyword, orderStockFirst } from '../../features/inventory/inventoryView'
-import { NEW_PRODUCT, purchaseUnits, todayValue, useDirectPurchase } from '../../features/inventory/useDirectPurchase'
+import { purchaseUnits, todayValue, useDirectPurchase } from '../../features/inventory/useDirectPurchase'
 import { stockInputUnits } from '../../utils/quantityUnits'
 import './InventoryTouch.css'
 
 const PAGE = 48
 const qty = (value?: number) => Number(value || 0).toLocaleString('ko-KR', { maximumFractionDigits: 2 })
 const won = (value?: number) => `${Math.round(Number(value || 0)).toLocaleString('ko-KR')}원`
-const itemKey = (item: AccountInventoryItem) => `${item.account_ingredient_product_id ?? item.inventory_balance_id ?? ''}-${item.ingredient_id}`
+const itemKey = (item: AccountInventoryItem) => `${item.inventory_balance_id || ''}-${item.ingredient_id}`
 const isEmpty = (item: AccountInventoryItem) => Number(item.current_base_qty) <= 0
 
 type Filter = 'all' | 'order' | 'empty' | string
@@ -101,7 +101,7 @@ export default function InventoryTouch() {
             {item.supplier_code === 'DIRECT' && <span className="t-badge is-yellow iv-card__tag">직접구매</span>}
           </span>
           <strong className="iv-card__name">{item.ingredient_name}</strong>
-          <small className="iv-card__product">{item.product_name || '상품 미연결'}</small>
+          <small className="iv-card__product">{item.product_name || '입고 기록 없음'}</small>
           <span className="iv-card__qty">
             <b>{qty(item.current_qty)}</b> {item.current_unit || item.base_unit}
             <small>{getLocationName(item.location_id)}</small>
@@ -150,7 +150,7 @@ function DetailPanel({ item, accountId, onClose, onAdjust, onOrder }: { item: Ac
       <span className="iv-panel__image"><ProductImage src={item.image_url} name={item.product_name || item.ingredient_name} /></span>
       <div>
         <h2>{item.ingredient_name}</h2>
-        <p>{item.product_name || '상품 미연결'}{item.supplier_name ? ` · ${item.supplier_name}` : ''}</p>
+        <p>{item.product_name || '입고 기록 없음'}{item.supplier_name ? ` · ${item.supplier_name}` : ''}</p>
       </div>
       <button type="button" className="t-btn is-icon is-ghost" aria-label="닫기" onClick={onClose}><TouchIcon name="close" /></button>
     </div>
@@ -176,10 +176,8 @@ function DetailPanel({ item, accountId, onClose, onAdjust, onOrder }: { item: Ac
     <div className="iv-panel__actions">
       {status.needsOrder && <button type="button" className="t-btn is-primary is-large is-block" onClick={onOrder}><TouchIcon name="order" />발주하러 가기</button>}
       <div className="iv-panel__row">
-        <button type="button" className={`t-btn is-block ${status.needsOrder ? 'is-soft' : 'is-primary is-large'}`} disabled={!item.inventory_balance_id && !item.account_ingredient_product_id} onClick={onAdjust}>재고 수정</button>
-        {item.account_ingredient_product_id
-          ? <Link className="t-btn is-soft is-block" to={`/inventory/history?${new URLSearchParams({ account_id: accountId, account_ingredient_product_id: String(item.account_ingredient_product_id) })}`}>변동 이력</Link>
-          : null}
+        <button type="button" className={`t-btn is-block ${status.needsOrder ? 'is-soft' : 'is-primary is-large'}`} onClick={onAdjust}>재고 수정</button>
+        <Link className="t-btn is-soft is-block" to={`/inventory/history?${new URLSearchParams({ account_id: accountId, ingredient_id: item.ingredient_id })}`}>변동 이력</Link>
       </div>
     </div>
   </div>
@@ -276,14 +274,8 @@ function PurchaseSheet({ accountId, items, onClose, onDone }: { accountId: strin
             <button type="button" className="t-btn is-small is-soft" disabled={p.saving} onClick={() => p.selectIngredient('')}>다시 고르기</button>
           </div>
 
-          <label className="iv-form__label">상품</label>
-          <div className="t-segment iv-wrap">
-            {p.directProducts.map(product => <button key={product.account_ingredient_product_id} type="button"
-              className={p.productChoice === String(product.account_ingredient_product_id) ? 'is-active' : ''}
-              onClick={() => p.setProductChoice(String(product.account_ingredient_product_id))}>{product.product_name}</button>)}
-            <button type="button" className={p.productChoice === NEW_PRODUCT ? 'is-active' : ''} onClick={() => p.setProductChoice(NEW_PRODUCT)}>새 상품</button>
-          </div>
-          {p.productChoice === NEW_PRODUCT && <input className="iv-input" aria-label="상품명" value={p.productName} maxLength={255} placeholder="예: 양파 (쿠팡)" onChange={e => p.setProductName(e.target.value)} />}
+          <label className="iv-form__label">산 물건 이름 (선택)</label>
+          <input className="iv-input" aria-label="상품명" value={p.productName} maxLength={255} placeholder="예: 양파 (쿠팡)" onChange={e => p.setProductName(e.target.value)} />
 
           <div className="iv-form__grid">
             <div>
