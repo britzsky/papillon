@@ -57,7 +57,12 @@ body.workspace-ui .pos-card.is-in-cart .pos-add:disabled { border-color: transpa
 .pos-cart__head h2 { margin: 0; }
 .pos-cart__group { display: grid; gap: 8px; padding-bottom: 10px; border-bottom: 1px dashed var(--pos-line, #e9ebef); }
 .pos-cart__group h3 { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 0; color: var(--pos-muted, #6b7280); font-weight: 600; }
-.pos-line { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; grid-template-areas: "img info remove" "img step amount"; align-items: center; gap: 4px 10px; }
+.pos-line { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; grid-template-areas: "img info remove" "img step amount" ". stock stock"; align-items: center; gap: 4px 10px; }
+/* 재고 식재료 한 줄(서버 추정 · 바꾸기). 비어 있으면 입고 때 고른다는 뜻으로 주황 */
+.pos-line__stock { grid-area: stock; display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 12px; color: var(--pos-muted, #6b7280); }
+.pos-line__stock select { min-width: 0; max-width: 170px; min-height: 26px; padding: 2px 6px; border: 1px solid var(--pos-line-strong, #dfe2e8); border-radius: 6px; background: #f6f7f9; font-size: 12px; font-weight: 700; color: #1f2937; }
+.pos-line__stock small { flex: none; white-space: nowrap; }
+.pos-line__stock.is-empty select { border-color: #f5b041; background: #fff7e6; color: #9a5b00; }
 .pos-line__image { grid-area: img; width: 40px; height: 40px; border-radius: 8px; overflow: hidden; background: #f6f7f9; display: grid; place-items: center; }
 .pos-line__image .product-image { width: 100%; height: 100%; border: 0; background: transparent; }
 .pos-line__image img { width: 100%; height: 100%; object-fit: cover; }

@@ -4,13 +4,17 @@ import { getSupplierSites, getSupplierOffers, setFavoriteProduct, type SupplierO
 import { submitMixedProcurement, recoverMixedProcurement, startNewMixedProcurement, type BatchResult } from '../../api/mixedProcurement'
 
 export type ProductIngredient = { ingredient_id: string; ingredient_name: string; product_name?: string }
-export type CartLine = { confirmed?: boolean; offer: SupplierOffer; date: string; source: string; quantity: number }
+/** source: 재고에 넣을 식재료(빈 값 = 입고할 때 고르기). sourceBy: 누가 정했나(USER 사람 · 그 밖은 서버 추정 근거) */
+export type CartLine = { confirmed?: boolean; offer: SupplierOffer; date: string; source: string; sourceBy: 'USER' | SupplierOffer['suggested_reason']; quantity: number }
 export const lineKey = (line: CartLine) => `${line.offer.supplier_offer_id}:${line.date}`
+/** 서버 추정 근거를 장바구니 한 줄 설명으로 */
+export const SOURCE_REASON: Record<string, string> = { HISTORY: '지난 발주', MASTER: '상품 지정 식재료', OTHER_ACCOUNTS: '다른 거래처 발주', NAME: '상품명 일치', USER: '직접 고름' }
 
 /**
  * 상품 검색 발주(PC 발주하기 '상품 검색' 탭·터치 화면 공용): 웰스토리·아워홈 상품을 검색(동의어 포함, 관련도순 300건)해
  * 장바구니에 담고 공급사·사업장·납품일별로 한 번에 발주한다. 담을 때 '재고에 넣을 식재료'(source)를 정하면 입고 때 그 식재료 재고로
- * 들어간다(2026-10-22: 식재료와 상품을 연결하지 않음). 정하지 않으면 입고할 때 고른다.
+ * 들어간다(2026-10-22: 식재료와 상품을 연결하지 않음). 위에서 고르지 않으면 서버가 맞힌 식재료(지난 발주 → 상품 지정 → 다른 거래처 → 이름,
+ * 2026-10-23)를 담고, 장바구니 줄에서 바꿀 수 있다. 끝내 비어 있으면 입고할 때 고른다.
  * 하트(나만의 식재료)를 누른 상품은 검색 결과 맨 위에 오고, '나만의 식재료' 버튼으로 하트 상품만 볼 수 있다.
  */
 export function useProductOrder(accountId: string, initialSource: string) {
@@ -51,7 +55,7 @@ export function useProductOrder(accountId: string, initialSource: string) {
     if (pending.current) return
     pending.current = true; setBusy(true); setMessage(''); setOffers([]); setPage(1); setFavoriteMode(favoritesOnly)
     // 서버에서 검색어(동의어 포함)로 찾아 관련도순 최대 300건만 받는다(나만의 식재료가 맨 위). 나만의 식재료 보기는 하트 상품만
-    try { setOffers((await getSupplierOffers(accountId, date, undefined, undefined, favoritesOnly ? { favoriteOnly: true, limit: 300 } : { keyword: query, limit: 300 })).filter(o => ['WELSTORY', 'OURHOME'].includes(o.supplier_code))) }
+    try { setOffers((await getSupplierOffers(accountId, date, undefined, undefined, favoritesOnly ? { favoriteOnly: true, limit: 300, guessIngredient: true } : { keyword: query, limit: 300, guessIngredient: true })).filter(o => ['WELSTORY', 'OURHOME'].includes(o.supplier_code))) }
     catch (e) { setMessage(e instanceof Error ? e.message : '상품 조회 실패') }
     finally { pending.current = false; setBusy(false) }
   }
@@ -67,8 +71,8 @@ export function useProductOrder(accountId: string, initialSource: string) {
     try {
       setResult(await (recover ? recoverMixedProcurement(accountId) : submitMixedProcurement({ account_id: accountId,
         items: cart.map(line => ({ delivery_terms_confirmed: line.confirmed, supplier_offer_id: line.offer.supplier_offer_id, delivery_date: line.date, order_qty: line.quantity, expected_price: line.offer.purchase_price,
-          // 재고에 넣을 식재료: 담을 때 고른 것 → 이 상품으로 발주했던 식재료가 하나뿐이면 그것 → 없으면 입고 때 선택
-          source_ingredient_id: line.source || (line.offer.usual_ingredient_ids.length === 1 ? line.offer.usual_ingredient_ids[0] : '') })) })))
+          // 재고에 넣을 식재료: 장바구니 줄의 값(위에서 고른 것 또는 서버 추정, 줄에서 바꿀 수 있음). 비우면 입고 때 선택
+          source_ingredient_id: line.source })) })))
     } catch (e) { setMessage(e instanceof Error ? e.message : '발주 결과 확인 실패') }
     finally { pending.current = false; setBusy(false) }
   }
@@ -83,8 +87,12 @@ export function useProductOrder(accountId: string, initialSource: string) {
   /** 담기: 납품·마감이 확인되지 않은 상품은 사용자가 공급사에 직접 확인했는지 묻는다 */
   const addToCart = (offer: SupplierOffer) => {
     if (offer.orderability_status !== 'AVAILABLE' && !window.confirm(offer.product_name + ' · ' + date + '\n공급사에 납품 가능일과 마감 조건을 직접 확인하셨습니까?')) return
-    setCart(current => [...current, { offer, date, source, quantity: offer.minimum_order_qty, confirmed: offer.orderability_status !== 'AVAILABLE' }])
+    const picked = source || offer.suggested_ingredient_id
+    setCart(current => [...current, { offer, date, source: picked, sourceBy: source ? 'USER' : offer.suggested_reason, quantity: offer.minimum_order_qty, confirmed: offer.orderability_status !== 'AVAILABLE' }])
   }
+  /** 장바구니 줄의 재고 식재료 바꾸기(빈 값 = 입고할 때 고르기) */
+  const setLineSource = (line: CartLine, value: string) => setCart(current => current.map(l => lineKey(l) === lineKey(line) ? { ...l, source: value, sourceBy: 'USER' } : l))
+  const ingredientName = (id: string) => ingredients.find(i => i.ingredient_id === id)?.ingredient_name || ''
   /** 하트: 나만의 식재료 지정·해제 */
   const toggleFavorite = async (offer: SupplierOffer) => {
     const on = offer.favorite_yn !== 'Y'
@@ -106,6 +114,6 @@ export function useProductOrder(accountId: string, initialSource: string) {
 
   return {
     sites, ingredients, source, chooseSource, site, setSite, date, changeDate, offers, query, setQuery, cart, busy, locked, message, result, page, setPage,
-    search, order, newCart, canAdd, addToCart, setLineQuantity, removeLine, filtered, groups, cartTotal, canOrder, toggleFavorite, favoriteMode,
+    search, order, newCart, canAdd, addToCart, setLineQuantity, setLineSource, ingredientName, removeLine, filtered, groups, cartTotal, canOrder, toggleFavorite, favoriteMode,
   }
 }

@@ -7,7 +7,7 @@ import SideMenuLayout from '../../components/SideMenuLayout'
 import BatchOrderResults from '../../components/BatchOrderResults'
 import ProductImage from '../../components/ProductImage'
 import type { SupplierOffer } from '../../api/supplierIntegration'
-import { lineKey, useProductOrder, type CartLine } from '../../features/order/useProductOrder'
+import { lineKey, useProductOrder, SOURCE_REASON, type CartLine } from '../../features/order/useProductOrder'
 import '../operations/MenuManager.css'
 import './ProductOrder.css'
 import './OrderPos.css'
@@ -86,7 +86,7 @@ function OfferCard({ offer, inCart, canAdd, onAdd, cheapest, line, onQty, disabl
 function ProductOrderContent({ accountId, initialSource, embedded }: { accountId: string; initialSource: string; embedded: boolean }) {
   const {
     sites, ingredients, source, chooseSource, site, setSite, date, changeDate, query, setQuery, cart, busy, locked, message, result, page, setPage,
-    search, order, newCart, canAdd, addToCart, setLineQuantity, removeLine, filtered, groups, cartTotal, canOrder, toggleFavorite, favoriteMode,
+    search, order, newCart, canAdd, addToCart, setLineQuantity, setLineSource, ingredientName, removeLine, filtered, groups, cartTotal, canOrder, toggleFavorite, favoriteMode,
   } = useProductOrder(accountId, initialSource)
   // 정렬은 보는 순서만 바꾼다(무엇을 발주할지는 담기로 사용자가 고름). 기본 추천순 = 늘 쓰는 상품 먼저 → 100g당 싼 순
   const [sort, setSort] = useState<SortKey>('recommend')
@@ -106,7 +106,7 @@ function ProductOrderContent({ accountId, initialSource, embedded }: { accountId
 
   const body = <div className="pos-order rd rd-pos">
     <section className="pos-filters" aria-label="상품 조회 조건">
-      <label title="입고하면 이 식재료 재고로 들어갑니다. 비우면 입고할 때 고릅니다">재고에 넣을 식재료<select disabled={busy || locked} value={source} onChange={e => chooseSource(e.target.value)}><option value="">입고할 때 고르기</option>{ingredients.map(i => <option key={i.ingredient_id} value={i.ingredient_id}>{i.ingredient_name}</option>)}</select></label>
+      <label title="담는 상품 모두 이 식재료 재고로 들어갑니다. 비우면 상품마다 맞힌 식재료로 담고, 장바구니에서 바꿀 수 있습니다">재고에 넣을 식재료<select disabled={busy || locked} value={source} onChange={e => chooseSource(e.target.value)}><option value="">상품마다 자동</option>{ingredients.map(i => <option key={i.ingredient_id} value={i.ingredient_id}>{i.ingredient_name}</option>)}</select></label>
       <label>공급사 · 사업장<select disabled={busy} value={site} onChange={e => { setSite(e.target.value); setPage(1) }}><option value="">전체 공급사·사업장</option>{sites.map(s => <option key={s.supplier_account_site_id} value={s.supplier_account_site_id}>{s.supplier_name} · {s.external_site_name || s.external_site_code}</option>)}</select></label>
       <label>납품일<input disabled={busy} type="date" value={date} onChange={e => changeDate(e.target.value)} /></label>
       <label className="pos-filters__search">상품 검색<input placeholder="상품명 · 코드 · 공급사" value={query} onChange={e => { setQuery(e.target.value); setPage(1) }} onKeyDown={e => { if (e.key === 'Enter' && !busy && date && accountId) void search() }} /></label>
@@ -158,6 +158,16 @@ function ProductOrderContent({ accountId, initialSource, embedded }: { accountId
               <button type="button" aria-label={`${line.offer.product_name} 수량 늘리기`} disabled={busy || locked} onClick={() => setLineQuantity(line, stepQty(line, 1))}>+</button>
             </span>
             <b className="pos-line__amount">{won(line.quantity * line.offer.purchase_price)}</b>
+            {/* 재고 식재료: 위에서 고른 것 또는 서버가 맞힌 것. 틀리면 여기서 바꾼다(2026-10-23) */}
+            <span className={`pos-line__stock${line.source ? '' : ' is-empty'}`}>
+              <span aria-hidden>→</span>
+              <select aria-label={`${line.offer.product_name} 재고에 넣을 식재료`} disabled={busy || locked} value={line.source} onChange={e => setLineSource(line, e.target.value)}>
+                <option value="">입고할 때 고르기</option>
+                {line.source && !ingredientName(line.source) && <option value={line.source}>{line.offer.suggested_ingredient_name || line.source}</option>}
+                {ingredients.map(i => <option key={i.ingredient_id} value={i.ingredient_id}>{i.ingredient_name} 재고로</option>)}
+              </select>
+              {line.source && line.sourceBy && <small>{SOURCE_REASON[line.sourceBy]}</small>}
+            </span>
             <button type="button" className="pos-line__remove" aria-label={`${line.offer.product_name} 빼기`} disabled={busy || locked} onClick={() => removeLine(line)}>×</button>
           </div>)}
         </section>)}

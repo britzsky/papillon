@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import TouchLayout from '../TouchLayout'
 import TouchIcon from '../TouchIcon'
 import BatchResultList from '../BatchResultList'
-import { useProductOrder, lineKey, type CartLine } from '../../features/order/useProductOrder'
+import { useProductOrder, lineKey, SOURCE_REASON, type CartLine } from '../../features/order/useProductOrder'
 import { preparationLabel, useCatalogPreparation } from '../../features/order/useCatalogPreparation'
 import './ProductOrderTouch.css'
 
@@ -40,6 +40,15 @@ function Content({ accountId, initialSource, methodBar }: { accountId: string; i
         <h3><span className="t-dot">{lines[0].offer.supplier_name.slice(0, 1)}</span><span>{lines[0].offer.supplier_name} · {lines[0].offer.external_site_name || lines[0].offer.external_site_code}<small>납품 {lines[0].date}</small></span></h3>
         <ul>{lines.map(line => <li key={lineKey(line)}>
           <div className="po-line__name"><strong>{line.offer.product_name}</strong><small>{won(line.quantity * line.offer.purchase_price)}</small></div>
+          {/* 재고 식재료: 위에서 고른 것 또는 서버가 맞힌 것. 틀리면 여기서 바꾼다(2026-10-23) */}
+          <label className={`po-line__stock${line.source ? '' : ' is-empty'}`}><span>재고</span>
+            <select disabled={p.busy || p.locked} value={line.source} onChange={e => p.setLineSource(line, e.target.value)}>
+              <option value="">입고할 때 고르기</option>
+              {line.source && !p.ingredientName(line.source) && <option value={line.source}>{line.offer.suggested_ingredient_name || line.source}</option>}
+              {p.ingredients.map(i => <option key={i.ingredient_id} value={i.ingredient_id}>{i.ingredient_name}</option>)}
+            </select>
+            {line.source && line.sourceBy && <small>{SOURCE_REASON[line.sourceBy]}</small>}
+          </label>
           <div className="po-line__qty">
             <button type="button" className="t-round" aria-label="줄이기" disabled={p.busy || p.locked} onClick={() => bump(line, -1)}>−</button>
             <input type="text" inputMode="decimal" aria-label={`${line.offer.product_name} 발주수량`} disabled={p.busy || p.locked} value={line.quantity}
@@ -73,7 +82,7 @@ function Content({ accountId, initialSource, methodBar }: { accountId: string; i
     {methodBar}
     <form className="t-card po-filters" onSubmit={submit}>
       <label className="po-field">재고에 넣을 식재료<select disabled={p.busy || p.locked} value={p.source} onChange={e => p.chooseSource(e.target.value)}>
-        <option value="">입고할 때 고르기</option>{p.ingredients.map(i => <option key={i.ingredient_id} value={i.ingredient_id}>{i.ingredient_name}</option>)}
+        <option value="">상품마다 자동</option>{p.ingredients.map(i => <option key={i.ingredient_id} value={i.ingredient_id}>{i.ingredient_name}</option>)}
       </select></label>
       <label className="po-field">공급사 · 사업장<select disabled={p.busy} value={p.site} onChange={e => { p.setSite(e.target.value); setLimit(PAGE) }}>
         <option value="">전체</option>{p.sites.map(s => <option key={s.supplier_account_site_id} value={s.supplier_account_site_id}>{s.supplier_name} · {s.external_site_name || s.external_site_code}</option>)}

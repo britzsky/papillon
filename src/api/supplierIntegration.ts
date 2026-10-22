@@ -30,6 +30,10 @@ export type SupplierOffer = {
   favorite_yn: 'Y' | 'N'
   /** 이 거래처가 이 상품으로 발주했던 식재료들(늘 쓰는 상품 표시·재고 식재료 기본값). 식재료와 상품을 연결하지는 않는다 */
   usual_ingredient_ids: string[]
+  /** 상품 검색 발주(guessIngredient)에서 서버가 맞힌 재고 식재료. 없으면 빈 문자열. 근거: HISTORY 지난 발주 · MASTER 상품 지정 · OTHER_ACCOUNTS 다른 거래처 · NAME 이름 일치 */
+  suggested_ingredient_id: string
+  suggested_ingredient_name: string
+  suggested_reason: '' | 'HISTORY' | 'MASTER' | 'OTHER_ACCOUNTS' | 'NAME'
   supplier_item_code: string
   product_name: string
   order_unit: string
@@ -135,7 +139,7 @@ export async function getSupplierSites(accountId: string): Promise<SupplierSite[
 }
 
 /** 서버 검색 옵션: keyword(동의어 포함, 관련도순)·offerIds(지정 상품만)·limit. 사업장 전체 상품(1만여 건, 수십 MB)을 받지 않기 위해 화면에서는 가능한 한 지정한다. */
-export type OfferSearch = { keyword?: string; offerIds?: number[]; limit?: number; favoriteOnly?: boolean }
+export type OfferSearch = { keyword?: string; offerIds?: number[]; limit?: number; favoriteOnly?: boolean; guessIngredient?: boolean }
 export async function getSupplierOffers(accountId: string, deliveryDate: string, requiredBaseQty?: number, externalSiteCode?: string, search?: OfferSearch): Promise<SupplierOffer[]> {
   const query = new URLSearchParams({ account_id: accountId, delivery_date: deliveryDate, orderable_only: 'N' })
   if (requiredBaseQty != null) query.set('required_base_qty', String(requiredBaseQty))
@@ -144,6 +148,7 @@ export async function getSupplierOffers(accountId: string, deliveryDate: string,
   if (search?.offerIds) { if (!search.offerIds.length) return []; query.set('offer_ids', search.offerIds.join(',')) }
   if (search?.limit) query.set('limit', String(search.limit))
   if (search?.favoriteOnly) query.set('favorite_only', 'Y')
+  if (search?.guessIngredient) query.set('guess_ingredient', 'Y')
   const rows = await getRows(`/v2/supplier-integration/offers?${query}`)
   return rows.map((row) => ({
     supplier_offer_id: number(row.supplier_offer_id), supplier_account_site_id: number(row.supplier_account_site_id),
@@ -153,6 +158,8 @@ export async function getSupplierOffers(accountId: string, deliveryDate: string,
     supplier_code: text(row.supplier_code), supplier_name: text(row.supplier_name), ingredient_id: text(row.ingredient_id),
     favorite_yn: text(row.favorite_yn) === 'Y' ? 'Y' : 'N',
     usual_ingredient_ids: text(row.usual_ingredient_ids).split(',').map(id => id.trim()).filter(Boolean),
+    suggested_ingredient_id: text(row.suggested_ingredient_id), suggested_ingredient_name: text(row.suggested_ingredient_name),
+    suggested_reason: (['HISTORY', 'MASTER', 'OTHER_ACCOUNTS', 'NAME'].includes(text(row.suggested_reason)) ? text(row.suggested_reason) : '') as SupplierOffer['suggested_reason'],
     supplier_item_code: text(row.supplier_item_code), product_name: text(row.product_name), order_unit: text(row.order_unit),
     base_qty: number(row.base_qty), base_unit: text(row.base_unit), purchase_price: number(row.purchase_price),
     pack_options: [

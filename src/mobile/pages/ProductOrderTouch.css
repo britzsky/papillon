@@ -38,6 +38,11 @@
 .po-line__name strong { font-size: 14px; }
 .po-line__name small { flex: none; color: var(--t-accent-strong); font-size: 13px; font-weight: 800; }
 .po-line__qty { display: flex; align-items: center; gap: 6px; }
+/* 재고 식재료 한 줄(서버 추정 · 바꾸기). 비어 있으면 입고 때 고른다는 뜻으로 주황 */
+.po-line__stock { display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--t-muted); font-size: 12px; font-weight: 700; }
+.po-line__stock select { flex: 1; min-width: 0; min-height: 36px; padding: 0 8px; border: 1.5px solid var(--t-line); border-radius: 10px; background: #fff; font-size: 14px; font-weight: 700; }
+.po-line__stock small { flex: none; }
+.po-line__stock.is-empty select { border-color: #f5b041; background: #fff7e6; color: #9a5b00; }
 .po-line__qty .t-round { width: 38px; min-width: 38px; min-height: 38px; font-size: 18px; }
 .po-line__qty input { width: 60px; min-height: 40px; border: 1.5px solid var(--t-line); border-radius: 10px; text-align: center; font-size: 16px; font-weight: 800; }
 .po-line__qty > span { color: var(--t-muted); font-size: 12px; font-weight: 700; }
