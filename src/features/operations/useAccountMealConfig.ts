@@ -3,12 +3,12 @@ import {
   getAccountMealConfiguration, getAccountMealSlots, saveAccountMealConfiguration,
   type AccountMealConfiguration, type AccountMealSlot, type AccountMealSlotProfile,
 } from '../../api/operations'
+import { slotKindOf } from '../../api/mealSlots'
 
 export const FOOD_TYPE_OPTIONS = [[1, '한식'], [2, '중식'], [3, '일식'], [4, '양식'], [5, '분식'], [6, '간식'], [7, '기타']] as const
 export const MEAL_PLAN_TYPE_OPTIONS = [[0, '일반식'], [1, '가성비식단'], [2, '요양원맞춤식단'], [3, '테마식단'], [4, '다이어트식단'], [5, '프리미엄식단']] as const
-/** 간식류 식사 코드(기본 식사분류가 간식) */
-export const isSnackSlot = (code: number) => [1, 3, 4, 6, 7, 8].includes(code)
-const defaultFoodType = (code: number) => (code === 1 || code === 3 || code >= 6 ? 6 : 1)
+/** 간식 끼니(기본 식사분류가 간식). 본식/간식은 본사 끼니 종류 관리의 구분을 따른다(2026-10-23) */
+export const isSnackSlot = (slot: { meal_slot_code: number; slot_kind?: string } | undefined, code: number) => slotKindOf(code, slot?.slot_kind) === 'SNACK'
 export const formatBudget = (value?: number | null) => value == null ? '계산 필요' : `${Math.round(value).toLocaleString('ko-KR')}원`
 
 type Loaded = { key: string; mealSlots: AccountMealSlot[]; configuration: AccountMealConfiguration | null; selectedCodes: number[]; profiles: Record<number, AccountMealSlotProfile> }
@@ -44,6 +44,8 @@ export function useAccountMealConfig(accountId: string) {
   }, [accountId])
 
   const current = state.key === accountId && accountId ? state : EMPTY
+  const isSnack = (code: number) => isSnackSlot(current.mealSlots.find(item => item.meal_slot_code === code), code)
+  const defaultFoodType = (code: number) => (isSnack(code) ? 6 : 1)
   const loading = Boolean(accountId) && loadingKey === accountId
   const edit = (patch: Partial<Loaded>) => setState(prev => prev.key === accountId ? { ...prev, ...patch } : prev)
 
@@ -127,6 +129,6 @@ export function useAccountMealConfig(accountId: string) {
 
   return {
     mealSlots: current.mealSlots, orderedSlots, selectedCodes: current.selectedCodes, configuration: current.configuration, profiles: current.profiles,
-    loading, saving, message, setMessage, toggleMealSlot, moveMealSlot, placeMealSlot, updateProfile, save,
+    loading, saving, message, setMessage, toggleMealSlot, moveMealSlot, placeMealSlot, updateProfile, save, isSnack,
   }
 }

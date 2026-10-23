@@ -1,3 +1,4 @@
+import { slotKindOf } from '../../api/mealSlots'
 import { useState, type ReactNode } from 'react'
 import TouchLayout from '../TouchLayout'
 import TouchIcon, { type TouchIconName } from '../TouchIcon'
@@ -228,7 +229,7 @@ function WeeklySheet({ w, onClose }: { w: W; onClose: () => void }) {
           const key = `${formatDateValue(date)}:${slot.code}`
           const profile = w.accountMealConfiguration?.profiles.find(item => item.meal_slot_code === slot.code)
           const setting = w.weeklyMealSettings[key]
-          const foodType = setting?.food_type ?? profile?.default_food_type ?? ([1, 3, 4, 6, 7, 8].includes(slot.code) ? 6 : 1)
+          const foodType = setting?.food_type ?? profile?.default_food_type ?? (slotKindOf(slot.code, profile?.slot_kind) === 'SNACK' ? 6 : 1)
           const planType = setting?.meal_plan_type ?? profile?.default_meal_plan_type ?? w.selectedMealPlanType
           return <div key={slot.id} className={`tc-weekly-row${setting ? ' is-changed' : ''}`}>
             <strong>{slot.label}</strong>

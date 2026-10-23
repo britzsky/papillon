@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import TouchLayout from '../TouchLayout'
 import TouchIcon from '../TouchIcon'
-import { FOOD_TYPE_OPTIONS, MEAL_PLAN_TYPE_OPTIONS, formatBudget, isSnackSlot, useAccountMealConfig } from '../../features/operations/useAccountMealConfig'
+import { FOOD_TYPE_OPTIONS, MEAL_PLAN_TYPE_OPTIONS, formatBudget, useAccountMealConfig } from '../../features/operations/useAccountMealConfig'
 import './AccountConfigTouch.css'
 
 /**
@@ -24,7 +24,7 @@ export default function AccountConfigTouch() {
       <ul className="ac-budgets">{c.selectedCodes.map(code => {
         const slot = c.mealSlots.find(item => item.meal_slot_code === code)
         const profile = c.profiles[code]
-        return <li key={code}><span>{slot?.meal_slot_name ?? `식사 ${code}`}</span><strong>{formatBudget(profile?.budget_per_person)}</strong><small>{profile?.budget_source || (isSnackSlot(code) ? '간식 단가' : '고객사 유형별 자동 계산')}</small></li>
+        return <li key={code}><span>{slot?.meal_slot_name ?? `식사 ${code}`}</span><strong>{formatBudget(profile?.budget_per_person)}</strong><small>{profile?.budget_source || (c.isSnack(code) ? '간식 단가' : '고객사 유형별 자동 계산')}</small></li>
       })}</ul>
       {c.message && <p className={`t-msg ${/실패|선택해/.test(c.message) ? 'is-error' : 'ac-ok'}`} role="status">{c.message}</p>}
     </div>
@@ -64,7 +64,7 @@ export default function AccountConfigTouch() {
           {c.selectedCodes.map(code => {
             const slot = c.mealSlots.find(item => item.meal_slot_code === code)
             const profile = c.profiles[code]
-            const foodType = profile?.default_food_type ?? (isSnackSlot(code) ? 6 : 1)
+            const foodType = profile?.default_food_type ?? (c.isSnack(code) ? 6 : 1)
             const planType = profile?.default_meal_plan_type ?? 0
             return <article key={code} className="t-card ac-row">
               <h3>{slot?.meal_slot_name ?? `식사 ${code}`}</h3>

@@ -3,7 +3,8 @@
 
 export type PdfTextItem = { text: string; x: number; y: number; page: number; width?: number }
 /** 거래처 식사 설정 한 줄. key는 식단 저장에 쓰는 식사 코드 문자열('0' 조식, '2' 중식 …) */
-export type MealSlotTarget = { key: string; label: string; code: number }
+/** kind: 본식/간식(본사 끼니 종류). 없으면 기본 간식 코드로 판단 */
+export type MealSlotTarget = { key: string; label: string; code: number; kind?: string }
 export type ParsedMealDay = {
   id: string
   /** 월~일 한 글자 */
@@ -41,6 +42,10 @@ const SLOT_NAMES: Array<[RegExp, number]> = [
   [/^킨더간식$/, 8],
 ]
 const SNACK_CODES = [1, 3, 6, 7, 8]
+/** 그냥 '간식'이 될 수 있는 거래처 끼니: 간식 끼니(DC 제외). 본사가 추가한 간식 끼니도 포함 */
+const isPlainSnack = (slot: MealSlotTarget) => slot.kind ? slot.kind === 'SNACK' && slot.code !== 4 : SNACK_CODES.includes(slot.code)
+/** 식사 이름표: 기본 끼니는 기본 이름(코스 제외 목록의 키가 바뀌지 않게), 본사가 추가한 끼니는 거래처 설정 이름 */
+export const slotLabelOf = (code: number, slots: MealSlotTarget[]) => SLOT_LABELS[code] ?? slots.find(slot => slot.code === code)?.label ?? String(code)
 
 export const compact = (value: string) => value.normalize('NFKC').replace(/\s+/g, '').trim()
 
@@ -170,7 +175,7 @@ function groupOf(y: number, groups: RowGroup[], tolerance = 4) {
 
 /** 그냥 '간식'은 거래처 간식 설정이 하나면 그것, 아니면 위치(중식 앞 오전·석식 뒤 저녁·그 사이 오후)로 정한다 */
 export function resolveSnacks(anchors: Anchor[], slots: MealSlotTarget[]) {
-  const configured = slots.map(slot => slot.code).filter(code => SNACK_CODES.includes(code))
+  const configured = slots.filter(isPlainSnack).map(slot => slot.code)
   return anchors.map((anchor, index) => {
     if (anchor.code !== -1) return anchor
     if (configured.length === 1) return { ...anchor, code: configured[0] }
@@ -266,7 +271,7 @@ export function parseMealTable(items: PdfTextItem[], pageCount: number, slots: M
       const group = groupOf(item.y, groups)
       if (!group) return
       if (group.course) {
-        const name = `${SLOT_LABELS[group.code] ?? group.code} ${group.course}`
+        const name = `${slotLabelOf(group.code, slots)} ${group.course}`
         if (!courses.includes(name)) courses.push(name)
         if (excluded.has(name)) return
       }
@@ -279,7 +284,7 @@ export function parseMealTable(items: PdfTextItem[], pageCount: number, slots: M
     columnDays.forEach(({ day }) => {
       Object.keys(day.meals).forEach(key => {
         if (slots.length && !configuredCodes.has(Number(key)) && day.meals[key].length) {
-          unconfigured.add(SLOT_LABELS[Number(key)] ?? key)
+          unconfigured.add(slotLabelOf(Number(key), slots))
         }
       })
       days.push(day)

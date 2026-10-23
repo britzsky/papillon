@@ -6,7 +6,7 @@ import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import { useSearchParams } from 'react-router-dom'
 import { workspaceAccountId } from '../../features/workspace/workspaceAccount'
 import { getAccountOptions, type AccountOption } from '../../api/operations'
-import { FOOD_TYPE_OPTIONS, MEAL_PLAN_TYPE_OPTIONS, formatBudget, isSnackSlot, useAccountMealConfig } from '../../features/operations/useAccountMealConfig'
+import { FOOD_TYPE_OPTIONS, MEAL_PLAN_TYPE_OPTIONS, formatBudget, useAccountMealConfig } from '../../features/operations/useAccountMealConfig'
 import './AccountManager.css'
 
 /** 고객사 관리(PC). 식사 설정 로직은 features/operations/useAccountMealConfig(터치 화면과 공용). 순서는 끌어 놓기로 바꾼다. */
@@ -15,7 +15,7 @@ function AccountManager() {
   // 관리 거래처는 머리 줄에서 고른다
   const accountId = workspaceAccountId(useSearchParams()[0])
   const [draggedCode, setDraggedCode] = useState<number | null>(null)
-  const { mealSlots, orderedSlots, selectedCodes, configuration, profiles, loading, saving, message, setMessage, toggleMealSlot, placeMealSlot, updateProfile, save } = useAccountMealConfig(accountId)
+  const { mealSlots, orderedSlots, selectedCodes, configuration, profiles, loading, saving, message, setMessage, toggleMealSlot, placeMealSlot, updateProfile, save, isSnack: isSnackSlot } = useAccountMealConfig(accountId)
 
   useEffect(() => {
     void getAccountOptions().then(setAccounts).catch(() => setMessage('고객사 목록을 불러오지 못했습니다.'))

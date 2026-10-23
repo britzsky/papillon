@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom'
-import { FOOD_TYPE_OPTIONS, MEAL_PLAN_TYPE_OPTIONS, formatBudget, isSnackSlot, useAccountMealConfig } from '../operations/useAccountMealConfig'
+import { FOOD_TYPE_OPTIONS, MEAL_PLAN_TYPE_OPTIONS, formatBudget, useAccountMealConfig } from '../operations/useAccountMealConfig'
 import './MealConfigDialog.css'
 
 /**
@@ -60,7 +60,7 @@ export default function MealConfigDialog({ accountId, accountName, onClose, onSa
                     {c.selectedCodes.map(code => {
                       const slot = c.mealSlots.find(item => item.meal_slot_code === code)
                       const profile = c.profiles[code]
-                      const isSnack = isSnackSlot(code)
+                      const isSnack = c.isSnack(code)
                       return <tr key={code}>
                         <th scope="row">{slot?.meal_slot_name ?? `식사 ${code}`}</th>
                         <td>

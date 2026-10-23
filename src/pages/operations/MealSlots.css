@@ -1,0 +1,18 @@
+/* 끼니 종류 관리(본사). 틀은 Redesign .rd-page */
+.meal-slots-page { height: 100vh; }
+.rd-meal-slots .rd-page__box { margin-bottom: 12px; }
+.rd-meal-slots .rd-page__list-head { flex-wrap: wrap; gap: 8px; }
+.rd-meal-slots .meal-slots__add { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; }
+.rd-meal-slots .meal-slots__add .rd-input { flex: 1 1 220px; max-width: 320px; min-height: 40px; }
+.rd-meal-slots .meal-slots__table .rd-input { width: 100%; min-width: 120px; min-height: 34px; }
+/* 공통 표 입력(ControlSizing.css)은 글자 수만큼만 넓어진다(width auto !important) — 이름 칸은 고정 폭 */
+body.workspace-ui > :is(#root, :not(#root)) .rd-meal-slots table input.rd-input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file]) { field-sizing: fixed; width: 200px !important; min-width: 120px !important; }
+.rd-meal-slots .meal-slots__table td:nth-child(2) { min-width: 160px; }
+.rd-meal-slots .meal-slots__order > span { display: inline-flex; gap: 4px; }
+.rd-meal-slots .meal-slots__order button { --button-width: 30px; --button-height: 28px; width: 30px; height: 28px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; cursor: pointer; }
+.rd-meal-slots .meal-slots__order button:disabled { opacity: .35; cursor: default; }
+.rd-meal-slots .meal-slots__active { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.rd-meal-slots tr.is-off td { color: #94a3b8; }
+.rd-meal-slots .meal-slots__msg { margin: 0; padding: 10px 14px; border: 1px solid #b7dcc4; border-radius: 12px; background: #eef8f1; color: #14532d; }
+.rd-meal-slots .meal-slots__msg.is-error { border-color: var(--rd-red-line); background: var(--rd-red-soft); color: var(--rd-red-ink); }
+@media (max-width: 600px) { body.workspace-ui > :is(#root, :not(#root)) .rd-meal-slots table input.rd-input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file]) { width: 130px !important; min-width: 100px !important; } }

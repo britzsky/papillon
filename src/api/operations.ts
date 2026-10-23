@@ -1,4 +1,5 @@
 import { API_ORIGIN, buildApiUrl } from '../config/api'
+import { slotKindOf, type MealSlotKind } from './mealSlots'
 
 export type MealCategory = '한식' | '중식' | '일식' | '양식' | '분식' | '간식' | '기타'
 
@@ -10,6 +11,8 @@ export type AccountOption = {
 export type AccountMealSlot = {
   meal_slot_code: number
   meal_slot_name: string
+  /** 본식/간식(본사 끼니 종류 관리). 예전 서버면 조·중·석식만 본식 */
+  slot_kind: MealSlotKind
   display_order: number
   selected_yn: 'Y' | 'N'
 }
@@ -22,6 +25,8 @@ export type AccountMealSlotSavePayload = {
 
 export type AccountMealSlotProfile = {
   meal_slot_code: number
+  meal_slot_name?: string
+  slot_kind: MealSlotKind
   default_food_type: number
   default_meal_plan_type: number
   template_id?: number | null
@@ -811,6 +816,7 @@ export async function getAccountMealSlots(accountId: string): Promise<AccountMea
     return {
       meal_slot_code: asNumber(record.meal_slot_code ?? record.mealSlotCode),
       meal_slot_name: asText(record.meal_slot_name ?? record.mealSlotName),
+      slot_kind: slotKindOf(asNumber(record.meal_slot_code ?? record.mealSlotCode), asText(record.slot_kind)),
       display_order: asNumber(record.display_order ?? record.displayOrder),
       selected_yn: asText(record.selected_yn ?? record.selectedYn, 'N') === 'Y' ? 'Y' : 'N',
     }
@@ -859,6 +865,8 @@ export async function getAccountMealConfiguration(accountId: string): Promise<Ac
       const budget = record.budget_per_person ?? record.budgetPerPerson
       return {
         meal_slot_code: asNumber(record.meal_slot_code ?? record.mealSlotCode),
+        meal_slot_name: asText(record.meal_slot_name ?? record.mealSlotName),
+        slot_kind: slotKindOf(asNumber(record.meal_slot_code ?? record.mealSlotCode), asText(record.slot_kind)),
         default_food_type: asNumber(record.default_food_type ?? record.defaultFoodType, 1),
         default_meal_plan_type: asNumber(record.default_meal_plan_type ?? record.defaultMealPlanType),
         template_id: asNumber(record.template_id ?? record.templateId) || null,

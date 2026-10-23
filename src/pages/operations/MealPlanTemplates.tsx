@@ -5,15 +5,18 @@ import { getMenuManagerList, type MenuManagerItem } from '../../api/operations'
 import {
   deleteMealPlanTemplate, getMealPlanTemplateDetail, getMealPlanTemplates, priceTierOf, saveMealPlanTemplate, won, type MealPlanTemplate,
 } from '../../api/mealPlanTemplates'
+import { getMealSlots } from '../../api/mealSlots'
 import { normalizeMenuText } from '../../features/tableMeals/useTableMealsWorkspace'
 import { mealPlanTypeOptions } from './menuManagerShared'
 import './MealPlanTemplates.css'
 
 const DAYS = ['월', '화', '수', '목', '금', '토', '일']
-const SLOTS = [
-  { code: 0, label: '조식' }, { code: 1, label: '오전간식' }, { code: 2, label: '중식' }, { code: 3, label: '오후간식' },
-  { code: 5, label: '석식' }, { code: 6, label: '저녁간식' },
-]
+/** 끼니 목록: 본사 끼니 종류(/v2/meal-slots, 사용 중인 것)를 받기 전·실패 시 쓰는 기본값 */
+type SlotOption = { code: number; label: string; main: boolean; active: boolean }
+const DEFAULT_SLOTS: SlotOption[] = [
+  { code: 0, label: '조식', main: true }, { code: 1, label: '오전간식', main: false }, { code: 2, label: '중식', main: true }, { code: 3, label: '오후간식', main: false },
+  { code: 5, label: '석식', main: true }, { code: 6, label: '저녁간식', main: false },
+].map(slot => ({ ...slot, active: true }))
 const planTypeName = (type: number) => mealPlanTypeOptions.find(option => Number(option.value) === type)?.text ?? `유형 ${type}`
 
 type CellMenu = { menu_id: string; menu_name: string }
@@ -30,7 +33,7 @@ type Draft = {
   weekend: boolean
 }
 const cellKey = (day: number, slot: number) => `${day}:${slot}`
-const emptyDraft = (): Draft => ({ price_tier: '', meal_plan_type: 0, template_seq: 1, template_name: '', note: '', active_yn: 'Y', cells: {}, slots: [0, 2, 5], weekend: false })
+const emptyDraft = (mains: number[]): Draft => ({ price_tier: '', meal_plan_type: 0, template_seq: 1, template_name: '', note: '', active_yn: 'Y', cells: {}, slots: mains, weekend: false })
 
 /**
  * 본사 금액대 식단표 템플릿(2026-10-22 사용자 결정). 금액대(1일 식단가를 1,000원 단위로 올린 값)·식단유형마다 최대 3개.
@@ -47,6 +50,18 @@ export default function MealPlanTemplates() {
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
   const [revision, setRevision] = useState(0)
+  const [slotOptions, setSlotOptions] = useState<SlotOption[]>(DEFAULT_SLOTS)
+
+  useEffect(() => {
+    let alive = true
+    getMealSlots().then(rows => {
+      if (alive && rows.length) setSlotOptions(rows.map(row => ({ code: row.meal_slot_code, label: row.meal_slot_name, main: row.slot_kind === 'MAIN', active: row.active_yn === 'Y' })))
+    }).catch(() => { /* 기본 끼니로 계속 */ })
+    return () => { alive = false }
+  }, [])
+  // 기본으로 켜는 끼니 = 본식. 표·체크 상자는 사용 중인 끼니 + 이 템플릿에 이미 있는 끼니(본사 표시 순서)
+  const mainCodes = slotOptions.filter(slot => slot.main && slot.active).map(slot => slot.code)
+  const SLOTS = slotOptions.filter(slot => slot.active || draft?.slots.includes(slot.code))
 
   useEffect(() => {
     let alive = true
@@ -78,13 +93,13 @@ export default function MealPlanTemplates() {
       .filter(menu => !key || normalizeMenuText(menu.menu_name).includes(key)).slice(0, 200)
   }, [menus, search, draft])
 
-  const openNew = () => { setDraft(emptyDraft()); setTarget({ day: 1, slot: 2 }); setMessage('') }
+  const openNew = () => { setDraft(emptyDraft(mainCodes)); setTarget({ day: 1, slot: mainCodes.includes(2) ? 2 : mainCodes[0] ?? 2 }); setMessage('') }
   const openEdit = async (template: MealPlanTemplate) => {
     setBusy(true); setMessage('')
     try {
       const detail = await getMealPlanTemplateDetail(template.meal_plan_template_id)
       const cells: Record<string, CellMenu[]> = {}
-      const slots = new Set<number>([0, 2, 5])
+      const slots = new Set<number>(mainCodes)
       let weekend = false
       for (const item of detail.items) {
         const key = cellKey(item.day_index, item.meal_slot_code)

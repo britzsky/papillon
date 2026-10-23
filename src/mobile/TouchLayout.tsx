@@ -36,6 +36,7 @@ const NAV: NavGroup[] = [
   { key: 'sanitation', label: '위생', icon: 'sanitation', items: [{ label: '위생 점검', to: '/sanitation/vendor', hint: '' }] },
   { key: 'hq', label: '본사', icon: 'hq', hqOnly: true, items: [
     { label: '고객사 관리', to: '/operations/account', hint: '고객사 · 식사 설정' },
+    { label: '끼니 종류', to: '/operations/meal-slots', hint: '조식·중식·간식 등 끼니 추가' },
     { label: '검색어 관리', to: '/operations/search-analytics', hint: '검색 기록 분석' },
     { label: 'AI 사용 이력', to: '/operations/ai-usage', hint: 'AI 토큰 · 예상 비용' },
   ] },

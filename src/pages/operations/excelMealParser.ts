@@ -13,7 +13,7 @@ import {
   resolveSnacks,
   slotCodeOf,
   splitMenuText,
-  SLOT_LABELS,
+  slotLabelOf,
   weekdayOfMonthDay,
   WEEKDAYS,
   type MealSlotTarget,
@@ -157,7 +157,7 @@ export function parseMealSheet(grid: SheetGrid, slots: MealSlotTarget[], exclude
 
   const resolved = resolveSnacks(sections.map(item => ({ code: item.code, y: -item.order })), slots)
   const slotKey = (index: number) => String(resolved[index].code)
-  const courseKey = (index: number, name: string) => `${SLOT_LABELS[resolved[index].code] ?? slotKey(index)} ${name}`
+  const courseKey = (index: number, name: string) => `${slotLabelOf(resolved[index].code, slots)} ${name}`
   const courses: string[] = []
   const excluded = new Set(excludedCourses)
   let cellCount = 0
@@ -192,7 +192,7 @@ export function parseMealSheet(grid: SheetGrid, slots: MealSlotTarget[], exclude
   days.forEach(day => keys.forEach(key => { day.meals[key] ??= [] }))
   const configured = new Set(slots.map(slot => slot.code))
   const unconfigured = slots.length
-    ? keys.filter(key => !configured.has(Number(key)) && days.some(day => day.meals[key].length)).map(key => SLOT_LABELS[Number(key)] ?? key)
+    ? keys.filter(key => !configured.has(Number(key)) && days.some(day => day.meals[key].length)).map(key => slotLabelOf(Number(key), slots))
     : []
   const originTexts = [...new Set(rows.flat().filter(text => isOriginText(text) && compact(text).length > 4))]
   days.sort((a, b) => (a.date && b.date ? a.date.localeCompare(b.date) : WEEKDAYS.indexOf(a.label as never) - WEEKDAYS.indexOf(b.label as never)))

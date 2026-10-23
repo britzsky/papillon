@@ -28,6 +28,7 @@ import SupplierSiteMapping from './pages/order/SupplierSiteMapping.tsx'
 import SearchAnalytics from './pages/operations/SearchAnalytics.tsx'
 import AiUsage from './pages/operations/AiUsage.tsx'
 import MealPlanTemplates from './pages/operations/MealPlanTemplates.tsx'
+import MealSlots from './pages/operations/MealSlots.tsx'
 import { DeviceRoute } from './mobile/deviceMode'
 import OrderWorkspaceTouch from './mobile/pages/OrderWorkspaceTouch'
 import HomeTouch from './mobile/pages/HomeTouch'
@@ -100,6 +101,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/operations/account-menu" element={<DeviceRoute pc={<AccountMenuManager />} touch={<AccountMenuTouch />} />} />
         <Route path="/operations/account-menu/import" element={<DeviceRoute pc={<AccountMenuImport />} touch={<AccountMenuTouch />} />} />
         <Route path="/operations/meal-plan-templates" element={<MealPlanTemplates />} />
+        <Route path="/operations/meal-slots" element={<MealSlots />} />
         <Route path="/operations/table-meals" element={<DeviceRoute pc={<TableMealsManager />} touch={<TableMealsTouch />} />} />
         <Route path="/operations/search-analytics" element={<DeviceRoute pc={<SearchAnalytics />} touch={<SearchAnalyticsTouch />} />} />
         <Route path="/operations/ai-usage" element={<DeviceRoute pc={<AiUsage />} touch={<AiUsageTouch />} />} />

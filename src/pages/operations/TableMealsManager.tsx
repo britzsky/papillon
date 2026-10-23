@@ -1,3 +1,4 @@
+import { isMainSlot, slotKindOf } from '../../api/mealSlots'
 import MealPlanImpact from '../../components/MealPlanImpact'
 import { formatQty } from '../../utils/formatQty'
 import MealUsageControls from '../../components/MealUsageControls'
@@ -664,7 +665,7 @@ function TableMealsManager() {
 
       {templatePicker ? <TemplatePickerDialog state={templatePicker} weekLabel={selectedAutoWeek?.label ?? '선택한 주차'} onPick={template => void applyTemplate(template)} onClose={() => setTemplatePicker(null)} /> : null}
       {isSaveTemplateOpen ? <SaveTemplateDialog mealPlanType={selectedMealPlanType}
-        defaultTier={Math.ceil(((accountMealConfiguration?.profiles ?? []).filter(profile => [0, 2, 5].includes(profile.meal_slot_code)).reduce((sum, profile) => sum + (profile.budget_per_person ?? 0), 0)) / 1000) * 1000}
+        defaultTier={Math.ceil(((accountMealConfiguration?.profiles ?? []).filter(profile => isMainSlot(profile.meal_slot_code, profile.slot_kind)).reduce((sum, profile) => sum + (profile.budget_per_person ?? 0), 0)) / 1000) * 1000}
         onSave={saveDraftAsTemplate} onClose={() => setIsSaveTemplateOpen(false)} /> : null}
       {isMealConfigOpen && selectedAccountId ? (
         <MealConfigDialog accountId={selectedAccountId} accountName={selectedAccountName} onClose={() => setIsMealConfigOpen(false)} onSaved={reloadMealConfiguration} />
@@ -699,7 +700,7 @@ function TableMealsManager() {
                       {configuredMealSlotRows.map((slot) => {
                         const key = `${formatDateValue(date)}:${slot.code}`
                         const profile = accountMealConfiguration?.profiles.find((item) => item.meal_slot_code === slot.code)
-                        const isSnack = [1, 3, 4, 6, 7, 8].includes(slot.code)
+                        const isSnack = slotKindOf(slot.code, profile?.slot_kind) === 'SNACK'
                         const setting = weeklyMealSettings[key]
                         const foodType = setting?.food_type ?? profile?.default_food_type ?? (isSnack ? 6 : 1)
                         const planType = setting?.meal_plan_type ?? profile?.default_meal_plan_type ?? selectedMealPlanType

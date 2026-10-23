@@ -28,7 +28,8 @@ export const DETAIL_MEAL_SLOT_ORDER: Array<{ id: string; key: MealSlotKey; label
   { id: 'snack-evening', key: 'snack', label: '간식' },
 ]
 
-export type MealSlotRow = { id: string; key: MealSlotKey; label: string; code: number }
+/** kind: 본식/간식(본사 끼니 종류, 거래처 설정에서 받음) */
+export type MealSlotRow = { id: string; key: MealSlotKey; label: string; code: number; kind?: string }
 
 export const ACCOUNT_MEAL_SLOT_ROWS: MealSlotRow[] = [
   { id: 'breakfast', key: '0', label: '조식', code: 0 },
@@ -49,10 +50,11 @@ export function toMealSlotRows(items: AccountMealSlot[]) {
 
   return selectedItems
     .map((item) => {
+      // 본사가 추가한 끼니(코드 9 이상)는 기본 행이 없어 코드로 만든다(key = 코드 문자열, 기본 끼니와 같은 규칙)
       const slot = ACCOUNT_MEAL_SLOT_ROWS.find((row) => row.code === item.meal_slot_code)
-      return slot ? { ...slot, label: item.meal_slot_name || slot.label } : null
+        ?? { id: `slot-${item.meal_slot_code}`, key: String(item.meal_slot_code), label: `식사 ${item.meal_slot_code}`, code: item.meal_slot_code }
+      return { ...slot, label: item.meal_slot_name || slot.label, kind: item.slot_kind }
     })
-    .filter((slot): slot is MealSlotRow => slot !== null)
 }
 
 export function formatDateValue(date: Date) {
