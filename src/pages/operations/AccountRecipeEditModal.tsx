@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { IngredientOption } from '../../api/operations'
-import { getAccountIngredients, registerAccountIngredient, type AccountIngredient } from '../../api/accountMenuRegistration'
+import { getAccountIngredients, registerAccountIngredient, resetAccountRecipeToStandard, type AccountIngredient } from '../../api/accountMenuRegistration'
 import { deleteAccountRecipeRow, getAccountRecipe, saveAccountRecipeRow, type AccountRecipeRow } from '../../api/accountRecipes'
 import IngredientSearchSelect from './IngredientSearchSelect'
 import './AccountRecipeEditModal.css'
@@ -14,6 +14,8 @@ type Props = {
   onClose: () => void
   /** 저장이 끝났을 때(부모가 메뉴·원가를 다시 읽는다) */
   onSaved?: (message: string) => void
+  /** 창을 열어 둔 채 서버 레시피가 바뀌었을 때(본사 레시피로 되돌리기) — 부모는 원가만 다시 읽는다 */
+  onChanged?: () => void
 }
 
 /** 편집 줄: 이미 있던 줄은 id·seq가 있다. 목록에 없는 식재료는 newName으로 입력하면 저장할 때 거래처 식재료로 만든다 */
@@ -24,19 +26,27 @@ const nameKey = (value: string) => value.replace(/\s+/g, '').toLowerCase()
 const qtyText = (value: number) => (Number.isFinite(value) && value > 0 ? String(Math.round(value * 1000) / 1000) : '')
 let rowSeq = 0
 const nextKey = () => `are-${++rowSeq}`
+const toRows = (recipe: AccountRecipeRow[]): Row[] => recipe.map(row => ({
+  key: nextKey(), id: row.account_recipe_detail_id, seq: row.ingredient_seq, ingredient_id: row.ingredient_id,
+  qty: row.review_flag ? '' : qtyText(row.qty_per_person), newName: null, newUnit: 'g',
+  hint: row.review_flag ? `원래 표기 '${row.qty_num}${row.qty_unit}'를 ${row.base_unit}로 바꾸지 못했습니다. ${row.base_unit} 기준으로 다시 입력해주세요.` : undefined,
+}))
+/** 거래처에서 직접 만든 메뉴(AM-…)는 본사 레시피가 없다 */
+const isAccountOnlyMenu = (menuId: string) => menuId.startsWith('AM-')
 
 /**
  * 이 업장 레시피 수정(2026-10-26 사용자 결정: 거래처 메뉴 관리 화면 대신 식단표에서 바로).
  * 식재료 바꾸기·1인 사용량(식재료 기준단위)·줄 추가·빼기. 이 거래처에만 적용되고 본사 레시피는 그대로다.
  * 부족량·발주 수량과 1인 원가가 이 레시피로 계산된다.
  */
-export default function AccountRecipeEditModal({ accountId, accountName, menuId, menuName, onClose, onSaved }: Props) {
+export default function AccountRecipeEditModal({ accountId, accountName, menuId, menuName, onClose, onSaved, onChanged }: Props) {
   const [original, setOriginal] = useState<AccountRecipeRow[]>([])
   const [ingredients, setIngredients] = useState<IngredientOption[]>([])
   const [rows, setRows] = useState<Row[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [notice, setNotice] = useState('')
 
   useEffect(() => {
     let alive = true
@@ -45,11 +55,7 @@ export default function AccountRecipeEditModal({ accountId, accountName, menuId,
         if (!alive) return
         setOriginal(recipe)
         setIngredients(accountIngredients.map(toOption))
-        setRows(recipe.map(row => ({
-          key: nextKey(), id: row.account_recipe_detail_id, seq: row.ingredient_seq, ingredient_id: row.ingredient_id,
-          qty: row.review_flag ? '' : qtyText(row.qty_per_person), newName: null, newUnit: 'g',
-          hint: row.review_flag ? `원래 표기 '${row.qty_num}${row.qty_unit}'를 ${row.base_unit}로 바꾸지 못했습니다. ${row.base_unit} 기준으로 다시 입력해주세요.` : undefined,
-        })))
+        setRows(toRows(recipe))
       })
       .catch(e => { if (alive) setError(e instanceof Error ? e.message : '레시피를 불러오지 못했습니다.') })
       .finally(() => { if (alive) setLoading(false) })
@@ -126,6 +132,25 @@ export default function AccountRecipeEditModal({ accountId, accountName, menuId,
   }
 
   // body에 붙인다: 식단표 화면 안쪽 규칙(여백·버튼)에 덮이지 않게. 버튼은 PC·터치 공통 버튼 모양(t-btn·is-primary)을 그대로 쓴다
+  /** 본사 레시피로 되돌리기: 저장하지 않은 수정은 버려진다. 끝나면 서버 레시피를 다시 읽어 창에 보여준다 */
+  const resetToStandard = async () => {
+    if (!window.confirm(`'${menuName}'의 이 업장 레시피를 본사 레시피로 되돌릴까요?
+이 업장에서 바꾼 식재료·사용량이 모두 본사 기준으로 바뀝니다.`)) return
+    setBusy(true); setError(''); setNotice('')
+    try {
+      const result = await resetAccountRecipeToStandard(accountId, menuId)
+      const recipe = await getAccountRecipe(accountId, menuId)
+      setOriginal(recipe)
+      setRows(toRows(recipe))
+      setNotice(`본사 레시피로 되돌렸습니다 · 식재료 ${result.copied_ingredient_count}개. 부족량·원가에 바로 반영됩니다.`)
+      onChanged?.()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '본사 레시피로 되돌리지 못했습니다.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return createPortal(
     <div className="are-backdrop" role="presentation" onClick={() => { if (!busy) onClose() }}>
       <section className="are" role="dialog" aria-modal="true" aria-labelledby="are-title" onClick={event => event.stopPropagation()}>
@@ -172,11 +197,13 @@ export default function AccountRecipeEditModal({ accountId, accountName, menuId,
               <button type="button" className="are__btn are__add t-btn is-soft is-small" onClick={() => setRows(current => [...current, { key: nextKey(), ingredient_id: '', qty: '', newName: ingredients.length ? null : '', newUnit: 'g' }])}>＋ 식재료 추가</button>
             </div>
           </>}
+          {notice && <p className="are__notice" role="status">{notice}</p>}
           {error && <p className="are__error" role="alert">{error}</p>}
         </div>
 
         <footer className="are__actions">
-          <button type="button" className="are__btn t-btn" disabled={busy} onClick={onClose}>취소</button>
+          {!loading && !notAccountMenu && !isAccountOnlyMenu(menuId) ? <button type="button" className="are__btn are__reset t-btn is-ghost" disabled={busy} onClick={() => void resetToStandard()}>본사 레시피로 되돌리기</button> : null}
+          <button type="button" className="are__btn t-btn" disabled={busy} onClick={onClose}>{notice ? '닫기' : '취소'}</button>
           <button type="button" className="are__btn t-btn is-primary" disabled={busy || loading || notAccountMenu || recipeId == null} onClick={() => void save()}>{busy ? '저장 중…' : '이 업장 레시피 저장'}</button>
         </footer>
       </section>

@@ -878,6 +878,7 @@ function TableMealsManager() {
             // 메뉴 원가·부족량 표시를 새 레시피로 다시 읽는다
             if (selectedAccountId) void getAccountMenuManagerList(selectedAccountId).then(setAccountMenuItems).catch(() => {})
           }}
+          onChanged={() => { if (selectedAccountId) void getAccountMenuManagerList(selectedAccountId).then(setAccountMenuItems).catch(() => {}) }}
         />
       ) : null}
       <RecipeViewModal

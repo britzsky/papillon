@@ -36,6 +36,11 @@ export function importStandardMenu(accountId: string, menuId: string) {
   return post<{ menu_id: string; menu_name: string }>('/v2/menu-management/menus/import-standard', { account_id: accountId, menu_id: menuId }, '본사 메뉴를 가져오지 못했습니다.')
 }
 
+/** 이 업장 레시피를 본사 레시피로 되돌린다(거래처 레시피 줄을 지우고 본사 레시피 복사, 메뉴 정보는 그대로). 거래처 전용 메뉴는 서버가 거부 */
+export function resetAccountRecipeToStandard(accountId: string, menuId: string) {
+  return post<{ removed_count: number; copied_ingredient_count: number; message: string }>('/v2/menu-management/menus/reset-to-standard', { account_id: accountId, menu_id: menuId }, '본사 레시피로 되돌리지 못했습니다.')
+}
+
 /** 거래처 전용 메뉴를 같은 ID로 본사 메뉴에도 등록 */
 export function promoteAccountMenu(accountId: string, menuId: string) {
   return post<{ menu_id: string }>('/v2/menu-management/menus/promote', { account_id: accountId, menu_id: menuId }, '본사 메뉴로 반영하지 못했습니다.')

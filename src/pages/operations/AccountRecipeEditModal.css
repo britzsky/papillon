@@ -21,14 +21,19 @@
 .are-backdrop .are__qty span { flex: none; min-width: 22px; color: #5b6660; }
 .are-backdrop .are .are__remove { width: 100%; min-width: 0; height: 36px; min-height: 36px; padding: 0 4px; font-size: 13px; cursor: pointer; }
 .are-backdrop .are__hint { color: #8a4b00; }
+.are-backdrop .are__notice { margin: 0; padding: 8px 10px; border-radius: 8px; background: #eef7f1; color: #1f6f4a; }
 .are-backdrop .are__error { margin: 0; padding: 8px 10px; border-radius: 8px; background: #fdecec; color: #a12020; }
 .are-backdrop .are__actions { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 18px 16px; border-top: 1px solid #e3e8e4; }
 .are-backdrop .are .are__btn { min-width: 0; height: 42px; min-height: 42px; padding: 0 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
 .are-backdrop .are .are__btn:disabled { opacity: 0.55; cursor: default; }
+/* 되돌리기는 왼쪽 끝(저장·취소와 떨어뜨림) */
+.are-backdrop .are .are__reset { margin-right: auto; color: #5b6660; }
 .are-backdrop .are .are__add { align-self: flex-start; height: 38px; min-height: 38px; }
 @media (max-width: 520px) {
   .are-backdrop { padding: 10px; }
   .are-backdrop .are__head, .are-backdrop .are__body, .are-backdrop .are__actions { padding-left: 14px; padding-right: 14px; }
   .are-backdrop .are__row { grid-template-columns: minmax(0, 1fr) 92px 46px; gap: 6px; }
+  .are-backdrop .are__actions { flex-wrap: wrap; }
   .are-backdrop .are__actions .are__btn { flex: 1 1 0; }
+  .are-backdrop .are__actions .are__reset { flex: 1 1 100%; margin-right: 0; }
 }
