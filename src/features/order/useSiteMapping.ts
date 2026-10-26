@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getAccountOptions, type AccountOption } from '../../api/operations'
+import { forgetAccountSuppliers } from '../workspace/accountSuppliers'
 import {
   assignSite, getMasterSites, getSiteMappings, nameScore, setMasterSiteUse, SharedSiteError, syncMasterSites,
   type SupplierCode, type SupplierMasterSite, type SupplierSiteMapping,
@@ -90,6 +91,7 @@ export function useSiteMapping() {
         await assignSite(account.value, supplier, siteCode, true)
       }
       setMessage(`${account.text} · ${label} 사업장을 ${siteCode ? '저장' : '해제'}했습니다.`)
+      forgetAccountSuppliers() // 관리 거래처 고르기의 매핑 색을 다시 읽게
       reload()
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : '저장에 실패했습니다.')

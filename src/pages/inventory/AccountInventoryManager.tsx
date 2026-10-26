@@ -337,18 +337,18 @@ function AccountInventoryManager() {
         <SideMenuLayout
           header={
             <HeaderBar
-              title="재고"
+              title="거래처별 재고관리"
               breadcrumbs={[
                 { label: 'Home', to: '/home' },
                 { label: '재고관리', to: '/inventory/account' },
-                { label: '재고' },
+                { label: '거래처별 재고관리' },
               ]}
             />
           }
         >
           <div className="rd rd-inv">
           <header className="rd-inv__head">
-            <h1 className="rd-sr-only">재고</h1>
+            <h1 className="rd-sr-only">거래처별 재고관리</h1>
             <DeadlineAlertSlot />
             <div className="rd-inv__actions">
               <button type="button" className="rd-btn is-primary" disabled={isLoading || isSaving || !targetAccountId}

@@ -272,7 +272,13 @@ function MenuManager() {
                   <span>{activeMenu ? activeMenu.menu_name || '신규 메뉴' : '메뉴를 선택하세요.'}</span>
                 </div>
                 <div className="menu-manager-panel__actions">
-
+                  {/* 조리 레시피(요약·조리 순서·보관 등) 보기·수정 — 수정 창은 저장된 레시피를 불러와 같은 레시피로 저장한다 */}
+                  <button type="button" disabled={!activeMenu?.menu_id} onClick={() => { if (activeMenu) { setRecipeViewMode('basic'); setRecipeViewRequest(buildRecipeRequest(activeMenu)) } }}>
+                  레시피 보기
+                  </button>
+                  <button type="button" disabled={!activeMenu?.menu_id} onClick={() => { if (activeMenu) setRecipeRegisterRequest(buildRecipeRequest(activeMenu)) }}>
+                  레시피 수정
+                  </button>
                   <button type="button" className="menu-manager-add-button" onClick={handleAddIngredient} disabled={!activeMenu}>
                   식자재 추가
                   </button>

@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { logout } from '../api/auth'
 import { getAccountOptions, type AccountOption } from '../api/operations'
+import { supplierBackground, supplierLabel, useAccountSuppliers } from '../features/workspace/accountSuppliers'
 import TouchIcon, { type TouchIconName } from './TouchIcon'
 import { useTouchBody } from './useTouchBody'
 import logo from '../assets/logo/thefull.png'
@@ -28,7 +29,7 @@ const NAV: NavGroup[] = [
     { label: '사업장 매핑', to: '/order_manager/supplier-sites', hint: '거래처별 공급사 사업장' },
   ] },
   { key: 'inventory', label: '재고', icon: 'inventory', items: [
-    { label: '재고 현황', to: '/inventory/account', hint: '식재료별 재고 · 직접 구매 · 조정' },
+    { label: '거래처별 재고관리', to: '/inventory/account', hint: '식재료별 재고 · 직접 구매 · 조정' },
     { label: '변동 이력', to: '/inventory/history', hint: '입고 · 사용 · 조정 기록' },
     { label: '식자재 관리', to: '/inventory/ingredients', hint: '본사 식자재 목록' },
   ] },
@@ -72,6 +73,8 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, children,
   // 관리 거래처(PC와 같은 규칙: 거래처 계정 고정, 본사는 주소 → 마지막 선택)
   const accountId = workspaceAccountId(searchParams)
   const accountUser = isAccountUser()
+  // 공급사 사업장 매핑 색(왼쪽 웰스토리 주황 · 오른쪽 아워홈 파랑) — 본사만
+  const suppliers = useAccountSuppliers(!accountUser)
 
   useTouchBody()
 
@@ -172,11 +175,11 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, children,
         {!hideAccount && <div className="t-top__account">
           {accountUser
             ? <span className="t-chip"><TouchIcon name="store" />{accountName || '내 거래처'}</span>
-            : <label className="t-chip t-chip--select">
+            : <label className="t-chip t-chip--select" style={{ backgroundImage: supplierBackground(suppliers.get(accountId)) }} title={supplierLabel(suppliers.get(accountId)) || undefined}>
               <TouchIcon name="store" />
               <select aria-label="거래처" value={accountId} onChange={e => changeAccount(e.target.value)}>
                 <option value="">전체 거래처</option>
-                {accounts.map(option => <option key={option.value} value={option.value}>{option.text}</option>)}
+                {accounts.map(option => { const label = supplierLabel(suppliers.get(option.value)); return <option key={option.value} value={option.value}>{option.text}{label ? ` · ${label}` : ''}</option> })}
               </select>
             </label>}
         </div>}

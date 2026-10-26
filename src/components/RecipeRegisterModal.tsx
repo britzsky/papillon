@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import AppAlert, { type AppAlertState } from './AppAlert'
-import { buildEmptyRecipe, saveRecipe, type Recipe, type RecipeImage, type RecipeRequest, type RecipeVideo } from '../api/recipe'
+import { buildEmptyRecipe, getRecipeDetail, saveRecipe, type Recipe, type RecipeImage, type RecipeRequest, type RecipeVideo } from '../api/recipe'
 import './AiRecipeModal.css'
 
 type RecipeRegisterModalProps = {
@@ -84,10 +84,23 @@ function RecipeRegisterModal({ request, onClose, onSaved }: RecipeRegisterModalP
       return
     }
 
-    setRecipe(buildEmptyRecipe(request))
+    // 저장된 레시피가 있으면 불러와 수정한다(같은 recipe_id로 저장 → 덮어씀, 2026-10-26). 없으면 빈 양식
+    let alive = true
+    setRecipe(null)
     setAlert(null)
     setActiveTab('basic')
+    const atLeastOne = (items: string[]) => (items.length > 0 ? items : [''])
+    getRecipeDetail(request)
+      .then(saved => {
+        if (!alive) return
+        setRecipe(saved?.recipe_id
+          ? { ...saved, steps: atLeastOne(saved.steps), tips: atLeastOne(saved.tips), storage: atLeastOne(saved.storage), allergens: atLeastOne(saved.allergens) }
+          : buildEmptyRecipe(request))
+      })
+      .catch(() => { if (alive) setRecipe(buildEmptyRecipe(request)) })
+    return () => { alive = false }
   }, [request])
+  const editing = Boolean(recipe?.recipe_id)
 
   const recipeJson = useMemo(() => {
     if (!recipe) {
@@ -137,7 +150,7 @@ function RecipeRegisterModal({ request, onClose, onSaved }: RecipeRegisterModalP
     try {
       setIsSaving(true)
       setAlert(null)
-      await saveRecipe(
+      const result = await saveRecipe(
         {
           ...recipe,
           ingredients: normalizeItems(recipe.ingredients),
@@ -148,7 +161,10 @@ function RecipeRegisterModal({ request, onClose, onSaved }: RecipeRegisterModalP
         },
         request,
       )
-      setAlert({ type: 'success', title: '저장 완료', message: '레시피 등록이 완료되었습니다.' })
+      // 새로 등록한 레시피는 서버가 준 recipe_id를 기억해 다시 저장해도 같은 레시피를 고친다
+      const savedId = result && typeof result === 'object' && 'recipe_id' in result ? String((result as { recipe_id: unknown }).recipe_id ?? '') : ''
+      if (savedId) setRecipe(current => (current ? { ...current, recipe_id: savedId } : current))
+      setAlert({ type: 'success', title: '저장 완료', message: editing ? '레시피를 수정했습니다.' : '레시피 등록이 완료되었습니다.' })
       onSaved?.()
     } catch (error) {
       setAlert({
@@ -176,8 +192,8 @@ function RecipeRegisterModal({ request, onClose, onSaved }: RecipeRegisterModalP
       >
         <header className="ai-recipe-modal__header">
           <div>
-            <p>Recipe Register</p>
-            <h2 id="recipe-register-title">레시피 등록</h2>
+            <p>{editing ? 'Recipe Edit' : 'Recipe Register'}</p>
+            <h2 id="recipe-register-title">{editing ? '레시피 수정' : '레시피 등록'}</h2>
             <span>{request.menu_name}</span>
           </div>
           <button type="button" onClick={onClose} aria-label="닫기">

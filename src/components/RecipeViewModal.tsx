@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { requestAiRecipe } from '../api/ai'
 import { getRecipeDetail, type Recipe, type RecipeRequest, type RecipeVideo } from '../api/recipe'
+import { isHeadquarters } from '../features/workspace/workspaceAccount'
 import './AiRecipeModal.css'
 
 export type RecipeViewMode = 'ai' | 'basic'
@@ -245,9 +246,12 @@ function RecipeViewModal({ request, mode, onClose, onRegister }: RecipeViewModal
           <button type="button" className="is-secondary" onClick={onClose}>
             닫기
           </button>
-          <button type="button" className="is-primary" onClick={() => onRegister(request)}>
-            레시피 등록
-          </button>
+          {/* 레시피(조리 순서 등)는 본사 기준정보 — 서버 /Menu/RecipeSave가 본사 전용. 저장된 레시피가 있으면 '수정'(같은 창에 불러옴) */}
+          {isHeadquarters() ? (
+            <button type="button" className="is-primary" onClick={() => onRegister(request)}>
+              {mode !== 'ai' && recipe?.recipe_id ? '레시피 수정' : '레시피 등록'}
+            </button>
+          ) : null}
         </footer>
       </section>
     </div>

@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import type { RecipeRequest } from '../api/recipe'
+import { isHeadquarters } from '../features/workspace/workspaceAccount'
 import './AiRecipeModal.css'
 
 export type RecipeActionMenuState = {
@@ -79,16 +80,19 @@ function RecipeActionMenu({ state, onClose, onViewAi, onViewBasic, onRegister, o
           이 업장 레시피 수정
         </button>
       ) : null}
-      <button
-        type="button"
-        role="menuitem"
-        onClick={() => {
-          onRegister(state.request)
-          onClose()
-        }}
-      >
-        레시피 등록
-      </button>
+      {/* 레시피 등록·수정은 본사만(서버 /Menu/RecipeSave 본사 전용). 저장된 레시피가 있으면 창이 불러와 수정한다 */}
+      {isHeadquarters() ? (
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => {
+            onRegister(state.request)
+            onClose()
+          }}
+        >
+          레시피 등록·수정
+        </button>
+      ) : null}
       {state.orderMenuId && onOrder ? (
         <button
           type="button"

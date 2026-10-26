@@ -61,7 +61,7 @@ const majorMenus: MajorMenu[] = [
     label: '재고관리',
     basePaths: ['/inventory'],
     items: [
-      { label: '재고', to: '/inventory/account', exact: true },
+      { label: '거래처별 재고관리', to: '/inventory/account', exact: true },
       { label: '재고 변동 이력', to: '/inventory/history', exact: true },
       { label: '식자재 관리', to: '/inventory/ingredients', exact: true },
     ],
