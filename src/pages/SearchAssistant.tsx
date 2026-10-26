@@ -48,7 +48,7 @@ function SearchAssistant() {
     }))
     const accountResults = accounts.filter((item) => includes(item.text, item.value)).slice(0, 5).map((item) => ({
       entity_type: 'VENDOR' as const, entity_id: item.value, title: item.text,
-      description: '사업장 메뉴와 식단 운영정보를 확인합니다.', category: '사업장', path: `/operations/account-menu?account_id=${encodeURIComponent(item.value)}`,
+      description: '사업장 식단표와 메뉴 레시피를 확인합니다.', category: '사업장', path: `/operations/table-meals?account_id=${encodeURIComponent(item.value)}`,
     }))
     const hygieneResults = guides.filter((item) => includes(item.title, item.category, item.guidance_text)).slice(0, 5).map((item) => ({
       entity_type: 'HYGIENE_GUIDE' as const, entity_id: String(item.guide_id), title: item.title,

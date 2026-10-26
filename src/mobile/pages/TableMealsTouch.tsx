@@ -7,6 +7,7 @@ import { parseMonthValue, type MealSlotRow, type TableMealsDetailDay } from '../
 import { dayLabel, qty, statusLabel, useMealUsage, type Meal } from '../../features/mealUsage/useMealUsage'
 import type { TableMealsItem } from '../../api/operations'
 import TableMealsCreateTouch from './TableMealsCreateTouch'
+import AccountRecipeEditModal from '../../pages/operations/AccountRecipeEditModal'
 import './TableMealsTouch.css'
 
 const SOURCE_LABEL: Record<string, string> = { auto: '자동', pdf: '파일', manual: '수기', template: '템플릿' }
@@ -85,6 +86,9 @@ function WeekView({ table, accountId, tables, onSelectTable, days, slotRows, too
   const [dayIndex, setDayIndex] = useState(() => Math.max(0, days.findIndex(day => day.date === today())))
   const usage = useMealUsage(accountId, table.table_id, noop)
   const touchStart = useRef<{ x: number; y: number } | null>(null)
+  /** 이 업장 레시피 수정 창(메뉴를 누르면 연다) */
+  const [recipeMenu, setRecipeMenu] = useState<{ menu_id: string; menu_name: string } | null>(null)
+  const [recipeNotice, setRecipeNotice] = useState('')
   const daysRef = useRef<HTMLDivElement | null>(null)
   const day = days[Math.min(dayIndex, days.length - 1)]
   const usageByDate = useMemo(() => new Map(usage.days.map(d => [d.date, d])), [usage.days])
@@ -153,7 +157,9 @@ function WeekView({ table, accountId, tables, onSelectTable, days, slotRows, too
               {meal && <span className={`t-badge ${mealTone(meal)}`}>{statusLabel(meal)}</span>}
             </header>
             <ul>
-              {menus.map(menu => <li key={`${menu.sort_order}-${menu.menu_id || menu.menu_name}`}>{menu.menu_name || '-'}</li>)}
+              {menus.map(menu => <li key={`${menu.sort_order}-${menu.menu_id || menu.menu_name}`}>{menu.menu_id
+                ? <button type="button" className="tm-menu-link" title="눌러서 이 업장 레시피 수정" onClick={() => setRecipeMenu({ menu_id: menu.menu_id, menu_name: menu.menu_name || menu.menu_id })}>{menu.menu_name || '-'}</button>
+                : menu.menu_name || '-'}</li>)}
             </ul>
             {meal && <footer>
               <span><TouchIcon name="users" size={16} />계획 {qty(meal.planned_servings)}명</span>
@@ -162,10 +168,13 @@ function WeekView({ table, accountId, tables, onSelectTable, days, slotRows, too
           </article>
         })}
       </div>
-      <p className="tm-swipe-hint">좌우로 밀면 다른 요일로 넘어갑니다.</p>
+      {recipeNotice && <p className="t-msg" role="status">{recipeNotice}</p>}
+      <p className="tm-swipe-hint">좌우로 밀면 다른 요일로 넘어갑니다. 메뉴를 누르면 이 업장 레시피를 고칠 수 있습니다.</p>
     </div>
 
     {usage.open && <UsageSheet usage={usage} accountId={accountId} />}
+    {recipeMenu && accountId ? <AccountRecipeEditModal accountId={accountId} menuId={recipeMenu.menu_id} menuName={recipeMenu.menu_name}
+      onClose={() => setRecipeMenu(null)} onSaved={setRecipeNotice} /> : null}
   </TouchLayout>
 }
 

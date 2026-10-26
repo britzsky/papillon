@@ -52,20 +52,6 @@ export const searchActions: SearchAction[] = [
     path: '/operations/menu',
   },
   {
-    intent: 'ingredient',
-    category: '운영',
-    title: '거래처 메뉴관리에서 확인',
-    description: '거래처별 메뉴 안에서 해당 식자재가 쓰이는 구성을 확인합니다.',
-    path: '/operations/account-menu',
-  },
-  {
-    intent: 'vendor',
-    category: '운영',
-    title: '거래처 메뉴관리로 이동',
-    description: '검색한 거래처의 메뉴 구성과 연결된 식자재를 관리합니다.',
-    path: '/operations/account-menu',
-  },
-  {
     intent: 'vendor',
     category: '재고',
     title: '거래처 재고관리로 이동',
@@ -99,13 +85,6 @@ export const searchActions: SearchAction[] = [
     title: '메뉴관리에서 수정',
     description: '메뉴명, 키워드, 연결 식자재를 수정합니다.',
     path: '/operations/menu',
-  },
-  {
-    intent: 'menu',
-    category: '운영',
-    title: '거래처 메뉴관리에서 확인',
-    description: '거래처별로 운영 중인 해당 메뉴를 확인합니다.',
-    path: '/operations/account-menu',
   },
   {
     intent: 'menu',

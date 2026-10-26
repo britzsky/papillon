@@ -20,7 +20,7 @@ export function TemplatePickerDialog({ state, weekLabel, onPick, onClose }: {
   return createPortal(<div className="tmx-backdrop" role="presentation" onClick={onClose}>
     <section className="tmx-dialog" role="dialog" aria-modal="true" aria-labelledby="tmx-template-title" onClick={event => event.stopPropagation()}>
       <header className="tmx-dialog__head">
-        <h2 id="tmx-template-title">금액대 식단표 템플릿 불러오기</h2>
+        <h2 id="tmx-template-title">템플릿 식단표 불러오기</h2>
         <button type="button" className="tmx-close" aria-label="닫기" onClick={onClose}>×</button>
       </header>
       {state.loading ? <p role="status">템플릿을 찾고 있습니다.</p> : null}
@@ -152,7 +152,7 @@ export function SaveTemplateDialog({ defaultTier, mealPlanType, onSave, onClose 
   }
   return createPortal(<div className="tmx-backdrop" role="presentation" onClick={onClose}>
     <section className="tmx-dialog is-small" role="dialog" aria-modal="true" aria-labelledby="tmx-save-template-title" onClick={event => event.stopPropagation()}>
-      <header className="tmx-dialog__head"><h2 id="tmx-save-template-title">이 식단을 금액대 템플릿으로 저장</h2><button type="button" className="tmx-close" aria-label="닫기" onClick={onClose}>×</button></header>
+      <header className="tmx-dialog__head"><h2 id="tmx-save-template-title">이 식단을 템플릿 식단표로 저장</h2><button type="button" className="tmx-close" aria-label="닫기" onClick={onClose}>×</button></header>
       <div className="tmx-form">
         <label>1일 식단가(금액대)<input type="number" min="1000" step="1000" value={tier} onChange={event => setTier(event.target.value)} />
           <small>{Number(tier) > 0 ? `${won(priceTierOf(Number(tier)))} 금액대로 저장 (${won(priceTierOf(Number(tier)) - 999)} ~ ${won(priceTierOf(Number(tier)))})` : '조·중·석 합계 1인 식단가'}</small></label>

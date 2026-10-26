@@ -1,0 +1,34 @@
+/* 이 업장 레시피 수정 창(PC 식단표·터치 식단표 공용). 화면 공통 버튼·여백 규칙에 덮이지 않게 .are-backdrop .are 아래로 쓴다 */
+/* 전역 button 규칙(min-width: var(--button-width) !important)이 칸 폭을 넘기지 않게 */
+.are-backdrop .are button { --button-width: 0px; }
+.are-backdrop { position: fixed; inset: 0; z-index: 3900; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(17, 24, 20, 0.45); }
+.are-backdrop .are { width: min(640px, 100%); max-height: calc(100vh - 32px); display: flex; flex-direction: column; margin: 0; padding: 0; background: #fff; border-radius: 14px; box-shadow: 0 18px 48px rgba(0, 0, 0, 0.2); overflow: hidden; color: #1d2621; font-size: 14px; }
+.are-backdrop .are__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 16px 18px 10px; border-bottom: 1px solid #e3e8e4; }
+.are-backdrop .are__head h2 { margin: 0; font-size: 18px; }
+.are-backdrop .are__head p { margin: 2px 0 0; color: #5b6660; }
+.are-backdrop .are .are__close { flex: none; width: 36px; min-width: 36px; height: 36px; min-height: 36px; padding: 0; font-size: 22px; line-height: 1; cursor: pointer; --pos-card: transparent; --pos-line-strong: transparent; --button-bg: transparent; }
+.are-backdrop .are__body { padding: 12px 18px; overflow: auto; display: flex; flex-direction: column; gap: 10px; }
+.are-backdrop .are__note { margin: 0; color: #5b6660; }
+.are-backdrop .are__rows { display: flex; flex-direction: column; gap: 8px; }
+.are-backdrop .are__row { display: grid; grid-template-columns: minmax(0, 1fr) 132px 56px; gap: 8px; align-items: center; }
+.are-backdrop .are__row--head { font-weight: 700; font-size: 12px; color: #5b6660; }
+.are-backdrop .are__row-block { display: flex; flex-direction: column; gap: 3px; }
+.are-backdrop .are__new { display: flex; gap: 6px; align-items: center; min-width: 0; }
+.are-backdrop .are__new input { flex: 1 1 auto; min-width: 0; }
+.are-backdrop .are__badge { flex: none; padding: 2px 6px; border-radius: 6px; background: #fff4e5; color: #8a4b00; font-size: 12px; font-weight: 700; }
+.are-backdrop .are__qty { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.are-backdrop .are__qty input { width: 100%; min-width: 0; }
+.are-backdrop .are__qty span { flex: none; min-width: 22px; color: #5b6660; }
+.are-backdrop .are .are__remove { width: 100%; min-width: 0; height: 36px; min-height: 36px; padding: 0 4px; font-size: 13px; cursor: pointer; }
+.are-backdrop .are__hint { color: #8a4b00; }
+.are-backdrop .are__error { margin: 0; padding: 8px 10px; border-radius: 8px; background: #fdecec; color: #a12020; }
+.are-backdrop .are__actions { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 18px 16px; border-top: 1px solid #e3e8e4; }
+.are-backdrop .are .are__btn { min-width: 0; height: 42px; min-height: 42px; padding: 0 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.are-backdrop .are .are__btn:disabled { opacity: 0.55; cursor: default; }
+.are-backdrop .are .are__add { align-self: flex-start; height: 38px; min-height: 38px; }
+@media (max-width: 520px) {
+  .are-backdrop { padding: 10px; }
+  .are-backdrop .are__head, .are-backdrop .are__body, .are-backdrop .are__actions { padding-left: 14px; padding-right: 14px; }
+  .are-backdrop .are__row { grid-template-columns: minmax(0, 1fr) 92px 46px; gap: 6px; }
+  .are-backdrop .are__actions .are__btn { flex: 1 1 0; }
+}

@@ -115,7 +115,7 @@ function nextAction(accountId: string, siteMissing: boolean, upcomingMealDays: n
   if (siteMissing) return { eyebrow: '발주 준비', title: '공급사 사업장이 지정되지 않았어요', hint: isHeadquarters() ? '사업장을 지정하면 상품·판가를 받아 발주할 수 있어요' : '본사에 공급사 사업장 지정을 요청하세요', tone: 'warn',
     action: '사업장 지정', to: isHeadquarters() ? accountHref('/order_manager/supplier-sites', accountId) : undefined }
   if (upcomingMealDays === null) return null
-  if (upcomingMealDays === 0) return { eyebrow: '다음 7일 식단표가 없어요', title: '다음 주 식단 만들기', hint: '금액대 식단표 템플릿 또는 식단표 파일을 불러와 저장하면 모자란 재료로 발주해요',
+  if (upcomingMealDays === 0) return { eyebrow: '다음 7일 식단표가 없어요', title: '다음 주 식단 만들기', hint: '템플릿 식단표 또는 식단표 파일을 불러와 저장하면 모자란 재료로 발주해요',
     action: '식단표로 가기', to: accountHref('/operations/table-meals', accountId) }
   if (prepare?.to && prepare.tone !== 'done') {
     const query = new URLSearchParams(prepare.to.split('?')[1] || '')

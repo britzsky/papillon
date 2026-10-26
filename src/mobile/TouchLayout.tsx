@@ -18,8 +18,7 @@ const NAV: NavGroup[] = [
   { key: 'home', label: '홈', icon: 'home', items: [{ label: '오늘 할 일', to: '/home', hint: '' }] },
   { key: 'meals', label: '식단', icon: 'meals', items: [
     { label: '식단표', to: '/operations/table-meals', hint: '요일별 메뉴 보기 · 사용 확정' },
-    { label: '식단표 템플릿', to: '/operations/meal-plan-templates', hint: '본사 금액대별 식단표' },
-    { label: '거래처 메뉴', to: '/operations/account-menu', hint: '거래처에서 쓰는 메뉴와 식재료' },
+    { label: '템플릿 식단표', to: '/operations/meal-plan-templates', hint: '본사 1일 식단가별 식단표' },
     { label: '메뉴 관리', to: '/operations/menu', hint: '본사 메뉴 등록' },
   ] },
   { key: 'order', label: '발주', icon: 'order', items: [

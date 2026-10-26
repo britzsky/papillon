@@ -40,9 +40,8 @@ const majorMenus: MajorMenu[] = [
     basePaths: ['/operations/table-meals', '/operations/menu', '/operations/account-menu', '/operations/meal-plan-templates'],
     items: [
       { label: '식단표 관리', to: '/operations/table-meals', exact: true },
-      { label: '금액대 식단표 템플릿', to: '/operations/meal-plan-templates', exact: true },
-      { label: '거래처 메뉴 관리', to: '/operations/account-menu', exact: true },
-      { label: '본사 메뉴 가져오기', to: '/operations/account-menu/import', exact: true },
+      { label: '템플릿 식단표 관리', to: '/operations/meal-plan-templates', exact: true },
+      // 2026-10-26: 거래처 메뉴 관리·본사 메뉴 가져오기는 메뉴에서 뺌(레시피 수정은 식단표에서 메뉴를 눌러 '이 업장 레시피 수정'). 주소는 당분간 열림
       { label: '메뉴 관리', to: '/operations/menu', exact: true },
     ],
   },

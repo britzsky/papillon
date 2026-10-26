@@ -18,7 +18,7 @@ import './TableMealsCreateTouch.css'
 
 type Method = 'template' | 'manual' | 'pdf'
 const METHODS: { key: Method; label: string; hint: string; icon: TouchIconName }[] = [
-  { key: 'template', label: '금액대 템플릿', hint: '거래처 1일 식단가에 맞는 본사 템플릿을 불러옵니다', icon: 'refresh' },
+  { key: 'template', label: '템플릿 식단표', hint: '거래처 1일 식단가에 맞는 본사 템플릿을 불러옵니다', icon: 'refresh' },
   { key: 'manual', label: '직접 만들기', hint: '칸을 누르고 메뉴를 골라 넣습니다', icon: 'meals' },
   { key: 'pdf', label: '파일 불러오기', hint: '받은 식단표 PDF·엑셀을 읽어 옵니다', icon: 'box' },
 ]

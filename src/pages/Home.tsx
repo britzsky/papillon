@@ -13,7 +13,6 @@ const shortcuts = [
   { title: '② 발주하기', description: '식단 부족량·추천 발주안·상품 검색', path: '/order_manager/order', icon: 'order' as const },
   { title: '③ 발주서·입고', description: '접수 결과 확인·입고 확정·인쇄', path: '/order_manager/orders', icon: 'product' as const },
   { title: '④ 재고', description: '현재고·직접구매·기초재고', path: '/inventory/account', icon: 'inventory' as const },
-  { title: '거래처 메뉴', description: '메뉴 레시피·원가', path: '/operations/account-menu', icon: 'headquarters' as const },
   { title: '위생 점검', description: '거래처별 점검 상태', path: '/sanitation/vendor', icon: 'sanitation' as const },
 ]
 

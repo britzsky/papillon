@@ -16,9 +16,11 @@ type RecipeActionMenuProps = {
   onViewBasic: (request: RecipeRequest) => void
   onRegister: (request: RecipeRequest) => void
   onOrder?: (menuId: string) => void
+  /** 식단표: 이 업장(거래처) 레시피 수정 창 열기 */
+  onEditAccountRecipe?: (request: RecipeRequest) => void
 }
 
-function RecipeActionMenu({ state, onClose, onViewAi, onViewBasic, onRegister, onOrder }: RecipeActionMenuProps) {
+function RecipeActionMenu({ state, onClose, onViewAi, onViewBasic, onRegister, onOrder, onEditAccountRecipe }: RecipeActionMenuProps) {
   useEffect(() => {
     if (!state) {
       return
@@ -65,6 +67,18 @@ function RecipeActionMenu({ state, onClose, onViewAi, onViewBasic, onRegister, o
       >
         기본 레시피 보기
       </button>
+      {onEditAccountRecipe && state.request.menu_id && state.request.account_id ? (
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => {
+            onEditAccountRecipe(state.request)
+            onClose()
+          }}
+        >
+          이 업장 레시피 수정
+        </button>
+      ) : null}
       <button
         type="button"
         role="menuitem"

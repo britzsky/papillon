@@ -70,6 +70,8 @@
 
 .tm-slot li:last-child { border-bottom: 0; }
 .tm-slot li::before { content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--t-accent); }
+/* 메뉴 이름 = 이 업장 레시피 수정 열기(글자 모양 그대로) */
+.tm-slot .tm-menu-link { flex: 1 1 auto; min-height: 40px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 
 .tm-slot footer {
   display: flex;
