@@ -29,6 +29,8 @@ type Props = {
   onRestore?: () => void
   /** 저장된 연결을 이번만 쓰지 않거나, 이번에 고른 연결을 취소 */
   onUnlink?: () => void
+  /** 연결된 메뉴의 식단 유형이 이 식사와 다름(서버가 저장을 막음) — 안내 문구. 있으면 빨간 줄 + 바꾸기 창 */
+  typeMismatch?: string
 }
 
 /** 식사 칸 머리의 1인분 열량: 좁은 칸에서도 한 줄. 자세한 내용은 마우스를 올리면 */
@@ -56,6 +58,35 @@ export default function PdfMenuLine(props: Props) {
       <li className="pdf-line is-excluded">
         <s>{text}</s>
         {props.onRestore && <button type="button" className="pdf-line__link" onClick={props.onRestore}>되돌리기</button>}
+      </li>
+    )
+  }
+
+  if (matchedMenu && props.typeMismatch) {
+    const similar = props.similar ?? []
+    return (
+      <li ref={anchorRef} className={`pdf-line is-matched is-type-mismatch${open ? ' is-open' : ''}`}>
+        <button type="button" className="pdf-line__name" aria-expanded={open} title={props.typeMismatch} onClick={() => onToggle(!open)}>{matchedMenu.menu_name}</button>
+        <button type="button" className="pdf-line__tag is-type-mismatch" aria-expanded={open} onClick={() => onToggle(!open)}>식단 유형 다름</button>
+        {open && (
+          <LinePopover anchor={anchorRef} onClose={() => onToggle(false)} title={`'${matchedMenu.menu_name}' 식단 유형`}>
+            <p className="pdf-pop__note">{props.typeMismatch} 이대로는 저장되지 않으니 이 식사 유형의 메뉴로 바꾸거나 빼 주세요.</p>
+            {similar.length > 0 ? (
+              <section>
+                <h4>이 식사 유형에서 이름이 비슷한 메뉴로 바꾸기</h4>
+                <ul className="pdf-pop__list">
+                  {similar.map(menu => (
+                    <li key={menu.menu_id}><button type="button" onClick={() => { props.onPick?.(menu); onToggle(false) }}><span>{menu.menu_name}</span><small>{won(menu)}</small></button></li>
+                  ))}
+                </ul>
+              </section>
+            ) : <p className="pdf-pop__empty">이 식사 유형에 이름이 비슷한 메뉴가 없습니다.</p>}
+            <div className="pdf-pop__actions">
+              <button type="button" className="pdf-pop__primary" onClick={() => { props.onUnlink?.(); onToggle(false) }} title="미등록 줄로 바꿔 추천·새 메뉴 등록·제외 중에서 고릅니다">다른 메뉴 고르기·등록</button>
+              <button type="button" className="pdf-pop__secondary" onClick={() => { props.onExclude?.(); onToggle(false) }}>이번 식단에서 빼기</button>
+            </div>
+          </LinePopover>
+        )}
       </li>
     )
   }

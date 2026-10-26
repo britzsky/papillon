@@ -268,3 +268,9 @@ body.workspace-ui .pdf-pop__actions button.pdf-pop__secondary,
   .pdf-legend, .pdf-line__tag, .pdf-line__source, .pdf-line__link { display: none !important; }
   .pdf-line::before { display: none; }
 }
+
+/* 식단 유형이 다른 메뉴(2026-10-26): 불러온 즉시 빨간 줄 — 저장 단계에서 막히기 전에 바꾸게. 전역 button 규칙(!important)은 변수·!important로 맞춘다 */
+.pdf-line.is-type-mismatch .pdf-line__name { --rd-btn-fg: #b42318; color: #b42318 !important; text-decoration: underline wavy #f1b7b0; text-underline-offset: 3px; }
+.pdf-line.is-type-mismatch .pdf-line__tag.is-type-mismatch { --button-width: 0px; --button-height: auto; --pos-card: #fdecea; --pos-line-strong: #f1b7b0; --button-bg: #fdecea; --rd-btn-bg: #fdecea; --rd-btn-fg: #9b1c14; --rd-btn-line: #f1b7b0;
+  display: inline-flex; align-items: center; min-height: 0; height: auto; margin-left: 4px; padding: 1px 6px; border: 1px solid #f1b7b0; border-radius: 6px;
+  color: #9b1c14 !important; font-size: 11px; font-weight: 700; line-height: 1.4; white-space: nowrap; cursor: pointer; }

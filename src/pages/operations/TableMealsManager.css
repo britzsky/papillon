@@ -1868,3 +1868,7 @@ body.workspace-ui .table-meals-toolbar > .table-meals-toolbar__actions { margin-
 .tmt .tmt__close { align-self: flex-end; min-height: 36px; padding: 0 14px; }
 /* 주차 칸: '4주차 · 10/26~11/1'이 다 보이게(공통 조회 칸 폭 변수) */
 .rd .rd-meals__filters .table-meals-field--week { --query-control-width: 150px; }
+/* 식단 유형이 다른 메뉴 경고(분석 요약 안) */
+.table-meals-type-warn { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; padding: 8px 10px; border: 1px solid #f1b7b0; border-radius: 10px; background: #fdecea; color: #9b1c14; }
+.table-meals-type-warn span { color: #7a1a12; }
+.table-meals-type-warn small { color: #9b1c14; }
