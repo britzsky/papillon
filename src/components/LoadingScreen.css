@@ -35,7 +35,9 @@
 }
 
 .loading-screen__logo {
-  width: min(180px, 60vw);
+  /* 사이드 메뉴 로고 크기(130px) */
+  width: min(130px, 60vw);
+  height: auto;
   max-width: 100%;
   animation: loading-screen-float 1.6s ease-in-out infinite;
 }
