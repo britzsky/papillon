@@ -26,6 +26,7 @@ import { mealPlanTypeOptions } from './menuManagerShared'
 import { TemplatePickerDialog, WeekBudgetBar, SavedBudgetCard, SaveTemplateDialog } from './TableMealsExtras'
 import { isHeadquarters } from '../../features/workspace/workspaceAccount'
 import { CloseIcon, PrintIcon } from '../../components/ActionIcons'
+import sheetLogo from '../../assets/logo/thefull-mark.png'
 import './TableMealsManager.css'
 import { getAverageUsage, getIngredientStockStatus } from '../../utils/ingredientStockStatus'
 import { DETAIL_MEAL_SLOT_ORDER, formatDateValue, weekRangeLabel, type MealSlotKey } from '../../features/tableMeals/tableMealsView'
@@ -356,6 +357,8 @@ function TableMealsManager() {
               {!isTableMealDetailLoading && !tableMealDetailError && tableMealDetailDays.length > 0 ? (
                 <div className="table-meals-hangyeol">
                   <div className="table-meals-hangyeol__title">
+                    {/* 좌측 상단 더채움 그릇 로고(배경 없음, 2026-10-26) */}
+                    <img className="table-meals-hangyeol__logo" src={sheetLogo} alt="더채움" />
                     <h3>주 간 식 단 표</h3>
                     <p><strong className="table-meals-hangyeol__account">{tableMealAccountName}</strong>{selectedTableMeal.table_name ? ` · ${selectedTableMeal.table_name}` : ''}</p>
                   </div>
@@ -423,7 +426,7 @@ function TableMealsManager() {
                     </tbody>
                   </table>
 
-                  <p className="table-meals-hangyeol__notice">* 상기메뉴는 식당 수급사정에 따라 변경될 수 있습니다.<br />* 열량은 현재 거래처 메뉴에 등록된 1인분 칼로리의 합계입니다. 미등록 메뉴가 있으면 등록분만 표시합니다.</p>
+                  <p className="table-meals-hangyeol__notice"><span>* 상기메뉴는 식당 수급사정에 따라 변경될 수 있습니다.</span><span>* 열량은 현재 거래처 메뉴에 등록된 1인분 칼로리의 합계입니다. 미등록 메뉴가 있으면 등록분만 표시합니다.</span></p>
                   <div className="table-meals-hangyeol__origin">
                     <strong>원산지</strong>
                     <div>

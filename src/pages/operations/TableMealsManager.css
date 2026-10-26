@@ -1872,3 +1872,19 @@ body.workspace-ui .table-meals-toolbar > .table-meals-toolbar__actions { margin-
 .table-meals-type-warn { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; padding: 8px 10px; border: 1px solid #f1b7b0; border-radius: 10px; background: #fdecea; color: #9b1c14; }
 .table-meals-type-warn span { color: #7a1a12; }
 .table-meals-type-warn small { color: #9b1c14; }
+
+/* 식단표 시트(2026-10-26): 좌측 상단 로고, 안내 두 문장을 한 줄 양 끝으로 */
+.table-meals-hangyeol__title { position: relative; }
+.table-meals-hangyeol__logo { position: absolute; left: 0; top: 0; width: 64px; height: auto; }
+.table-meals-hangyeol__notice { display: flex; justify-content: space-between; align-items: baseline; gap: 4px 16px; flex-wrap: wrap; }
+.table-meals-hangyeol__notice > span:last-child { margin-left: auto; text-align: right; }
+/* 인쇄: 원산지는 그대로(11px), 나머지 글자는 1px 크게 — 전역 크기 규칙(.rd.rd * = max(--rd-fs-min, --rd-fs − --rd-fs-shift))에서 빼는 값 2→1px, 최소 11→12px.
+   맞춤 배율을 재는 단계(body.meal-print-measure)도 같은 크기여야 한 장에 맞는다 */
+@media print {
+  .table-meals-hangyeol { --rd-fs-shift: 1px; --rd-fs-min: 12px; }
+  .table-meals-hangyeol__origin { --rd-fs-shift: 2px; --rd-fs-min: 11px; }
+  .table-meals-hangyeol__logo { width: 52px; }
+}
+body.meal-print-measure .table-meals-hangyeol { --rd-fs-shift: 1px; --rd-fs-min: 12px; }
+body.meal-print-measure .table-meals-hangyeol__origin { --rd-fs-shift: 2px; --rd-fs-min: 11px; }
+body.meal-print-measure .table-meals-hangyeol__logo { width: 52px; }
