@@ -1,10 +1,12 @@
 /* 조회 중 상단 진행률 막대: 모달(최대 z-index 1500)과 로딩 화면(10000) 위에도 보이게 둔다 */
 .global-loading-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 20000; height: 3px; background: transparent; pointer-events: none; }
 .global-loading-bar span { display: block; height: 100%; background: linear-gradient(90deg, #1d5585, #2f9e6e); box-shadow: 0 0 6px #2f9e6e88; transition: width 0.2s ease-out; }
-/* 조회 중 로고 카드: 사이드 메뉴 로고 크기(130px), 클릭은 그대로 아래로 */
+/* 조회 중 로고 카드: 더채움 그릇 로고(배경 없음), 클릭은 그대로 아래로 */
 .global-loading-chip { position: fixed; top: 10px; left: 50%; z-index: 20000; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 16px 9px; border: 1px solid rgba(15, 23, 42, .08); border-radius: 14px; background: rgba(255, 255, 255, .96); box-shadow: 0 8px 24px rgba(15, 23, 42, .14); pointer-events: none; animation: global-loading-chip-in .2s ease-out; }
-.global-loading-chip img { display: block; width: 130px; height: auto; }
-.global-loading-chip__track { display: block; width: 130px; height: 4px; overflow: hidden; border-radius: 999px; background: #e5ece8; }
+.global-loading-chip img { display: block; width: 60px; height: auto; animation: global-loading-chip-bob 1.6s ease-in-out infinite; }
+@keyframes global-loading-chip-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@media (prefers-reduced-motion: reduce) { .global-loading-chip img { animation: none; } }
+.global-loading-chip__track { display: block; width: 96px; height: 4px; overflow: hidden; border-radius: 999px; background: #e5ece8; }
 .global-loading-chip__track > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #1d5585, #2f9e6e); transition: width .2s ease-out; }
 @keyframes global-loading-chip-in { from { opacity: 0; transform: translate(-50%, -6px); } to { opacity: 1; transform: translate(-50%, 0); } }
 @media print { .global-loading-bar, .global-loading-chip, .global-loading-overlay { display: none !important; } }

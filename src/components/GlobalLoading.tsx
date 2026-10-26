@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import LoadingScreen from './LoadingScreen'
-import logo from '../assets/logo/thefull.png'
+import logo from '../assets/logo/thefull-mark.png'
 import { getLoadingSnapshot, subscribeLoading } from '../api/requestLoading'
 import './GlobalLoading.css'
 
@@ -31,7 +31,7 @@ function TopProgress({ active }: { active: boolean }) {
     return () => { window.clearTimeout(fill); window.clearTimeout(hide) }
   }, [active])
   if (!visible) return null
-  // 맨 위 가는 막대 + 가운데 위 로고 카드(사이드 메뉴 로고와 같은 크기, 2026-10-26). 화면은 막지 않는다
+  // 맨 위 가는 막대 + 가운데 위 로고 카드(더채움 그릇 로고, 2026-10-26). 화면은 막지 않는다
   return <>
     <div className="global-loading-bar" role="progressbar" aria-label="조회 중" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress)}>
       <span style={{ width: `${progress}%` }} />

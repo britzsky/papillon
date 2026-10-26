@@ -35,8 +35,8 @@
 }
 
 .loading-screen__logo {
-  /* 사이드 메뉴 로고 크기(130px) */
-  width: min(130px, 60vw);
+  /* 더채움 그릇 로고(배경 없음) */
+  width: min(96px, 40vw);
   height: auto;
   max-width: 100%;
   animation: loading-screen-float 1.6s ease-in-out infinite;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-// 사이드 메뉴와 같은 더채움 로고(2026-10-26)
-import logo from '../assets/logo/thefull.png'
+// 더채움 그릇 로고(배경 없음, 사용자 제공 2026-10-26)
+import logo from '../assets/logo/thefull-mark.png'
 import './LoadingScreen.css'
 
 type LoadingScreenProps = {
@@ -37,7 +37,7 @@ function LoadingScreen({ message = '조회 중입니다.', compact = false, over
       aria-label={`${message} ${displayedProgress}%`}
     >
       <div className="loading-screen__panel">
-        <img src={logo} alt="더채움 THE CHAEWOOM" className="loading-screen__logo" />
+        <img src={logo} alt="더채움" className="loading-screen__logo" />
         <p>{message}</p>
         <div className="loading-screen__progress-row">
           <div
