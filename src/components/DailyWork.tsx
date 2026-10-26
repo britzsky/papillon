@@ -11,11 +11,20 @@ import { isSiteUser } from '../features/workspace/roleScreens'
 
 const won = (value: number) => Math.round(value).toLocaleString('ko-KR')
 /** 예산 묶음 하나(예산·사용·여유 + 사용 막대) */
+/** 예산 사용률 단계(2026-10-26 사용자 결정): 80% 이상 주황, 90% 이상 빨강, 100% 넘으면 빨강 + 심장 뛰듯 굵기 애니메이션 */
+function budgetLevel(budget: number, used: number) {
+  if (!budget) return ''
+  if (used > budget) return 'is-over'
+  const ratio = used / budget
+  return ratio >= 0.9 ? 'is-danger' : ratio >= 0.8 ? 'is-warn' : ''
+}
+
 function budgetBlock(title: string, budget = 0, used = 0, remaining = 0) {
   const pct = budget ? Math.round(used / budget * 100) : 0
+  const level = budgetLevel(budget, used)
   // 한 줄 제목(사용률) + 막대 + 예산|사용|여유 가로 3칸 — 홈이 스크롤 없이 한 화면에 들어가게(사용자 요청)
-  return <div className="rd-budget">
-    <div className="rd-budget__head"><strong className="rd-budget__title">{title}</strong>{budget ? <span className="rd-muted rd-fs-xs">{pct}% 사용</span> : null}</div>
+  return <div className={`rd-budget${level ? ` ${level}` : ''}`}>
+    <div className="rd-budget__head"><strong className="rd-budget__title">{title}</strong>{budget ? <span className="rd-budget__pct rd-muted rd-fs-xs" role={level === 'is-over' ? 'status' : undefined}>{pct}% 사용{level === 'is-over' ? ' · 예산 초과' : ''}</span> : null}</div>
     {budget ? <span className="rd-bar rd-account__bar" aria-hidden="true"><span className={used > budget ? 'is-over' : ''} style={{ width: `${Math.min(100, pct)}%` }} /></span> : null}
     <dl className="rd-budget__nums">
       <div><dt>예산</dt><dd>{won(budget)}원</dd></div>

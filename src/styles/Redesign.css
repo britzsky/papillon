@@ -192,6 +192,16 @@ a.rd-tile:hover { border-color: var(--rd-green); }
 .rd .rd-account__rows .is-remaining dd { --rd-fs: 16px; font-weight: 800; }
 .rd .rd-account__bar > span { background: var(--rd-green); }
 .rd .rd-account__bar > span.is-over { background: var(--rd-red); }
+/* 예산 사용률 단계(2026-10-26): 80% 주황 · 90% 빨강 · 100% 초과 빨강 + 심장 박동(막대·글씨가 굵어졌다 얇아짐) */
+.rd .rd-budget.is-warn .rd-budget__pct { color: var(--rd-orange) !important; font-weight: 800; }
+.rd .rd-budget.is-warn .rd-account__bar > span { background: var(--rd-orange); }
+.rd .rd-budget.is-danger .rd-budget__pct, .rd .rd-budget.is-over .rd-budget__pct { color: var(--rd-red) !important; font-weight: 800; }
+.rd .rd-budget.is-danger .rd-account__bar > span, .rd .rd-budget.is-over .rd-account__bar > span { background: var(--rd-red); }
+.rd .rd-budget.is-over .rd-account__bar { height: 10px; animation: rd-budget-beat-bar 1.2s ease-in-out infinite; }
+.rd .rd-budget.is-over .rd-budget__pct { display: inline-block; transform-origin: right center; animation: rd-budget-beat-text 1.2s ease-in-out infinite; }
+@keyframes rd-budget-beat-bar { 0%, 40%, 100% { height: 10px; } 10%, 30% { height: 18px; } 20% { height: 12px; } }
+@keyframes rd-budget-beat-text { 0%, 40%, 100% { font-weight: 600; transform: scale(1); } 10%, 30% { font-weight: 900; transform: scale(1.12); } 20% { font-weight: 700; transform: scale(1.03); } }
+@media (prefers-reduced-motion: reduce) { .rd .rd-budget.is-over .rd-account__bar, .rd .rd-budget.is-over .rd-budget__pct { animation: none; } }
 
 @media (max-width: 1100px) {
   .rd .rd-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -263,7 +273,7 @@ a.rd-tile:hover { border-color: var(--rd-green); }
   .rd .rd-tile__hint { -webkit-line-clamp: 1; }
   .rd .rd-home__main .rd-shortcut small { display: none; }
   .rd .rd-home__head .rd-h1 { --rd-fs: 21px; }
-  .rd .rd-home__main .rd-tile > .rd-chip, .rd .rd-budget .rd-account__bar { display: none; }
+  .rd .rd-home__main .rd-tile > .rd-chip, .rd .rd-budget:not(.is-warn):not(.is-danger):not(.is-over) .rd-account__bar { display: none; }
   .rd.rd-home { --rd-cal-cell: 22px; }
   .rd .rd-steps ol { gap: 4px; }
   .rd .rd-home__main .rd-tile { padding: 10px 12px; }
