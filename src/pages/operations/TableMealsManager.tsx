@@ -28,20 +28,12 @@ import { isHeadquarters } from '../../features/workspace/workspaceAccount'
 import { PrintIcon } from '../../components/ActionIcons'
 import './TableMealsManager.css'
 import { getAverageUsage, getIngredientStockStatus } from '../../utils/ingredientStockStatus'
-import { DETAIL_MEAL_SLOT_ORDER, formatDateValue, type MealSlotKey } from '../../features/tableMeals/tableMealsView'
+import { DETAIL_MEAL_SLOT_ORDER, formatDateValue, weekRangeLabel, type MealSlotKey } from '../../features/tableMeals/tableMealsView'
+import { downloadBlankTemplate, downloadConfiguredTemplate } from '../../features/tableMeals/mealPlanTemplateFile'
 import MealCalories from '../../features/tableMeals/MealCalories'
 import MealConfigDialog from '../../features/tableMeals/MealConfigDialog'
 import { useTableMealsWorkspace, AUTO_WEEKDAY_LABELS, MANUAL_FOOD_TYPE_OPTIONS, MANUAL_MENU_TYPE_OPTIONS, normalizeMenuText, formatDateLabel, getMenuFoodTypeCode, getAutoMenuCost, getMealBudgetSummary, mergeManualEveningSnacks, PDF_EXCLUDED, PDF_UNLINKED } from '../../features/tableMeals/useTableMealsWorkspace'
 
-/** 식단표 표준 양식(엑셀) 내려받기 */
-function downloadMealTemplate() {
-  const link = document.createElement('a')
-  link.href = `${import.meta.env.BASE_URL}templates/weekly-meal-plan-template.xlsx`
-  link.download = '주간식단표_표준양식.xlsx'
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-}
 
 /** 직접 편집기 메뉴 목록에 한 번에 그리는 개수(본사 메뉴 수천 개를 다 그리면 화면이 느려진다) */
 const MANUAL_MENU_LIMIT = 200
@@ -55,6 +47,21 @@ function TableMealsManager() {
   const [isSaveTemplateOpen, setIsSaveTemplateOpen] = useState(false)
   /** PDF 미등록 메뉴 한꺼번에 정리 창 */
   const [isBulkOpen, setIsBulkOpen] = useState(false)
+  /** 표준 양식 받기: 빈 양식 / 설정 양식(거래처·주차 날짜·식사 구성) 고르기 */
+  const [templateChoice, setTemplateChoice] = useState(false)
+  const [templateError, setTemplateError] = useState('')
+  const configuredTemplateBlocker = !selectedAccountId ? "위 '관리 거래처'에서 거래처를 먼저 고르세요."
+    : !selectedAutoWeek ? '주차를 먼저 고르세요.'
+    : configuredMealSlotRows.length === 0 ? "이 거래처는 '식사 구성'이 아직 없습니다. 식사 구성을 먼저 정해 주세요." : ''
+  const downloadConfigured = async () => {
+    if (configuredTemplateBlocker || !selectedAutoWeek) return
+    setTemplateError('')
+    try {
+      await downloadConfiguredTemplate({ accountName: selectedAccountName || selectedAccountId, week: selectedAutoWeek, slots: configuredMealSlotRows,
+        mealPlanTypeName: mealPlanTypeOptions.find(option => Number(option.value) === selectedMealPlanType)?.text })
+      setTemplateChoice(false)
+    } catch (error) { setTemplateError(error instanceof Error ? error.message : '양식을 만들지 못했습니다.') }
+  }
   /** 이 업장 레시피 수정 창(메뉴 누르면 나오는 메뉴에서 연다) */
   const [recipeEditRequest, setRecipeEditRequest] = useState<RecipeRequest | null>(null)
   /** 처리 창이 열린 메뉴 줄(한 번에 하나) */
@@ -134,7 +141,8 @@ function TableMealsManager() {
               <select id="table-auto-week" value={autoWeekValue} onChange={(event) => setAutoWeekValue(event.target.value)}>
                 {currentMonthWeeks.map((week) => (
                   <option key={week.value} value={week.value}>
-                    {week.label}
+                    {/* 조회월은 옆에 있으니 '4주차 · 10/26~11/1'(주차는 월~일, 월요일이 속한 달) */}
+                    {`${week.label.replace(/^\d+월\s*/, '')} · ${weekRangeLabel(week).replace(/\([^)]*\)/g, '')}`}
                   </option>
                 ))}
               </select>
@@ -142,7 +150,7 @@ function TableMealsManager() {
             <label className="table-meals-servings-field"><span>예정 식수</span><input aria-label="예정 식수" type="number" min="1" step="1" value={plannedServings} onChange={event => setPlannedServings(event.target.value)} placeholder="식수 입력" style={{ width: 100 }} /><span>명</span></label>
             {/* 2026-10-26: 불러오기 버튼은 조회 조건과 같은 줄(오른쪽 끝). 거래처 이름 칩은 머리 줄 '관리 거래처'와 겹쳐 뺌 */}
             <div className="rd-meals__actions rd-meals__actions--inline">
-              <button type="button" className="table-meals-upload-button" onClick={downloadMealTemplate} title="읽히지 않는 엑셀은 이 양식에 옮겨 올려주세요">
+              <button type="button" className="table-meals-upload-button" onClick={() => setTemplateChoice(true)} title="빈 양식 또는 이 거래처·주차·식사 구성이 들어간 양식">
                 <span aria-hidden="true">📄</span> 표준 양식 받기
               </button>
               <button type="button" className="table-meals-upload-button" onClick={handleUploadClick} title="식단표 PDF·엑셀(.xlsx)을 읽어 요일·식사별로 불러옵니다(파일은 서버에 저장하지 않음)">
@@ -854,6 +862,21 @@ function TableMealsManager() {
           </section>
         </div>
       ) : null}
+      {templateChoice ? createPortal(<div className="tmt-backdrop" role="presentation" onClick={() => setTemplateChoice(false)}>
+        <section className="tmt" role="dialog" aria-modal="true" aria-labelledby="tmt-title" onClick={event => event.stopPropagation()}>
+          <h2 id="tmt-title">표준 양식 받기</h2>
+          <p className="tmt__hint">어떤 양식을 받을까요? 채운 뒤 '식단표 불러오기'로 올리면 됩니다.</p>
+          <button type="button" className="tmt__option" onClick={() => { downloadBlankTemplate(); setTemplateChoice(false) }}>
+            <strong>빈 양식</strong><small>지금까지 쓰던 양식 그대로(거래처·날짜·식사를 직접 적음)</small>
+          </button>
+          <button type="button" className="tmt__option is-recommended" disabled={Boolean(configuredTemplateBlocker)} onClick={() => void downloadConfigured()}>
+            <strong>설정 양식</strong>
+            <small>{configuredTemplateBlocker || `${selectedAccountName || selectedAccountId} · ${selectedAutoWeek?.label} ${selectedAutoWeek ? weekRangeLabel(selectedAutoWeek) : ''} · ${configuredMealSlotRows.map(slot => slot.label).join('·')}`}</small>
+          </button>
+          {templateError ? <p className="tmt__error" role="alert">{templateError}</p> : null}
+          <button type="button" className="tmt__close" onClick={() => setTemplateChoice(false)}>닫기</button>
+        </section>
+      </div>, document.body) : null}
       <RecipeActionMenu
         state={recipeMenuState}
         onClose={() => setRecipeMenuState(null)}

@@ -16,7 +16,7 @@ import { getLikeMenuManagerList, saveLikeMenu, tableMealsId, getAccountOptions, 
 import { type RecipeRequest } from '../../api/recipe'
 import { requestAiTableMealsMatch } from '../../api/ai'
 import { getIngredientStockStatus } from '../../utils/ingredientStockStatus'
-import { buildTableMealsDetailDays, formatDateValue, formatMonthValue, getCurrentMonthWeekOptions, getTableMealsQueryPeriod, parseMonthValue, toMealSlotRows, type MealSlotKey, type MealSlotRow, type MonthWeekOption } from './tableMealsView'
+import { buildTableMealsDetailDays, formatDateValue, formatMonthValue, getCurrentMonthWeekOptions, getTableMealsQueryPeriod, parseMonthValue, toMealSlotRows, weekOfDate, type MealSlotKey, type MealSlotRow, type MonthWeekOption } from './tableMealsView'
 
 GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()
 
@@ -1052,6 +1052,23 @@ export function useTableMealsWorkspace() {
     },
     [rawParsedResult, planMenuLookup, menuAliases, pdfMenuOverrides, selectedAccountId],
   )
+
+  // 불러온 파일에 연도까지 적힌 날짜가 있으면 조회월·주차를 그 주(월~일, 월요일이 속한 달)로 한 번 맞춘다(2026-10-26).
+  // 파일마다 한 번만 — 그 뒤 사람이 주차를 바꾸면 그대로 둔다
+  const alignedFileKey = useRef('')
+  useEffect(() => {
+    if (!rawParsedResult) return
+    const dates = rawParsedResult.days.map(day => day.date).filter(date => /^\d{4}-\d{2}-\d{2}$/.test(date)).sort()
+    const key = `${uploadedFileName}|${excelSheetName}|${dates[0] ?? ''}`
+    if (!dates.length || alignedFileKey.current === key) return
+    alignedFileKey.current = key
+    const target = weekOfDate(dates[0])
+    if (!target || (target.month === selectedTableMonth && target.week === autoWeekValue)) return
+    setSelectedTableMonthState(target.month)
+    setAutoWeekValue(target.week)
+    const option = getCurrentMonthWeekOptions(monthStart(target.month))[Number(target.week)]
+    setPdfLinkMessage(`파일 날짜(${dates[0]} ~ ${dates[dates.length - 1]})에 맞춰 조회월·주차를 '${option?.label ?? ''}'로 바꿨습니다.`)
+  }, [rawParsedResult, uploadedFileName, excelSheetName, selectedTableMonth, autoWeekValue])
 
   useEffect(() => {
     const restored = restoredSettings.current

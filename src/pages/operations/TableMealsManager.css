@@ -1852,3 +1852,19 @@ body.workspace-ui .table-meals-toolbar > .table-meals-toolbar__actions { margin-
 .table-meals-draft-top .table-meals-pdf-transfer { flex-direction: column; align-items: flex-start; justify-content: center; gap: 10px; margin: 0; padding: 12px 14px; border: 1px solid #dbe4f0; border-radius: 12px; background: #fff; }
 @media (max-width: 1100px) { .table-meals-draft-top.is-split { grid-template-columns: minmax(0, 1fr); } }
 @media print { .table-meals-draft-top.is-split { grid-template-columns: minmax(0, 1fr); } }
+
+/* 표준 양식 받기: 빈 양식 / 설정 양식 고르기(2026-10-26) */
+.tmt-backdrop { position: fixed; inset: 0; z-index: 3900; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(17, 24, 20, .45); }
+.tmt { width: min(460px, 100%); display: flex; flex-direction: column; gap: 10px; padding: 20px; border-radius: 14px; background: #fff; box-shadow: 0 18px 48px rgba(0, 0, 0, .2); color: #1d2621; }
+.tmt h2 { margin: 0; font-size: 18px; }
+.tmt__hint { margin: 0; color: #5b6660; font-size: 13px; }
+.tmt button { --button-width: 0px; --button-height: auto; }
+.tmt .tmt__option { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; width: 100%; padding: 12px 14px; text-align: left; border-radius: 10px; cursor: pointer; }
+.tmt .tmt__option strong { font-size: 15px; }
+.tmt .tmt__option small { color: #5b6660; font-weight: 500; white-space: normal; line-height: 1.4; }
+.tmt .tmt__option.is-recommended:not(:disabled) { --pos-card: #eef7f1; --pos-line-strong: #1f6f4a; }
+.tmt .tmt__option:disabled { opacity: .6; cursor: not-allowed; }
+.tmt__error { margin: 0; padding: 8px 10px; border-radius: 8px; background: #fdecec; color: #a12020; }
+.tmt .tmt__close { align-self: flex-end; min-height: 36px; padding: 0 14px; }
+/* 주차 칸: '4주차 · 10/26~11/1'이 다 보이게(공통 조회 칸 폭 변수) */
+.rd .rd-meals__filters .table-meals-field--week { --query-control-width: 150px; }

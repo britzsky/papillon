@@ -81,38 +81,44 @@ export function parseMonthValue(value: string) {
   }
 }
 
+/**
+ * 그 달의 주차(2026-10-26 사용자 결정): 주차는 항상 월~일 7일, 그 주 월요일이 속한 달의 주차.
+ * 예) 2026-11-01(일)은 10/26(월)~11/1(일) 주 → 10월 5주차, 11월 1주차 = 11/2(월)~11/8(일).
+ * N주차 = 그 달 N번째 월요일부터 7일(월요일이 d일이면 (d-1)/7+1주차). 저장 값(table_year·table_month·table_week)도 이 규칙.
+ */
 export function getCurrentMonthWeekOptions(baseDate = new Date()): MonthWeekOption[] {
   const year = baseDate.getFullYear()
   const month = baseDate.getMonth()
   const lastDate = new Date(year, month + 1, 0).getDate()
   const weeks: MonthWeekOption[] = []
-  let currentWeek: Date[] = []
+  const firstMonday = 1 + ((8 - new Date(year, month, 1).getDay()) % 7)
 
-  for (let day = 1; day <= lastDate; day += 1) {
-    const date = new Date(year, month, day)
-    const mondayBasedDay = (date.getDay() + 6) % 7
-
-    if (currentWeek.length > 0 && mondayBasedDay === 0) {
-      weeks.push({
-        value: String(weeks.length),
-        label: `${month + 1}월 ${weeks.length + 1}주차`,
-        dates: currentWeek,
-      })
-      currentWeek = []
-    }
-
-    currentWeek.push(date)
-  }
-
-  if (currentWeek.length > 0) {
+  for (let monday = firstMonday; monday <= lastDate; monday += 7) {
     weeks.push({
       value: String(weeks.length),
       label: `${month + 1}월 ${weeks.length + 1}주차`,
-      dates: currentWeek,
+      dates: Array.from({ length: 7 }, (_, offset) => new Date(year, month, monday + offset)),
     })
   }
 
   return weeks
+}
+
+/** 날짜(YYYY-MM-DD)가 속한 주차: 그 주 월요일의 달('YYYY-MM')과 주차 값(0부터) */
+export function weekOfDate(value: string): { month: string; week: string } | null {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!match) return null
+  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+  const monday = new Date(date.getFullYear(), date.getMonth(), date.getDate() - ((date.getDay() + 6) % 7))
+  return { month: formatMonthValue(monday), week: String(Math.floor((monday.getDate() - 1) / 7)) }
+}
+
+/** 주차 기간 글자: '10/26(월)~11/1(일)' */
+export function weekRangeLabel(week: Pick<MonthWeekOption, 'dates'>) {
+  const first = week.dates[0], last = week.dates[week.dates.length - 1]
+  if (!first || !last) return ''
+  const short = (date: Date) => `${date.getMonth() + 1}/${date.getDate()}`
+  return `${short(first)}(월)~${short(last)}(일)`
 }
 
 export function getTableMealsQueryPeriod(item: TableMealsItem, fallbackMonth: string): TableMealsQueryPeriod {
