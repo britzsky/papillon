@@ -25,7 +25,7 @@ import { createAiRecipeGestureHandlers } from '../../components/aiRecipeGesture'
 import { mealPlanTypeOptions } from './menuManagerShared'
 import { TemplatePickerDialog, WeekBudgetBar, SavedBudgetCard, SaveTemplateDialog } from './TableMealsExtras'
 import { isHeadquarters } from '../../features/workspace/workspaceAccount'
-import { PrintIcon } from '../../components/ActionIcons'
+import { CloseIcon, PrintIcon } from '../../components/ActionIcons'
 import './TableMealsManager.css'
 import { getAverageUsage, getIngredientStockStatus } from '../../utils/ingredientStockStatus'
 import { DETAIL_MEAL_SLOT_ORDER, formatDateValue, weekRangeLabel, type MealSlotKey } from '../../features/tableMeals/tableMealsView'
@@ -342,7 +342,7 @@ function TableMealsManager() {
                   <div className="rd-meals__saved-actions">
                     <button type="button" className="rd-btn is-primary" disabled={isTableMealDetailLoading || tableMealDetailItems.length === 0} onClick={openSavedPlanEditor}>이 식단표 수정</button>
                     <button type="button" className="rd-btn print-button" onClick={printTableMealDetail}><PrintIcon />인쇄</button>
-                    <button type="button" className="rd-btn is-ghost" onClick={closeTableMealDetail}>닫기</button>
+                    <button type="button" className="rd-btn close-button" onClick={closeTableMealDetail}><CloseIcon />닫기</button>
                   </div>
                 </div>
             <MealUsageControls accountId={selectedTableMeal.account_id || selectedAccountId} tableId={selectedTableMeal.table_id} onChanged={() => { setOriginRevision(r => r + 1); setSelectedTableMeal({ ...selectedTableMeal }) }} />
