@@ -7,6 +7,12 @@ import './MealConfigDialog.css'
  * 고객사 관리(본사 전용)와 같은 useAccountMealConfig를 써서, 거래처 계정도 자기 거래처 구성을 저장할 수 있다.
  * 서버는 거래처 계정의 account_id를 로그인 거래처로 덮어쓴다. PC·터치 공용이라 순서는 ▲▼ 버튼으로 바꾼다.
  */
+/** 1인 단가 출처(서버 단가 뷰 budget_source) → 화면 글자. 요양원 본식은 ERP 어르신 1끼 단가 그대로(2026-10-26) */
+const BUDGET_SOURCE_LABEL: Record<string, string> = {
+  ELDERLY_EACH: 'ERP 어르신 1끼 단가', ELDERLY_DIVIDED: 'ERP 어르신 단가 ÷ 본식 수', SNACK: 'ERP 간식 단가', OVERRIDE: '직접 지정 단가',
+  DIET_PRICE_EACH: 'ERP 식단가(끼니마다)', DIET_PRICE_DIVIDED: 'ERP 식단가 ÷ 본식 수', INCLUDED_IN_DIET_PRICE: '식단가에 포함', POLICY_REQUIRED: '단가 정책 필요',
+}
+
 export default function MealConfigDialog({ accountId, accountName, onClose, onSaved }: {
   accountId: string
   accountName?: string
@@ -27,7 +33,7 @@ export default function MealConfigDialog({ accountId, accountName, onClose, onSa
           </div>
           <div className="meal-config__type">
             <strong>{c.configuration?.account_type_name || (c.configuration ? `고객사 유형 ${c.configuration.account_type}` : '-')}</strong>
-            <small>본식 {c.configuration?.main_meal_count ?? 0}회 기준 · 1인 단가는 서버 자동 계산</small>
+            <small>본식 {c.configuration?.main_meal_count ?? 0}회 · 1인 단가는 ERP 거래처 단가로 서버 계산</small>
           </div>
         </header>
 
@@ -75,7 +81,7 @@ export default function MealConfigDialog({ accountId, accountName, onClose, onSa
                         </td>
                         <td className="is-num">
                           <strong>{formatBudget(profile?.budget_per_person)}</strong>
-                          <small>{profile?.budget_source || (isSnack ? '간식 단가' : '고객사 유형별 자동 계산')}</small>
+                          <small>{BUDGET_SOURCE_LABEL[profile?.budget_source ?? ''] || profile?.budget_source || (isSnack ? '간식 단가' : '고객사 유형별 자동 계산')}</small>
                         </td>
                       </tr>
                     })}
