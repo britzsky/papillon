@@ -101,27 +101,8 @@ function TableMealsManager() {
           {/* 2026-10-15 개편(시안 ⑧): 고른 식단표를 본문에 바로(예전 상세 창 내용 그대로), 오른쪽에 저장된 식단표·모자란 재료·새 식단 */}
           <div className="rd rd-meals">
           <header className="rd-meals__head">
-            <div className="rd-meals__title"><h1 className="rd-sr-only">식단표 관리</h1>{selectedAccountName ? <span className="rd-chip is-ok">{selectedAccountName}</span> : null}</div>
+            <h1 className="rd-sr-only">식단표 관리</h1>
             <DeadlineAlertSlot />
-            <div className="rd-meals__actions">
-
-              <button type="button" className="table-meals-upload-button" onClick={downloadMealTemplate} title="읽히지 않는 엑셀은 이 양식에 옮겨 올려주세요">
-                <span aria-hidden="true">📄</span> 표준 양식 받기
-              </button>
-              <button type="button" className="table-meals-upload-button" onClick={handleUploadClick} title="식단표 PDF·엑셀(.xlsx)을 읽어 요일·식사별로 불러옵니다(파일은 서버에 저장하지 않음)">
-                식단표 불러오기(PDF·엑셀)
-              </button>
-              {/* 2026-10-22: 자동 식단표 제작 대신 본사 금액대 템플릿(거래처 1일 식단가와 같은 금액대) */}
-              <button
-                type="button"
-                className="table-meals-upload-button is-summary"
-                onClick={() => void openTemplatePicker()}
-                disabled={selectedAccountId === '' || isAccountMenuLoading}
-                title="거래처 1일 식단가와 같은 금액대의 본사 템플릿을 선택한 주차로 불러옵니다"
-              >
-                템플릿 식단표 불러오기
-              </button>
-            </div>
           </header>
           <section className="table-meals-toolbar rd-meals__filters">
 
@@ -159,6 +140,25 @@ function TableMealsManager() {
               </select>
             </div>
             <label className="table-meals-servings-field"><span>예정 식수</span><input aria-label="예정 식수" type="number" min="1" step="1" value={plannedServings} onChange={event => setPlannedServings(event.target.value)} placeholder="식수 입력" style={{ width: 100 }} /><span>명</span></label>
+            {/* 2026-10-26: 불러오기 버튼은 조회 조건과 같은 줄(오른쪽 끝). 거래처 이름 칩은 머리 줄 '관리 거래처'와 겹쳐 뺌 */}
+            <div className="rd-meals__actions rd-meals__actions--inline">
+              <button type="button" className="table-meals-upload-button" onClick={downloadMealTemplate} title="읽히지 않는 엑셀은 이 양식에 옮겨 올려주세요">
+                <span aria-hidden="true">📄</span> 표준 양식 받기
+              </button>
+              <button type="button" className="table-meals-upload-button" onClick={handleUploadClick} title="식단표 PDF·엑셀(.xlsx)을 읽어 요일·식사별로 불러옵니다(파일은 서버에 저장하지 않음)">
+                식단표 불러오기
+              </button>
+              {/* 2026-10-22: 자동 식단표 제작 대신 본사 금액대 템플릿(거래처 1일 식단가와 같은 금액대) */}
+              <button
+                type="button"
+                className="table-meals-upload-button is-summary"
+                onClick={() => void openTemplatePicker()}
+                disabled={selectedAccountId === '' || isAccountMenuLoading}
+                title="거래처 1일 식단가와 같은 금액대의 본사 템플릿을 선택한 주차로 불러옵니다"
+              >
+                템플릿 식단표 불러오기
+              </button>
+            </div>
             <input
               ref={fileInputRef}
               type="file"
@@ -202,6 +202,8 @@ function TableMealsManager() {
 
                 {!isPdfParsing && !pdfError && displayedMealResult ? (
                   <>
+                    {/* 2026-10-26: 분석 요약 | 편집·저장·연결 기억을 한 줄 반반으로 — 식단표 내용이 더 보이게 */}
+                    <div className={`table-meals-draft-top${parsedPdfResult ? ' is-split' : ''}`}>
                     <section className="table-meals-summary-card">
                       <strong>분석 요약</strong>
                       <p>
@@ -225,6 +227,7 @@ function TableMealsManager() {
                       <label><input type="checkbox" checked={rememberPdfLinks} onChange={event => setRememberPdfLinks(event.target.checked)} /> 직접 고른 메뉴 연결을 기억 (다음 파일부터 같은 표기는 자동 연결)</label>
                       {pdfLinkMessage && <small>{pdfLinkMessage}</small>}
                     </div>}
+                    </div>
                     <MenuOrigins accountId={selectedAccountId} menuIds={displayedMealResult.days.flatMap(day => Object.values(day.meals).flatMap(items => items.flatMap(item => item.matchedMenu ? [item.matchedMenu.menu_id] : [])))} />
 
                     {parsedPdfResult ? <p className="pdf-legend" aria-label="메뉴 색 안내">
@@ -413,7 +416,7 @@ function TableMealsManager() {
               ) : null}
             </div>
 
-              </div> : <div className="table-meals-empty rd-meals__empty">오른쪽에서 저장된 식단표를 고르거나, 위의 식단표 불러오기(PDF·엑셀)·템플릿 식단표 불러오기로 새 식단을 만드세요.</div>}
+              </div> : <div className="table-meals-empty rd-meals__empty">오른쪽에서 저장된 식단표를 고르거나, 위의 식단표 불러오기(PDF·엑셀 파일)나 템플릿 식단표 불러오기로 새 식단을 만드세요.</div>}
             </section>
 
             <aside className="rd-meals__side" aria-label="저장된 식단표와 발주">

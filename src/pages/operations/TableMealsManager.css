@@ -1838,3 +1838,17 @@ body.workspace-ui .table-meals-toolbar > .table-meals-toolbar__actions { margin-
 .table-meals-file-error {
   margin: 0 0 12px;
 }
+
+/* 2026-10-26: 불러오기 버튼을 조회 조건 줄 오른쪽 끝에, 머리 줄은 마감 알림만(없으면 자리 차지 안 함) */
+.rd .rd-meals__filters .rd-meals__actions--inline { margin-left: auto; align-self: flex-end; }
+.rd .rd-meals__filters { column-gap: 10px; }
+.rd .rd-meals__filters .rd-meals__actions--inline { gap: 6px; }
+.rd .rd-meals__filters .rd-meals__actions--inline .table-meals-upload-button { padding: 0 10px; }
+.rd .rd-meals__head:not(:has(> :not(h1))) { display: none; }
+/* 새로 만드는 식단: 분석 요약 | 편집·저장·연결 기억 한 줄 반반 */
+.table-meals-draft-top { display: grid; gap: 12px; margin-bottom: 10px; }
+.table-meals-draft-top.is-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
+.table-meals-draft-top > .table-meals-summary-card { margin: 0; }
+.table-meals-draft-top .table-meals-pdf-transfer { flex-direction: column; align-items: flex-start; justify-content: center; gap: 10px; margin: 0; padding: 12px 14px; border: 1px solid #dbe4f0; border-radius: 12px; background: #fff; }
+@media (max-width: 1100px) { .table-meals-draft-top.is-split { grid-template-columns: minmax(0, 1fr); } }
+@media print { .table-meals-draft-top.is-split { grid-template-columns: minmax(0, 1fr); } }
