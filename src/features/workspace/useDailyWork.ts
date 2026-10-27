@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { buildApiUrl } from '../../config/api'
-import { clearDeadlineAlertCache, DEADLINE_WINDOW_HOURS, deadlineOrderPath, getDeadlineAlertsCached, minutesUntil, remainingLabel, type DeadlineAlert } from '../../api/deadlineAlerts'
+import { clearDeadlineAlertCache, DEADLINE_WINDOW_HOURS, deadlineOrderPath, getDeadlineAlertsCached, minutesUntil, remainingLabel, shortDayTime, upcomingOrderPath, type DeadlineAlert, type DeadlineUpcoming } from '../../api/deadlineAlerts'
 import { getShortages, type ShortageRow } from '../../api/shortageProcurement'
 
 /** 발주하기 '현재 부족 재고 바로 주문' 탭과 같은 조건(납품 내일)으로 부족 품목을 센다. 5분 캐시. */
@@ -45,7 +45,7 @@ export function useDailyWork(account: string) {
   const [error, setError] = useState('')
   const [revision, setRevision] = useState(0)
   // 거래처 한 곳일 때 '발주 준비' 칸: 24시간 안에 마감되는 부족 식재료(머리글 종 알림·상단 배너와 같은 조회 결과)
-  const [deadlineResult, setDeadlineResult] = useState<{ key: string; alerts: DeadlineAlert[] } | null>(null)
+  const [deadlineResult, setDeadlineResult] = useState<{ key: string; alerts: DeadlineAlert[]; upcoming: DeadlineUpcoming | null } | null>(null)
   // 같은 칸의 두 번째 기준: 현재고 부족(식단이 없어도 재고가 없으면 발주가 필요하다)
   const [stockResult, setStockResult] = useState<{ key: string; rows: ShortageRow[] } | null>(null)
   useEffect(() => {
@@ -69,12 +69,13 @@ export function useDailyWork(account: string) {
     if (!singleId) return
     let active = true
     const key = `${singleId}:${revision}`
-    getDeadlineAlertsCached(singleId, DEADLINE_WINDOW_HOURS).then(r => { if (active) setDeadlineResult({ key, alerts: r.alerts }) }).catch(() => { if (active) setDeadlineResult({ key, alerts: [] }) })
+    getDeadlineAlertsCached(singleId, DEADLINE_WINDOW_HOURS).then(r => { if (active) setDeadlineResult({ key, alerts: r.alerts, upcoming: r.upcoming }) }).catch(() => { if (active) setDeadlineResult({ key, alerts: [], upcoming: null }) })
     stockShortagesCached(singleId).then(rows => { if (active) setStockResult({ key, rows }) }).catch(() => { if (active) setStockResult({ key, rows: [] }) })
     return () => { active = false }
   }, [singleId, revision])
   // 결과가 지금 거래처·새로고침 차례의 것이 아니면 아직 확인 중
   const deadlines = deadlineResult?.key === deadlineKey ? deadlineResult.alerts : null
+  const upcoming = deadlineResult?.key === deadlineKey ? deadlineResult.upcoming : null
   const stockRows = stockResult?.key === deadlineKey ? stockResult.rows : null
 
   const prepareTile = (row: AccountTask): TaskTile => {
@@ -84,13 +85,16 @@ export function useDailyWork(account: string) {
     const items = open.reduce((sum, x) => sum + x.alert.items.length, 0)
     const checks = stockRows.filter(needsCheck).length
     const stockText = `재고 부족 ${stockRows.length}품목${checks ? ` · 그중 확인 필요 ${checks}` : ''}`
-    // ① 식단 기준 24시간 안 마감 ② 현재고 부족 ③ 없음
+    // ① 식단 기준 24시간 안 마감 ② 식단 기준 발주 필요(마감 전이라도 늘 보임) ③ 현재고 부족 ④ 없음
     if (items) {
       const first = open[0]
       return { key: 'prepare', label: '발주 준비 · 마감 임박', value: `${items}품목`,
         hint: `가장 빠른 마감 ${first.alert.deadline.slice(11, 16)}(${remainingLabel(first.minutes)}) · ${first.alert.supplier_name}${stockRows.length ? ` · ${stockText} 별도` : ''}`,
         tone: first.minutes <= 300 ? 'urgent' : 'warn', to: deadlineOrderPath(row.account_id, first.alert) }
     }
+    if (upcoming) return { key: 'prepare', label: '발주 준비 · 식단 재료', value: `${upcoming.items}품목`,
+      hint: `${upcoming.needed_from ? `${shortDayTime(upcoming.needed_from)} 식단부터 필요` : '식단 기준 부족'} · ${upcoming.first_deadline ? `가장 빠른 마감 ${shortDayTime(upcoming.first_deadline)}${upcoming.first_deadline_supplier ? `(${upcoming.first_deadline_supplier})` : ''}` : '마감 규칙 확인 필요'}${stockRows.length ? ` · ${stockText} 별도` : ''}`,
+      tone: 'warn', to: upcomingOrderPath(row.account_id, upcoming) }
     if (stockRows.length) return { key: 'prepare', label: '발주 준비 · 재고 부족', value: `${stockRows.length}품목`,
       hint: `현재고가 없거나 안전재고 미달${checks ? ` · 그중 확인 필요 ${checks}(판매 중단·기존 주문 확인 등)` : ''}`,
       tone: 'warn', to: `/order_manager/order?${new URLSearchParams({ tab: 'stock', account_id: row.account_id, autoselect: '1' })}` }

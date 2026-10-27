@@ -4,6 +4,7 @@ import TouchLayout from '../TouchLayout'
 import TouchIcon, { type TouchIconName } from '../TouchIcon'
 import { ORDER_STATUS_LABELS, RECEIVABLE_STATUSES, UNCERTAIN_STATUSES, daysAgo, usePurchaseOrders, type OrderItem, type PurchaseOrder } from '../../features/order/usePurchaseOrders'
 import './OrdersTouch.css'
+import FavoriteProductHeart from '../../components/FavoriteProductHeart'
 
 const qty = (value?: number) => Number(value || 0).toLocaleString('ko-KR', { maximumFractionDigits: 3 })
 const won = (value?: number) => `${Math.round(Number(value || 0)).toLocaleString('ko-KR')}원`
@@ -51,7 +52,7 @@ export default function OrdersTouch() {
   </>
 
   return <TouchLayout title="발주서 · 입고" subtitle={accountId ? `${po.orders.length}건` : undefined} toolbar={toolbar}
-    aside={<OrderPanel po={po} />} onAccountChange={value => { setAccountId(value); po.selectOrder(null) }}>
+    aside={<OrderPanel po={po} accountId={accountId} />} onAccountChange={value => { setAccountId(value); po.selectOrder(null) }}>
     {focusedId && <div className="t-msg is-warn od-focus">
       <span>알림에서 고른 발주서 하나만 보고 있습니다.</span>
       <button type="button" className="t-btn is-small" onClick={() => { setParams({ account_id: accountId }); po.setOffset(0) }}>전체 발주서 보기</button>
@@ -93,7 +94,7 @@ export default function OrdersTouch() {
 }
 
 /** 오른쪽 패널: 발주서 제목 → 상태·공급사 응답 → 품목별 이번 입고(−/+) → 실입고일·합계 → 입고 확정 */
-function OrderPanel({ po }: { po: ReturnType<typeof usePurchaseOrders> }) {
+function OrderPanel({ po, accountId }: { po: ReturnType<typeof usePurchaseOrders>; accountId: string }) {
   const order: PurchaseOrder | null = po.selected
   if (!order) return <div className="od-panel">
     <div className="od-panel__head"><h2>입고 확정</h2><p>왼쪽에서 발주서를 고르면 품목과 입고 수량이 여기에 나옵니다.</p></div>
@@ -134,7 +135,7 @@ function OrderPanel({ po }: { po: ReturnType<typeof usePurchaseOrders> }) {
           const left = remaining(item)
           return <li key={item.client_ord_item} className={left === 0 ? 'is-done' : ''}>
             <div className="od-items__name">
-              <strong>{item.product_name}</strong>
+              <strong>{item.product_name}<FavoriteProductHeart accountId={accountId} supplierProductId={item.supplier_product_id} productName={item.product_name} favorite={item.favorite_yn === 'Y'} /></strong>
               <small>주문 {qty(item.order_qty)} · 입고 {qty(item.received_order_qty)} · 남음 {qty(left)} {item.order_unit}</small>
               {item.supplier_error_message && <small className="od-items__error">사유: {item.supplier_error_message}</small>}
               {!po.needsIngredient(item)

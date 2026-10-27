@@ -19,9 +19,12 @@ type RecipeActionMenuProps = {
   onOrder?: (menuId: string) => void
   /** 식단표: 이 업장(거래처) 레시피 수정 창 열기 */
   onEditAccountRecipe?: (request: RecipeRequest) => void
+  /** 식단표: 나만의 메뉴 지정·해제(불러온 식단의 메뉴도 여기서) */
+  isFavorite?: (menuId: string) => boolean
+  onToggleFavorite?: (menuId: string) => void
 }
 
-function RecipeActionMenu({ state, onClose, onViewAi, onViewBasic, onRegister, onOrder, onEditAccountRecipe }: RecipeActionMenuProps) {
+function RecipeActionMenu({ state, onClose, onViewAi, onViewBasic, onRegister, onOrder, onEditAccountRecipe, isFavorite, onToggleFavorite }: RecipeActionMenuProps) {
   useEffect(() => {
     if (!state) {
       return
@@ -78,6 +81,20 @@ function RecipeActionMenu({ state, onClose, onViewAi, onViewBasic, onRegister, o
           }}
         >
           이 업장 레시피 수정
+        </button>
+      ) : null}
+      {onToggleFavorite && state.request.menu_id ? (
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => {
+            if (state.request.menu_id) {
+              onToggleFavorite(state.request.menu_id)
+            }
+            onClose()
+          }}
+        >
+          {isFavorite?.(state.request.menu_id) ? '♥ 나만의 메뉴 해제' : '♡ 나만의 메뉴로 저장'}
         </button>
       ) : null}
       {/* 레시피 등록·수정은 본사만(서버 /Menu/RecipeSave 본사 전용). 저장된 레시피가 있으면 창이 불러와 수정한다 */}

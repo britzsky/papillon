@@ -40,6 +40,8 @@ export type ShortageOffer = {
   orderable: boolean
   availability_reason: string
   tax_type: string
+  /** 나만의 식재료(하트) */
+  favorite_yn?: 'Y' | 'N'
   /** 공급사 상품 사진(백엔드 offers SQL이 함께 반환, 없으면 빈 값) */
   image_url?: string | null
   thumbnail_url?: string | null
@@ -77,6 +79,13 @@ export function shortageStockStatus(row: ShortageRow): 'RED' | 'YELLOW' | 'GREEN
   if (row.stock_status) return row.stock_status
   if (row.shortage_qty <= 0) return 'GREEN'
   return row.current_qty + row.incoming_qty < row.required_qty ? 'RED' : 'YELLOW'
+}
+
+/** 막힌 상품 사유 모음. 같은 사유는 한 번만, 여러 상품이면 상품 수를 붙인다(예: 액젓 후보 12개가 모두 단위 환산 불가). */
+export function blockedReasons(reasons: (string | undefined)[], separator = ' / ') {
+  const counts = new Map<string, number>()
+  reasons.forEach(reason => { if (reason) counts.set(reason, (counts.get(reason) || 0) + 1) })
+  return [...counts].map(([reason, count]) => count > 1 ? `${reason} (상품 ${count}개)` : reason).join(separator)
 }
 
 export function matchesStockFilter(row: ShortageRow, filter: ShortageStockFilter) {

@@ -27,7 +27,10 @@ export type DeadlineAlert = {
   items: DeadlineAlertItem[]
 }
 
-export type DeadlineAlertResult = { checked_at: string; within_hours: number; alerts: DeadlineAlert[] }
+/** 알림 범위와 상관없는 식단 기준 발주 필요 요약(홈 '오늘 할 일'·종 알림). 마감은 한국시간 'YYYY-MM-DDTHH:mm' */
+export type DeadlineUpcoming = { items: number; needed_from: string | null; first_deadline: string | null; first_deadline_supplier: string | null }
+
+export type DeadlineAlertResult = { checked_at: string; within_hours: number; alerts: DeadlineAlert[]; upcoming: DeadlineUpcoming | null }
 
 /** 저장된 식단 기준 부족 식재료의 발주 마감(공급사 가이드 규칙). 발주하면 부족량에서 빠져 목록에서 사라진다. */
 export async function getDeadlineAlerts(accountId: string, withinHours = 24, signal?: AbortSignal): Promise<DeadlineAlertResult> {
@@ -37,7 +40,11 @@ export async function getDeadlineAlerts(accountId: string, withinHours = 24, sig
   if (!response.ok || !body) throw new Error(body?.message || '발주 마감 정보를 확인하지 못했습니다.')
   // 예상과 다른 응답(이전 서버, 프록시 오류 페이지 등)이어도 업무 화면이 깨지지 않게 빈 목록으로 본다
   const alerts = Array.isArray(body.alerts) ? body.alerts.filter((alert: Partial<DeadlineAlert>) => alert && typeof alert.deadline === 'string' && Array.isArray(alert.items)) : []
-  return { checked_at: String(body.checked_at ?? ''), within_hours: Number(body.within_hours) || withinHours, alerts } as DeadlineAlertResult
+  const up = body.upcoming
+  const text = (value: unknown) => typeof value === 'string' && value ? value : null
+  const upcoming: DeadlineUpcoming | null = up && typeof up === 'object' && Number(up.items) > 0
+    ? { items: Number(up.items), needed_from: text(up.needed_from), first_deadline: text(up.first_deadline), first_deadline_supplier: text(up.first_deadline_supplier) } : null
+  return { checked_at: String(body.checked_at ?? ''), within_hours: Number(body.within_hours) || withinHours, alerts, upcoming } as DeadlineAlertResult
 }
 
 const CACHE_MS = 5 * 60_000
@@ -59,6 +66,22 @@ export function deadlineOrderPath(accountId: string, alert: Pick<DeadlineAlert, 
   // autoselect=1: 들어가면 바로 시킬 수 있는 품목이 미리 선택된다(마감 알림 → 발주서 확인 → 보내기)
   return `/order_manager/order?${new URLSearchParams({ tab: 'plan', account_id: accountId, source: 'PLAN', delivery_date: alert.delivery_date, autoselect: '1' })}`
 }
+
+/** 식단 기준 발주 필요: 필요한 첫 날로 식단표 기준 발주하기 탭을 연다. */
+export function upcomingOrderPath(accountId: string, upcoming: DeadlineUpcoming) {
+  return deadlineOrderPath(accountId, { delivery_date: upcoming.needed_from || new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10) })
+}
+
+/** 'YYYY-MM-DDTHH:mm' 또는 'YYYY-MM-DD' → '10/31(토) 16:30' / '11/2(월)' */
+export function shortDayTime(value: string) {
+  const [date, time] = value.split('T')
+  const [y, m, d] = date.split('-').map(Number)
+  const week = '일월화수목금토'[new Date(y, m - 1, d).getDay()]
+  return `${m}/${d}(${week})${time ? ` ${time.slice(0, 5)}` : ''}`
+}
+
+/** 종 알림에 식단 기준 발주 필요를 띄우는 시점: 가장 빠른 마감 72시간 전부터 */
+export const UPCOMING_NOTIFY_HOURS = 72
 
 /** 배너·종 알림·홈이 같은 결과를 쓰도록 맞춘 조회 범위(시간). 배너는 이 중 5시간 이내만 보여준다. */
 export const DEADLINE_WINDOW_HOURS = 24

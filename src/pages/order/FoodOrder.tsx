@@ -2,12 +2,13 @@ import CatalogPreparation from '../../components/CatalogPreparation'
 import LoadingScreen from '../../components/LoadingScreen'
 import BatchOrderResults from '../../components/BatchOrderResults'
 import ProductImage from '../../components/ProductImage'
+import FavoriteProductHeart from '../../components/FavoriteProductHeart'
 import { recoverMixedProcurement, startNewMixedProcurement } from '../../api/mixedProcurement'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import HeaderBar from '../../components/HeaderBar'
 import SideMenuLayout from '../../components/SideMenuLayout'
-import { MANUAL_MAX_ORDER_QTY, shortageStockStatus, SHORTAGE_STOCK_LABELS, type ShortageOffer, type ShortageRow } from '../../api/shortageProcurement'
+import { blockedReasons, MANUAL_MAX_ORDER_QTY, shortageStockStatus, SHORTAGE_STOCK_LABELS, type ShortageOffer, type ShortageRow } from '../../api/shortageProcurement'
 import { useEffect, useState } from 'react'
 import { getDeadlineAlertsCached } from '../../api/deadlineAlerts'
 import { availableSelection, day, deliveryTerms, deliveryWarning, money, number, taxLabel, useShortageOrder } from '../../features/order/useShortageOrder'
@@ -199,10 +200,10 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
                   {offer ? <div className="rd-order__offer-name"><span className={`rd-supplier is-${offer.supplier_code}`}>{offer.supplier_name}</span>
                     <select aria-label={`${row.ingredient_name} 공급상품`} value={offer.supplier_offer_id} disabled={loading || row.offers.filter(o => o.orderable).length < 2} onChange={e => choose(row, Number(e.target.value))}>
                       {offerOptions(row).map(o => <option key={o.supplier_offer_id} value={o.supplier_offer_id} disabled={!o.orderable}>{o.supplier_offer_id === row.recommended_offer_id ? '★ 늘 쓰는 · ' : ''}{o.product_name} ({o.supplier_name}) · {o.orderable ? `${money(o.purchase_price)}원/${o.order_unit}${per100(o, row.base_unit) ? ` · ${per100(o, row.base_unit)}` : ''}` : o.availability_reason || '발주 불가'}</option>)}
-                    </select></div>
+                    </select><FavoriteProductHeart key={offer.supplier_product_id} accountId={accountId} supplierProductId={offer.supplier_product_id} productName={offer.product_name} favorite={offer.favorite_yn === 'Y'} /></div>
                     : <strong className="rd-text-warn">발주 가능한 상품 없음</strong>}
                   {offer ? <small className="rd-fs-sm">{money(offer.purchase_price)}원/{offer.order_unit}{per100(offer, row.base_unit) ? ` · ${per100(offer, row.base_unit)}` : ''} · {deliveryTerms(offer)}</small>
-                    : <small className="rd-text-warn rd-fs-xs">{row.offers.map(o => o.availability_reason).filter(Boolean).join(' / ') || '주문 가능한 공급사 상품 없음 — 상품 검색에서 직접 골라주세요'}</small>}
+                    : <small className="rd-text-warn rd-fs-xs">{blockedReasons(row.offers.map(o => o.availability_reason)) || '주문 가능한 공급사 상품 없음 — 상품 검색에서 직접 골라주세요'}</small>}
                   {warning ? <small className="rd-text-warn rd-fs-xs" role="status">{warning}</small> : null}
                   {cheaper ? <button type="button" className="rd-link" onClick={() => choose(row, cheaper.offer.supplier_offer_id)}>{cheaper.offer.supplier_name} {cheaper.offer.product_name} {cheaper.label}으로 바꾸기</button>
                     : offer && row.offers.filter(o => o.orderable).length > 1 ? <small className="rd-text-ok rd-fs-xs">지금 상품이 기준단위당 가장 저렴해요</small> : null}
@@ -267,7 +268,7 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
           {sheet.rows.map(row => { const warning = deliveryWarning(row.offer, preview.criteria.delivery_date, guidanceNow)
             return <div key={row.ingredient_id} className={`rd-preview__row${warning ? ' is-warn' : ''}`}>
               <div className="rd-preview__item"><ProductImage zoomable src={row.offer.thumbnail_url || row.offer.image_url || undefined} fullSrc={row.offer.image_url || undefined} name={row.offer.product_name} />
-                <div><strong>{row.ingredient_name}</strong><small className="rd-muted">{row.offer.product_name} · {row.offer.supplier_item_code}</small>
+                <div><strong>{row.ingredient_name}</strong><small className="rd-muted">{row.offer.product_name} · {row.offer.supplier_item_code}<FavoriteProductHeart accountId={accountId} supplierProductId={row.offer.supplier_product_id} productName={row.offer.product_name} favorite={row.offer.favorite_yn === 'Y'} /></small>
                   <small className="rd-muted">부족 {number(row.shortage_qty)}{row.base_unit} → {number(row.ordered_base_qty)}{row.base_unit} 주문</small>
                   {warning ? <small className="rd-text-warn" role="status">{warning}</small> : null}</div></div>
               <span className="is-num">{number(row.order_qty)} {row.offer.order_unit}</span>

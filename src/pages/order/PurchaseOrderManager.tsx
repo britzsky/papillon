@@ -10,6 +10,7 @@ import { PrintIcon } from '../../components/ActionIcons'
 import { buildApiUrl } from '../../config/api'
 import { ORDER_STATUS_LABELS as labels, RECEIVABLE_STATUSES, UNCERTAIN_STATUSES, usePurchaseOrders, type PurchaseOrder } from '../../features/order/usePurchaseOrders'
 import './PurchaseOrderManager.css'
+import FavoriteProductHeart from '../../components/FavoriteProductHeart'
 
 /** 아워홈 품목별 출고 상태(서버 /Procurement/SupplierShipment, 실시간 조회·재고 반영 없음) */
 type ShipmentLine = { client_ord_item: string; state: 'SHIPPED' | 'OPEN' | 'DELETED' | 'MISSING'; shipped_qty?: string }
@@ -184,7 +185,7 @@ export default function PurchaseOrderManager() {
             <thead><tr><th>상품</th><th className="is-num">주문</th><th className="is-num">공급사 출고</th><th className="is-num">이미 입고</th><th className="is-num">받은 수량</th></tr></thead>
             <tbody>{selected.items.map(item => { const line = lineOf(item.client_ord_item); const diff = line?.state === 'SHIPPED' && Number(line.shipped_qty) !== Number(item.order_qty)
               return <tr key={item.client_ord_item} className={diff || line?.state === 'DELETED' ? 'is-diff' : ''}>
-                <td><strong>{item.product_name}</strong>
+                <td><strong>{item.product_name}</strong><FavoriteProductHeart accountId={accountId} supplierProductId={item.supplier_product_id} productName={item.product_name} favorite={item.favorite_yn === 'Y'} />
                   <small className="rd-muted">{item.supplier_item_code} · <OrderStatusBadge status={item.item_status} label={labels[item.item_status] || item.item_status} /></small>
                   {!needsIngredient(item)
                     ? <small className="rd-muted">재고 식재료: {item.ingredient_name || item.ingredient_id}</small>

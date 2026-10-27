@@ -43,4 +43,5 @@ body.workspace-ui .tmx-btn.is-primary { background: #1f6f4a; color: #fff; border
 .table-meals-manual__menu-row > .table-meals-manual__menu { flex: 1 1 auto; min-width: 0; }
 body.workspace-ui .table-meals-heart { min-width: 34px; padding: 0 6px; font-size: 18px; color: #c44a6a; background: #fff; }
 body.workspace-ui .table-meals-heart.is-on { background: #fdeef2; }
-.table-meals-manual__favorite { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.table-meals-manual__favorite { display: flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; flex: 0 0 auto; }
+.table-meals-manual__favorite input { width: auto; flex: 0 0 auto; margin: 0; }

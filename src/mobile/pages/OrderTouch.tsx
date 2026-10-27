@@ -3,7 +3,7 @@ import BatchResultList from '../BatchResultList'
 import { Link, useSearchParams } from 'react-router-dom'
 import TouchLayout from '../TouchLayout'
 import TouchIcon from '../TouchIcon'
-import type { PreviewRow } from '../../api/shortageProcurement'
+import { blockedReasons, type PreviewRow } from '../../api/shortageProcurement'
 import { money, orderDay, useQuickOrder } from '../../features/order/useQuickOrder'
 import { preparationLabel, useCatalogPreparation } from '../../features/order/useCatalogPreparation'
 import './OrderTouch.css'
@@ -70,7 +70,7 @@ export function RecommendedOrder({ methodBar }: { methodBar: ReactNode }) {
       <h2><TouchIcon name="alert" size={20} />확인이 필요한 식재료 {order.exceptions.length}개</h2>
       <ul>{order.exceptions.map(row => <li key={row.ingredient_id}>
         <strong>{row.ingredient_name}</strong>
-        <span>{row.issues.join(' · ') || row.offers.map(o => o.orderability_reason || o.availability_reason).filter(Boolean).join(' · ') || '주상품이 없거나 주문할 수 없습니다. 상품·단위를 확인해주세요.'}</span>
+        <span>{row.issues.join(' · ') || blockedReasons(row.offers.map(o => o.orderability_reason || o.availability_reason), ' · ') || '주상품이 없거나 주문할 수 없습니다. 상품·단위를 확인해주세요.'}</span>
       </li>)}</ul>
       <Link className="t-btn is-small" to={withAccount({ tab: order.source === 'PLAN' ? 'plan' : 'usage', source: order.source })}>상세 화면에서 상품 고르기</Link>
     </section>}

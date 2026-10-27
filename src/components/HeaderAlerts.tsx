@@ -1,7 +1,7 @@
 import { workspaceAccountId } from '../features/workspace/workspaceAccount'
 import { useEffect, useId, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { DEADLINE_WINDOW_HOURS, deadlineOrderPath, getDeadlineAlertsCached, minutesUntil, remainingLabel, type DeadlineAlert } from '../api/deadlineAlerts'
+import { DEADLINE_WINDOW_HOURS, deadlineOrderPath, getDeadlineAlertsCached, minutesUntil, remainingLabel, shortDayTime, UPCOMING_NOTIFY_HOURS, upcomingOrderPath, type DeadlineAlert, type DeadlineUpcoming } from '../api/deadlineAlerts'
 import { getMealPlanAlertsCached, type MealPlanAlert } from '../api/workspaceAlerts'
 
 const POLL_MS = 10 * 60_000
@@ -14,6 +14,7 @@ type Row = { key: string; level: 'urgent' | 'warn'; group: string; title: string
 
 /**
  * 머리글 종 알림: ① 24시간 안에 마감되는 발주(식단 기준 부족 식재료, 상단 배너와 같은 조회 결과)
+ * ①' 그 전이라도 식단 기준 발주가 필요하고 가장 빠른 마감이 72시간 안이면 한 줄(①이 있으면 생략)
  * ② 다음 주 식단표 미작성(목요일부터). 현장 계정은 자기 거래처, 본사는 식단표를 전체 거래처로 본다.
  */
 export default function HeaderAlerts() {
@@ -23,6 +24,7 @@ export default function HeaderAlerts() {
   const site = read('user_type') === '3'
   const accountId = workspaceAccountId(location.search).trim()
   const [deadlines, setDeadlines] = useState<DeadlineAlert[]>([])
+  const [upcoming, setUpcoming] = useState<DeadlineUpcoming | null>(null)
   const [meals, setMeals] = useState<MealPlanAlert[]>([])
   const [now, setNow] = useState(() => Date.now())
 
@@ -31,8 +33,8 @@ export default function HeaderAlerts() {
     const load = () => {
       setNow(Date.now())
       // 알림 조회 실패는 업무 화면을 막지 않는다(이전 서버면 빈 목록)
-      if (accountId) getDeadlineAlertsCached(accountId, DEADLINE_WINDOW_HOURS).then(r => { if (active) setDeadlines(r.alerts) }).catch(() => { if (active) setDeadlines([]) })
-      else setDeadlines([])
+      if (accountId) getDeadlineAlertsCached(accountId, DEADLINE_WINDOW_HOURS).then(r => { if (active) { setDeadlines(r.alerts); setUpcoming(r.upcoming) } }).catch(() => { if (active) { setDeadlines([]); setUpcoming(null) } })
+      else { setDeadlines([]); setUpcoming(null) }
       getMealPlanAlertsCached(site ? accountId : '').then(r => { if (active) setMeals(r) }).catch(() => { if (active) setMeals([]) })
     }
     load()
@@ -40,8 +42,7 @@ export default function HeaderAlerts() {
     return () => { active = false; window.clearInterval(poll) }
   }, [accountId, site])
 
-  const rows: Row[] = [
-    ...deadlines
+  const deadlineRows: Row[] = deadlines
       .map(alert => ({ alert, minutes: minutesUntil(alert.deadline, now) }))
       .filter(({ minutes }) => minutes > 0)
       .sort((a, b) => a.minutes - b.minutes)
@@ -52,7 +53,17 @@ export default function HeaderAlerts() {
         title: `${alert.supplier_name} · 부족 식재료 ${alert.items.length}품목`,
         detail: `${alert.deadline.slice(5).replace('T', ' ')} 마감(${remainingLabel(minutes)}) · ${alert.delivery_date.slice(5)} 납품 · ${alert.items.slice(0, 3).map(item => item.ingredient_name).join(', ')}${alert.items.length > 3 ? ' 외' : ''}`,
         path: deadlineOrderPath(accountId, alert),
-      })),
+      }))
+  const upcomingMinutes = upcoming?.first_deadline ? minutesUntil(upcoming.first_deadline, now) : 0
+  const upcomingRow: Row[] = !deadlineRows.length && upcoming && upcomingMinutes > 0 && upcomingMinutes <= UPCOMING_NOTIFY_HOURS * 60 && upcoming.first_deadline ? [{
+    key: 'upcoming', level: 'warn', group: '발주 필요',
+    title: `식단 재료 ${upcoming.items}품목 발주 필요`,
+    detail: `가장 빠른 마감 ${shortDayTime(upcoming.first_deadline)}(${remainingLabel(upcomingMinutes)})${upcoming.first_deadline_supplier ? ` · ${upcoming.first_deadline_supplier}` : ''}${upcoming.needed_from ? ` · ${shortDayTime(upcoming.needed_from)} 식단부터` : ''}`,
+    path: upcomingOrderPath(accountId, upcoming),
+  }] : []
+  const rows: Row[] = [
+    ...deadlineRows,
+    ...upcomingRow,
     ...meals.map(alert => ({
       key: alert.key,
       level: alert.level,
@@ -73,7 +84,7 @@ export default function HeaderAlerts() {
       {rows.length ? <span className={`header-alerts__badge${urgent ? ' is-urgent' : ''}`} aria-hidden="true">{rows.length > 99 ? '99+' : rows.length}</span> : null}
     </button>
     <section id={panelId} popover="auto" className="header-bar__user-info header-alerts" aria-label="알림">
-      <div className="header-bar__user-info-heading"><h2>알림</h2><small>발주 마감 24시간 이내 · 다음 주 식단표</small></div>
+      <div className="header-bar__user-info-heading"><h2>알림</h2><small>발주 마감 3일 전부터 · 다음 주 식단표</small></div>
       {rows.length ? <ul>{rows.map(row => <li key={row.key} className={`is-${row.level}`}>
         <button type="button" popoverTarget={panelId} popoverTargetAction="hide" onClick={() => navigate(row.path)}>
           <span className="header-alerts__group">{row.group}</span>

@@ -6,6 +6,7 @@ import SideMenuLayout from '../../components/SideMenuLayout'
 import BatchOrderResults from '../../components/BatchOrderResults'
 import ProductImage from '../../components/ProductImage'
 import { money, orderDay as day, useQuickOrder } from '../../features/order/useQuickOrder'
+import { blockedReasons } from '../../api/shortageProcurement'
 import '../../components/DailyWork.css'
 
 const dayLabel = (value: string) => { const d = new Date(`${value}T00:00:00`); return `${d.getMonth() + 1}/${d.getDate()}(${'일월화수목금토'[d.getDay()]})` }
@@ -70,7 +71,7 @@ export default function QuickOrder({ embedded = false }: { embedded?: boolean })
       <aside className="rd-order__side" aria-label="발주 확정">
         {exceptions.length > 0 && <div className="rd-order__blocked rd-fs-sm">
           <strong className="rd-fs-md">확인이 필요한 식재료 {exceptions.length}개</strong>
-          {exceptions.slice(0, 5).map(row => <span key={row.ingredient_id}>{row.ingredient_name} · {row.issues.join(' · ') || row.offers.map(o => o.orderability_reason || o.availability_reason).filter(Boolean).join(' · ') || '늘 쓰는 상품이 없거나 주문할 수 없음 · 상품·단위 확인 요망'}</span>)}
+          {exceptions.slice(0, 5).map(row => <span key={row.ingredient_id}>{row.ingredient_name} · {row.issues.join(' · ') || blockedReasons(row.offers.map(o => o.orderability_reason || o.availability_reason), ' · ') || '늘 쓰는 상품이 없거나 주문할 수 없음 · 상품·단위 확인 요망'}</span>)}
           {exceptions.length > 5 ? <span>외 {exceptions.length - 5}개</span> : null}
           {preview ? <label className="rd-quick__partial"><input type="checkbox" checked={allowPartial} disabled={busy || attempted} onChange={e => setAllowPartial(e.target.checked)} /> 이 {exceptions.length}개는 빼고 나머지만 발주</label> : null}
         </div>}
