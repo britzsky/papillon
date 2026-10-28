@@ -9,6 +9,7 @@ import { useMenuManager } from '../../features/operations/useMenuManager'
 import { isMenuFieldDirty, mealCategoryOptions, mealPlanTypeOptions, menuGubunOptions, menuTypeOptions, qtyUnitOptions } from '../../pages/operations/menuManagerShared'
 import type { MenuManagerItem } from '../../api/operations'
 import './MenuManagerTouch.css'
+import TouchSelect from '../TouchSelect'
 
 const PAGE = 48
 const MENU_FIELDS = ['menu_name', 'meal_category', 'menu_type', 'menu_gubun', 'menu_img', 'meal_plan_type', 'calories_per_serving'] as const
@@ -52,12 +53,12 @@ export default function MenuManagerTouch() {
       <span className="mm-label">메뉴유형</span>
       <div className="mm-chips">{menuTypeOptions.map(option => <button key={option.value} type="button" className={String(menu.menu_type) === option.value ? 'is-active' : ''} onClick={() => m.handleMenuChange(menu.menu_id, 'menu_type', option.value)}>{option.text}</button>)}</div>
       <div className="mm-pair">
-        <label className="mm-field">메뉴구분<select value={String(menu.menu_gubun ?? '')} onChange={e => m.handleMenuChange(menu.menu_id, 'menu_gubun', e.target.value)}>
+        <label className="mm-field">메뉴구분<TouchSelect value={String(menu.menu_gubun ?? '')} onChange={e => m.handleMenuChange(menu.menu_id, 'menu_gubun', e.target.value)}>
           <option value="">선택</option>{menuGubunOptions.map(option => <option key={option.value} value={option.value}>{option.text}</option>)}
-        </select></label>
-        <label className="mm-field">식단유형<select value={String(menu.meal_plan_type ?? 0)} onChange={e => m.handleMenuNumberChange(menu.menu_id, 'meal_plan_type', e.target.value)}>
+        </TouchSelect></label>
+        <label className="mm-field">식단유형<TouchSelect value={String(menu.meal_plan_type ?? 0)} onChange={e => m.handleMenuNumberChange(menu.menu_id, 'meal_plan_type', e.target.value)}>
           {mealPlanTypeOptions.map(option => <option key={option.value} value={option.value}>{option.text}</option>)}
-        </select></label>
+        </TouchSelect></label>
         <label className="mm-field">1인분 열량(kcal)<input type="text" inputMode="numeric" value={menu.calories_per_serving ?? ''} onChange={e => m.handleMenuNumberChange(menu.menu_id, 'calories_per_serving', e.target.value.replace(/[^0-9.]/g, ''))} /></label>
       </div>
 
@@ -70,17 +71,17 @@ export default function MenuManagerTouch() {
       {m.detailError && <p className="t-msg is-error">{m.detailError}</p>}
       <ul className="mm-ings">{m.activeDetailItems.map(item => <li key={item.row_id} className="t-pc-embed">
         <div className="mm-ings__pick">
-          <select aria-label="분류" value={item.category_name ?? ''} onChange={e => m.handleIngredientCategoryChange(menu.menu_id, item.row_id, e.target.value)}>
+          <TouchSelect aria-label="분류" value={item.category_name ?? ''} onChange={e => m.handleIngredientCategoryChange(menu.menu_id, item.row_id, e.target.value)}>
             <option value="">분류</option>{m.ingredientCategoryOptions.map(option => <option key={option} value={option}>{option}</option>)}
-          </select>
+          </TouchSelect>
           <IngredientSearchSelect options={item.category_name ? m.ingredientOptions.filter(o => o.category_name === item.category_name) : m.ingredientOptions}
             placeholder="식자재 선택" selectedName={item.ingredient_name} value={item.ingredient_id} onChange={id => m.handleIngredientSelect(menu.menu_id, item.row_id, id)} />
         </div>
         <div className="mm-ings__qty">
           <input type="text" inputMode="decimal" aria-label="1인분 필요량" value={item.required_qty} onChange={e => m.handleIngredientNumberChange(menu.menu_id, item.row_id, 'required_qty', e.target.value.replace(/[^0-9.]/g, ''))} />
-          <select aria-label="단위" value={item.qty_unit ?? ''} onChange={e => m.handleIngredientTextChange(menu.menu_id, item.row_id, 'qty_unit', e.target.value)}>
+          <TouchSelect aria-label="단위" value={item.qty_unit ?? ''} onChange={e => m.handleIngredientTextChange(menu.menu_id, item.row_id, 'qty_unit', e.target.value)}>
             <option value="">단위</option>{qtyUnitOptions.map(unit => <option key={unit} value={unit}>{unit}</option>)}
-          </select>
+          </TouchSelect>
         </div>
       </li>)}</ul>
       <button type="button" className="t-btn is-soft is-block" onClick={m.handleAddIngredient}><span aria-hidden="true">＋</span>식자재 추가</button>
@@ -99,9 +100,9 @@ export default function MenuManagerTouch() {
       </button>)}
     </div>
     <div className="mm-filters">
-      <label className="t-chip t-chip--select"><select aria-label="메뉴유형" value={m.selectedMenuType} onChange={e => m.setSelectedMenuType(e.target.value)}><option value="">메뉴유형 전체</option>{menuTypeOptions.map(o => <option key={o.value} value={o.value}>{o.text}</option>)}</select></label>
-      <label className="t-chip t-chip--select"><select aria-label="메뉴구분" value={m.selectedMenuGubun} onChange={e => m.setSelectedMenuGubun(e.target.value)}><option value="">메뉴구분 전체</option>{menuGubunOptions.map(o => <option key={o.value} value={o.value}>{o.text}</option>)}</select></label>
-      <label className="t-chip t-chip--select"><select aria-label="식단유형" value={m.selectedMealPlanType} onChange={e => m.setSelectedMealPlanType(e.target.value)}><option value="">식단유형 전체</option>{mealPlanTypeOptions.map(o => <option key={o.value} value={o.value}>{o.text}</option>)}</select></label>
+      <label className="t-chip t-chip--select"><TouchSelect aria-label="메뉴유형" value={m.selectedMenuType} onChange={e => m.setSelectedMenuType(e.target.value)}><option value="">메뉴유형 전체</option>{menuTypeOptions.map(o => <option key={o.value} value={o.value}>{o.text}</option>)}</TouchSelect></label>
+      <label className="t-chip t-chip--select"><TouchSelect aria-label="메뉴구분" value={m.selectedMenuGubun} onChange={e => m.setSelectedMenuGubun(e.target.value)}><option value="">메뉴구분 전체</option>{menuGubunOptions.map(o => <option key={o.value} value={o.value}>{o.text}</option>)}</TouchSelect></label>
+      <label className="t-chip t-chip--select"><TouchSelect aria-label="식단유형" value={m.selectedMealPlanType} onChange={e => m.setSelectedMealPlanType(e.target.value)}><option value="">식단유형 전체</option>{mealPlanTypeOptions.map(o => <option key={o.value} value={o.value}>{o.text}</option>)}</TouchSelect></label>
     </div>
 
     {m.menuError && <p className="t-msg is-error">{m.menuError}</p>}

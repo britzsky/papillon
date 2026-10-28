@@ -1,10 +1,10 @@
 /* 부족량 기준 발주(터치). 공용 부품은 TouchLayout.css */
 .so-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 10px 12px; margin-bottom: 14px; }
 .so-field { display: grid; gap: 4px; color: var(--t-muted); font-size: 12px; font-weight: 700; }
-.so-field :is(input, select) { min-height: 46px; padding: 0 10px; border: 1.5px solid var(--t-line); border-radius: 12px; background: var(--t-surface); color: var(--t-text); font-size: 16px; }
+.so-field :is(input, .t-select) { min-height: 46px; padding: 0 10px; border: 1.5px solid var(--t-line); border-radius: 12px; background: var(--t-surface); color: var(--t-text); font-size: 16px; }
 .so-field input[type=number] { width: 110px; }
 .so-field--wide { flex: 1 1 220px; }
-.so-field--wide select { width: 100%; }
+.so-field--wide .t-select { width: 100%; }
 .so-filters__actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .so-filters__hint { flex: 1 1 100%; }
 .so-filters__hint b { color: var(--t-accent-strong); }
@@ -37,13 +37,18 @@ body.t-ui .so-check.is-on { --button-bg: var(--t-accent); --button-bg-hover: var
 .so-nums dd small { color: var(--t-muted); font-size: 10px; }
 .so-nums .is-short dd { color: var(--t-danger); }
 
-.so-offers { display: grid; gap: 6px; }
-.so-offers button { display: grid; gap: 1px; width: 100%; min-height: 56px; padding: 8px 12px; border: 0; border-radius: 12px; text-align: left; }
-body.t-ui .so-offers button { box-shadow: inset 0 0 0 1.5px var(--t-line); }
-body.t-ui .so-offers button.is-active { --button-bg: var(--t-accent-soft); --button-bg-hover: var(--t-accent-soft); box-shadow: inset 0 0 0 2px var(--t-accent); }
-.so-offers strong { font-size: 14px; }
-.so-offers small { color: var(--t-muted); font-size: 12px; }
-.so-offers span { color: var(--t-accent-strong); font-size: 13px; font-weight: 800; }
+/* 공급상품: 사진 + 고르기(select) — 같은 식재료의 아워홈·웰스토리 상품을 한 칸에서 */
+.so-offer { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 12px; box-shadow: inset 0 0 0 1.5px var(--t-line); }
+.so-offer .product-image { width: 64px; min-width: 64px; max-width: 64px; height: 64px; flex: 0 0 64px; border-radius: 10px; }
+/* 눌러 크게 보기 칸은 전역에서 40px 고정(!important)이라 사진과 같은 64px로 맞춘다 — 안 맞추면 사진이 넘쳐 옆 글자를 덮음 */
+body .so-offer .image-zoom-trigger[role='button'],
+body .so-offer .image-zoom-trigger[role='button']:hover { flex: 0 0 64px; width: 64px; min-width: 64px !important; max-width: 64px; height: 64px !important; border-radius: 10px; }
+.so-offer > div { display: grid; flex: 1; gap: 3px; min-width: 0; }
+.so-offer .t-select { width: 100%; min-height: 44px; padding: 0 8px; border: 1.5px solid var(--t-line); border-radius: 10px; background: var(--t-surface); color: var(--t-text); font-size: 14px; font-weight: 700; text-overflow: ellipsis; }
+.so-offer .t-select:disabled { opacity: 1; background: var(--t-surface-2); }
+.so-offer small { color: var(--t-muted); font-size: 12px; }
+.so-offer > div > span { color: var(--t-accent-strong); font-size: 13px; font-weight: 800; }
+.so-offer > div > span small { font-weight: 600; }
 
 .so-qty { display: flex; align-items: center; gap: 8px; padding-top: 10px; border-top: 1px dashed var(--t-line); }
 .so-qty input { width: 72px; min-height: 46px; border: 1.5px solid var(--t-line); border-radius: 12px; text-align: center; font-size: 18px; font-weight: 800; }

@@ -196,11 +196,17 @@ button,
 }
 
 .menu-manager-like-button:hover,
-.menu-manager-like-button:focus-visible,
-.menu-manager-like-button.is-liked {
+.menu-manager-like-button:focus-visible {
   border: 0 !important;
   background: transparent !important;
   color: #f06292 !important;
+}
+
+/* 2026-10-28: 저장된 나만의 메뉴 = 빨간 하트 */
+.menu-manager-like-button.is-liked {
+  border: 0 !important;
+  background: transparent !important;
+  color: #e02424 !important;
 }
 
 .vendor-sanitation-photo {

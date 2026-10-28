@@ -11,7 +11,7 @@ import SideMenuLayout from '../../components/SideMenuLayout'
 import { blockedReasons, MANUAL_MAX_ORDER_QTY, shortageStockStatus, SHORTAGE_STOCK_LABELS, type ShortageOffer, type ShortageRow } from '../../api/shortageProcurement'
 import { useEffect, useState } from 'react'
 import { getDeadlineAlertsCached } from '../../api/deadlineAlerts'
-import { availableSelection, day, deliveryTerms, deliveryWarning, money, number, taxLabel, useShortageOrder } from '../../features/order/useShortageOrder'
+import { availableSelection, day, deliveryTerms, deliveryWarning, money, number, offerOptions, per100, taxLabel, unitCost, useShortageOrder } from '../../features/order/useShortageOrder'
 import { PrintIcon } from '../../components/ActionIcons'
 import './ShortageFoodOrder.css'
 
@@ -20,29 +20,7 @@ import './ShortageFoodOrder.css'
  * fixedSource: 발주하기의 기준 탭(식단표·현재 부족 재고·최근 사용량)이 정한 계산 기준. 이때 화면 안의 기준 전환은 숨긴다.
  * 식단표 기준 탭은 식단 구성 화면에서 넘어온 '구성 중인 식단(DRAFT)'도 받는다.
  */
-/** 기준단위 100g(또는 100ml·1개)당 가격. 같은 식재료의 공급사 상품끼리 비교할 때 쓴다. */
-function unitCost(offer: ShortageOffer, unit: string) {
-  const qty = Number(offer.package_base_qty) || 0
-  if (!qty || !offer.purchase_price) return null
-  const u = unit.toLowerCase()
-  const factor = u === 'g' || u === 'ml' ? 100 : u === 'kg' || u === 'l' ? 0.1 : 1
-  return { value: offer.purchase_price / qty * factor, per: u === 'g' || u === 'kg' ? '100g' : u === 'ml' || u === 'l' ? '100ml' : unit }
-}
-function per100(offer: ShortageOffer, unit: string) {
-  const cost = unitCost(offer, unit)
-  return cost ? `${cost.per}당 ${money(Math.round(cost.value))}원` : ''
-}
 type RowSort = 'default' | 'amount_desc' | 'amount_asc'
-/** 상품 선택칸 순서: 늘 쓰는 상품(기본 상품) 맨 위 고정 → 나머지 기준단위당 싼 순 → 발주 불가는 뒤로 */
-function offerOptions(row: ShortageRow) {
-  return [...row.offers].sort((a, b) => {
-    if (a.supplier_offer_id === row.recommended_offer_id) return -1
-    if (b.supplier_offer_id === row.recommended_offer_id) return 1
-    if (a.orderable !== b.orderable) return a.orderable ? -1 : 1
-    const ca = unitCost(a, row.base_unit), cb = unitCost(b, row.base_unit)
-    return ca && cb ? ca.value - cb.value : ca ? -1 : cb ? 1 : 0
-  })
-}
 /** 지금 고른 상품보다 기준단위당 더 싼, 바로 시킬 수 있는 다른 상품(같은 행) */
 function cheapestOther(row: ShortageRow, current: ShortageOffer) {
   const mine = unitCost(current, row.base_unit)

@@ -37,7 +37,7 @@ body.t-ui .mm-chips button { --button-bg: var(--t-surface-2); --button-bg-hover:
 body.t-ui .mm-chips button.is-active { --button-bg: var(--t-accent); --button-bg-hover: var(--t-accent); --button-text: #fff; }
 .mm-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 6px; }
 .mm-field { display: grid; gap: 4px; color: var(--t-muted); font-size: 12px; font-weight: 700; }
-.mm-field :is(input, select) { min-height: 44px; padding: 0 10px; border: 1.5px solid var(--t-line); border-radius: 10px; background: var(--t-surface); color: var(--t-text); font-size: 15px; }
+.mm-field :is(input, .t-select) { min-height: 44px; padding: 0 10px; border: 1.5px solid var(--t-line); border-radius: 10px; background: var(--t-surface); color: var(--t-text); font-size: 15px; }
 
 .mm-recipe-head { display: flex; align-items: center; gap: 6px; margin-top: 12px; }
 .mm-recipe-head h3 { flex: 1; font-size: 15px; }
@@ -45,7 +45,7 @@ body.t-ui .mm-chips button.is-active { --button-bg: var(--t-accent); --button-bg
 .mm-ings li { display: grid; gap: 6px; padding: 10px; border: 1px solid var(--t-line); border-radius: 12px; }
 .mm-ings__pick { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 6px; }
 .mm-ings__qty { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: 6px; }
-body.t-ui .mm-ings :is(input, select) { min-height: 42px; font-size: 15px; }
+body.t-ui .mm-ings :is(input, .t-select) { min-height: 42px; font-size: 15px; }
 
 @media (max-width: 767px) {
   .mm-search { flex: 1; min-width: 0; }

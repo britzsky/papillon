@@ -8,6 +8,8 @@ export type RecipeActionMenuState = {
   x: number
   y: number
   orderMenuId?: string
+  /** 부른 곳에서만 쓰는 항목(예: 식단표 편집 칸의 '특식으로 바꾸기'). 맨 위에 보인다 */
+  extraAction?: { label: string; run: () => void }
 }
 
 type RecipeActionMenuProps = {
@@ -46,10 +48,26 @@ function RecipeActionMenu({ state, onClose, onViewAi, onViewBasic, onRegister, o
   return (
     <div
       className="recipe-action-menu"
-      style={{ left: state.x, top: state.y }}
+      // 화면 오른쪽·아래 끝에서 눌러도 메뉴가 잘리지 않게(폭 최대 220px·항목 7개 높이 기준)
+      style={{ left: Math.max(8, Math.min(state.x, window.innerWidth - 228)), top: Math.max(8, Math.min(state.y, window.innerHeight - 300)) }}
       role="menu"
       onClick={(event) => event.stopPropagation()}
     >
+      {/* 어떤 메뉴의 항목인지 맨 위에 작게(긴 이름은 말줄임) */}
+      {state.request.menu_name ? <div className="recipe-action-menu__title" title={state.request.menu_name}>{state.request.menu_name}</div> : null}
+      {state.extraAction ? (
+        <button
+          type="button"
+          role="menuitem"
+          className="recipe-action-menu__extra"
+          onClick={() => {
+            state.extraAction?.run()
+            onClose()
+          }}
+        >
+          {state.extraAction.label}
+        </button>
+      ) : null}
       <button
         type="button"
         role="menuitem"
@@ -94,7 +112,8 @@ function RecipeActionMenu({ state, onClose, onViewAi, onViewBasic, onRegister, o
             onClose()
           }}
         >
-          {isFavorite?.(state.request.menu_id) ? '♥ 나만의 메뉴 해제' : '♡ 나만의 메뉴로 저장'}
+          {/* 2026-10-28: 저장된 나만의 메뉴는 빨간 하트 */}
+          {isFavorite?.(state.request.menu_id) ? <><span style={{ color: '#e02424' }}>♥</span> 나만의 메뉴 해제</> : '♡ 나만의 메뉴로 저장'}
         </button>
       ) : null}
       {/* 레시피 등록·수정은 본사만(서버 /Menu/RecipeSave 본사 전용). 저장된 레시피가 있으면 창이 불러와 수정한다 */}

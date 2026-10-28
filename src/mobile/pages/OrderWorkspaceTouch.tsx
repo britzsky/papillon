@@ -37,6 +37,7 @@ export default function OrderWorkspaceTouch({ initialTab }: { initialTab?: Order
   </div>
 
   if (tab === 'recommended') return <RecommendedOrder methodBar={methodBar} />
-  if (tab === 'products') return <ProductOrderTouch methodBar={methodBar} />
+  if (tab === 'products') return <ProductOrderTouch key="products" methodBar={methodBar} />
+  if (tab === 'myProducts') return <ProductOrderTouch key="my" methodBar={methodBar} favorites />
   return <ShortageOrderTouch key={tab} methodBar={methodBar} fixedSource={ORDER_TAB_SOURCE[tab]} title={ORDER_TABS.find(item => item.key === tab)!.label} />
 }

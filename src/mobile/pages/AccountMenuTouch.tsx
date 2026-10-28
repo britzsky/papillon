@@ -13,6 +13,7 @@ import { mealCategoryOptions, mealPlanTypeOptions, menuGubunOptions, menuTypeOpt
 import { planningCostSourceLabels } from '../../utils/planningCost'
 import type { MenuManagerItem } from '../../api/operations'
 import './AccountMenuTouch.css'
+import TouchSelect from '../TouchSelect'
 
 type View = 'mine' | 'add'
 const PAGE = 48
@@ -70,12 +71,12 @@ export default function AccountMenuTouch() {
           <span className="am-label">메뉴유형</span>
           <div className="am-chips">{menuTypeOptions.map(option => <button key={option.value} type="button" className={String(menu.menu_type) === option.value ? 'is-active' : ''} onClick={() => m.handleAssignedMenuChange(menu.menu_id, 'menu_type', option.value)}>{option.text}</button>)}</div>
           <div className="am-pair">
-            <label className="am-field">메뉴구분<select value={String(menu.menu_gubun ?? '')} onChange={e => m.handleAssignedMenuChange(menu.menu_id, 'menu_gubun', e.target.value)}>
+            <label className="am-field">메뉴구분<TouchSelect value={String(menu.menu_gubun ?? '')} onChange={e => m.handleAssignedMenuChange(menu.menu_id, 'menu_gubun', e.target.value)}>
               <option value="">선택</option>{menuGubunOptions.map(o => <option key={o.value} value={o.value}>{o.text}</option>)}
-            </select></label>
-            <label className="am-field">식단유형<select value={menu.meal_plan_type ?? 0} onChange={e => m.handleAssignedMenuChange(menu.menu_id, 'meal_plan_type', Number(e.target.value))}>
+            </TouchSelect></label>
+            <label className="am-field">식단유형<TouchSelect value={menu.meal_plan_type ?? 0} onChange={e => m.handleAssignedMenuChange(menu.menu_id, 'meal_plan_type', Number(e.target.value))}>
               {mealPlanTypeOptions.map(o => <option key={o.value} value={o.value}>{o.text}</option>)}
-            </select></label>
+            </TouchSelect></label>
             <label className="am-field">열량(kcal)<input type="text" inputMode="decimal" value={menu.calories_per_serving ?? 0} onChange={e => m.handleAssignedMenuChange(menu.menu_id, 'calories_per_serving', Number(e.target.value.replace(/[^0-9.]/g, '')) || 0)} /></label>
           </div>
         </>}
@@ -92,18 +93,18 @@ export default function AccountMenuTouch() {
           const cost = accountIngredientCost(item)
           return <li key={item.row_id} className="t-pc-embed">
             <div className="am-ings__pick">
-              <select aria-label="분류" value={item.category_name ?? ''} onChange={e => m.handleIngredientCategoryChange(menu.menu_id, item.row_id, e.target.value)}>
+              <TouchSelect aria-label="분류" value={item.category_name ?? ''} onChange={e => m.handleIngredientCategoryChange(menu.menu_id, item.row_id, e.target.value)}>
                 <option value="">분류</option>{m.ingredientCategoryOptions.map(option => <option key={option} value={option}>{option}</option>)}
-              </select>
+              </TouchSelect>
               <IngredientSearchSelect options={m.ingredientOptions.filter(o => !item.category_name || o.category_name === item.category_name)}
                 placeholder="식자재 선택" selectedName={item.ingredient_name} value={item.ingredient_id} onChange={id => m.handleIngredientSelect(menu.menu_id, item.row_id, id)} />
             </div>
             <p className={`am-product${item.cost_unit_cost == null ? ' is-missing' : ''}`}>{item.cost_unit_cost == null ? '단가 미확인' : `${Number(item.cost_unit_cost).toLocaleString('ko-KR')}원/${item.cost_base_unit || item.base_unit || ''}`}</p>
             <div className="am-ings__qty">
               <input type="text" inputMode="decimal" aria-label="1인분 사용량" value={item.qty_num ?? item.required_qty} onChange={e => m.handleIngredientQtyChange(menu.menu_id, item.row_id, e.target.value.replace(/[^0-9.]/g, ''))} />
-              <select aria-label="단위" value={item.qty_unit ?? ''} onChange={e => m.handleIngredientUnitChange(menu.menu_id, item.row_id, e.target.value)}>
+              <TouchSelect aria-label="단위" value={item.qty_unit ?? ''} onChange={e => m.handleIngredientUnitChange(menu.menu_id, item.row_id, e.target.value)}>
                 <option value="">단위</option>{qtyUnitOptions.map(unit => <option key={unit} value={unit}>{unit}</option>)}
-              </select>
+              </TouchSelect>
               <span className={`am-ings__cost${cost == null ? ' is-missing' : ''}`}>
                 {cost == null ? '원가 확인 필요' : won(cost)}
                 {item.cost_source && <small>{planningCostSourceLabels[item.cost_source] ?? item.cost_source}</small>}

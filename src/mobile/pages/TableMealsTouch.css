@@ -94,33 +94,34 @@
 
 /* 오른쪽 사용 확정 패널 */
 .tm-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; }
-.tm-panel__head { padding: 26px 20px 14px; border-bottom: 1px solid var(--t-line); }
-.tm-panel__head h2 { font-size: 24px; letter-spacing: -0.02em; }
-.tm-panel__head p { margin-top: 4px; color: var(--t-muted); font-size: 13px; }
-.tm-panel__body { display: grid; align-content: start; gap: 12px; flex: 1; min-height: 0; overflow-y: auto; padding: 16px 20px; }
+.tm-panel__head { padding: 18px 14px 10px; border-bottom: 1px solid var(--t-line); }
+.tm-panel__head h2 { font-size: 20px; letter-spacing: -0.02em; }
+.tm-panel__head p { margin-top: 4px; color: var(--t-muted); font-size: 12px; }
+.tm-panel__body { display: grid; align-content: start; gap: 10px; flex: 1; min-height: 0; overflow-y: auto; padding: 12px 14px; }
+.tm-panel .t-segment button { padding: 0 8px; }
 .tm-panel__empty { padding: 16px 0; color: var(--t-muted); text-align: center; }
 
-.tm-meals { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.tm-meals { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 
 .tm-meals li {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 70px;
-  padding: 10px 14px 10px 10px;
+  gap: 10px;
+  min-height: 56px;
+  padding: 8px 10px 8px 8px;
   border: 1px solid var(--t-line);
   border-radius: 14px;
 }
 
 .tm-meals li.is-waiting { border-color: var(--t-accent); box-shadow: inset 0 0 0 1px var(--t-accent); }
 .tm-meals li > div { display: grid; flex: 1; min-width: 0; }
-.tm-meals strong { font-size: 15px; }
-.tm-meals small { color: var(--t-muted); font-size: 13px; }
+.tm-meals strong { font-size: 14px; }
+.tm-meals small { color: var(--t-muted); font-size: 12px; }
 
 .tm-panel__actions {
   display: grid;
-  gap: 14px;
-  padding: 14px 20px 20px;
+  gap: 10px;
+  padding: 10px 14px 14px;
 }
 
 @media (max-width: 767px) {
@@ -210,3 +211,10 @@ body.t-ui .tm-stepper__ten { --button-bg: var(--t-accent-soft); --button-bg-hove
 .tm-ingredients__stock b { color: var(--t-text); }
 .tm-ingredients li.is-short { border-color: var(--t-danger); background: var(--t-danger-soft); }
 .tm-ingredients__short { grid-column: 1 / -1; color: var(--t-danger); font-size: 13px; font-weight: 800; }
+
+/* 특식 메뉴(보라: PC 식단표와 같은 색) */
+.tm-slot li.is-special { color: #5f3a91; font-weight: 800; }
+.tm-slot li.is-special::before { content: '★'; width: auto; height: auto; border-radius: 0; background: none; color: #7a4fb0; font-size: 12px; }
+
+/* 2026-10-28 식단표 서류 받기 */
+.tm-docs { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }

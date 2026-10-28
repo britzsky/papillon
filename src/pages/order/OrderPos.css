@@ -129,5 +129,6 @@ body.workspace-ui .order-workspace .quick-order__summary button:disabled { backg
 
 /* 나만의 식재료(상품 하트) — 사진 오른쪽 위 */
 .pos-card__image { position: relative; }
-body.workspace-ui .pos-card__heart { position: absolute; top: 6px; right: 6px; min-width: 34px; height: 34px; padding: 0; border-radius: 999px; font-size: 18px; line-height: 1; color: #c44a6a; background: rgba(255, 255, 255, 0.92); border: 1px solid #f0c7d3; }
-body.workspace-ui .pos-card__heart.is-on { background: #fdeef2; }
+/* 2026-10-28: 전역 button 규칙(PosTheme.css, color·background !important)이 하트 색·크기를 덮어써 검게 보였음 → 같은 세기(!important)로 */
+body.workspace-ui > :is(#root, :not(#root)) .pos-card .pos-card__heart { position: absolute; top: 6px; right: 6px; width: 34px !important; min-width: 34px !important; height: 34px !important; min-height: 0 !important; padding: 0 !important; border-radius: 999px !important; font-size: 18px; line-height: 1; color: #9aa6b5 !important; background: rgba(255, 255, 255, 0.92) !important; border: 1px solid #d5dbe3 !important; }
+body.workspace-ui > :is(#root, :not(#root)) .pos-card .pos-card__heart.is-on { color: #e02424 !important; background: #fdecec !important; border-color: #f5b5b5 !important; }

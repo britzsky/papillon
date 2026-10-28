@@ -9,7 +9,7 @@
 .am-card__tags { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 4px; }
 .am-card__cost { padding: 0 4px; color: var(--t-accent-strong); font-size: 15px; font-weight: 800; }
 .am-card__cost.is-missing { color: var(--t-warn); font-size: 13px; }
-.am-card__like { position: absolute; top: 16px; right: 16px; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: #fff; color: var(--t-danger); }
+.am-card__like { position: absolute; top: 16px; right: 16px; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: #fff; color: #e02424; }
 .am-card :is(img, [class*=thumbnail]) { width: 100% !important; max-width: none !important; height: 104px !important; border-radius: 12px; object-fit: cover; }
 .am-card--add { padding-bottom: 10px; }
 .am-card__open { display: grid; gap: 6px; padding: 0; border: 0; text-align: left; }
@@ -51,7 +51,7 @@ body.t-ui .am-chips button { --button-bg: var(--t-surface-2); --button-bg-hover:
 body.t-ui .am-chips button.is-active { --button-bg: var(--t-accent); --button-bg-hover: var(--t-accent); --button-text: #fff; }
 .am-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
 .am-field { display: grid; gap: 4px; color: var(--t-muted); font-size: 11px; font-weight: 700; }
-.am-field :is(input, select) { min-height: 42px; padding: 0 8px; border: 1.5px solid var(--t-line); border-radius: 10px; background: var(--t-surface); color: var(--t-text); font-size: 14px; }
+.am-field :is(input, .t-select) { min-height: 42px; padding: 0 8px; border: 1.5px solid var(--t-line); border-radius: 10px; background: var(--t-surface); color: var(--t-text); font-size: 14px; }
 
 .am-ings-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
 .am-ings-head h3 { flex: 1; font-size: 15px; }
@@ -59,7 +59,7 @@ body.t-ui .am-chips button.is-active { --button-bg: var(--t-accent); --button-bg
 .am-ings li { display: grid; gap: 6px; padding: 10px; border: 1px solid var(--t-line); border-radius: 12px; }
 .am-ings__pick { display: grid; grid-template-columns: 84px minmax(0, 1fr) 40px; gap: 6px; align-items: center; }
 .am-ings__qty { display: grid; grid-template-columns: 76px 80px minmax(0, 1fr); gap: 6px; align-items: center; }
-body.t-ui .am-ings :is(input, select) { min-height: 42px; font-size: 15px; }
+body.t-ui .am-ings :is(input, .t-select) { min-height: 42px; font-size: 15px; }
 .am-ings__cost { display: grid; justify-items: end; color: var(--t-accent-strong); font-weight: 800; font-size: 14px; text-align: right; }
 .am-ings__cost small { color: var(--t-muted); font-size: 11px; font-weight: 500; }
 .am-ings__cost.is-missing { color: var(--t-warn); font-size: 12px; }

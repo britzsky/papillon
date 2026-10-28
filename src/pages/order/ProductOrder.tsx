@@ -31,10 +31,10 @@ function unitCost(offer: SupplierOffer) {
 }
 
 /** 상품 검색 발주(PC). 로직은 features/order/useProductOrder(터치와 공용). embedded: 발주하기(OrderWorkspace) 탭 안에서 레이아웃 없이 내용만 그린다 */
-export default function ProductOrder({ embedded = false }: { embedded?: boolean }) {
+export default function ProductOrder({ embedded = false, favorites = false }: { embedded?: boolean; favorites?: boolean }) {
   const [params] = useSearchParams()
   const accountId = workspaceAccountId(params)
-  return <ProductOrderContent key={accountId} accountId={accountId} initialSource={params.get('ingredient_id') || ''} embedded={embedded} />
+  return <ProductOrderContent key={accountId} accountId={accountId} initialSource={params.get('ingredient_id') || ''} embedded={embedded} favorites={favorites} />
 }
 
 /** 같은 기준단위(100g·100ml·개)끼리 단가 비교. 단위가 다르면 100g → 100ml → 그 외 순서로 묶는다 */
@@ -83,11 +83,11 @@ function OfferCard({ offer, inCart, canAdd, onAdd, cheapest, line, onQty, disabl
   </article>
 }
 
-function ProductOrderContent({ accountId, initialSource, embedded }: { accountId: string; initialSource: string; embedded: boolean }) {
+function ProductOrderContent({ accountId, initialSource, embedded, favorites }: { accountId: string; initialSource: string; embedded: boolean; favorites: boolean }) {
   const {
     sites, ingredients, source, chooseSource, site, setSite, date, changeDate, query, setQuery, cart, busy, locked, message, result, page, setPage,
     search, order, newCart, canAdd, addToCart, setLineQuantity, setLineSource, ingredientName, removeLine, filtered, groups, cartTotal, canOrder, toggleFavorite, favoriteMode,
-  } = useProductOrder(accountId, initialSource)
+  } = useProductOrder(accountId, initialSource, favorites)
   // 정렬은 보는 순서만 바꾼다(무엇을 발주할지는 담기로 사용자가 고름). 기본 추천순 = 늘 쓰는 상품 먼저 → 100g당 싼 순
   const [sort, setSort] = useState<SortKey>('recommend')
   const [onlyLinked, setOnlyLinked] = useState(false)
@@ -114,7 +114,7 @@ function ProductOrderContent({ accountId, initialSource, embedded }: { accountId
       <button type="button" className={favoriteMode ? 'is-primary' : ''} disabled={busy || !date || !accountId} onClick={() => void search(true)} title="하트를 누른 웰스토리·아워홈 상품만 봅니다">♥ 나만의 식재료</button>
     </section>
     <div className="pos-notes">
-      <CatalogPreparation key={accountId + date} accountId={accountId} date={date} onReady={() => void search()} />
+      <CatalogPreparation key={accountId + date} accountId={accountId} date={date} onReady={() => void search(favorites || favoriteMode)} />
       {message && <p role="status" className="pos-message">{message}</p>}
     </div>
 

@@ -122,6 +122,8 @@ export type MenuIngredientItem = {
   cost_source?: string
   cost_source_date?: string
   cost_reason?: string
+  /** 'HQ' = 거래처에 아직 없는 본사 메뉴라 본사 레시피로 보여준 줄(저장하면 거래처로 복사) */
+  recipe_source?: string
   cost_per_person?: number
   purchase_price?: number
   origin_name?: string
@@ -180,7 +182,7 @@ export type TableMealsDetailItem = {
   menu_gubun: number
   /** 식사구분 코드(조식 0·중식 2·석식 5 …) */
   meal_slot_code?: number
-  /** 특식 여부(식단가 초과분을 주 합계에서 빼고 따로 보여준다) */
+  /** 특식 메뉴 여부(메뉴 단위, 2026-10-27). 끼니 특식 메모는 special_note */
   special_yn?: 'Y' | 'N'
   special_note?: string
 }
@@ -234,6 +236,8 @@ export type TableMealsSavePayload = {
   meals: Array<{
     /** 특식(Y): 식단가 초과분을 주 합계에서 빼고 따로 보여준다 */
     special_yn?: 'Y' | 'N'
+    /** 특식 메모(무슨 특식인지, 예: 삼계탕) */
+    special_note?: string
     meal_date: string
     weekday: string
     meal_slot: string
@@ -250,6 +254,8 @@ export type TableMealsSavePayload = {
       food_type: number
       menu_type: number
       menu_gubun: number
+      /** 특식 메뉴(끼니 special_yn은 이 값 중 하나라도 Y) */
+      special_yn?: 'Y' | 'N'
     }>
   }>
   table_meals: Array<{
@@ -680,6 +686,7 @@ function normalizeIngredient(record: RawRecord): MenuIngredientItem {
     cost_source: asText(record.cost_source),
     cost_source_date: asText(record.cost_source_date),
     cost_reason: asText(record.cost_reason),
+    recipe_source: asText(record.recipe_source),
     cost_per_person: record.cost_per_person == null ? undefined : asNumber(record.cost_per_person),
     purchase_price: record.purchase_price == null ? undefined : asNumber(record.purchase_price),
     origin_name: asText(record.origin_name),

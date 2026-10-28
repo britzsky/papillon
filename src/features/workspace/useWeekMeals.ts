@@ -3,7 +3,8 @@ import { buildApiUrl } from '../../config/api'
 import { DEFAULT_SLOT_NAMES } from '../../api/mealSlots'
 
 /** 홈 '이번 주 식단표'(현장 계정, 2026-10-22 사용자 요청: 크게). 서버 /v2/meal-plans/details 기간 조회 */
-export type WeekMealMenu = { menu_id: string; menu_name: string; calories_per_serving?: number | null }
+/** special: 특식 메뉴(메뉴 단위, 2026-10-27) */
+export type WeekMealMenu = { menu_id: string; menu_name: string; calories_per_serving?: number | null; special?: boolean }
 export type WeekMealSlot = { code: number; name: string }
 export type WeekMealDay = { date: string; label: string; weekday: string; today: boolean; slots: Record<number, WeekMealMenu[]> }
 
@@ -54,7 +55,7 @@ export function useWeekMeals(accountId: string) {
     if (!day) continue
     const code = Number(row.meal_slot_code ?? row.meal_slot)
     if (!slotInfo.has(code)) slotInfo.set(code, { name: String(row.meal_slot_name || DEFAULT_SLOT_NAMES[code] || `식사 ${code}`), order: row.slot_display_order == null ? code : Number(row.slot_display_order) })
-    ;(day.slots[code] ??= []).push({ menu_id: String(row.menu_id ?? ''), menu_name: String(row.menu_name ?? ''), calories_per_serving: row.calories_per_serving == null ? null : Number(row.calories_per_serving) })
+    ;(day.slots[code] ??= []).push({ menu_id: String(row.menu_id ?? ''), menu_name: String(row.menu_name ?? ''), calories_per_serving: row.calories_per_serving == null ? null : Number(row.calories_per_serving), special: row.special_yn === 'Y' })
   }
   // 주말은 식단이 있을 때만 보여준다
   const visibleDays = days.filter((day, index) => index < 5 || Object.keys(day.slots).length > 0)

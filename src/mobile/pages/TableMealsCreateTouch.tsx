@@ -13,14 +13,23 @@ import { formatDateValue } from '../../features/tableMeals/tableMealsView'
 import {
   AUTO_WEEKDAY_LABELS, MANUAL_FOOD_TYPE_OPTIONS, PDF_EXCLUDED, formatDateLabel, useTableMealsWorkspace, type ParsedDay,
 } from '../../features/tableMeals/useTableMealsWorkspace'
-import { TemplatePickerDialog } from '../../pages/operations/TableMealsExtras'
+import { CopyPlanDialog, TemplatePickerDialog } from '../../pages/operations/TableMealsExtras'
+import { isHeadquarters } from '../../features/workspace/workspaceAccount'
+import RecipeActionMenu from '../../components/RecipeActionMenu'
+import RecipeViewModal from '../../components/RecipeViewModal'
+import RecipeRegisterModal from '../../components/RecipeRegisterModal'
+import { createAiRecipeGestureHandlers } from '../../components/aiRecipeGesture'
 import './TableMealsCreateTouch.css'
+import TouchSelect from '../TouchSelect'
+import SpecialMenuInput, { SpecialMenuDatalist } from '../../components/SpecialMenuInput'
 
-type Method = 'template' | 'manual' | 'pdf'
+type Method = 'template' | 'manual' | 'pdf' | 'copy'
 const METHODS: { key: Method; label: string; hint: string; icon: TouchIconName }[] = [
   { key: 'template', label: '템플릿 식단표', hint: '거래처 1일 식단가에 맞는 본사 템플릿을 불러옵니다', icon: 'refresh' },
   { key: 'manual', label: '직접 만들기', hint: '칸을 누르고 메뉴를 골라 넣습니다', icon: 'meals' },
   { key: 'pdf', label: '파일 불러오기', hint: '받은 식단표 PDF·엑셀을 읽어 옵니다', icon: 'box' },
+  // 2026-10-27: 본사만(다른 거래처 식단 열람)
+  { key: 'copy', label: '다른 거래처에서', hint: '다른 거래처의 저장된 식단표를 가져와 식수만 넣습니다', icon: 'store' },
 ]
 
 /**
@@ -35,6 +44,8 @@ export default function TableMealsCreateTouch({ onClose }: { onClose: () => void
   const [weeklyOpen, setWeeklyOpen] = useState(false)
   const [mealConfigOpen, setMealConfigOpen] = useState(false)
   const [bulkOpen, setBulkOpen] = useState(false)
+  const [copyOpen, setCopyOpen] = useState(false)
+  const methods = isHeadquarters() ? METHODS : METHODS.filter(m => m.key !== 'copy')
   const [y, mo] = w.selectedTableMonth.split('-').map(Number)
   const shiftMonth = (delta: number) => { const d = new Date(y, mo - 1 + delta, 1); w.setSelectedTableMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`) }
   const ready = Boolean(w.selectedAccountId) && Number(w.plannedServings) > 0
@@ -74,7 +85,7 @@ export default function TableMealsCreateTouch({ onClose }: { onClose: () => void
     {messages.map(text => <p key={text} className="t-msg is-warn tc-msg" role="status">{text}</p>)}
     {w.accountMenuError && <p className="t-msg is-error">{w.accountMenuError}</p>}
 
-    <div className="tc-methods">{METHODS.map(m => <button key={m.key} type="button" className={`t-card tc-method${method === m.key ? ' is-selected' : ''}`} onClick={() => setMethod(m.key)}>
+    <div className={`tc-methods${methods.length > 3 ? ' is-four' : ''}`}>{methods.map(m => <button key={m.key} type="button" className={`t-card tc-method${method === m.key ? ' is-selected' : ''}`} onClick={() => setMethod(m.key)}>
       <span className="tc-method__icon"><TouchIcon name={m.icon} size={28} /></span><strong>{m.label}</strong><small>{m.hint}</small>
     </button>)}</div>
 
@@ -86,6 +97,17 @@ export default function TableMealsCreateTouch({ onClose }: { onClose: () => void
       {!ready && <p className="tc-hint">예정 식수를 넣어야 부족재고까지 계산할 수 있습니다.</p>}
     </section>}
     {w.templatePicker && <TemplatePickerDialog state={w.templatePicker} weekLabel={w.selectedAutoWeek?.label ?? '고른 주'} onPick={template => void w.applyTemplate(template)} onClose={() => w.setTemplatePicker(null)} />}
+
+    {method === 'copy' && <section className="t-card tc-action">
+      <p>다른 거래처의 저장된 식단표를 {w.selectedAutoWeek?.label || '고른 주'}의 같은 요일로 가져옵니다. 이 거래처 식사 구성에 없는 식사와 거래처 전용 메뉴는 빠지고, 원가는 이 거래처 기준으로 다시 계산됩니다.</p>
+      <div className="tc-action__buttons">
+        <button type="button" className="t-btn is-primary is-large" disabled={!w.selectedAccountId || w.isAccountMenuLoading} onClick={() => setCopyOpen(true)}>{w.isAccountMenuLoading ? '메뉴 불러오는 중…' : '식단표 고르기'}</button>
+      </div>
+      {!ready && <p className="tc-hint">예정 식수를 넣어야 부족재고까지 계산할 수 있습니다.</p>}
+    </section>}
+    {copyOpen && <CopyPlanDialog accountOptions={w.accountOptions} currentAccountId={w.selectedAccountId} initialMonth={w.selectedTableMonth} Select={TouchSelect}
+      weekLabel={w.selectedAutoWeek?.label ?? '고른 주'} onClose={() => setCopyOpen(false)}
+      onApply={async (plan, items) => { const message = await w.applyOtherAccountPlan(plan, items); if (!message) setCopyOpen(false); return message }} />}
 
     {method === 'manual' && <section className="t-card tc-action">
       <p>빈 식단표를 열고 요일·식사 칸마다 본사 메뉴를 골라 넣습니다.</p>
@@ -114,6 +136,15 @@ export default function TableMealsCreateTouch({ onClose }: { onClose: () => void
     {bulkOpen && w.parsedPdfResult && <PdfUnmatchedBulkModal accountId={w.selectedAccountId} accountName={w.selectedAccountName} mealPlanType={w.selectedMealPlanType} unmatched={w.unmatchedPdfMenus}
       accountMenus={w.accountMenuItems} onClose={() => setBulkOpen(false)} onLinked={w.handleBulkLinkedMenus} onExclude={w.excludePdfTexts} />}
     <StockCheckSheet w={w} />
+    {/* 메뉴를 길게 누르면: 레시피 보기 · 나만의 메뉴 저장/해제(불러온 식단의 메뉴도) — PC 식단표 우클릭 메뉴와 같음 */}
+    <RecipeActionMenu state={w.recipeMenuState} onClose={() => w.setRecipeMenuState(null)}
+      onViewAi={request => { w.setRecipeViewMode('ai'); w.setRecipeViewRequest(request) }}
+      onViewBasic={request => { w.setRecipeViewMode('basic'); w.setRecipeViewRequest(request) }}
+      onRegister={w.setRecipeRegisterRequest}
+      isFavorite={w.isFavoriteMenu} onToggleFavorite={menuId => void w.toggleFavoriteMenu({ menu_id: menuId })} />
+    <RecipeViewModal request={w.recipeViewRequest} mode={w.recipeViewMode} onClose={() => w.setRecipeViewRequest(null)}
+      onRegister={request => { w.setRecipeViewRequest(null); w.setRecipeRegisterRequest(request) }} />
+    <RecipeRegisterModal request={w.recipeRegisterRequest} onClose={() => w.setRecipeRegisterRequest(null)} />
   </TouchLayout>
 }
 
@@ -124,9 +155,9 @@ function PdfResult({ w }: { w: W }) {
   const result = w.displayedMealResult
   if (!result) return null
   return <div className="tc-pdf">
-    {w.excelSheetOptions.length > 1 && <label className="tc-hint tc-excel-pick">시트 <select value={w.excelSheetName} onChange={event => w.setExcelSheetName(event.target.value)}>
+    {w.excelSheetOptions.length > 1 && <label className="tc-hint tc-excel-pick">시트 <TouchSelect value={w.excelSheetName} onChange={event => w.setExcelSheetName(event.target.value)}>
       {w.excelSheetOptions.map(option => <option key={option.name} value={option.name}>{option.name}{option.dates.length ? ` (${option.dates[0]} ~ ${option.dates[option.dates.length - 1]})` : ''}</option>)}
-    </select></label>}
+    </TouchSelect></label>}
     {w.rawParsedResult?.courses?.length ? <div className="tc-hint tc-excel-pick">가져올 코스 {w.rawParsedResult.courses.map(course => <label key={course}><input type="checkbox" checked={!w.excludedCourses.includes(course)} onChange={event => w.setExcludedCourses(current => event.target.checked ? current.filter(item => item !== course) : [...current, course])} /> {course}</label>)}</div> : null}
     <p className="tc-hint">{result.source === 'excel' ? `엑셀 '${result.sheetName}' 칸` : '텍스트'} {result.textItemCount}건 · 맞춘 메뉴 {w.matchedCount}건{result.unconfiguredSlots?.length ? ` · ${result.unconfiguredSlots.join(', ')}는 이 거래처 식사 설정에 없어 빠집니다` : ''}</p>
     <div className="tc-pdf__days">{result.days.map(day => <article key={day.id} className="tc-pdf__day">
@@ -139,7 +170,7 @@ function PdfResult({ w }: { w: W }) {
           <div className="tc-pdf__items">{items.map((item, index) => item.excluded
             ? <button key={index} type="button" className="tc-pill is-excluded" onClick={() => w.setPdfOverride(day.id, slot.key, index, null)}><s>{item.text}</s> 되살리기</button>
             : item.matchedMenu
-              ? <span key={index} className="tc-pill is-matched">{item.matchedMenu.menu_name}{item.text !== item.matchedMenu.menu_name ? <small>({item.text})</small> : null}</span>
+              ? <span key={index} className="tc-pill is-matched" {...createAiRecipeGestureHandlers(w.buildRecipeRequest(item.text, item.matchedMenu), w.setRecipeMenuState)}>{w.isFavoriteMenu(item.matchedMenu.menu_id) ? <span className="tc-favorite-mark">♥ </span> : ''}{item.matchedMenu.menu_name}{item.text !== item.matchedMenu.menu_name ? <small>({item.text})</small> : null}</span>
               : <span key={index} className="tc-pill is-unmatched">
                 {item.text}
                 <button type="button" onClick={() => w.openRegisterModal(item.text, day, slot.key)}>등록</button>
@@ -164,12 +195,14 @@ function Editor({ w, toolbar }: { w: W; toolbar: ReactNode }) {
   const aside = <div className="tc-panel">
     <div className="tc-panel__head">
       <h2>메뉴 넣기</h2>
-      <p>{day && targetRow ? `${day.label} ${day.date?.slice(5) || ''} · ${targetRow.label} 칸에 넣습니다` : '왼쪽에서 칸을 먼저 고르세요'}</p>
+      {w.specialReplace ? <p className="tc-special-replace" role="status">★ 특식으로 바꾸기 · <b>{w.specialReplace.text}</b> 대신 넣을 메뉴를 누르세요
+        <button type="button" className="t-btn is-small" onClick={w.cancelSpecialReplace}>취소</button></p>
+        : <p>{day && targetRow ? `${day.label} ${day.date?.slice(5) || ''} · ${targetRow.label} 칸에 넣습니다` : '왼쪽에서 칸을 먼저 고르세요'}</p>}
       <label className="t-chip tc-search"><TouchIcon name="search" /><input type="search" value={w.manualSearchText} placeholder="메뉴 검색" onChange={e => w.setManualSearchText(e.target.value)} /></label>
       <div className="tc-chips tc-chips--small">{MANUAL_FOOD_TYPE_OPTIONS.map(option => <button key={option.value || 'all'} type="button" className={w.manualFoodTypeFilter === option.value ? 'is-active' : ''} onClick={() => w.setManualFoodTypeFilter(option.value)}>{option.label}</button>)}
         <button type="button" className={w.favoriteOnly ? 'is-active' : ''} onClick={() => w.setFavoriteOnly(!w.favoriteOnly)}>♥ 나만의 메뉴</button></div>
     </div>
-    <ul className="tc-menus">{w.filteredManualMenus.slice(0, 120).map(menu => <li key={menu.menu_id}>
+    <ul className="tc-menus">{w.filteredManualMenus.slice(0, 120).map(menu => <li key={menu.menu_id} {...createAiRecipeGestureHandlers(w.buildRecipeRequest(menu.menu_name, menu), w.setRecipeMenuState)}>
       <button type="button" disabled={!target} onClick={() => w.addManualMenu(menu)}>
         <strong>{menu.menu_name}</strong>
         <small>{menu.meal_category}{menu.calories_per_serving ? ` · ${menu.calories_per_serving}kcal` : ''}</small>
@@ -205,8 +238,13 @@ function Editor({ w, toolbar }: { w: W; toolbar: ReactNode }) {
           <MealCalories menus={items.map(item => item.matchedMenu)} />
           {active ? <span className="t-badge is-accent">여기에 넣는 중</span> : <span className="t-badge">눌러서 고르기</span>}
         </header>
-        <ul>{items.map((item, index) => <li key={`${item.text}-${index}`} className={item.matchedMenu ? '' : 'is-unmatched'}>
+        <ul>{items.map((item, index) => <li key={`${item.text}-${index}`} className={`${item.matchedMenu ? '' : 'is-unmatched'}${item.special ? ' is-special' : ''}`.trim() || undefined}
+          {...(item.matchedMenu ? createAiRecipeGestureHandlers(w.buildRecipeRequest(item.text, item.matchedMenu), w.setRecipeMenuState,
+            { extraAction: { label: '★ 특식으로 바꾸기', run: () => w.startSpecialReplace(day.id, row.id, row.key, index, item.text) } }) : {})}>
           <span>{item.matchedMenu?.menu_name || item.text}{item.matchedMenu ? '' : ' (미등록)'}</span>
+          {/* 특식 메뉴: 이 메뉴 원가만큼은 식단가를 넘어도 주 합계에서 빼고 따로 */}
+          {item.matchedMenu && <button type="button" className={`tc-special${item.special ? ' is-on' : ''}`} aria-pressed={Boolean(item.special)} aria-label={`${item.text} 특식${item.special ? ' 해제' : ''}`}
+            onClick={e => { e.stopPropagation(); w.toggleSpecialMenu(day.id, row.id, row.key, index) }}>{item.special ? '★ 특식' : '특식'}</button>}
           <button type="button" aria-label="빼기" onClick={e => { e.stopPropagation(); w.removeManualMenu(day.id, row.id, row.key, index) }}><TouchIcon name="close" size={16} /></button>
         </li>)}</ul>
         {items.length === 0 && <p className="tc-hint">비어 있습니다. 이 칸을 고르고 오른쪽에서 메뉴를 누르세요.</p>}
@@ -222,7 +260,8 @@ function WeeklySheet({ w, onClose }: { w: W; onClose: () => void }) {
   const week = w.selectedAutoWeek!
   return <div className="t-sheet-backdrop" role="presentation" onClick={onClose}>
     <section className="t-sheet tc-weekly-sheet" role="dialog" aria-modal="true" aria-labelledby="tc-weekly-title" onClick={e => e.stopPropagation()}>
-      <header className="t-sheet__head"><h2 id="tc-weekly-title">주간 식사 편성</h2><p>{week.label} · 특별한 날만 바꾸세요</p></header>
+      <header className="t-sheet__head"><h2 id="tc-weekly-title">주간 식사 편성</h2><p>{week.label} · 특별한 날만 바꾸세요 · ★ 특식 메뉴를 정하면 그 끼니 주메뉴 자리에 넣고 특식으로 표시해요</p></header>
+      <SpecialMenuDatalist id="tc-special-menus" menus={w.planMenus} />
       <div className="t-sheet__body">{week.dates.map(date => <section key={formatDateValue(date)} className="tc-weekly-day">
         <h3>{formatDateLabel(date)} ({AUTO_WEEKDAY_LABELS[(date.getDay() + 6) % 7]})</h3>
         {w.configuredMealSlotRows.map(slot => {
@@ -233,12 +272,14 @@ function WeeklySheet({ w, onClose }: { w: W; onClose: () => void }) {
           const planType = setting?.meal_plan_type ?? profile?.default_meal_plan_type ?? w.selectedMealPlanType
           return <div key={slot.id} className={`tc-weekly-row${setting ? ' is-changed' : ''}`}>
             <strong>{slot.label}</strong>
-            <select aria-label={`${slot.label} 식사분류`} value={foodType} onChange={e => w.updateWeeklyMealSetting(date, slot, { food_type: Number(e.target.value) })}>
+            <TouchSelect aria-label={`${slot.label} 식사분류`} value={foodType} onChange={e => w.updateWeeklyMealSetting(date, slot, { food_type: Number(e.target.value) })}>
               {MANUAL_FOOD_TYPE_OPTIONS.filter(o => o.value).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-            <select aria-label={`${slot.label} 식단유형`} value={planType} onChange={e => w.updateWeeklyMealSetting(date, slot, { meal_plan_type: Number(e.target.value) })}>
+            </TouchSelect>
+            <TouchSelect aria-label={`${slot.label} 식단유형`} value={planType} onChange={e => w.updateWeeklyMealSetting(date, slot, { meal_plan_type: Number(e.target.value) })}>
               {mealPlanTypeOptions.map(o => <option key={o.value} value={o.value}>{o.text}</option>)}
-            </select>
+            </TouchSelect>
+            <SpecialMenuInput className="tc-weekly-row__special" listId="tc-special-menus" menus={w.planMenus} menuId={setting?.special_menu_id} menuName={setting?.special_menu_name} label={`${slot.label} 특식 메뉴`}
+              onChange={menu => w.updateWeeklyMealSetting(date, slot, { special_menu_id: menu?.menu_id, special_menu_name: menu?.menu_name })} />
           </div>
         })}
       </section>)}</div>

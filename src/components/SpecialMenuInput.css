@@ -1,0 +1,14 @@
+/* 주간 식사 설정 '특식' 칸(PC·터치 공용) */
+.special-menu-input { display: flex; align-items: center; gap: 4px; min-width: 0; padding: 0 6px; border: 1px dashed #c9b6e4; border-radius: 8px; background: #faf6ff; color: #7a4fb0; }
+.special-menu-input > span { flex: none; font-size: 12px; opacity: 0.5; }
+.special-menu-input input { flex: 1; min-width: 0; height: 30px; padding: 0; border: 0 !important; outline: none; background: transparent !important; box-shadow: none !important; color: #5f3a91; font-size: 12px; font-weight: 700; }
+.special-menu-input input::placeholder { color: #b3a0cc; font-weight: 500; }
+.special-menu-input.is-set { border-style: solid; border-color: #b99ad9; background: #f1e9fb; }
+.special-menu-input.is-set > span { opacity: 1; }
+.special-menu-input.is-pending { border-color: #b42318; }
+.special-menu-input button { flex: none; width: 22px !important; min-width: 0 !important; height: 22px !important; min-height: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 6px !important; background: transparent !important; color: #5f3a91 !important; font-size: 15px; line-height: 1; cursor: pointer; }
+/* 터치: 손가락 크기 */
+@media (pointer: coarse) {
+  .special-menu-input input { height: 40px; font-size: 14px; }
+  .special-menu-input button { width: 32px !important; height: 32px !important; }
+}

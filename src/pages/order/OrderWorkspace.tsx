@@ -47,7 +47,7 @@ export default function OrderWorkspace({ initialTab }: { initialTab?: OrderTab |
     navigate(`/order_manager/order?${query}`)
   }
   // 무엇을 기준으로 시킬지 = 이 화면에서 가장 먼저 고르는 것. 추천 발주안도 같은 줄의 한 칸(2026-10-16 정리)
-  const BASIS: { key: OrderTab; label: string }[] = [{ key: 'plan', label: '식단표 기준' }, { key: 'stock', label: '지금 부족한 재고' }, { key: 'usage', label: '최근 사용량' }, { key: 'recommended', label: '추천 발주안' }]
+  const BASIS: { key: OrderTab; label: string }[] = [{ key: 'plan', label: '식단표 기준' }, { key: 'stock', label: '지금 부족한 재고' }, { key: 'usage', label: '최근 사용량' }, { key: 'recommended', label: '추천 발주안' }, { key: 'myProducts', label: '♥ 나만의 식재료' }]
 
   return <div className="order-workspace"><SideMenuLayout header={<HeaderBar title="발주하기" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주관리', to: '/order_manager' }, { label: '발주하기' }]} />}>
     {/* 2026-10-16 정리: 한 줄에 ① 기준(식단표·재고·사용량·추천 발주안) ② 마감 알림 ③ 상품 직접 검색. 화면 이름은 위 경로 줄 */}
@@ -67,7 +67,7 @@ export default function OrderWorkspace({ initialTab }: { initialTab?: OrderTab |
       </div>
     </header>
     <div role="tabpanel" aria-label={TABS.find(item => item.key === tab)?.label}>
-      {tab === 'recommended' ? <QuickOrder embedded /> : tab === 'products' ? <ProductOrder embedded /> : <FoodOrder key={tab} embedded fixedSource={SOURCE[tab]} />}
+      {tab === 'recommended' ? <QuickOrder embedded /> : tab === 'products' ? <ProductOrder embedded /> : tab === 'myProducts' ? <ProductOrder key="my" embedded favorites /> : <FoodOrder key={tab} embedded fixedSource={SOURCE[tab]} />}
     </div>
   </SideMenuLayout></div>
 }

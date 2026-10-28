@@ -4,6 +4,7 @@ import TouchIcon, { type TouchIconName } from '../TouchIcon'
 import { STORAGE_OPTIONS, isIngredientChanged, useIngredientMaster, type EditableIngredientMasterItem } from '../../features/inventory/useIngredientMaster'
 import { qtyUnitOptions } from '../../pages/operations/menuManagerShared'
 import './IngredientMasterTouch.css'
+import TouchSelect from '../TouchSelect'
 
 const PAGE = 60
 const STORAGE_ICON: Record<string, TouchIconName> = { '': 'inventory', ROOM: 'store', REFRIGERATED: 'box', FROZEN: 'box', OTHER: 'box' }
@@ -101,11 +102,11 @@ function EditPanel({ item, categories, saving, dirty, message, onChange, onClose
       <label className="im-form__label" htmlFor="im-category">카테고리</label>
       {newCategory || categories.length === 0
         ? <input id="im-category" className="im-input" value={item.category_name} placeholder="새 카테고리 이름" onChange={e => onChange({ category_name: e.target.value })} />
-        : <select id="im-category" className="im-input" value={item.category_name} onChange={e => e.target.value === '__new' ? (setNewCategory(true), onChange({ category_name: '' })) : onChange({ category_name: e.target.value })}>
+        : <TouchSelect id="im-category" className="im-input" value={item.category_name} onChange={e => e.target.value === '__new' ? (setNewCategory(true), onChange({ category_name: '' })) : onChange({ category_name: e.target.value })}>
           <option value="">카테고리 선택</option>
           {categories.map(option => <option key={option} value={option}>{option}</option>)}
           <option value="__new">＋ 새 카테고리</option>
-        </select>}
+        </TouchSelect>}
 
       <span className="im-form__label">보관유형</span>
       <div className="t-segment">{STORAGE_OPTIONS.map(option => <button key={option.value} type="button" className={item.storage_type === option.value ? 'is-active' : ''} onClick={() => onChange({ storage_type: option.value })}>{option.text}</button>)}</div>

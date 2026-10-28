@@ -8,6 +8,8 @@ import { dayLabel, qty, statusLabel, useMealUsage, type Meal } from '../../featu
 import type { TableMealsItem } from '../../api/operations'
 import TableMealsCreateTouch from './TableMealsCreateTouch'
 import AccountRecipeEditModal from '../../pages/operations/AccountRecipeEditModal'
+import MealDocumentButtons from '../../features/tableMeals/MealDocumentButtons'
+import { isHeadquarters } from '../../features/workspace/workspaceAccount'
 import './TableMealsTouch.css'
 
 const SOURCE_LABEL: Record<string, string> = { auto: '자동', pdf: '파일', manual: '수기', template: '템플릿' }
@@ -35,7 +37,8 @@ function TableMealsView({ onCreate }: { onCreate: () => void }) {
   const table = view.selectedTable
   const accountId = table?.account_id || view.accountId
 
-  const toolbar = <><button type="button" className="t-btn is-primary" onClick={onCreate}><span aria-hidden="true">＋</span>식단표 만들기</button><div className="t-chip tm-month" role="group" aria-label="조회 월">
+  // 2026-10-28: 식단표는 본사가 만들어 올리므로 '식단표 만들기'는 본사만
+  const toolbar = <>{isHeadquarters() ? <button type="button" className="t-btn is-primary" onClick={onCreate}><span aria-hidden="true">＋</span>식단표 만들기</button> : null}<div className="t-chip tm-month" role="group" aria-label="조회 월">
     <button type="button" className="t-btn is-ghost is-icon" aria-label="이전 달" onClick={() => view.shiftMonth(-1)}><TouchIcon name="chevronLeft" /></button>
     <strong><TouchIcon name="calendar" size={20} />{year}년 {month}월</strong>
     <button type="button" className="t-btn is-ghost is-icon" aria-label="다음 달" onClick={() => view.shiftMonth(1)}><TouchIcon name="chevronRight" /></button>
@@ -113,8 +116,10 @@ function WeekView({ table, accountId, tables, onSelectTable, days, slotRows, too
   /** 식사 카드의 상태: 사용 확정 목록에서 같은 이름의 식사를 찾는다(이름이 다르면 표시 안 함) */
   const slotMeal = (label: string) => dayUsage?.meals.find(meal => meal.meal_slot === label)
 
-  return <TouchLayout title="식단표" subtitle={table.table_name} toolbar={toolbar} aside={<UsagePanel day={day} dayUsage={dayUsage} usage={usage} />} onAccountChange={onAccountChange}>
+  return <TouchLayout title="식단표" subtitle={table.table_name} toolbar={toolbar} asideNarrow aside={<UsagePanel day={day} dayUsage={dayUsage} usage={usage} />} onAccountChange={onAccountChange}>
     <WeekSwitch tables={tables} selected={table} onSelect={onSelectTable} />
+    {/* 2026-10-28: 식단표 서류 받기(조리계획표·급식운영일지 엑셀, 보존식 라벨 PDF) */}
+    <MealDocumentButtons accountId={accountId} tableId={table.table_id} buttonClassName="t-btn" className="tm-docs" />
 
     <div className="t-tabs tm-days" ref={daysRef} role="tablist" aria-label="요일">
       {days.map((d, index) => {
@@ -157,7 +162,7 @@ function WeekView({ table, accountId, tables, onSelectTable, days, slotRows, too
               {meal && <span className={`t-badge ${mealTone(meal)}`}>{statusLabel(meal)}</span>}
             </header>
             <ul>
-              {menus.map(menu => <li key={`${menu.sort_order}-${menu.menu_id || menu.menu_name}`}>{menu.menu_id
+              {menus.map(menu => <li key={`${menu.sort_order}-${menu.menu_id || menu.menu_name}`} className={menu.special_yn === 'Y' ? 'is-special' : undefined}>{menu.menu_id
                 ? <button type="button" className="tm-menu-link" title="눌러서 이 업장 레시피 수정" onClick={() => setRecipeMenu({ menu_id: menu.menu_id, menu_name: menu.menu_name || menu.menu_id })}>{menu.menu_name || '-'}</button>
                 : menu.menu_name || '-'}</li>)}
             </ul>

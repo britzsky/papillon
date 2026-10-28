@@ -550,6 +550,9 @@
   position: relative;
 }
 
+/* 부른 곳 전용 항목(식단표 '특식으로 바꾸기'): 맨 위, 아래 줄로 구분 */
+.recipe-action-menu .recipe-action-menu__extra { margin-bottom: 4px; border-bottom: 1px solid #e4d8f2; border-radius: 6px 6px 0 0; color: #7a4fb0; }
+
 .recipe-register {
   width: min(920px, 100%);
 }
@@ -760,3 +763,68 @@
     aspect-ratio: 16 / 9;
   }
 }
+
+/*
+ * 메뉴 우클릭(길게 누름) 메뉴 — 거래처 선택 목록과 같은 모양(흰 바탕·옅은 테두리·회색 hover), 글자 길이에 맞춘 폭(2026-10-28).
+ * 업무 화면 테마(PosTheme body.workspace-ui button !important)가 버튼을 덮으므로 같은 방식으로 더 구체적으로 지정
+ */
+body .recipe-action-menu {
+  width: max-content;
+  min-width: 150px;
+  max-width: 220px;
+  padding: 6px;
+  border: 1px solid #cfd8e3;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(22, 32, 51, 0.16);
+}
+body .recipe-action-menu .recipe-action-menu__title {
+  overflow: hidden;
+  padding: 4px 8px 6px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #edf0f3;
+  color: #6b7785;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+body > :is(#root, :not(#root)) .recipe-action-menu button,
+body .recipe-action-menu button {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 32px !important;
+  min-height: 0 !important;
+  padding: 0 10px !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #1f2933 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  text-align: left;
+  white-space: nowrap;
+}
+body > :is(#root, :not(#root)) .recipe-action-menu button:hover:not(:disabled),
+body .recipe-action-menu button:hover:not(:disabled),
+body .recipe-action-menu button:focus-visible {
+  background: #f1f3f5 !important;
+  color: #000000 !important;
+}
+body > :is(#root, :not(#root)) .recipe-action-menu .recipe-action-menu__extra,
+body .recipe-action-menu .recipe-action-menu__extra {
+  margin-bottom: 4px;
+  border-radius: 6px !important;
+  background: #f6f0fd !important;
+  color: #6a40a0 !important;
+}
+body > :is(#root, :not(#root)) .recipe-action-menu .recipe-action-menu__extra:hover:not(:disabled),
+body .recipe-action-menu .recipe-action-menu__extra:hover:not(:disabled) {
+  background: #ece1fa !important;
+  color: #5f3a91 !important;
+}
+body .recipe-action-menu .recipe-action-menu__ai-label { padding: 2px 7px; font-size: 9px; }

@@ -6,6 +6,7 @@ import BatchResultList from '../BatchResultList'
 import { useProductOrder, lineKey, SOURCE_REASON, type CartLine } from '../../features/order/useProductOrder'
 import { preparationLabel, useCatalogPreparation } from '../../features/order/useCatalogPreparation'
 import './ProductOrderTouch.css'
+import TouchSelect from '../TouchSelect'
 
 const won = (value: number) => `${Math.round(value).toLocaleString('ko-KR')}원`
 const PAGE = 30
@@ -14,15 +15,15 @@ const PAGE = 30
  * 상품 검색 발주(태블릿·휴대폰): 식재료·사업장·납품일 → 상품 검색 → 상품 카드 '담기', 오른쪽 장바구니(공급사·사업장·납품일별 묶음)에서 수량 −/+ 후 발주.
  * 로직은 PC 발주하기 '상품 검색' 탭과 같은 useProductOrder.
  */
-export default function ProductOrderTouch({ methodBar }: { methodBar: ReactNode }) {
+export default function ProductOrderTouch({ methodBar, favorites = false }: { methodBar: ReactNode; favorites?: boolean }) {
   const [params] = useSearchParams()
   const accountId = params.get('account_id') || localStorage.getItem('account_id') || ''
-  return <Content key={accountId} accountId={accountId} initialSource={params.get('ingredient_id') || ''} methodBar={methodBar} />
+  return <Content key={accountId} accountId={accountId} initialSource={params.get('ingredient_id') || ''} methodBar={methodBar} favorites={favorites} />
 }
 
-function Content({ accountId, initialSource, methodBar }: { accountId: string; initialSource: string; methodBar: ReactNode }) {
-  const p = useProductOrder(accountId, initialSource)
-  const prep = useCatalogPreparation(accountId, p.date, () => void p.search())
+function Content({ accountId, initialSource, methodBar, favorites }: { accountId: string; initialSource: string; methodBar: ReactNode; favorites: boolean }) {
+  const p = useProductOrder(accountId, initialSource, favorites)
+  const prep = useCatalogPreparation(accountId, p.date, () => void p.search(favorites || p.favoriteMode))
   const [limit, setLimit] = useState(PAGE)
   const [sort, setSort] = useState<'recommend' | 'price_asc' | 'price_desc'>('recommend')
   const submit = (event: FormEvent) => { event.preventDefault(); setLimit(PAGE); void p.search() }
@@ -42,11 +43,11 @@ function Content({ accountId, initialSource, methodBar }: { accountId: string; i
           <div className="po-line__name"><strong>{line.offer.product_name}</strong><small>{won(line.quantity * line.offer.purchase_price)}</small></div>
           {/* 재고 식재료: 위에서 고른 것 또는 서버가 맞힌 것. 틀리면 여기서 바꾼다(2026-10-23) */}
           <label className={`po-line__stock${line.source ? '' : ' is-empty'}`}><span>재고</span>
-            <select disabled={p.busy || p.locked} value={line.source} onChange={e => p.setLineSource(line, e.target.value)}>
+            <TouchSelect disabled={p.busy || p.locked} value={line.source} onChange={e => p.setLineSource(line, e.target.value)}>
               <option value="">입고할 때 고르기</option>
               {line.source && !p.ingredientName(line.source) && <option value={line.source}>{line.offer.suggested_ingredient_name || line.source}</option>}
               {p.ingredients.map(i => <option key={i.ingredient_id} value={i.ingredient_id}>{i.ingredient_name}</option>)}
-            </select>
+            </TouchSelect>
             {line.source && line.sourceBy && <small>{SOURCE_REASON[line.sourceBy]}</small>}
           </label>
           <div className="po-line__qty">
@@ -81,19 +82,19 @@ function Content({ accountId, initialSource, methodBar }: { accountId: string; i
   return <TouchLayout title="발주하기" subtitle="상품 검색" aside={aside}>
     {methodBar}
     <form className="t-card po-filters" onSubmit={submit}>
-      <label className="po-field">재고에 넣을 식재료<select disabled={p.busy || p.locked} value={p.source} onChange={e => p.chooseSource(e.target.value)}>
+      <label className="po-field">재고에 넣을 식재료<TouchSelect disabled={p.busy || p.locked} value={p.source} onChange={e => p.chooseSource(e.target.value)}>
         <option value="">상품마다 자동</option>{p.ingredients.map(i => <option key={i.ingredient_id} value={i.ingredient_id}>{i.ingredient_name}</option>)}
-      </select></label>
-      <label className="po-field">공급사 · 사업장<select disabled={p.busy} value={p.site} onChange={e => { p.setSite(e.target.value); setLimit(PAGE) }}>
+      </TouchSelect></label>
+      <label className="po-field">공급사 · 사업장<TouchSelect disabled={p.busy} value={p.site} onChange={e => { p.setSite(e.target.value); setLimit(PAGE) }}>
         <option value="">전체</option>{p.sites.map(s => <option key={s.supplier_account_site_id} value={s.supplier_account_site_id}>{s.supplier_name} · {s.external_site_name || s.external_site_code}</option>)}
-      </select></label>
+      </TouchSelect></label>
       <label className="po-field">납품일<input type="date" disabled={p.busy} value={p.date} onChange={e => p.changeDate(e.target.value)} /></label>
       <label className="t-chip po-search"><TouchIcon name="search" /><input type="search" value={p.query} placeholder="상품명 · 코드 · 공급사" onChange={e => p.setQuery(e.target.value)} /></label>
       <button type="submit" className="t-btn is-primary" disabled={p.busy || !p.date || !accountId}>{p.busy && !p.locked ? '찾는 중…' : '상품 찾기'}</button>
       <button type="button" className={`t-btn${p.favoriteMode ? ' is-primary' : ' is-soft'}`} disabled={p.busy || !p.date || !accountId} onClick={() => { setLimit(PAGE); void p.search(true) }}>♥ 나만의 식재료</button>
-      <label className="po-field">정렬<select value={sort} onChange={e => setSort(e.target.value as typeof sort)}>
+      <label className="po-field">정렬<TouchSelect value={sort} onChange={e => setSort(e.target.value as typeof sort)}>
         <option value="recommend">추천순</option><option value="price_asc">가격 낮은 순</option><option value="price_desc">가격 높은 순</option>
-      </select></label>
+      </TouchSelect></label>
       <div className="po-prep">
         {prep.result?.suppliers.map(s => <span key={s.supplier_code} className={`t-badge ${s.status === 'READY' ? 'is-ok' : 'is-warn'}`} title={s.message}>{s.supplier_name} {preparationLabel(s.status)}</span>)}
         {prep.needsRetry && <button type="button" className="t-btn is-small is-soft" onClick={prep.retry}>상품 준비 다시 확인</button>}
@@ -101,7 +102,7 @@ function Content({ accountId, initialSource, methodBar }: { accountId: string; i
     </form>
 
     {p.message && <p className="t-msg is-warn" role="status">{p.message}</p>}
-    {!p.busy && p.offers.length === 0 && <p className="t-msg">찾을 상품 이름을 넣고 '상품 찾기'를 누르세요.</p>}
+    {!p.busy && p.offers.length === 0 && <p className="t-msg">{p.favoriteMode ? '나만의 식재료가 없습니다. 상품의 ♡를 눌러 지정하면 여기서 바로 발주할 수 있습니다.' : "찾을 상품 이름을 넣고 '상품 찾기'를 누르세요."}</p>}
     {p.filtered.length > 0 && <p className="po-count">{p.filtered.length}개 상품</p>}
 
     <div className="po-grid">

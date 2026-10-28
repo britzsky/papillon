@@ -1,0 +1,73 @@
+/* 터치 select(TouchSelect): 칸 = 테두리 + 오른쪽 꺾쇠, 누르면 아래에서 올라오는 목록 창 */
+/* 크기·글자는 화면별 규칙(.so-field .t-select 등)이 이기도록 낮은 특이도. 색 변수는 전역 button 규칙보다 높게 */
+:where(body.t-ui) .t-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+body.t-ui button.t-select {
+  --button-width: 0;
+  --button-height: auto;
+  --button-bg: var(--t-surface);
+  --button-bg-hover: var(--t-surface);
+  --button-bg-disabled: var(--t-surface-2);
+  --button-text: var(--t-text);
+  /* 꺾쇠 자리·테두리는 화면별 padding·border 규칙과 상관없이(전역 button 규칙이 테두리 색을 배경색으로 덮어 box-shadow로 그림) */
+  padding-right: 34px !important;
+  border: 0 !important;
+  box-shadow: inset 0 0 0 1.5px var(--t-line);
+}
+body.t-ui .t-select::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--t-muted);
+  border-bottom: 2px solid var(--t-muted);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+body.t-ui button.t-select:disabled { opacity: 1; color: var(--t-muted); cursor: default; }
+body.t-ui .t-select:disabled::after { opacity: 0.4; }
+body.t-ui button.t-select:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--t-accent), 0 0 0 3px var(--t-accent-soft); }
+.t-select__value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 위 칩(t-chip--select) 안: 칩이 테두리·꺾쇠를 그리므로 글자만 */
+body.t-ui .t-chip--select button.t-select { --button-bg: transparent; --button-bg-hover: transparent; --button-bg-disabled: transparent; min-height: var(--t-tap); padding: 0 !important; box-shadow: none; font-weight: 700; font-size: 16px; }
+body.t-ui .t-chip--select .t-select::after { content: none; }
+
+/* 창 */
+.t-select-backdrop { z-index: 1200; }
+.t-select-sheet { width: min(480px, 100%); }
+.t-select-search { display: flex; width: 100%; margin-top: 10px; box-shadow: inset 0 0 0 1.5px var(--t-line); }
+.t-select-search input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; font-size: 16px; }
+.t-select-list { display: grid; gap: 6px; }
+body.t-ui .t-select-list button {
+  --button-bg: var(--t-surface);
+  --button-bg-hover: var(--t-surface-2);
+  --button-bg-disabled: var(--t-surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 50px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px var(--t-line);
+  font-weight: 700;
+  text-align: left;
+}
+body.t-ui .t-select-list button.is-selected { --button-bg: var(--t-accent-soft); --button-bg-hover: var(--t-accent-soft); --button-text: var(--t-accent-strong); box-shadow: inset 0 0 0 2px var(--t-accent); }
+body.t-ui .t-select-list button:disabled { color: var(--t-muted); opacity: 1; }
+.t-select-list button .t-icon { flex: none; color: var(--t-accent); }

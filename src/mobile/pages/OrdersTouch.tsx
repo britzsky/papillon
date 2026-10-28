@@ -5,6 +5,7 @@ import TouchIcon, { type TouchIconName } from '../TouchIcon'
 import { ORDER_STATUS_LABELS, RECEIVABLE_STATUSES, UNCERTAIN_STATUSES, daysAgo, usePurchaseOrders, type OrderItem, type PurchaseOrder } from '../../features/order/usePurchaseOrders'
 import './OrdersTouch.css'
 import FavoriteProductHeart from '../../components/FavoriteProductHeart'
+import TouchSelect from '../TouchSelect'
 
 const qty = (value?: number) => Number(value || 0).toLocaleString('ko-KR', { maximumFractionDigits: 3 })
 const won = (value?: number) => `${Math.round(Number(value || 0)).toLocaleString('ko-KR')}원`
@@ -140,11 +141,11 @@ function OrderPanel({ po, accountId }: { po: ReturnType<typeof usePurchaseOrders
               {item.supplier_error_message && <small className="od-items__error">사유: {item.supplier_error_message}</small>}
               {!po.needsIngredient(item)
                 ? <small>재고 식재료: {item.ingredient_name || item.ingredient_id}</small>
-                : receivable && left > 0 ? <select className="t-input od-items__ingredient" aria-label={`${item.product_name} 재고에 넣을 식재료`} value={po.receiptChoice(item).ingredient_id} disabled={po.busy}
+                : receivable && left > 0 ? <TouchSelect className="t-input od-items__ingredient" aria-label={`${item.product_name} 재고에 넣을 식재료`} value={po.receiptChoice(item).ingredient_id} disabled={po.busy}
                   onChange={e => po.setReceiptChoice(item, { ingredient_id: e.target.value })}>
                   <option value="">재고에 넣을 식재료 선택</option>
                   {po.ingredients.map(row => <option key={row.ingredient_id} value={row.ingredient_id}>{row.ingredient_name}{row.base_unit ? ` (${row.base_unit})` : ''}</option>)}
-                </select> : null}
+                </TouchSelect> : null}
             </div>
             {receivable && left > 0
               ? <div className="od-items__qty">

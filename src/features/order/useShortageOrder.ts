@@ -5,7 +5,7 @@ import { clearDeadlineAlertCache } from '../../api/deadlineAlerts'
 import { submitMixedProcurement, type BatchResult } from '../../api/mixedProcurement'
 import { getTableMealsList, type TableMealsItem } from '../../api/operations'
 import { getSupplierSites, type SupplierSite } from '../../api/supplierIntegration'
-import { getPlanDates, getShortages, MANUAL_MAX_ORDER_QTY, matchesStockFilter, previewShortageOrder, shortageStockStatus, type OrderPreview, type OrderSelection, type ShortageCriteria, type ShortageResult, type ShortageOffer, type ShortageStockFilter } from '../../api/shortageProcurement'
+import { getPlanDates, getShortages, MANUAL_MAX_ORDER_QTY, matchesStockFilter, previewShortageOrder, shortageStockStatus, type OrderPreview, type OrderSelection, type ShortageCriteria, type ShortageResult, type ShortageOffer, type ShortageRow, type ShortageStockFilter } from '../../api/shortageProcurement'
 
 export const day = (offset = 0) => { const date = new Date(); date.setDate(date.getDate() + offset); return date.toLocaleDateString('sv-SE') }
 export const number = (value: number) => value.toLocaleString('ko-KR', { maximumFractionDigits: 3 })
@@ -38,6 +38,28 @@ export function deliveryWarning(offer: ShortageOffer, deliveryDate: string, now:
   return ''
 }
 
+/** 기준단위 100g(또는 100ml·1개)당 가격. 같은 식재료의 공급사 상품끼리 비교할 때 쓴다. */
+export function unitCost(offer: ShortageOffer, unit: string) {
+  const qty = Number(offer.package_base_qty) || 0
+  if (!qty || !offer.purchase_price) return null
+  const u = unit.toLowerCase()
+  const factor = u === 'g' || u === 'ml' ? 100 : u === 'kg' || u === 'l' ? 0.1 : 1
+  return { value: offer.purchase_price / qty * factor, per: u === 'g' || u === 'kg' ? '100g' : u === 'ml' || u === 'l' ? '100ml' : unit }
+}
+export function per100(offer: ShortageOffer, unit: string) {
+  const cost = unitCost(offer, unit)
+  return cost ? `${cost.per}당 ${money(Math.round(cost.value))}원` : ''
+}
+/** 상품 선택칸 순서: 늘 쓰는 상품(기본 상품) 맨 위 고정 → 나머지 기준단위당 싼 순 → 발주 불가는 뒤로 */
+export function offerOptions(row: ShortageRow) {
+  return [...row.offers].sort((a, b) => {
+    if (a.supplier_offer_id === row.recommended_offer_id) return -1
+    if (b.supplier_offer_id === row.recommended_offer_id) return 1
+    if (a.orderable !== b.orderable) return a.orderable ? -1 : 1
+    const ca = unitCost(a, row.base_unit), cb = unitCost(b, row.base_unit)
+    return ca && cb ? ca.value - cb.value : ca ? -1 : cb ? 1 : 0
+  })
+}
 /**
  * 부족량 기준 발주(PC 발주하기의 식단표·현재 부족·사용량 탭, 터치 화면 공용): 조회 조건(주소·식단 구성 화면에서 넘어온 DRAFT 포함),
  * 부족 식재료 조회·자동 새로고침, 품목별 상품·수량 선택, 서버 검증 미리보기, 공급사별 혼합 발주.

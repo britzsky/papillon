@@ -5,6 +5,7 @@ import TouchIcon from '../TouchIcon'
 import ProductImage from '../../components/ProductImage'
 import { money, text, useWelstoryRaw } from '../../features/order/useWelstoryRaw'
 import './WelstoryRawTouch.css'
+import TouchSelect from '../TouchSelect'
 
 const TABS = [
   { key: 'products', label: '상품·판가' },
@@ -23,9 +24,9 @@ export default function WelstoryRawTouch() {
   const [limit, setLimit] = useState(PAGE)
 
   const toolbar = <label className="t-chip t-chip--select wr-site"><TouchIcon name="store" />
-    <select aria-label="웰스토리 사업장" value={w.soldTo} onChange={e => w.saveSoldTo(e.target.value)}>
+    <TouchSelect aria-label="웰스토리 사업장" value={w.soldTo} onChange={e => w.saveSoldTo(e.target.value)}>
       <option value="">사업장 선택</option>{w.workplaces.map(item => <option key={item.soldTo} value={item.soldTo}>{item.soldToNm || item.soldTo} ({item.soldTo})</option>)}
-    </select>
+    </TouchSelect>
   </label>
 
   const aside = <div className="wr-panel">

@@ -103,13 +103,14 @@ a.ht-tile:active { transform: scale(0.99); }
 }
 
 /* 통합 검색(HomeSearchTouch) */
-.hs { display: grid; gap: 12px; margin-bottom: 8px; }
-.hs-bar { display: flex; gap: 10px; }
-.hs-input { flex: 1; min-width: 0; min-height: 56px; font-weight: 500; }
+.hs { display: grid; gap: 10px; margin-bottom: 8px; }
+.hs-top { display: flex; align-items: center; gap: 12px; }
+.hs-bar { display: flex; flex: 0 0 50%; gap: 8px; min-width: 0; }
+.hs-input { flex: 1; min-width: 0; min-height: 44px; font-weight: 500; }
 .hs-input input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; font-size: 17px; color: var(--t-text); }
 .hs-input input::-webkit-search-cancel-button { display: none; }
 body.t-ui .hs-clear { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 10px; background: var(--t-surface-2, #f3f4f3); color: var(--t-muted); box-shadow: none; }
-.hs-bar .t-btn { min-height: 56px; min-width: 96px; font-size: 17px; border-radius: 14px; }
+.hs-bar .t-btn { min-height: 44px; min-width: 72px; font-size: 16px; border-radius: 12px; }
 .hs-results { display: grid; gap: 12px; }
 .hs-results .t-msg { padding: 12px 0; text-align: left; }
 .hs-summary { margin: 0; font-size: 16px; color: var(--t-muted); }
@@ -126,8 +127,11 @@ body.t-ui .hs-action:active { background: var(--t-accent-softer); }
 .hs-action__text strong { font-size: 16px; }
 .hs-action__text small { color: var(--t-muted); font-size: 13px; line-height: 1.4; }
 .hs-action .t-icon { flex: none; color: var(--t-muted); }
-.hs-keywords { display: grid; gap: 8px; }
-.hs-keywords > div { display: flex; align-items: center; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.hs-keywords { display: grid; flex: 1; gap: 6px; min-width: 0; }
+.hs-keywords > div { display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; }
 .hs-keywords b { flex: none; color: var(--t-muted); font-size: 13px; }
-body.t-ui .hs-keyword { flex: none; min-height: 40px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--t-surface); color: var(--t-text); font-weight: 600; box-shadow: var(--t-shadow); white-space: nowrap; }
-@media (max-width: 767px) { .hs-actions { grid-template-columns: 1fr; } .hs-bar .t-btn { min-width: 72px; } }
+body.t-ui .hs-keyword { flex: none; min-height: 34px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--t-surface); color: var(--t-text); font-weight: 600; box-shadow: var(--t-shadow); white-space: nowrap; }
+@media (max-width: 767px) { .hs-actions { grid-template-columns: 1fr; } .hs-top { flex-wrap: wrap; } .hs-bar { flex-basis: 100%; } }
+
+/* 현장 홈 이번 주 식단표: 터치는 바깥 여백만 줄임(카드 모양은 WeekMealBoard.css) */
+.rd.ht-week { margin-bottom: 8px; }

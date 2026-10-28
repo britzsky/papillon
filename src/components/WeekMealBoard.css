@@ -1,21 +1,66 @@
-/* 홈 '이번 주 식단표' — 현장 계정 홈의 가장 큰 영역 */
-.rd .rd-weekmeal { padding: 20px 22px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.rd .rd-weekmeal__head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.rd .rd-weekmeal__head .rd-h2 { margin: 0; }
-.rd .rd-weekmeal__nav { display: flex; align-items: center; gap: 6px; margin-left: auto; }
-.rd .rd-weekmeal__empty { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 28px 16px; border: 1px dashed var(--rd-line, #d8ded9); border-radius: 12px; }
-.rd .rd-weekmeal__empty p { margin: 0; }
-.rd .rd-weekmeal__scroll { overflow-x: auto; }
-.rd .rd-weekmeal__table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; min-width: 640px; }
-.rd .rd-weekmeal__table th, .rd .rd-weekmeal__table td { border-bottom: 1px solid var(--rd-line, #e3e8e4); padding: 10px 10px; vertical-align: top; text-align: left; }
-.rd .rd-weekmeal__table thead th { font-weight: 700; background: var(--rd-surface-2, #f5f7f5); }
-.rd .rd-weekmeal__table thead th .rd-chip { margin-left: 6px; }
-.rd .rd-weekmeal__weekday { display: inline-block; margin-right: 6px; }
-.rd .rd-weekmeal__date { color: var(--rd-muted, #5b6660); font-weight: 500; }
-.rd .rd-weekmeal__slot { width: 76px; color: var(--rd-muted, #5b6660); font-weight: 700; }
-.rd .rd-weekmeal__table .is-today { background: var(--rd-today, #eef7f1); }
-.rd .rd-weekmeal__table ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.rd .rd-weekmeal__table li { line-height: 1.35; word-break: keep-all; }
+/* 홈 '이번 주 식단표' — 현장 계정 홈의 가장 큰 영역(PC·터치 공용).
+   글자 크기는 --rd-fs(PC 전역 규칙이 2px 빼서 씀) + font-size(터치는 그 규칙이 없음) 둘 다 — 두 화면이 같은 크기가 되게 --rd-fs는 2px 크게 */
+.rd .rd-weekmeal { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.rd .rd-weekmeal__head { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; }
+.rd .rd-weekmeal__title { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.rd .rd-weekmeal__title .rd-h2 { margin: 0; }
+.rd .rd-weekmeal__title span { color: var(--rd-muted); --rd-fs: 15px; font-size: 13px; font-weight: 600; }
+.rd .rd-weekmeal__nav { display: inline-flex; align-items: center; gap: 2px; margin-left: auto; padding: 3px; border-radius: 999px; background: var(--rd-bg); }
+.rd .rd-weekmeal__nav .rd-icon-btn { border-radius: 999px; }
+.rd .rd-weekmeal__this { min-height: 36px; padding: 0 14px; border: 0; border-radius: 999px; --rd-fs: 15px; font-size: 13px; font-weight: 700; cursor: pointer; --button-width: 0; --button-height: 36px; --button-bg: transparent; --button-bg-hover: #fff; --button-bg-disabled: #fff; --button-text: var(--rd-green-dark); }
+.rd .rd-weekmeal__this:disabled { opacity: 1 !important; cursor: default; box-shadow: 0 1px 3px rgba(30, 42, 34, 0.12); }
+
+.rd .rd-weekmeal__empty { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 28px 20px; border: 1.5px dashed var(--rd-line-strong); border-radius: 14px; background: #FAFCFA; }
+.rd .rd-weekmeal__empty p { display: grid; gap: 4px; margin: 0; }
+.rd .rd-weekmeal__empty strong { --rd-fs: 17px; font-size: 15px; }
+.rd .rd-weekmeal__empty small { color: var(--rd-muted); --rd-fs: 14px; font-size: 12px; }
+
+/* 요일 카드: 넓은 화면은 한 줄에 전부, 좁으면 옆으로 넘김 */
+.rd .rd-weekmeal__days {
+  display: grid;
+  grid-template-columns: repeat(var(--rd-week-days, 5), minmax(150px, 1fr));
+  gap: 10px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 8px;
+  padding-bottom: 4px;
+}
+.rd .rd-weekmeal__day { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--rd-line-strong); border-radius: 14px; background: #fff; overflow: hidden; scroll-snap-align: start; }
+.rd .rd-weekmeal__day header { display: flex; align-items: baseline; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--rd-line); background: #F7F9F7; }
+.rd .rd-weekmeal__day header strong { --rd-fs: 20px; font-size: 18px; font-weight: 800; }
+.rd .rd-weekmeal__day header span { color: var(--rd-muted); --rd-fs: 15px; font-size: 13px; font-weight: 600; }
+.rd .rd-weekmeal__day header em { margin-left: auto; padding: 2px 9px; border-radius: 999px; background: #fff; color: var(--rd-green-dark); --rd-fs: 13px; font-size: 11px; font-style: normal; font-weight: 800; }
+.rd .rd-weekmeal__day.is-today { border: 2px solid var(--rd-green); box-shadow: 0 6px 18px rgba(46, 107, 58, 0.16); }
+.rd .rd-weekmeal__day.is-today header { border-bottom-color: transparent; background: var(--rd-green); color: #fff; }
+.rd .rd-weekmeal__day.is-today header span { color: rgba(255, 255, 255, 0.85); }
+.rd .rd-weekmeal__day.is-past { opacity: 0.6; }
+.rd .rd-weekmeal__day.is-past:hover { opacity: 1; }
+
+.rd .rd-weekmeal__slots { display: flex; flex-direction: column; flex: 1; }
+.rd .rd-weekmeal__slot { --slot: var(--rd-green); --slot-soft: var(--rd-green-soft); padding: 10px 12px 12px; border-top: 1px dashed var(--rd-line); }
+.rd .rd-weekmeal__slot:first-child { border-top: 0; }
+.rd .rd-weekmeal__slot.is-morning { --slot: #B7791F; --slot-soft: var(--rd-yellow-soft); }
+.rd .rd-weekmeal__slot.is-evening { --slot: var(--rd-blue); --slot-soft: var(--rd-blue-soft); }
+.rd .rd-weekmeal__slot.is-snack { --slot: var(--rd-orange); --slot-soft: var(--rd-orange-soft); }
+.rd .rd-weekmeal__slot-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 6px; }
+.rd .rd-weekmeal__slot-head b { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px 2px 7px; border-radius: 999px; background: var(--slot-soft); color: var(--slot); --rd-fs: 14px; font-size: 12px; font-weight: 800; }
+.rd .rd-weekmeal__slot-head b::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--slot); }
+.rd .rd-weekmeal__slot-head small { color: var(--rd-muted); --rd-fs: 13px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.rd .rd-weekmeal__slot ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.rd .rd-weekmeal__slot li { --rd-fs: 15px; font-size: 13px; line-height: 1.4; color: var(--rd-soft-ink); word-break: keep-all; }
+.rd .rd-weekmeal__slot li.is-first { --rd-fs: 16px; font-size: 14px; font-weight: 800; color: var(--rd-ink); }
+.rd .rd-weekmeal__slot p { margin: 0; color: #9AA59E; --rd-fs: 14px; font-size: 12px; }
+
+/* 특식 메뉴(보라: 식단표와 같은 색) */
+.rd .rd-weekmeal__slot li.is-special { color: #5f3a91; font-weight: 800; }
+.rd .rd-weekmeal__slot li.is-special::before { content: '★ '; color: #7a4fb0; }
+
+@media (max-width: 767px) {
+  .rd .rd-weekmeal { padding: 14px; }
+  .rd .rd-weekmeal__days { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(78%, 1fr); margin: 0 -14px; padding: 0 14px 4px; scroll-padding: 0 14px; }
+  .rd .rd-weekmeal__nav { margin-left: 0; }
+}
+
 /* 현장 홈: 오늘 할 일은 작게 */
 .rd .rd-steps.is-compact { padding: 14px 16px; }
 .rd .rd-steps.is-compact > p { display: none; }

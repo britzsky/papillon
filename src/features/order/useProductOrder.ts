@@ -17,7 +17,8 @@ export const SOURCE_REASON: Record<string, string> = { HISTORY: '지난 발주',
  * 2026-10-23)를 담고, 장바구니 줄에서 바꿀 수 있다. 끝내 비어 있으면 입고할 때 고른다.
  * 하트(나만의 식재료)를 누른 상품은 검색 결과 맨 위에 오고, '나만의 식재료' 버튼으로 하트 상품만 볼 수 있다.
  */
-export function useProductOrder(accountId: string, initialSource: string) {
+/** favorites: 발주하기 '나만의 식재료' 탭 — 처음 열 때와 납품일을 바꿀 때 하트 상품을 바로 불러온다 */
+export function useProductOrder(accountId: string, initialSource: string, favorites = false) {
   const [sites, setSites] = useState<SupplierSite[]>([])
   const [ingredients, setIngredients] = useState<ProductIngredient[]>([])
   const [source, setSource] = useState(initialSource)
@@ -35,7 +36,7 @@ export function useProductOrder(accountId: string, initialSource: string) {
   const [page, setPage] = useState(1)
   // 발주하기 머리 줄 검색창에서 ?q= 로 들어오면 첫 화면에서 바로 한 번 조회한다
   const initialQuery = useRef(new URLSearchParams(window.location.search).get('q') || '')
-  const [autoSearch, setAutoSearch] = useState(false)
+  const [autoSearch, setAutoSearch] = useState<false | 'keyword' | 'favorites'>(false)
   useEffect(() => {
     let active = true
     if (!accountId) return
@@ -46,10 +47,11 @@ export function useProductOrder(accountId: string, initialSource: string) {
       setSites(nextSites); setIngredients(nextIngredients)
       // 식재료를 지정해 들어온 경우만 검색어를 식재료명으로(머리 줄 검색어 ?q= 는 유지)
       if (initialSource) setQuery(nextIngredients.find(i => i.ingredient_id === initialSource)?.ingredient_name || '')
-      else if (initialQuery.current) setAutoSearch(true)
+      else if (favorites) setAutoSearch('favorites')
+      else if (initialQuery.current) setAutoSearch('keyword')
     }).catch(e => { if (active) setMessage(e.message) })
     return () => { active = false }
-  }, [accountId, initialSource])
+  }, [accountId, initialSource, favorites])
   const [favoriteMode, setFavoriteMode] = useState(false)
   const search = async (favoritesOnly = false) => {
     if (pending.current) return
@@ -62,7 +64,7 @@ export function useProductOrder(accountId: string, initialSource: string) {
   useEffect(() => {
     if (!autoSearch) return
     setAutoSearch(false)
-    void search()
+    void search(autoSearch === 'favorites')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoSearch])
   const order = async (recover = false) => {
@@ -81,7 +83,7 @@ export function useProductOrder(accountId: string, initialSource: string) {
     catch (e) { setMessage(e instanceof Error ? e.message : '기존 발주를 확인하세요.') }
   }
   const chooseSource = (value: string) => { setSource(value); setQuery(ingredients.find(i => i.ingredient_id === value)?.ingredient_name || ''); setPage(1) }
-  const changeDate = (value: string) => { setDate(value); setOffers([]) }
+  const changeDate = (value: string) => { setDate(value); setOffers([]); if (favorites && value) setAutoSearch('favorites') }
   const inCart = (offer: SupplierOffer) => cart.some(l => l.offer.supplier_offer_id === offer.supplier_offer_id && l.date === date)
   const canAdd = (offer: SupplierOffer) => !busy && !locked && offer.orderable_yn === 'Y' && offer.minimum_order_qty > 0 && !inCart(offer)
   /** 담기: 납품·마감이 확인되지 않은 상품은 사용자가 공급사에 직접 확인했는지 묻는다 */

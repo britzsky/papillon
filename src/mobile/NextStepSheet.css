@@ -26,11 +26,11 @@
 .ns-main { flex: 2 !important; }
 
 /* 홈 맨 위 큰 버튼 카드 */
-.ht-next { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin: 0 0 18px; padding: 18px 20px; border-radius: 20px; background: var(--t-accent); color: #fff; }
-.ht-next__text { flex: 1 1 260px; display: flex; flex-direction: column; gap: 4px; }
-.ht-next__text small { opacity: .85; font-size: 14px; }
-.ht-next__text strong { font-size: 20px; }
-.ht-next .t-btn { min-width: 220px; background: #fff; color: var(--t-accent-strong); border-color: #fff; font-size: 17px; }
+.ht-next { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 0 0 12px; padding: 10px 16px; border-radius: 16px; background: var(--t-accent); color: #fff; }
+.ht-next__text { flex: 1 1 260px; display: flex; flex-direction: column; gap: 1px; }
+.ht-next__text small { opacity: .85; font-size: 13px; }
+.ht-next__text strong { font-size: 17px; }
+.ht-next .t-btn, .ht-next .t-btn.is-large { min-width: 180px; min-height: 44px; background: #fff; color: var(--t-accent-strong); border-color: #fff; font-size: 17px; }
 .ht-next.is-quiet { background: var(--t-surface); color: var(--t-text); border: 1px solid var(--t-line); }
 .ht-next.is-quiet .t-btn { background: var(--t-accent-soft); color: var(--t-accent-strong); border-color: var(--t-accent-soft); }
 .ht-next.is-warn { background: var(--t-warn-soft); color: var(--t-warn); }

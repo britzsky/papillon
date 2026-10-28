@@ -1,7 +1,7 @@
 /* 상품 검색 발주(터치). 공용 부품은 TouchLayout.css */
 .po-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 10px 12px; margin-bottom: 14px; }
 .po-field { display: grid; gap: 4px; flex: 1 1 180px; color: var(--t-muted); font-size: 12px; font-weight: 700; }
-.po-field :is(input, select) { width: 100%; min-height: 46px; padding: 0 10px; border: 1.5px solid var(--t-line); border-radius: 12px; background: var(--t-surface); color: var(--t-text); font-size: 16px; }
+.po-field :is(input, .t-select) { width: 100%; min-height: 46px; padding: 0 10px; border: 1.5px solid var(--t-line); border-radius: 12px; background: var(--t-surface); color: var(--t-text); font-size: 16px; }
 .po-search { flex: 2 1 260px; gap: 10px; padding: 0 16px; box-shadow: inset 0 0 0 1.5px var(--t-line); }
 .po-search input { flex: 1; min-width: 0; min-height: 46px; border: 0; background: transparent; font-size: 16px; outline: none; }
 .po-prep { display: flex; flex-wrap: wrap; gap: 6px; flex: 1 1 100%; }
@@ -40,9 +40,10 @@
 .po-line__qty { display: flex; align-items: center; gap: 6px; }
 /* 재고 식재료 한 줄(서버 추정 · 바꾸기). 비어 있으면 입고 때 고른다는 뜻으로 주황 */
 .po-line__stock { display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--t-muted); font-size: 12px; font-weight: 700; }
-.po-line__stock select { flex: 1; min-width: 0; min-height: 36px; padding: 0 8px; border: 1.5px solid var(--t-line); border-radius: 10px; background: #fff; font-size: 14px; font-weight: 700; }
+.po-line__stock .t-select { flex: 1; min-width: 0; min-height: 36px; padding: 0 8px; border: 1.5px solid var(--t-line); border-radius: 10px; background: #fff; font-size: 14px; font-weight: 700; }
 .po-line__stock small { flex: none; }
-.po-line__stock.is-empty select { border-color: #f5b041; background: #fff7e6; color: #9a5b00; }
+/* 버튼 색은 전역 button 규칙이 변수로 칠함 */
+body.t-ui .po-line__stock.is-empty button.t-select { --button-bg: #fff7e6; --button-bg-hover: #fff7e6; --button-text: #9a5b00; box-shadow: inset 0 0 0 1.5px #f5b041; }
 .po-line__qty .t-round { width: 38px; min-width: 38px; min-height: 38px; font-size: 18px; }
 .po-line__qty input { width: 60px; min-height: 40px; border: 1.5px solid var(--t-line); border-radius: 10px; text-align: center; font-size: 16px; font-weight: 800; }
 .po-line__qty > span { color: var(--t-muted); font-size: 12px; font-weight: 700; }
@@ -55,5 +56,5 @@
 
 /* 나만의 식재료 하트 */
 .po-offer__top { position: relative; }
-.po-offer__heart { margin-left: auto; min-width: 40px; height: 40px; border-radius: 999px; border: 1px solid #f0c7d3; background: #fff; color: #c44a6a; font-size: 20px; }
-.po-offer__heart[aria-pressed='true'] { background: #fdeef2; }
+.po-offer__heart { margin-left: auto; min-width: 40px; height: 40px; border-radius: 999px; border: 1px solid #d5dbe3; background: #fff; color: #9aa6b5; font-size: 20px; }
+.po-offer__heart[aria-pressed='true'] { color: #e02424; background: #fdecec; border-color: #f5b5b5; }

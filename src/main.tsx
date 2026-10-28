@@ -47,6 +47,7 @@ import AccountMenuTouch from './mobile/pages/AccountMenuTouch'
 import LoginTouch from './mobile/pages/LoginTouch'
 import WelstoryRawTouch from './mobile/pages/WelstoryRawTouch'
 import SanitationTouch from './mobile/pages/SanitationTouch'
+import MealPlanTemplatesTouch from './mobile/pages/MealPlanTemplatesTouch'
 
 import './styles/WorkspaceTheme.css'
 import './styles/UserTypography.css'
@@ -100,7 +101,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/operations/account" element={<DeviceRoute pc={<AccountManager />} touch={<AccountConfigTouch />} />} />
         <Route path="/operations/account-menu" element={<DeviceRoute pc={<AccountMenuManager />} touch={<AccountMenuTouch />} />} />
         <Route path="/operations/account-menu/import" element={<DeviceRoute pc={<AccountMenuImport />} touch={<AccountMenuTouch />} />} />
-        <Route path="/operations/meal-plan-templates" element={<MealPlanTemplates />} />
+        <Route path="/operations/meal-plan-templates" element={<DeviceRoute pc={<MealPlanTemplates />} touch={<MealPlanTemplatesTouch />} />} />
         <Route path="/operations/meal-slots" element={<MealSlots />} />
         <Route path="/operations/table-meals" element={<DeviceRoute pc={<TableMealsManager />} touch={<TableMealsTouch />} />} />
         <Route path="/operations/search-analytics" element={<DeviceRoute pc={<SearchAnalytics />} touch={<SearchAnalyticsTouch />} />} />

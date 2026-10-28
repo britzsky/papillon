@@ -55,7 +55,7 @@ export default function HomeTouch() {
     {sheet && single && <NextStepSheet accountId={single.account_id} step={sheet} onClose={() => { setSheet(null); refresh() }} />}
     <HomeSearchTouch />
     {/* 현장 계정(2026-10-22): 이번 주 식단표를 크게 */}
-    {single && isSiteUser() && <div className="rd"><WeekMealBoard accountId={single.account_id} editHref={accountHref('/operations/table-meals', single.account_id)} /></div>}
+    {single && isSiteUser() && <div className="rd ht-week"><WeekMealBoard accountId={single.account_id} editHref={accountHref('/operations/table-meals', single.account_id)} /></div>}
     <h2 className="t-section-title">
       오늘 할 일
       {data?.checked_at && <small className="ht-checked">{data.checked_at.slice(11, 16)} 기준</small>}

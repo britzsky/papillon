@@ -18,6 +18,7 @@ body.t-ui .tc-chips button.is-active { --button-bg: var(--t-accent); --button-bg
 .tc-hint { color: var(--t-muted); font-size: 13px; line-height: 1.5; }
 
 .tc-methods { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+.tc-methods.is-four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .tc-method { display: grid; justify-items: start; gap: 4px; width: 100%; min-height: 136px; border: 0; text-align: left; }
 .tc-method__icon { display: grid; place-items: center; width: 52px; height: 52px; margin-bottom: 6px; border-radius: 16px; background: var(--t-accent-soft); color: var(--t-accent); }
 .tc-method strong { font-size: 17px; }
@@ -82,7 +83,8 @@ body.t-ui .tc-menus button { box-shadow: inset 0 0 0 1.5px var(--t-line); }
 .tc-weekly-day h3 { margin-bottom: 6px; font-size: 15px; }
 .tc-weekly-row { display: grid; grid-template-columns: 90px 1fr 1fr; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 10px; }
 .tc-weekly-row.is-changed { background: var(--t-yellow-soft); }
-.tc-weekly-row select { min-height: 42px; padding: 0 8px; border: 1.5px solid var(--t-line); border-radius: 10px; background: #fff; font-size: 15px; }
+.tc-weekly-row__special { grid-column: 2 / -1; }
+.tc-weekly-row .t-select { min-height: 42px; padding: 0 8px; border: 1.5px solid var(--t-line); border-radius: 10px; background: #fff; font-size: 15px; }
 
 .tc-stock { max-width: 780px; }
 .tc-stock__list { display: grid; gap: 8px; margin: 0 0 12px; padding: 0; list-style: none; }
@@ -96,7 +98,7 @@ body.t-ui .tc-menus button { box-shadow: inset 0 0 0 1.5px var(--t-line); }
 .tc-stock__list .is-short dd { color: var(--t-danger); }
 .tc-stock__actions { flex-wrap: wrap; }
 
-@media (max-width: 1023px) { .tc-methods { grid-template-columns: minmax(0, 1fr); } .tc-method { min-height: 0; } }
+@media (max-width: 1023px) { .tc-methods, .tc-methods.is-four { grid-template-columns: minmax(0, 1fr); } .tc-method { min-height: 0; } }
 @media (max-width: 767px) {
   .tc-slots { grid-template-columns: minmax(0, 1fr); }
   .tc-menus { max-height: 50vh; }
@@ -105,10 +107,23 @@ body.t-ui .tc-menus button { box-shadow: inset 0 0 0 1.5px var(--t-line); }
 /* 엑셀 식단표: 시트·코스 고르기 */
 .tc-excel-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0 0 6px; }
 .tc-excel-pick label { display: inline-flex; align-items: center; gap: 4px; }
-.tc-excel-pick select { max-width: 100%; min-height: 36px; }
+.tc-excel-pick .t-select { max-width: 100%; min-height: 36px; }
 
 /* 본사 메뉴 하트(나만의 메뉴) */
 .tc-menus li { display: flex; gap: 6px; align-items: stretch; }
 .tc-menus li > button:first-child { flex: 1 1 auto; min-width: 0; }
-.tc-heart { min-width: 44px; border-radius: 10px; border: 1px solid #f0c7d3; background: #fff; color: #c44a6a; font-size: 20px; }
-.tc-heart[aria-pressed='true'] { background: #fdeef2; }
+.tc-heart { min-width: 44px; border-radius: 10px; border: 1px solid #d5dbe3; background: #fff; color: #9aa6b5; font-size: 20px; }
+.tc-heart[aria-pressed='true'] { color: #e02424; background: #fdecec; border-color: #f5b5b5; }
+/* 나만의 메뉴 표시(불러온 식단 메뉴 앞 ♥) */
+.tc-favorite-mark { color: #e02424; }
+
+/* 메뉴 길게 누르기(레시피 보기·나만의 메뉴): 휴대폰 글자 선택·복사 메뉴가 뜨지 않게 */
+.tc-menus li, .tc-pill.is-matched, .tc-slot li { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+
+/* 특식 메뉴(보라: PC 식단표와 같은 색) */
+.tc-slot li.is-special { background: #f1e9fb; color: #5f3a91; box-shadow: inset 3px 0 0 #7a4fb0; }
+.tc-slot li > span { flex: 1; min-width: 0; }
+body.t-ui .tc-slot li .tc-special { --button-bg: #fff; --button-bg-hover: #fff; --button-text: #7a4fb0; display: inline-flex; width: auto; min-width: 0; min-height: 30px; padding: 0 10px; border-radius: 999px; box-shadow: inset 0 0 0 1.5px #c9b6e4; font-size: 12px; font-weight: 800; white-space: nowrap; }
+body.t-ui .tc-slot li .tc-special.is-on { --button-bg: #7a4fb0; --button-bg-hover: #7a4fb0; --button-text: #fff; box-shadow: none; }
+.tc-special-replace { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 8px 10px; border-radius: 10px; background: #f6f0fd; color: #5f3a91 !important; }
+.tc-special-replace .t-btn { margin-left: auto; }

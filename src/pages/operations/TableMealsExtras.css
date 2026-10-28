@@ -39,9 +39,45 @@ body.workspace-ui .tmx-btn.is-primary { background: #1f6f4a; color: #fff; border
 /* 편집 칸의 특식 표시·메뉴 하트 */
 .table-meals-special { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; border: 1px solid #c9b6e4; color: #7a4fb0; border-radius: 999px; padding: 1px 7px; cursor: pointer; background: #fff; }
 .table-meals-special.is-on { background: #7a4fb0; color: #fff; border-color: #7a4fb0; }
+/* 편집 칸 메뉴 줄: 특식 메뉴 */
+.table-meals-manual__cell ul li { grid-template-columns: minmax(0, 1fr) auto auto; }
+/* 메뉴 칸의 특식 표시는 '특' 한 글자 동그라미(메뉴 이름·원가 자리를 줄이지 않게, 2026-10-28) */
+.table-meals-manual__cell li .table-meals-special { justify-content: center; width: 20px; height: 20px; padding: 0; font-size: 11px; font-weight: 800; line-height: 1; white-space: nowrap; align-self: start; }
+.table-meals-manual__cell li .table-meals-special:hover { border-color: #7a4fb0; background: #f1e9fb; }
+.table-meals-manual__cell li .table-meals-special.is-on:hover { background: #6a40a0; }
+.table-meals-manual__cell li.is-special { background: #f6f0fd; box-shadow: inset 3px 0 0 #7a4fb0; color: #5f3a91; }
+/* 메뉴 추가 칸: 특식으로 바꾸는 중 */
+.table-meals-special-replace { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 0; padding: 8px 10px; border: 1px solid #c9b6e4; border-radius: 8px; background: #f6f0fd; color: #5f3a91; font-size: 12px; }
+.table-meals-special-replace button { margin-left: auto; }
+.table-meals-weekly-settings__special-hint { margin: 0 0 8px; color: #5f3a91; font-size: 12px; }
 .table-meals-manual__menu-row { display: flex; align-items: stretch; gap: 4px; }
 .table-meals-manual__menu-row > .table-meals-manual__menu { flex: 1 1 auto; min-width: 0; }
-body.workspace-ui .table-meals-heart { min-width: 34px; padding: 0 6px; font-size: 18px; color: #c44a6a; background: #fff; }
-body.workspace-ui .table-meals-heart.is-on { background: #fdeef2; }
+body.workspace-ui .table-meals-heart { min-width: 34px; padding: 0 6px; font-size: 18px; color: #9aa6b5 !important; background: #fff !important; }
+body.workspace-ui .table-meals-heart.is-on { color: #e02424 !important; background: #fdecec !important; border-color: #f5b5b5 !important; }
 .table-meals-manual__favorite { display: flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; flex: 0 0 auto; }
 .table-meals-manual__favorite input { width: auto; flex: 0 0 auto; margin: 0; }
+
+/* 저장된 식단표 보기: 특식 메뉴 */
+.table-meals-hangyeol li.is-special { color: #5f3a91; font-weight: 800; }
+.table-meals-hangyeol li.is-special::before { content: '★ '; color: #7a4fb0; }
+
+/* 다른 거래처 식단표 가져오기(본사) */
+.tmx-copy__filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) auto; gap: 8px; align-items: end; }
+.tmx-copy__filters label { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: 13px; font-weight: 600; color: #3d4741; }
+.tmx-copy__filters input, .tmx-copy__filters select { height: 36px; min-width: 0; }
+.tmx-template-list li.is-picked { border-color: #1f6f4a; background: #f4faf6; }
+.tmx-copy__preview { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.tmx-copy__day { border: 1px solid #e3e8e4; border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.tmx-copy__day > strong { font-size: 14px; }
+.tmx-copy__day p { margin: 0; display: flex; flex-wrap: wrap; gap: 2px 6px; line-height: 1.45; }
+.tmx-copy__day p b { color: #1f6f4a; margin-right: 2px; }
+.tmx-copy__day span.is-special { color: #5f3a91; font-weight: 800; }
+.tmx-copy__day span.is-special::before { content: '★ '; color: #7a4fb0; }
+.tmx-copy__filters.is-touch { grid-template-columns: minmax(0, 1fr) auto; }
+@media (max-width: 720px) { .tmx-copy__filters { grid-template-columns: minmax(0, 1fr); } }
+/* 터치(가져오기 창): 손가락 크기 */
+body.t-ui .tmx-copy__filters input { height: 44px; font-size: 15px; }
+body.t-ui .tmx-copy .tmx-btn { min-height: 44px; padding: 0 16px; }
+/* 2026-10-28: 전역 마우스 올림 규칙(Readability.css 초록 글자)에도 하트 색 유지 */
+body.workspace-ui button.table-meals-heart:hover:not(:disabled) { color: #9aa6b5 !important; }
+body.workspace-ui button.table-meals-heart.is-on:hover:not(:disabled) { color: #e02424 !important; }

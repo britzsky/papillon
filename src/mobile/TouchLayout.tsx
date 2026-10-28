@@ -4,7 +4,8 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { logout } from '../api/auth'
 import { getAccountOptions, type AccountOption } from '../api/operations'
-import { supplierBackground, supplierLabel, useAccountSuppliers } from '../features/workspace/accountSuppliers'
+import { useAccountSuppliers } from '../features/workspace/accountSuppliers'
+import TouchAccountPicker from './TouchAccountPicker'
 import TouchIcon, { type TouchIconName } from './TouchIcon'
 import { useTouchBody } from './useTouchBody'
 import logo from '../assets/logo/thefull.png'
@@ -52,13 +53,15 @@ const todayLabel = () => new Date().toLocaleDateString('ko-KR', { month: 'long',
  * 휴대폰(768px 미만)은 메뉴가 아래 탭, 실행 패널은 본문 아래로 내려간다.
  * PC 전용 전역 스타일(body.workspace-ui)은 이 틀이 있는 동안 끈다.
  */
-export default function TouchLayout({ title, subtitle, toolbar, aside, children, onAccountChange, hideAccount = false }: {
+export default function TouchLayout({ title, subtitle, toolbar, aside, asideNarrow = false, children, onAccountChange, hideAccount = false }: {
   title: string
   subtitle?: string
   /** 제목 옆 조회 조건(월 이동 등) */
   toolbar?: ReactNode
   /** 오른쪽 실행 패널(요약·확정 버튼) */
   aside?: ReactNode
+  /** 오른쪽 패널을 좁게(본문을 넓게) — 식단표처럼 패널 내용이 짧은 화면 */
+  asideNarrow?: boolean
   children: ReactNode
   /** 위 거래처 선택이 바뀔 때. 없으면 주소의 account_id만 바꾼다 */
   onAccountChange?: (accountId: string) => void
@@ -116,7 +119,7 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, children,
 
   const userName = localStorage.getItem('user_name') || ''
 
-  return <div className={`t-app${aside ? ' has-aside' : ''}`}>
+  return <div className={`t-app${aside ? ' has-aside' : ''}${aside && asideNarrow ? ' is-aside-narrow' : ''}`}>
     <nav className="t-rail" aria-label="메뉴">
       <div className="t-rail__brand">
         <img className="t-rail__logo" src={logo} alt="더채움" />
@@ -175,13 +178,7 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, children,
         {!hideAccount && <div className="t-top__account">
           {accountUser
             ? <span className="t-chip"><TouchIcon name="store" />{accountName || '내 거래처'}</span>
-            : <label className="t-chip t-chip--select" style={{ backgroundImage: supplierBackground(suppliers.get(accountId)) }} title={supplierLabel(suppliers.get(accountId)) || undefined}>
-              <TouchIcon name="store" />
-              <select aria-label="거래처" value={accountId} onChange={e => changeAccount(e.target.value)}>
-                <option value="">전체 거래처</option>
-                {accounts.map(option => { const label = supplierLabel(suppliers.get(option.value)); return <option key={option.value} value={option.value}>{option.text}{label ? ` · ${label}` : ''}</option> })}
-              </select>
-            </label>}
+            : <TouchAccountPicker accounts={accounts} accountId={accountId} suppliers={suppliers} onChange={changeAccount} />}
         </div>}
       </header>
       <div className="t-body">

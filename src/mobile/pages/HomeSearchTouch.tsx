@@ -9,6 +9,8 @@ export default function HomeSearchTouch() {
   } = useHomeSearch()
 
   return <section className="hs" aria-label="통합 검색">
+    {/* 검색창은 절반 폭, 남는 오른쪽에 최근·많이 찾는 검색어(휴대폰은 아래 줄) */}
+    <div className="hs-top">
     <form className="hs-bar" role="search" onSubmit={event => { event.preventDefault(); handleSearchSubmit() }}>
       <label className="t-chip hs-input">
         <TouchIcon name="search" />
@@ -17,8 +19,13 @@ export default function HomeSearchTouch() {
       </label>
       <button type="submit" className="t-btn is-primary" disabled={!normalizedSearchText || isSearchDataLoading || Boolean(searchDataError)}>검색</button>
     </form>
+    {!normalizedSearchText && (recent.length > 0 || popular.length > 0) && <div className="hs-keywords">
+      {recent.length > 0 && <div><b>최근</b>{recent.map(value => <button key={value} type="button" className="hs-keyword" onClick={() => setSearchText(value)}>{value}</button>)}</div>}
+      {popular.length > 0 && <div><b>많이 찾는</b>{popular.map(item => <button key={item.query} type="button" className="hs-keyword" onClick={() => setSearchText(item.query)}>{item.query}</button>)}</div>}
+    </div>}
+    </div>
 
-    {normalizedSearchText ? <div className="t-card hs-results" aria-live="polite">
+    {normalizedSearchText && <div className="t-card hs-results" aria-live="polite">
       {isSearchDataLoading && <p className="t-msg" role="status">검색하고 있습니다.</p>}
       {!isSearchDataLoading && primaryMatch && <>
         <p className="hs-summary"><strong>{primaryMatch.name}</strong> · {searchIntentLabels[primaryMatch.intent]}
@@ -39,9 +46,6 @@ export default function HomeSearchTouch() {
         </ul>
       </>}
       {!isSearchDataLoading && !primaryMatch && <p className="t-msg"><strong>{normalizedSearchText}</strong>와 일치하는 식자재, 거래처, 메뉴가 없습니다.{searchDataError ? ` ${searchDataError}` : ''}</p>}
-    </div> : (recent.length > 0 || popular.length > 0) && <div className="hs-keywords">
-      {recent.length > 0 && <div><b>최근</b>{recent.map(value => <button key={value} type="button" className="hs-keyword" onClick={() => setSearchText(value)}>{value}</button>)}</div>}
-      {popular.length > 0 && <div><b>많이 찾는</b>{popular.map(item => <button key={item.query} type="button" className="hs-keyword" onClick={() => setSearchText(item.query)}>{item.query}</button>)}</div>}
     </div>}
   </section>
 }

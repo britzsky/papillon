@@ -1,3 +1,10 @@
-body.workspace-ui .favorite-product-heart { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 26px; min-width: 26px; height: 26px; padding: 0; margin-left: 4px; border: 1px solid #f0c7d3; border-radius: 999px; font-size: 15px; line-height: 1; color: #c44a6a; background: #fff; vertical-align: middle; cursor: pointer; }
-body.workspace-ui .favorite-product-heart.is-on { background: #fdeef2; }
-body.workspace-ui .favorite-product-heart.is-error { border-color: #d64545; }
+/* PC(body.workspace-ui)와 터치 화면(이 전역 스타일이 꺼짐) 모두에 적용 */
+body.workspace-ui .favorite-product-heart, button.favorite-product-heart { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 26px; min-width: 26px; height: 26px; padding: 0; margin-left: 4px; border: 1px solid #d5dbe3 !important; border-radius: 999px !important; font-size: 15px; line-height: 1; color: #9aa6b5 !important; background: #fff !important; vertical-align: middle; cursor: pointer; }
+body.workspace-ui .favorite-product-heart.is-on, button.favorite-product-heart.is-on { color: #e02424 !important; background: #fdecec !important; border-color: #f5b5b5 !important; }
+/* 2026-10-28: 저장된 나만의 식재료 = 빨간 하트, 아니면 회색 */
+body.workspace-ui .favorite-product-heart.is-error, button.favorite-product-heart.is-error { border-color: #d64545; }
+/* 터치 화면: 손가락으로 누르기 쉬운 크기 */
+@media (pointer: coarse) { body.workspace-ui .favorite-product-heart, button.favorite-product-heart { width: 36px; min-width: 36px; height: 36px; font-size: 18px; margin-left: 6px; } }
+/* 2026-10-28: 전역 마우스 올림 규칙(Readability.css 초록 글자)에도 하트 색 유지 */
+body.workspace-ui button.favorite-product-heart:hover:not(:disabled) { color: #9aa6b5 !important; }
+body.workspace-ui button.favorite-product-heart.is-on:hover:not(:disabled) { color: #e02424 !important; }

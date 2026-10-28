@@ -38,6 +38,33 @@ body.t-ui {
 
 body.t-ui * { box-sizing: border-box; }
 body.t-ui :is(button, select, input, textarea) { font: inherit; color: inherit; }
+
+/* select 공통 모양: 기기 기본 모양(iOS 회색 그라데이션·안드로이드 화살표)을 끄고 같은 테두리·꺾쇠로.
+   기본값은 :where라 화면별 크기·색 규칙이 그대로 이기고, 꺾쇠·오른쪽 여백만 !important(화면별 background 단축 속성이 지우지 않게).
+   위 거래처 칩(t-chip--select)은 자체 꺾쇠가 있어 제외 */
+body.t-ui :where(select:not([multiple]):not(.t-chip--select select)) {
+  min-height: 40px;
+  padding-left: 10px;
+  border: 1.5px solid var(--t-line);
+  border-radius: 10px;
+  background-color: var(--t-surface);
+  color: var(--t-text);
+  font-weight: 600;
+}
+body.t-ui select:not([multiple]):not(.t-chip--select select) {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 34px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23737b75' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  background-size: 12px 8px !important;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+body.t-ui select:not([multiple]):not(.t-chip--select select):focus-visible { border-color: var(--t-accent); outline: none; box-shadow: 0 0 0 3px var(--t-accent-soft); }
+body.t-ui select:not([multiple]):not(.t-chip--select select):disabled { background-color: var(--t-surface-2); color: var(--t-muted); opacity: 1; cursor: default; }
+body.t-ui select::-ms-expand { display: none; }
 body.t-ui h1, body.t-ui h2, body.t-ui h3, body.t-ui p { margin: 0; }
 
 /* ── 틀 ───────────────────────────── */
@@ -192,6 +219,9 @@ body.t-ui h1, body.t-ui h2, body.t-ui h3, body.t-ui p { margin: 0; }
 /* 오른쪽 패널 폭: 태블릿 가로 360px, 세로(1000px 미만) 300px */
 .t-app.has-aside { --t-aside-w: 360px; }
 @media (max-width: 999px) { .t-app.has-aside { --t-aside-w: 300px; } }
+/* 좁은 패널(asideNarrow): 가로 280px, 세로 240px */
+.t-app.has-aside.is-aside-narrow { --t-aside-w: 280px; }
+@media (max-width: 999px) { .t-app.has-aside.is-aside-narrow { --t-aside-w: 240px; } }
 .t-app.has-aside .t-top { padding-right: calc(var(--t-aside-w) + 24px); }
 
 @media (min-width: 768px) {
@@ -572,3 +602,24 @@ body.t-ui button[type=submit].t-btn.is-primary,
 body.t-ui button[type=submit].t-btn.is-primary:not(:disabled):hover { border-color: var(--t-accent) !important; background-color: var(--t-accent) !important; color: #fff !important; }
 body.t-ui button[type=submit].t-btn:not(.is-primary),
 body.t-ui button[type=submit].t-btn:not(.is-primary):not(:disabled):hover { border-color: var(--button-bg) !important; background-color: var(--button-bg) !important; color: var(--button-text) !important; }
+
+/* 관리 거래처 고르기(본사, TouchAccountPicker): 공급사 사업장 매핑 색 = 왼쪽 웰스토리 주황 · 오른쪽 아워홈 파랑(PC와 같은 색) */
+body.t-ui .t-account-trigger { max-width: 280px; border: 0; color: var(--t-text); cursor: pointer; background-color: var(--t-surface); }
+.t-account-trigger > span { overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 767px) { body.t-ui .t-account-trigger { width: 100%; max-width: none; } }
+.t-account-sheet { width: min(480px, 100%); }
+.t-account-legend { display: flex; align-items: center; gap: 6px; margin: 6px 0 10px; font-size: 12px; }
+.t-account-legend i { display: inline-block; width: 16px; height: 11px; border-radius: 3px; }
+.t-account-legend i.is-welstory { background: #ffd8ad; }
+.t-account-legend i.is-ourhome { margin-left: 6px; background: #c9ddff; }
+.t-account-legend span { margin-left: auto; }
+.t-account-search { display: flex; width: 100%; box-shadow: inset 0 0 0 1.5px var(--t-line); }
+.t-account-search input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; font-size: 16px; }
+.t-account-list { display: grid; gap: 6px; }
+body.t-ui .t-account-list button { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 52px; padding: 8px 14px; border: 0; border-radius: 12px; background-color: var(--t-surface); box-shadow: inset 0 0 0 1px var(--t-line); color: var(--t-text); font-weight: 700; text-align: left; }
+.t-account-list button > span { display: grid; gap: 1px; min-width: 0; }
+.t-account-list small { color: var(--t-muted); font-size: 12px; font-weight: 600; }
+body.t-ui .t-account-list button.is-selected { box-shadow: inset 0 0 0 2px var(--t-accent); }
+.t-account-list button .t-icon { flex: none; color: var(--t-accent); }
+body.t-ui :is(.t-account-trigger, .t-account-list button) { position: relative; isolation: isolate; overflow: hidden; }
+.t-account-tint { position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; }

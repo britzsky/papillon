@@ -3,11 +3,14 @@ import { Link } from 'react-router-dom'
 import TouchLayout from '../TouchLayout'
 import TouchIcon, { type TouchIconName } from '../TouchIcon'
 import BatchResultList from '../BatchResultList'
+import FavoriteProductHeart from '../../components/FavoriteProductHeart'
+import ProductImage from '../../components/ProductImage'
 import { recoverMixedProcurement, startNewMixedProcurement } from '../../api/mixedProcurement'
-import { MANUAL_MAX_ORDER_QTY, shortageStockStatus, SHORTAGE_STOCK_LABELS, type ShortageRow, type ShortageStockFilter } from '../../api/shortageProcurement'
-import { day, deliveryTerms, deliveryWarning, money, number, taxLabel, useShortageOrder } from '../../features/order/useShortageOrder'
+import { blockedReasons, MANUAL_MAX_ORDER_QTY, shortageStockStatus, SHORTAGE_STOCK_LABELS, type ShortageRow, type ShortageStockFilter } from '../../api/shortageProcurement'
+import { day, deliveryTerms, deliveryWarning, money, number, offerOptions, per100, taxLabel, useShortageOrder } from '../../features/order/useShortageOrder'
 import { preparationLabel, useCatalogPreparation } from '../../features/order/useCatalogPreparation'
 import './ShortageOrderTouch.css'
+import TouchSelect from '../TouchSelect'
 
 const FILTERS: { key: ShortageStockFilter; label: string; icon: TouchIconName }[] = [
   { key: '', label: '전체', icon: 'inventory' },
@@ -79,9 +82,9 @@ export default function ShortageOrderTouch({ methodBar, fixedSource, title }: { 
   return <TouchLayout title="발주하기" subtitle={title} aside={aside}>
     {methodBar}
     <section className="t-card so-filters" aria-label="조회 조건">
-      {c.source === 'PLAN' && <label className="so-field so-field--wide">식단표<select value={c.table_id} disabled={busy} onChange={e => o.update({ table_id: e.target.value })}>
+      {c.source === 'PLAN' && <label className="so-field so-field--wide">식단표<TouchSelect value={c.table_id} disabled={busy} onChange={e => o.update({ table_id: e.target.value })}>
         <option value="">기간 안의 모든 식단표</option>{o.plans.map(plan => <option key={plan.table_id} value={plan.table_id}>{plan.table_name}</option>)}
-      </select></label>}
+      </TouchSelect></label>}
       {c.source === 'INVENTORY' && <>
         <label className="so-field">사용량 조회일수<input type="number" inputMode="numeric" min="1" max="365" value={c.average_days} onChange={e => o.update({ average_days: Number(e.target.value) })} /></label>
         <label className="so-field">확보일수<input type="number" inputMode="numeric" min="1" max="30" value={c.coverage_days} onChange={e => o.update({ coverage_days: Number(e.target.value) })} /></label>
@@ -89,9 +92,9 @@ export default function ShortageOrderTouch({ methodBar, fixedSource, title }: { 
       <label className="so-field">조회 시작일<input type="date" value={c.date_from} onChange={e => o.update({ date_from: e.target.value })} /></label>
       <label className="so-field">조회 종료일<input type="date" value={c.date_to} onChange={e => o.update({ date_to: e.target.value })} /></label>
       <label className="so-field">납품일<input type="date" min={day()} max={c.date_to} value={c.delivery_date} onChange={e => o.update({ delivery_date: e.target.value })} /></label>
-      <label className="so-field so-field--wide">공급사 사업장<select value={c.sold_to ? (c.supplier_code || 'WELSTORY') + ':' + c.sold_to : ''} onChange={e => { const [supplier_code = '', sold_to = ''] = e.target.value.split(':'); o.update({ sold_to, supplier_code }) }}>
+      <label className="so-field so-field--wide">공급사 사업장<TouchSelect value={c.sold_to ? (c.supplier_code || 'WELSTORY') + ':' + c.sold_to : ''} onChange={e => { const [supplier_code = '', sold_to = ''] = e.target.value.split(':'); o.update({ sold_to, supplier_code }) }}>
         <option value="">전체 공급사·사업장</option>{o.sites.map(site => <option key={site.supplier_account_site_id} value={site.supplier_code + ':' + site.external_site_code}>{site.supplier_name} · {site.external_site_name} ({site.external_site_code})</option>)}
-      </select></label>
+      </TouchSelect></label>
       <label className="t-chip so-search"><TouchIcon name="search" /><input type="search" value={o.keyword} placeholder="식재료 검색" onChange={e => o.setKeyword(e.target.value)} /></label>
       <div className="so-filters__actions">
         <button type="button" className="t-btn is-primary" disabled={busy} onClick={() => o.setRevision(v => v + 1)}><TouchIcon name="refresh" size={18} />{o.loading ? '조회 중…' : '부족재고 조회'}</button>
@@ -143,14 +146,18 @@ export default function ShortageOrderTouch({ methodBar, fixedSource, title }: { 
             <div><dt>입고예정</dt><dd>{number(row.incoming_qty)}</dd></div>
             <div className="is-short"><dt>부족</dt><dd>{number(row.shortage_qty)} <small>{row.base_unit}</small></dd></div>
           </dl>
-          {row.offers.length > 0 ? <div className="so-offers">
-            {row.offers.map(item => <button key={item.supplier_offer_id} type="button" className={item.supplier_offer_id === offer?.supplier_offer_id ? 'is-active' : ''} disabled={!item.orderable || o.loading} onClick={() => choose(row, item.supplier_offer_id)}>
-              <strong>{item.product_name}</strong>
-              <small>{item.supplier_name} · {item.external_site_name || item.external_site_code}</small>
-              <span>{item.orderable ? `${money(item.purchase_price)}원/${item.order_unit}` : item.availability_reason || '발주 불가'}</span>
-            </button>)}
-          </div> : <p className="so-item__issue">주문 가능한 공급사 상품이 없습니다. 상품 검색에서 직접 골라주세요.</p>}
-          {offer && <p className="so-item__terms">1 {offer.order_unit} = {number(offer.package_base_qty)} {row.base_unit} · {taxLabel(offer.tax_type)} · {deliveryTerms(offer)}</p>}
+          {offer ? <div className="so-offer">
+            <ProductImage zoomable src={offer.thumbnail_url || offer.image_url || undefined} fullSrc={offer.image_url || undefined} name={offer.product_name} />
+            <div>
+              <TouchSelect aria-label={`${row.ingredient_name} 공급상품`} value={offer.supplier_offer_id} disabled={o.loading || row.offers.filter(item => item.orderable).length < 2} onChange={e => choose(row, Number(e.target.value))}>
+                {offerOptions(row).map(item => <option key={item.supplier_offer_id} value={item.supplier_offer_id} disabled={!item.orderable}>{item.supplier_offer_id === row.recommended_offer_id ? '★ ' : ''}{item.product_name} ({item.supplier_name}) · {item.orderable ? `${money(item.purchase_price)}원/${item.order_unit}` : item.availability_reason || '발주 불가'}</option>)}
+              </TouchSelect>
+              <small>{offer.supplier_name} · {offer.external_site_name || offer.external_site_code}{row.offers.filter(item => item.orderable).length > 1 ? ` · 다른 상품 ${row.offers.filter(item => item.orderable).length - 1}개` : ''}</small>
+              <span>{money(offer.purchase_price)}원/{offer.order_unit}{per100(offer, row.base_unit) ? <small> · {per100(offer, row.base_unit)}</small> : null}</span>
+            </div>
+          </div> : <p className="so-item__issue">{blockedReasons(row.offers.map(item => item.availability_reason), ' · ') || '주문 가능한 공급사 상품이 없습니다. 상품 검색에서 직접 골라주세요.'}</p>}
+          {offer && <p className="so-item__terms">1 {offer.order_unit} = {number(offer.package_base_qty)} {row.base_unit} · {taxLabel(offer.tax_type)} · {deliveryTerms(offer)}
+            <FavoriteProductHeart key={offer.supplier_product_id} accountId={o.accountId} supplierProductId={offer.supplier_product_id} productName={offer.product_name} favorite={offer.favorite_yn === 'Y'} /></p>}
           {warning && <p className="so-item__issue">{warning}</p>}
           {offer && <div className="so-qty">
             <button type="button" className="t-round" aria-label="줄이기" disabled={!selection || o.loading} onClick={() => setQty(row, qty - step)}>−</button>
@@ -173,7 +180,7 @@ export default function ShortageOrderTouch({ methodBar, fixedSource, title }: { 
         </header>
         <div className="t-sheet__body">
           <ul className="so-preview">{o.preview.items.map(row => <li key={row.ingredient_id}>
-            <div><strong>{row.ingredient_name}</strong><small>{row.offer.supplier_name} · {row.offer.product_name}</small>
+            <div><strong>{row.ingredient_name}</strong><small>{row.offer.supplier_name} · {row.offer.product_name}<FavoriteProductHeart accountId={o.accountId} supplierProductId={row.offer.supplier_product_id} productName={row.offer.product_name} favorite={row.offer.favorite_yn === 'Y'} /></small>
               {deliveryWarning(row.offer, o.preview!.criteria.delivery_date, o.guidanceNow) && <small className="so-item__issue">{deliveryWarning(row.offer, o.preview!.criteria.delivery_date, o.guidanceNow)}</small>}</div>
             <span>{number(row.order_qty)} {row.offer.order_unit}</span>
             <strong>{money(row.item_amount)}원</strong>

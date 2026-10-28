@@ -1888,3 +1888,29 @@ body.workspace-ui .table-meals-toolbar > .table-meals-toolbar__actions { margin-
 body.meal-print-measure .table-meals-hangyeol { --rd-fs-shift: 1px; --rd-fs-min: 12px; }
 body.meal-print-measure .table-meals-hangyeol__origin { --rd-fs-shift: 2px; --rd-fs-min: 11px; }
 body.meal-print-measure .table-meals-hangyeol__logo { width: 52px; }
+
+/* 저장 전 본사 레시피로 보여주는 식자재 상세 안내(2026-10-28) */
+.table-meals-detail-note {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #fff7e6;
+  color: #8a5a00;
+  font-size: 13px;
+}
+
+/*
+ * 메뉴 식자재 상세(2026-10-28): 공통 .table-meals-modal(1300px)이 뒤에서 폭을 덮어 표가 화면 끝까지 늘어나던 것 →
+ * 내용에 맞는 폭, 숫자 칸은 오른쪽 정렬·줄바꿈 없음, 단위는 숫자 옆에만(기본단위 칸 없앰)
+ */
+.table-meals-modal.table-meals-modal--detail { width: min(620px, 100%); }
+.table-meals-modal--detail .table-meals-detail-table { width: 100%; table-layout: auto; }
+.table-meals-modal--detail .table-meals-detail-table th,
+.table-meals-modal--detail .table-meals-detail-table td { padding: 7px 10px; vertical-align: top; }
+.table-meals-modal--detail .table-meals-detail-table th.is-num,
+.table-meals-modal--detail .table-meals-detail-table td.is-num,
+.table-meals-modal--detail .table-meals-detail-table th:not(:first-child) { width: 1%; text-align: right; white-space: nowrap; }
+.table-meals-modal--detail .table-meals-detail-table td small { display: block; margin-top: 2px; color: #7b8794; font-size: 11px; font-weight: 400; }
+.table-meals-modal--detail .table-meals-detail-table__name { font-weight: 600; overflow-wrap: anywhere; }
+.table-meals-modal--detail .table-meals-detail-table td.is-short { color: #c2410c; font-weight: 700; }
+.table-meals-modal--detail .table-meals-modal__actions { flex-wrap: wrap; padding-top: 12px; border-top: 1px solid #edf0f3; }
