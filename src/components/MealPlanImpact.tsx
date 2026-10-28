@@ -7,6 +7,8 @@ export type PlanImpact = {
   affected_orders: Array<{ purchase_order_id: string; ingredient_id?: string; requested_delivery_date: string; status: string; product_name: string; remaining_order_qty: number }>
   completed_meals: number
   notice: string
+  /** 단위를 바꿀 수 없어 비교에서 뺀 식재료(예: 레시피 ml·식재료 g) */
+  unit_issues?: string[]
 }
 
 const ORDER_STATUS: Record<string, string> = { ORDERED: '접수', CONFIRMED: '접수 확인', PARTIAL_RECEIVED: '일부 입고', NOT_RECEIVED: '미입고', SENDING: '전송 확인 중', UNKNOWN: '접수 확인 필요', PARTIAL_FAILED: '일부 확인 필요' }
@@ -47,6 +49,7 @@ export default function MealPlanImpact({ impact }: { impact?: PlanImpact }) {
 
   return <section className="plan-impact" aria-label="식단 변경 영향">
     <h3>② 기존 식단 대비 변경</h3>
+    {impact.unit_issues?.length ? <p className="plan-impact__alert" role="alert">단위가 맞지 않아 비교에서 뺀 식재료: {impact.unit_issues.join(' / ')}</p> : null}
     {impact.completed_meals > 0 && <p className="plan-impact__alert" role="alert">이미 실제 사용을 확정한 식사가 {impact.completed_meals}개 있습니다. 다시 저장하면 기존 사용량을 복원하므로 식수·사용을 다시 확인해야 합니다.</p>}
     {!rows.length ? <p className="plan-impact__empty">기존 식단과 필요량이 같습니다.</p>
       : firstSave ? <p className="plan-impact__empty">처음 저장하는 식단입니다(식재료 {rows.length}종 새로 필요). 필요량과 부족량은 위 ① 표를 보세요.</p>
