@@ -37,6 +37,7 @@ import { downloadBlankTemplate, downloadConfiguredTemplate } from '../../feature
 import MealCalories from '../../features/tableMeals/MealCalories'
 import MealConfigDialog from '../../features/tableMeals/MealConfigDialog'
 import MealDocumentButtons from '../../features/tableMeals/MealDocumentButtons'
+import MenuCostMissing from '../../features/tableMeals/MenuCostMissing'
 import SpecialMenuInput, { SpecialMenuDatalist } from '../../components/SpecialMenuInput'
 import { useTableMealsWorkspace, AUTO_WEEKDAY_LABELS, MANUAL_FOOD_TYPE_OPTIONS, MANUAL_MENU_TYPE_OPTIONS, normalizeMenuText, formatDateLabel, getMenuFoodTypeCode, getAutoMenuCost, getMealBudgetSummary, mergeManualEveningSnacks, PDF_EXCLUDED, PDF_UNLINKED } from '../../features/tableMeals/useTableMealsWorkspace'
 
@@ -581,9 +582,11 @@ function TableMealsManager() {
                                     <small className="table-meals-menu-cost">
                                       {item.matchedMenu && getAutoMenuCost(item.matchedMenu) > 0
                                         ? `${Math.round(getAutoMenuCost(item.matchedMenu)).toLocaleString('ko-KR')}원`
-                                        : `원가 미산정${item.matchedMenu?.menu_cost_reason ? ` (${item.matchedMenu.menu_cost_reason})` : ''}`}
+                                        : <MenuCostMissing reason={item.matchedMenu?.menu_cost_reason} />}
                                     </small>
                                   </span>
+                                  {/* 특·삭제를 한 줄에(2026-10-28 사용자 요청) */}
+                                  <span className="table-meals-manual__line-actions">
                                   <span role="button" tabIndex={0} aria-pressed={Boolean(item.special)} aria-label={item.special ? '특식 해제' : '특식으로 표시'} className={`table-meals-special${item.special ? ' is-on' : ''}`}
                                     title={item.special ? '특식 메뉴입니다 · 누르면 해제' : '특식으로 표시: 이 메뉴 원가만큼은 식단가를 넘어도 이번 주 합계에서 빼고 따로 보여줍니다'}
                                     onClick={(event) => { event.stopPropagation(); toggleSpecialMenu(day.id, mealSlot.id, mealSlot.key, index) }}
@@ -607,6 +610,7 @@ function TableMealsManager() {
                                     }}
                                   >
                                     삭제
+                                  </span>
                                   </span>
                                 </li>
                               ))}

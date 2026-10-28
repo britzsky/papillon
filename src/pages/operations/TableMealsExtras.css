@@ -40,11 +40,33 @@ body.workspace-ui .tmx-btn.is-primary { background: #1f6f4a; color: #fff; border
 .table-meals-special { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; border: 1px solid #c9b6e4; color: #7a4fb0; border-radius: 999px; padding: 1px 7px; cursor: pointer; background: #fff; }
 .table-meals-special.is-on { background: #7a4fb0; color: #fff; border-color: #7a4fb0; }
 /* 편집 칸 메뉴 줄: 특식 메뉴 */
-.table-meals-manual__cell ul li { grid-template-columns: minmax(0, 1fr) auto auto; }
-/* 메뉴 칸의 특식 표시는 '특' 한 글자 동그라미(메뉴 이름·원가 자리를 줄이지 않게, 2026-10-28) */
-.table-meals-manual__cell li .table-meals-special { justify-content: center; width: 20px; height: 20px; padding: 0; font-size: 11px; font-weight: 800; line-height: 1; white-space: nowrap; align-self: start; }
-.table-meals-manual__cell li .table-meals-special:hover { border-color: #7a4fb0; background: #f1e9fb; }
-.table-meals-manual__cell li .table-meals-special.is-on:hover { background: #6a40a0; }
+.table-meals-manual__cell ul li { grid-template-columns: minmax(0, 1fr) auto; }
+/* 특·삭제 한 줄 */
+.table-meals-manual__cell li .table-meals-manual__line-actions { display: inline-flex; align-items: center; gap: 4px; align-self: start; white-space: nowrap; }
+/*
+ * 메뉴 칸의 '특' 표시: 옆 '삭제' 버튼과 같은 크기(2026-10-28 사용자 요청).
+ * index.css의 [role='button'] 전역 규칙(폭·높이·색 !important)이 덮어 커지던 것 → 삭제 버튼처럼 같은 방식으로 더 구체적으로 지정
+ */
+body .table-meals-manual__cell li .table-meals-special {
+  justify-content: center;
+  width: auto !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 24px !important;
+  padding: 3px 5px !important;
+  border: 1px solid #c9b6e4 !important;
+  border-radius: 4px !important;
+  background: #ffffff !important;
+  color: #7a4fb0 !important;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  align-self: center;
+}
+body .table-meals-manual__cell li .table-meals-special:hover { border-color: #7a4fb0 !important; background: #f1e9fb !important; color: #7a4fb0 !important; }
+body .table-meals-manual__cell li .table-meals-special.is-on { border-color: #7a4fb0 !important; background: #7a4fb0 !important; color: #ffffff !important; }
+body .table-meals-manual__cell li .table-meals-special.is-on:hover { border-color: #6a40a0 !important; background: #6a40a0 !important; color: #ffffff !important; }
 .table-meals-manual__cell li.is-special { background: #f6f0fd; box-shadow: inset 3px 0 0 #7a4fb0; color: #5f3a91; }
 /* 메뉴 추가 칸: 특식으로 바꾸는 중 */
 .table-meals-special-replace { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 0; padding: 8px 10px; border: 1px solid #c9b6e4; border-radius: 8px; background: #f6f0fd; color: #5f3a91; font-size: 12px; }

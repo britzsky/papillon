@@ -1,0 +1,62 @@
+/* 식단표 편집 칸 '원가 미산정' + 빨간 ! (2026-10-28). 원가 글씨(10px)보다 1px 작게 */
+.menu-cost-missing {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #c2410c;
+  font-size: 9px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* index.css [role='button'] 전역 규칙(폭·높이·색 !important)을 이기도록 더 구체적으로 */
+body .menu-cost-missing .menu-cost-missing__alert {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px !important;
+  min-width: 13px !important;
+  height: 13px !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+}
+body .menu-cost-missing .menu-cost-missing__alert:hover,
+body .menu-cost-missing .menu-cost-missing__alert[aria-expanded='true'] {
+  background: #b91c1c !important;
+  color: #ffffff !important;
+}
+body .menu-cost-missing .menu-cost-missing__alert:focus-visible { outline: 2px solid #2474a5; outline-offset: 1px; }
+
+/* body에 띄우는 팝업(위치는 JS가 화면 기준으로). 식단표 편집 창(.table-meals-modal-backdrop 1200)·레시피 메뉴(1400)보다 위 */
+.menu-cost-missing__pop {
+  position: fixed;
+  z-index: 4000;
+  display: grid;
+  gap: 4px;
+  width: max-content;
+  min-width: 140px;
+  max-width: 240px;
+  padding: 8px 10px;
+  border: 1px solid #f5b5b5;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(22, 32, 51, 0.16);
+  color: #1f2933;
+  font-size: 12px;
+  font-weight: 400;
+  white-space: normal;
+  text-align: left;
+  cursor: default;
+}
+.menu-cost-missing__pop b { color: #b91c1c; font-size: 12px; }
+.menu-cost-missing__list { display: flex; flex-wrap: wrap; gap: 4px; }
+.menu-cost-missing__list span { padding: 1px 6px; border-radius: 999px; background: #fdecec; color: #9b1c1c; font-size: 11px; }
