@@ -13,6 +13,13 @@ export const isHeadquarters = () => read('user_type') !== '3'
 /** 거래처 계정의 자기 거래처 */
 export const ownAccountId = () => read('account_id')
 
+/** 로그인 계정의 거래처명. 본사 계정은 거래처가 없어(로그인 응답 null) '더채움'으로 보인다 */
+export function ownAccountName(): string {
+  const name = read('account_name').trim()
+  if (name && name !== 'null' && name !== 'undefined') return name
+  return isHeadquarters() ? '더채움' : ''
+}
+
 /** 주소가 가리키는 거래처(?account_id, 통합 검색 거래처 결과 ?type=vendor&id=) */
 export function urlAccountId(search?: URLSearchParams | string): string {
   const params = typeof search === 'string' ? new URLSearchParams(search) : search

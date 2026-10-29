@@ -1,16 +1,16 @@
 /* Responsive workspace: neutral navigation, compact data, photo gallery. */
 body.workspace-ui { --theme-color:#5e6ad2; --theme-color-strong:#4954b8; --theme-color-soft:#eef0ff; --theme-accent:#5e6ad2; --form-control-height:34px; background:#f7f8fa; color:#242632; }
 body.workspace-ui *, body.workspace-ui *::before, body.workspace-ui *::after { box-sizing:border-box; }
-body.workspace-ui > :is(#root,:not(#root)), body.workspace-ui > :is(#root,:not(#root)) * { font-size:12px !important; }
-body.workspace-ui > :is(#root,:not(#root)) :is(h1,.header-bar__status,.home-hero h1,.home-insight strong,.supplier-integration-summary strong,.search-admin-kpis strong) { font-size:16px !important; line-height:1.45; }
-body.workspace-ui > :is(#root,:not(#root)) h2 { font-size:14px !important; }
-body.workspace-ui > :is(#root,:not(#root)) :is(h3,.menu-card__title) { font-size:14px !important; }
-body.workspace-ui > :is(#root,:not(#root)) .home-hero__copy > p:not(.home-hero__eyebrow) { font-size:13px !important; }
-body.workspace-ui > :is(#root,:not(#root)) .home-hero .home-hero__eyebrow { font-size:12px !important; }
-body.workspace-ui > :is(#root,:not(#root)) :is(table,table *,input,select,textarea,[class*="filters"],[class*="filters"] *,[class*="toolbar"],[class*="toolbar"] *, .home-search__box *) { font-size:10px !important; }
+body.workspace-ui > :is(#root,:not(#root)), body.workspace-ui > :is(#root,:not(#root)) * { font-size:13px !important; }
+body.workspace-ui > :is(#root,:not(#root)) :is(h1,.header-bar__status,.home-hero h1,.home-insight strong,.supplier-integration-summary strong,.search-admin-kpis strong) { font-size:17px !important; line-height:1.45; }
+body.workspace-ui > :is(#root,:not(#root)) h2 { font-size:15px !important; }
+body.workspace-ui > :is(#root,:not(#root)) :is(h3,.menu-card__title) { font-size:15px !important; }
+body.workspace-ui > :is(#root,:not(#root)) .home-hero__copy > p:not(.home-hero__eyebrow) { font-size:14px !important; }
+body.workspace-ui > :is(#root,:not(#root)) .home-hero .home-hero__eyebrow { font-size:13px !important; }
+body.workspace-ui > :is(#root,:not(#root)) :is(table,table *,input,select,textarea,[class*="filters"],[class*="filters"] *,[class*="toolbar"],[class*="toolbar"] *, .home-search__box *) { font-size:11px !important; }
 /* Buttons retain their own size, including nested labels in data and filters. */
 body.workspace-ui > :is(#root,:not(#root)) button,
-body.workspace-ui > :is(#root,:not(#root)) button * { font-size:11px !important; }
+body.workspace-ui > :is(#root,:not(#root)) button * { font-size:12px !important; }
 body.workspace-ui .side-layout { grid-template-columns:216px minmax(0,1fr); grid-template-rows:minmax(0,1fr); gap:0; background:#f7f8fa; }
 body.workspace-ui .side-layout.is-collapsed { grid-template-columns:minmax(0,1fr); }
 body.workspace-ui .side-layout__sidebar { background:#f2f3f7; color:#484b58; border-right:1px solid #e2e4eb; padding:12px; }

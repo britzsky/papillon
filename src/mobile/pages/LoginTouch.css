@@ -12,10 +12,10 @@
 
 .lg-card { display: grid; justify-items: center; gap: 6px; width: min(440px, 100%); padding: 36px 28px 24px; border-radius: 26px; background: var(--t-surface); box-shadow: 0 20px 60px rgba(16, 24, 20, 0.1); text-align: center; }
 .lg-logo { width: 150px; height: auto; margin-bottom: 8px; }
-.lg-card > p { margin-bottom: 18px; color: var(--t-muted); font-size: 14px; font-weight: 500; }
+.lg-card > p { margin-bottom: 18px; color: var(--t-muted); font-size: 15px; font-weight: 500; }
 .lg-form { display: grid; gap: 14px; width: 100%; text-align: left; }
-.lg-field { display: grid; gap: 6px; color: var(--t-muted); font-size: 13px; font-weight: 700; }
-.lg-field input { min-height: 54px; padding: 0 16px; border: 1.5px solid var(--t-line); border-radius: 14px; background: var(--t-surface); color: var(--t-text); font-size: 17px; }
+.lg-field { display: grid; gap: 6px; color: var(--t-muted); font-size: 14px; font-weight: 700; }
+.lg-field input { min-height: 54px; padding: 0 16px; border: 1.5px solid var(--t-line); border-radius: 14px; background: var(--t-surface); color: var(--t-text); font-size: 18px; }
 .lg-field input:focus { border-color: var(--t-accent); outline: none; box-shadow: 0 0 0 4px var(--t-accent-soft); }
 .lg-form .t-btn { margin-top: 6px; }
 .lg-test { margin-top: 12px; color: var(--t-muted); }
@@ -23,7 +23,7 @@ body.t-ui .lg-test { --button-text: var(--t-muted); }
 
 .lg-alert { max-width: 420px; text-align: center; }
 .lg-alert .t-sheet__body { display: grid; justify-items: center; gap: 8px; padding-top: 28px; }
-.lg-alert__icon { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--t-danger-soft); color: var(--t-danger); font-size: 26px; font-weight: 800; }
+.lg-alert__icon { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--t-danger-soft); color: var(--t-danger); font-size: 27px; font-weight: 800; }
 .lg-alert__icon.is-payment { background: var(--t-yellow); color: #3d2a00; }
-.lg-alert h2 { font-size: 20px; }
+.lg-alert h2 { font-size: 21px; }
 .lg-alert p { color: var(--t-muted); line-height: 1.55; }

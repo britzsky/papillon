@@ -1,28 +1,28 @@
 /* 템플릿 식단표(터치). 편집기 칸·메뉴 패널은 TableMealsCreateTouch.css(tc-*) */
 
 .mt-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
-.mt-filters__label { color: var(--t-muted); font-size: 13px; }
+.mt-filters__label { color: var(--t-muted); font-size: 14px; }
 
-.mt-group .t-section-title small { margin-left: 6px; color: var(--t-muted); font-size: 13px; font-weight: 600; }
+.mt-group .t-section-title small { margin-left: 6px; color: var(--t-muted); font-size: 14px; font-weight: 600; }
 .mt-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
 .mt-card { display: flex; align-items: center; gap: 6px; padding: 6px 8px 6px 6px; }
 .mt-card__open { display: flex; flex: 1; align-items: center; gap: 12px; min-width: 0; min-height: 60px; padding: 6px 8px; border: 0; border-radius: 12px; text-align: left; }
 body.t-ui .mt-card__open { --button-bg: transparent; --button-bg-hover: transparent; }
 .mt-card__text { display: grid; flex: 1; gap: 2px; min-width: 0; }
-.mt-card__text strong { overflow: hidden; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
-.mt-card__text small { color: var(--t-muted); font-size: 13px; }
+.mt-card__text strong { overflow: hidden; font-size: 17px; text-overflow: ellipsis; white-space: nowrap; }
+.mt-card__text small { color: var(--t-muted); font-size: 14px; }
 .mt-card__open .t-icon { flex: none; color: var(--t-muted); }
 
 /* 템플릿 정보: 태블릿은 3칸, 휴대폰은 1칸 */
 .mt-meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 12px; margin-bottom: 14px; padding: 14px; }
-.mt-field { display: grid; gap: 4px; color: var(--t-muted); font-size: 12px; font-weight: 700; }
+.mt-field { display: grid; gap: 4px; color: var(--t-muted); font-size: 13px; font-weight: 700; }
 .mt-field small { font-weight: 600; }
-.mt-field :is(input, .t-select) { width: 100%; min-height: 44px; padding: 0 10px; border: 1.5px solid var(--t-line); border-radius: 10px; background-color: var(--t-surface); color: var(--t-text); font-size: 15px; }
+.mt-field :is(input, .t-select) { width: 100%; min-height: 44px; padding: 0 10px; border: 1.5px solid var(--t-line); border-radius: 10px; background-color: var(--t-surface); color: var(--t-text); font-size: 16px; }
 .mt-field input:focus { border-color: var(--t-accent); outline: none; }
 .mt-meta .is-wide { grid-column: span 3; }
 @media (min-width: 1000px) { .mt-meta .mt-field.is-wide { grid-column: span 1; } .mt-meta { grid-template-columns: repeat(5, minmax(0, 1fr)); } .mt-meta .mt-options.is-wide { grid-column: 1 / -1; } }
 .mt-options { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.mt-options__label { color: var(--t-muted); font-size: 12px; font-weight: 700; }
+.mt-options__label { color: var(--t-muted); font-size: 13px; font-weight: 700; }
 
 @media (max-width: 767px) {
   .mt-meta { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }

@@ -8,6 +8,7 @@ import { useAccountSummary } from '../features/workspace/useAccountSummary'
 import DeadlineAlertSlot from './DeadlineAlertSlot'
 import WeekMealBoard from './WeekMealBoard'
 import { isSiteUser } from '../features/workspace/roleScreens'
+import { useHqOverview } from '../features/workspace/useHqOverview'
 
 const won = (value: number) => Math.round(value).toLocaleString('ko-KR')
 /** 예산 묶음 하나(예산·사용·여유 + 사용 막대) */
@@ -41,13 +42,51 @@ function budgetBlock(title: string, budget = 0, used = 0, remaining = 0) {
  */
 const CHIP: Record<TaskTone, string> = { urgent: '마감 임박', warn: '확인 요망', info: '오늘', done: '여유' }
 type Step = { key: string; title: string; detail: string; action: string; to: string }
+/** 본사 전체 거래처 칸: 해당 업장 목록(누르면 그 업장의 화면으로) */
+type HqTile = TaskTile & { chip: string; accounts: { account_id: string; account_name: string; note: string; to: string }[] }
 
-export default function DailyWork({ search, shortcuts }: { search: ReactNode; shortcuts?: ReactNode }) {
+export default function DailyWork({ search }: { search: ReactNode }) {
   const [params] = useSearchParams()
   // 관리 거래처(본사가 '전체 거래처'면 빈 값 → 전체 현황)
   const account = workspaceAccountId(params)
   const { data, error, rows, single, busy, idle, tiles, refresh } = useDailyWork(account)
   const [noticeAccount, setNoticeAccount] = useState('')
+  // 본사 전체 거래처(2026-10-29 사용자 요청): 식단표 제작 → 발주 필요 → 공급사 확인 → 입고 확인 → 위생 조치, 칸마다 업장 수
+  const hqAll = !single && data?.role === 'HEADQUARTERS' && rows.length > 0
+  // 본사가 거래처 한 곳을 고른 홈도 같은 5칸(2026-10-29 사용자 요청). 발주 필요 칸은 기존 '발주 준비' 계산(마감 임박 → 식단 재료 → 재고 부족)
+  const hqSingle = Boolean(single) && data?.role === 'HEADQUARTERS'
+  const [hqRevision, setHqRevision] = useState(0)
+  // 식단표 제작·위생 조치는 본사 일이라 거래처를 골라도 관리 거래처 전체 기준(N곳)으로 센다(2026-10-29 사용자 요청)
+  const hq = useHqOverview(hqAll || hqSingle, '', hqRevision)
+  const [hqOpen, setHqOpen] = useState('')
+  const hqTiles: HqTile[] = !hqAll && !hqSingle ? [] : (() => {
+    const o = hq.data
+    const loading = !o
+    const make = (key: string, label: string, chip: string, tone: TaskTone, hint: string, accounts: HqTile['accounts']): HqTile =>
+      ({ key, label, chip: accounts.length ? chip : '없음', value: loading ? (hq.error ? '불러오기 실패' : '확인 중') : `${accounts.length}곳`, hint: hq.error && loading ? hq.error : hint, tone: loading || !accounts.length ? 'done' : tone, accounts })
+    const supplier = rows.filter(row => count(row, 'pending_orders') + (Number(row.supplier_notices) || 0) > 0)
+    const receipts = rows.filter(row => count(row, 'due_receipts') > 0)
+    return [
+      // 종 알림과 같이 목요일부터: 다음 주 식단이 없는 관리 거래처 수(월~수는 0곳)
+      make('meal_plan', '식단표 제작 필요', o?.meal_plan_late ? '늦음' : '오늘까지', o?.meal_plan_late ? 'urgent' : 'warn',
+        // 다른 칸과 높이를 맞추려 한 줄 안내(2026-10-29 사용자 문구)
+        '식단표 제작이 필요합니다',
+        (o?.meal_plan_needed || []).map(a => ({ ...a, note: '', to: href('/operations/table-meals', a.account_id) }))),
+      make('order', '지금 발주 필요', '발주 필요', 'warn', '저장된 식단(14일) 기준 모자란 식재료가 있는 업장',
+        (o?.order_needed || []).map(a => ({ ...a, note: a.items == null ? '계산 확인 필요' : `${a.items}품목`,
+          to: `/order_manager/order?${new URLSearchParams({ tab: 'plan', account_id: a.account_id, source: 'PLAN', autoselect: '1' })}` }))),
+      make('supplier', '공급사 확인 요망', '확인 요망', 'urgent', '접수 불명확 발주서 · 공급사 출고·삭제 알림',
+        supplier.map(row => ({ account_id: row.account_id, account_name: row.account_name,
+          note: `${count(row, 'pending_orders') + (Number(row.supplier_notices) || 0)}건`, to: href('/order_manager/orders', row.account_id) }))),
+      make('receipts', '입고 확인', '입고', 'info', '오늘까지 도착 예정인 미입고 주문',
+        receipts.map(row => ({ account_id: row.account_id, account_name: row.account_name, note: `${count(row, 'due_receipts')}건`, to: href('/order_manager/orders', row.account_id) }))),
+      make('hygiene', '위생 조치 필요', '조치 필요', 'warn',
+        '위생관리 내용을 확인하세요',
+        (o?.hygiene_open || []).map(a => ({ ...a, note: `${a.open_count}건`,
+          to: `/sanitation/vendor?${new URLSearchParams({ account_id: a.account_id, month: '', status: 'CHECK' })}` }))),
+    ]
+  })()
+  const hqOpenTile = hqTiles.find(tile => tile.key === hqOpen && tile.accounts.length > 1)
   const calendar = useWorkspaceCalendar(single?.account_id || '')
   const upcomingMealDays = useUpcomingMealDays(single?.account_id || '')
   const summary = useAccountSummary(single?.account_id || '')
@@ -61,7 +100,8 @@ export default function DailyWork({ search, shortcuts }: { search: ReactNode; sh
     hint: pending + notices ? [pending && `접수 불명확 ${pending}`, notices && `출고·삭제 알림 ${notices}`].filter(Boolean).join(' · ') : '공급사 쪽 확인할 것 없음',
     tone: pending + notices ? 'urgent' : 'done', to: pending + notices ? href('/order_manager/orders', single.account_id) : undefined,
   })
-  const chip = (tile: TaskTile) => tile.key === 'prepare' && tile.tone === 'warn' ? '발주 필요' : tile.key === 'due_receipts' && tile.tone !== 'done' ? '입고' : CHIP[tile.tone]
+  const chip = (tile: TaskTile) => tile.key === 'prepare' && tile.tone === 'warn' ? '발주 필요' : tile.key === 'due_receipts' && tile.tone !== 'done' ? '입고'
+    : CHIP[tile.tone]
 
   // '오늘 순서대로' — 할 일이 있는 칸만, 식단표 → 발주 → 공급사 확인 → 입고 → 사용 확정 순서
   const steps: Step[] = single ? [
@@ -80,6 +120,7 @@ export default function DailyWork({ search, shortcuts }: { search: ReactNode; sh
   // 현장 계정(2026-10-22 사용자 요청): 자주 쓰는 화면 없음, 오늘 할 일은 작게, 이번 주 식단표를 크게. 예산·달력·검색은 그대로
   const site = isSiteUser()
   const title = single ? (steps.length ? `오늘 할 일 ${steps.length}가지가 있어요` : '오늘 할 일을 모두 마쳤어요')
+    : hqAll ? `거래처 ${rows.length}곳 · 오늘 할 일`
     : rows.length > 1 ? `거래처 ${rows.length}곳 · 확인할 곳 ${busy.length}곳` : '오늘 할 일'
   const today = new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })
 
@@ -89,6 +130,22 @@ export default function DailyWork({ search, shortcuts }: { search: ReactNode; sh
     const className = `rd-tile is-${tile.tone}`
     return tile.to ? <Link key={tile.key} className={className} to={tile.to}>{body}</Link> : <div key={tile.key} className={className}>{body}</div>
   }
+  // 본사 칸: 업장이 한 곳이면 바로 그 화면, 여러 곳이면 아래에 업장 목록을 펼친다
+  const hqTileView = (tile: HqTile) => {
+    const body = <><span className={`rd-chip is-${tile.tone}`}>{tile.chip}</span><span className="rd-tile__label">{tile.label}</span>
+      <strong className="rd-tile__value">{tile.value}</strong><span className="rd-tile__hint">{tile.hint}</span></>
+    const className = `rd-tile is-${tile.tone}${hqOpen === tile.key ? ' is-open' : ''}`
+    if (tile.accounts.length === 1) return <Link key={tile.key} className={className} to={tile.accounts[0].to} title={tile.accounts[0].account_name}>{body}</Link>
+    if (tile.accounts.length > 1) return <button key={tile.key} type="button" className={className} aria-expanded={hqOpen === tile.key}
+      onClick={() => setHqOpen(current => current === tile.key ? '' : tile.key)}>{body}</button>
+    return <div key={tile.key} className={className}>{body}</div>
+  }
+
+  const hqAccounts = hqOpenTile ? <section className="rd-card rd-hq-accounts" aria-label={`${hqOpenTile.label} 업장`}>
+    <div className="rd-hq-accounts__head"><h2 className="rd-h2">{hqOpenTile.label} · {hqOpenTile.accounts.length}곳</h2>
+      <button type="button" className="rd-btn is-ghost" onClick={() => setHqOpen('')}>접기</button></div>
+    <ul>{hqOpenTile.accounts.map(a => <li key={a.account_id}><Link to={a.to}><strong>{a.account_name}</strong>{a.note ? <span className="rd-muted">{a.note}</span> : null}</Link></li>)}</ul>
+  </section> : null
 
   return <>
     <header className="rd-home__head">
@@ -104,18 +161,27 @@ export default function DailyWork({ search, shortcuts }: { search: ReactNode; sh
     {!data && !error && <p role="status" className="rd-muted">업무 현황을 확인하고 있습니다.</p>}
     {data && !rows.length && <p>조회할 거래처가 없습니다. 거래처 설정을 확인해주세요.</p>}
 
-    {!single && rows.length > 0 && <section className="rd-tiles" aria-label="오늘 현황">{view.map(tileView)}</section>}
+    {!single && rows.length > 0 && !hqAll && <section className="rd-tiles" aria-label="오늘 현황">{view.map(tileView)}</section>}
+    {hqAll && <section className="rd-tiles rd-tiles--hq" aria-label="오늘 현황">{hqTiles.map(hqTileView)}</section>}
+    {hqAll && hq.error ? <p role="alert" className="rd-text-warn">{hq.error}</p> : null}
+    {hqAll && hqAccounts}
 
     {/* 거래처 한 곳: 왼쪽 = 칸 4개 + 순서 목록, 오른쪽 = 거래처 카드(담당자·예산) + 달력 */}
     {single && <div className="rd-home__grid">
       <div className="rd-home__main">
       {site ? <WeekMealBoard accountId={single.account_id} editHref={href('/operations/table-meals', single.account_id)} />
+        : hqSingle ? <>
+          {/* 본사가 거래처를 고른 홈: 식단표 제작·위생 조치는 관리 거래처 전체(N곳), 가운데 셋은 이 거래처 */}
+          <section className="rd-tiles rd-tiles--hq" aria-label="오늘 현황">
+            {hqTileView(hqTiles[0])}{view.filter(tile => ['prepare', 'pending_orders', 'due_receipts'].includes(tile.key)).map(tileView)}{hqTileView(hqTiles[4])}
+          </section>
+          {hqAccounts}</>
         : <section className="rd-tiles" aria-label="오늘 현황">{view.map(tileView)}</section>}
       <section className={`rd-card rd-steps${site ? ' is-compact' : ''}`} aria-label="오늘 할 일 순서">
         {/* 제목 줄: 업무 알림 버튼도 여기(목록 아래 한 줄 절약). 펼치면 알림 패널은 제목 아래 한 줄 전체 */}
         <div className="rd-steps__head">
           <h2 className="rd-h2">오늘 순서대로 하면 돼요</h2>
-          <button type="button" className="rd-btn is-ghost" onClick={refresh}>새로고침</button>
+          <button type="button" className="rd-btn is-ghost" onClick={() => { refresh(); setHqRevision(value => value + 1) }}>새로고침</button>
           <div className="rd-steps__notice"><WorkspaceNotifications accountId={single.account_id} /></div>
         </div>
         <p className="rd-muted">식단표 → 발주 → 공급사 확인 → 입고 → 사용 확정. 끝나면 자동으로 지워집니다.</p>
@@ -125,7 +191,6 @@ export default function DailyWork({ search, shortcuts }: { search: ReactNode; sh
           <Link className="rd-btn" to={step.to}>{step.action}</Link>
         </li>)}</ol> : <div className="rd-steps__done">지금 할 일이 없어요. 새 일이 생기면 여기에 순서대로 나타납니다.</div>}
       </section>
-      {site ? null : shortcuts}
       </div>
 
       <aside className="rd-home__side" aria-label="거래처 정보와 달력">
@@ -192,6 +257,5 @@ export default function DailyWork({ search, shortcuts }: { search: ReactNode; sh
       <summary>업무 없는 거래처 {idle.length}곳</summary>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>{idle.map(row => <Link key={row.account_id} className="rd-btn" to={href('/order_manager/recommended', row.account_id)}>{row.account_name}</Link>)}</div>
     </details>}
-    {!single && shortcuts}
   </>
 }

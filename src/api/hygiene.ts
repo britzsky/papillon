@@ -13,6 +13,8 @@ export type HygieneCategory = {
   use_yn?: 'Y' | 'N'
   main_yn?: 'Y' | 'N'
   status_yn?: 'Y' | 'N'
+  /** 'Y'면 거래처에 저장된 카테고리가 없어 서버가 준 ERP 기본 목록(카테고리 편집에서 저장하면 ERP에 저장) */
+  default_yn?: 'Y' | 'N'
 }
 
 export type HygieneRecord = {

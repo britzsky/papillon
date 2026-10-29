@@ -1,17 +1,17 @@
 /* 웰스토리 원문 조회(터치). 공용 부품은 TouchLayout.css */
 .wr-site .t-select { max-width: 260px; }
 .wr-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 10px 12px; margin-bottom: 14px; }
-.wr-field { display: grid; gap: 4px; color: var(--t-muted); font-size: 12px; font-weight: 700; }
-.wr-field input { min-height: 46px; width: 140px; padding: 0 12px; border: 1.5px solid var(--t-line); border-radius: 12px; background: var(--t-surface); font-size: 16px; }
+.wr-field { display: grid; gap: 4px; color: var(--t-muted); font-size: 13px; font-weight: 700; }
+.wr-field input { min-height: 46px; width: 140px; padding: 0 12px; border: 1.5px solid var(--t-line); border-radius: 12px; background: var(--t-surface); font-size: 17px; }
 .wr-search { flex: 1 1 220px; gap: 10px; padding: 0 16px; box-shadow: inset 0 0 0 1.5px var(--t-line); }
-.wr-search input { flex: 1; min-width: 0; min-height: 46px; border: 0; background: transparent; font-size: 16px; outline: none; }
+.wr-search input { flex: 1; min-width: 0; min-height: 46px; border: 0; background: transparent; font-size: 17px; outline: none; }
 
 .wr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
 .wr-item { display: grid; align-content: start; gap: 4px; padding: 10px 10px 14px; }
 .wr-item > .t-badge { justify-self: start; margin: 6px 2px 2px; }
-.wr-item strong { padding: 0 2px; font-size: 15px; line-height: 1.35; }
-.wr-item small { padding: 0 2px; color: var(--t-muted); font-size: 12px; }
-.wr-item__price { padding: 4px 2px 0; color: var(--t-accent-strong); font-size: 18px; font-weight: 800; }
+.wr-item strong { padding: 0 2px; font-size: 16px; line-height: 1.35; }
+.wr-item small { padding: 0 2px; color: var(--t-muted); font-size: 13px; }
+.wr-item__price { padding: 4px 2px 0; color: var(--t-accent-strong); font-size: 19px; font-weight: 800; }
 .wr-item__price small { padding: 0; font-weight: 600; }
 .wr-item__img .product-image { width: 100%; min-width: 0; max-width: none; height: 104px; flex: none; border: 0; border-radius: 12px; background: var(--t-surface-2); color: var(--t-accent); }
 .wr-more { margin-top: 16px; }
@@ -19,14 +19,14 @@
 .wr-records { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
 .wr-record { display: grid; gap: 8px; }
 .wr-record dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; margin: 0; }
-.wr-record dt { color: var(--t-muted); font-size: 11px; }
-.wr-record dd { margin: 0; overflow: hidden; font-size: 14px; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
+.wr-record dt { color: var(--t-muted); font-size: 12px; }
+.wr-record dd { margin: 0; overflow: hidden; font-size: 15px; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
 .wr-record > .t-badge { justify-self: start; }
 
 .wr-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 .wr-panel__head { padding: 26px 20px 14px; border-bottom: 1px solid var(--t-line); }
-.wr-panel__head h2 { font-size: 22px; }
-.wr-panel__head p { margin-top: 6px; color: var(--t-muted); font-size: 13px; line-height: 1.55; }
+.wr-panel__head h2 { font-size: 23px; }
+.wr-panel__head p { margin-top: 6px; color: var(--t-muted); font-size: 14px; line-height: 1.55; }
 .wr-panel__body { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 20px; }
 .wr-panel__actions { display: grid; gap: 10px; padding: 14px 20px 20px; }
 

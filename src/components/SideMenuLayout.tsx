@@ -7,7 +7,7 @@ import DeadlineAlertBanner from './DeadlineAlertBanner'
 import { DeadlineSlotContext } from './deadlineSlot'
 import WorkflowBar from './WorkflowBar'
 import WorkspaceAccountPicker from './WorkspaceAccountPicker'
-import { isHeadquarters, workspaceAccountId } from '../features/workspace/workspaceAccount'
+import { isHeadquarters, ownAccountName, workspaceAccountId } from '../features/workspace/workspaceAccount'
 import { matchesBase } from '../features/workspace/workflow'
 import { visibleForRole } from '../features/workspace/roleScreens'
 
@@ -316,7 +316,7 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
         </nav>
         <div className="side-layout__account">
           <WorkspaceIcon name="headquarters" />
-          <div><strong>{localStorage.getItem('account_name') || '더채움'}</strong><span>{localStorage.getItem('user_name') || '구매·재고 업무 공간'}</span></div>
+          <div><strong>{ownAccountName() || '더채움'}</strong><span>{localStorage.getItem('user_name') || '구매·재고 업무 공간'}</span></div>
         </div>
       </aside>
 

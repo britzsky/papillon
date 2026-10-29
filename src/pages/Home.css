@@ -80,13 +80,13 @@
 }
 
 .home-hero .home-hero__eyebrow {
-  font-size: 18px !important;
+  font-size: 19px !important;
 }
 
 .home-hero h1 {
   margin: 0;
   color: #243036;
-  font-size: 35px !important;
+  font-size: 36px !important;
   line-height: 1.18;
   letter-spacing: 0;
 }
@@ -95,7 +95,7 @@
   max-width: 590px;
   margin: 14px 0 0;
   color: #60717a;
-  font-size: 14px !important;
+  font-size: 15px !important;
 }
 
 .home-hero__actions {
@@ -524,7 +524,7 @@
   }
 
   .home-hero h1 {
-    font-size: 35px !important;
+    font-size: 36px !important;
   }
 
   .home-search__filters {
@@ -546,7 +546,7 @@
   }
 
   .home-hero h1 {
-    font-size: 35px !important;
+    font-size: 36px !important;
   }
 
   .menu-grid,
@@ -640,7 +640,7 @@ body.workspace-ui .home-search .home-search__assistant { position: static; grid-
 body.workspace-ui .home-dashboard { gap: 16px; }
 body.workspace-ui .home-top { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 24px; }
 body.workspace-ui .home-top { align-items: center; }
-body.workspace-ui > #root .home-top .home-top__title { flex: 0 0 auto; margin: 0; color: #192e25; font-size: 14px !important; font-weight: 700; }
+body.workspace-ui > #root .home-top .home-top__title { flex: 0 0 auto; margin: 0; color: #192e25; font-size: 15px !important; font-weight: 700; }
 body.workspace-ui .home-top .home-search { flex: 1 1 420px; max-width: 760px; margin: 0; padding: 12px; }
 body.workspace-ui .home-search__keywords { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; }
 body.workspace-ui .home-search__keywords span { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
@@ -657,7 +657,7 @@ body.workspace-ui .home-tasks__tiles { display: grid; grid-template-columns: rep
 body.workspace-ui .home-tasks__tile { display: grid; gap: 2px; padding: 12px 14px; border: 1px solid #e0e8e3; border-left-width: 4px; border-radius: 8px; background: #f8faf9; color: #1f2d27; text-decoration: none; }
 body.workspace-ui a.home-tasks__tile:hover { background: #eef6f1; border-color: #9ebbac; }
 body.workspace-ui .home-tasks__label { font-weight: 700; color: #34483f; }
-body.workspace-ui > #root .home-tasks .home-tasks__count { font-size: 22px !important; font-weight: 800; line-height: 1.25; }
+body.workspace-ui > #root .home-tasks .home-tasks__count { font-size: 23px !important; font-weight: 800; line-height: 1.25; }
 body.workspace-ui .home-tasks__hint { color: #4e5e56; }
 body.workspace-ui .home-tasks__tile.is-primary { border-left-color: #14634d; background: #eef7f1; }
 body.workspace-ui .home-tasks__tile.is-primary .home-tasks__count { color: #14634d; }
@@ -695,7 +695,7 @@ body.workspace-ui > #root .home-shortcuts button.home-shortcut {
 body.workspace-ui > #root .home-shortcuts button.home-shortcut:hover { border-color: #9ebbac !important; background: #f3f9f5 !important; }
 body.workspace-ui .home-shortcut__icon { display: grid; place-items: center; flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; background: #eaf5ee; color: #14634d; }
 body.workspace-ui .home-shortcut__text { display: grid; gap: 2px; min-width: 0; }
-body.workspace-ui > #root .home-shortcuts .home-shortcut strong { font-size: 12px !important; font-weight: 700 !important; color: #14634d; }
+body.workspace-ui > #root .home-shortcuts .home-shortcut strong { font-size: 13px !important; font-weight: 700 !important; color: #14634d; }
 body.workspace-ui > #root .home-shortcuts .home-shortcut small { color: #4e5e56; }
 
 @media (max-width: 1200px) {

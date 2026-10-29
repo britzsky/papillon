@@ -1,52 +1,52 @@
 /* 상품 검색 발주(터치). 공용 부품은 TouchLayout.css */
 .po-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 10px 12px; margin-bottom: 14px; }
-.po-field { display: grid; gap: 4px; flex: 1 1 180px; color: var(--t-muted); font-size: 12px; font-weight: 700; }
-.po-field :is(input, .t-select) { width: 100%; min-height: 46px; padding: 0 10px; border: 1.5px solid var(--t-line); border-radius: 12px; background: var(--t-surface); color: var(--t-text); font-size: 16px; }
+.po-field { display: grid; gap: 4px; flex: 1 1 180px; color: var(--t-muted); font-size: 13px; font-weight: 700; }
+.po-field :is(input, .t-select) { width: 100%; min-height: 46px; padding: 0 10px; border: 1.5px solid var(--t-line); border-radius: 12px; background: var(--t-surface); color: var(--t-text); font-size: 17px; }
 .po-search { flex: 2 1 260px; gap: 10px; padding: 0 16px; box-shadow: inset 0 0 0 1.5px var(--t-line); }
-.po-search input { flex: 1; min-width: 0; min-height: 46px; border: 0; background: transparent; font-size: 16px; outline: none; }
+.po-search input { flex: 1; min-width: 0; min-height: 46px; border: 0; background: transparent; font-size: 17px; outline: none; }
 .po-prep { display: flex; flex-wrap: wrap; gap: 6px; flex: 1 1 100%; }
-.po-count { margin-bottom: 8px; color: var(--t-muted); font-size: 13px; font-weight: 700; }
+.po-count { margin-bottom: 8px; color: var(--t-muted); font-size: 14px; font-weight: 700; }
 
 .po-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
 .po-offer { display: grid; align-content: start; gap: 4px; padding: 14px; }
-.po-offer__top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; color: var(--t-muted); font-size: 11px; line-height: 1.3; }
-.po-offer__top .t-dot { width: 34px; height: 34px; font-size: 14px; }
-.po-offer strong { font-size: 15px; line-height: 1.35; }
-.po-offer small { color: var(--t-muted); font-size: 12px; }
+.po-offer__top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; color: var(--t-muted); font-size: 12px; line-height: 1.3; }
+.po-offer__top .t-dot { width: 34px; height: 34px; font-size: 15px; }
+.po-offer strong { font-size: 16px; line-height: 1.35; }
+.po-offer small { color: var(--t-muted); font-size: 13px; }
 .po-offer .po-offer__warn { color: var(--t-danger); font-weight: 600; }
-.po-offer__price { margin: 4px 0 6px; color: var(--t-accent-strong); font-size: 19px; font-weight: 800; }
+.po-offer__price { margin: 4px 0 6px; color: var(--t-accent-strong); font-size: 20px; font-weight: 800; }
 .po-offer .t-btn { margin-top: auto; }
 .po-more { margin-top: 16px; }
 
 .po-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 .po-panel__head { padding: 26px 20px 14px; border-bottom: 1px solid var(--t-line); }
-.po-panel__head h2 { font-size: 24px; letter-spacing: -0.02em; }
-.po-panel__head p { margin-top: 4px; color: var(--t-muted); font-size: 13px; }
+.po-panel__head h2 { font-size: 25px; letter-spacing: -0.02em; }
+.po-panel__head p { margin-top: 4px; color: var(--t-muted); font-size: 14px; }
 .po-panel__body { display: grid; align-content: start; gap: 14px; flex: 1; min-height: 0; overflow-y: auto; padding: 16px 20px; }
 .po-panel__actions { display: grid; gap: 12px; padding: 14px 20px 20px; }
 .po-empty { padding: 20px 0; color: var(--t-muted); text-align: center; }
-.po-sub { font-size: 15px; }
+.po-sub { font-size: 16px; }
 .po-row { display: flex; justify-content: center; gap: 8px; }
 
-.po-group h3 { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 14px; }
-.po-group h3 .t-dot { width: 32px; height: 32px; font-size: 13px; }
+.po-group h3 { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 15px; }
+.po-group h3 .t-dot { width: 32px; height: 32px; font-size: 14px; }
 .po-group h3 > span:last-child { display: grid; }
-.po-group h3 small { color: var(--t-muted); font-size: 12px; font-weight: 600; }
+.po-group h3 small { color: var(--t-muted); font-size: 13px; font-weight: 600; }
 .po-group ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .po-group li { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid var(--t-line); border-radius: 14px; }
 .po-line__name { display: flex; justify-content: space-between; gap: 8px; }
-.po-line__name strong { font-size: 14px; }
-.po-line__name small { flex: none; color: var(--t-accent-strong); font-size: 13px; font-weight: 800; }
+.po-line__name strong { font-size: 15px; }
+.po-line__name small { flex: none; color: var(--t-accent-strong); font-size: 14px; font-weight: 800; }
 .po-line__qty { display: flex; align-items: center; gap: 6px; }
 /* 재고 식재료 한 줄(서버 추정 · 바꾸기). 비어 있으면 입고 때 고른다는 뜻으로 주황 */
-.po-line__stock { display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--t-muted); font-size: 12px; font-weight: 700; }
-.po-line__stock .t-select { flex: 1; min-width: 0; min-height: 36px; padding: 0 8px; border: 1.5px solid var(--t-line); border-radius: 10px; background: #fff; font-size: 14px; font-weight: 700; }
+.po-line__stock { display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--t-muted); font-size: 13px; font-weight: 700; }
+.po-line__stock .t-select { flex: 1; min-width: 0; min-height: 36px; padding: 0 8px; border: 1.5px solid var(--t-line); border-radius: 10px; background: #fff; font-size: 15px; font-weight: 700; }
 .po-line__stock small { flex: none; }
 /* 버튼 색은 전역 button 규칙이 변수로 칠함 */
 body.t-ui .po-line__stock.is-empty button.t-select { --button-bg: #fff7e6; --button-bg-hover: #fff7e6; --button-text: #9a5b00; box-shadow: inset 0 0 0 1.5px #f5b041; }
-.po-line__qty .t-round { width: 38px; min-width: 38px; min-height: 38px; font-size: 18px; }
-.po-line__qty input { width: 60px; min-height: 40px; border: 1.5px solid var(--t-line); border-radius: 10px; text-align: center; font-size: 16px; font-weight: 800; }
-.po-line__qty > span { color: var(--t-muted); font-size: 12px; font-weight: 700; }
+.po-line__qty .t-round { width: 38px; min-width: 38px; min-height: 38px; font-size: 19px; }
+.po-line__qty input { width: 60px; min-height: 40px; border: 1.5px solid var(--t-line); border-radius: 10px; text-align: center; font-size: 17px; font-weight: 800; }
+.po-line__qty > span { color: var(--t-muted); font-size: 13px; font-weight: 700; }
 .po-line__qty .t-btn { margin-left: auto; }
 
 @media (max-width: 767px) {
@@ -56,5 +56,5 @@ body.t-ui .po-line__stock.is-empty button.t-select { --button-bg: #fff7e6; --but
 
 /* 나만의 식재료 하트 */
 .po-offer__top { position: relative; }
-.po-offer__heart { margin-left: auto; min-width: 40px; height: 40px; border-radius: 999px; border: 1px solid #d5dbe3; background: #fff; color: #9aa6b5; font-size: 20px; }
+.po-offer__heart { margin-left: auto; min-width: 40px; height: 40px; border-radius: 999px; border: 1px solid #d5dbe3; background: #fff; color: #9aa6b5; font-size: 21px; }
 .po-offer__heart[aria-pressed='true'] { color: #e02424; background: #fdecec; border-color: #f5b5b5; }

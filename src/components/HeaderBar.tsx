@@ -5,6 +5,7 @@ import userIcon from '../assets/image/user.png'
 import signOutIcon from '../assets/image/exit.png'
 import HeaderAlerts from './HeaderAlerts'
 import WorkspaceAccountPicker from './WorkspaceAccountPicker'
+import { ownAccountName } from '../features/workspace/workspaceAccount'
 import './HeaderBar.css'
 
 type BreadcrumbItem = {
@@ -25,7 +26,7 @@ function HeaderBar({ title = 'Home', breadcrumbs = [] }: HeaderBarProps) {
   const userInfo = [
     ['이름', localStorage.getItem('user_name')],
     ['아이디', localStorage.getItem('user_id')],
-    ['거래처명', localStorage.getItem('account_name')],
+    ['거래처명', ownAccountName()],
     ['거래처 ID', localStorage.getItem('account_id')],
   ]
 

@@ -25,13 +25,13 @@
   --action-disabled-bg: #eee9df;
   --action-disabled-border: #d7d1c5;
   --action-disabled-text: #7b756a;
-  --query-control-font-size: 12px;
+  --query-control-font-size: 13px;
   --query-control-font-weight: 500;
   --table-border-strong: #aaa59a;
   --table-border-mid: #ddd8ce;
   --form-label-width: 72px;
   --form-label-height: 23px;
-  --form-label-font-size: 12px;
+  --form-label-font-size: 13px;
   --form-label-bg: #e98851;
   --form-control-width: 171px;
   --form-control-height: 32px;
@@ -99,7 +99,7 @@ body {
 .payment-page *,
 .result-page,
 .result-page * {
-  font-size: 10px !important;
+  font-size: 11px !important;
 }
 
 body {

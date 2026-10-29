@@ -1,15 +1,15 @@
 /* 식단표(터치). 공용 부품은 TouchLayout.css */
 .tm-month { gap: 2px; padding: 0 4px; }
-.tm-month strong { display: inline-flex; align-items: center; gap: 8px; padding: 0 6px; font-size: 16px; }
+.tm-month strong { display: inline-flex; align-items: center; gap: 8px; padding: 0 6px; font-size: 17px; }
 
 .tm-weeks { display: inline-flex; margin-bottom: 14px; max-width: 100%; overflow-x: auto; }
 .tm-weeks button { display: inline-flex; align-items: center; gap: 6px; flex: none; padding: 0 18px; }
-.tm-weeks small { font-size: 12px; font-weight: 600; opacity: 0.7; }
+.tm-weeks small { font-size: 13px; font-weight: 600; opacity: 0.7; }
 
 /* 요일 칸(레퍼런스의 카테고리 칸) */
 .tm-days { margin-bottom: 6px; }
 .tm-day { min-width: 128px; }
-.tm-day strong { font-size: 16px; }
+.tm-day strong { font-size: 17px; }
 .tm-day__today { position: absolute; top: 12px; right: 12px; }
 
 .tm-dayhead {
@@ -20,7 +20,7 @@
   margin: 14px 0 14px;
 }
 
-.tm-dayhead h2 { font-size: 20px; letter-spacing: -0.01em; }
+.tm-dayhead h2 { font-size: 21px; letter-spacing: -0.01em; }
 .tm-dayhead__nav { display: flex; gap: 8px; margin-left: auto; }
 
 .tm-slots {
@@ -53,8 +53,8 @@
 }
 
 .tm-slot__cover > div { flex: 1; min-width: 0; }
-.tm-slot__cover h3 { font-size: 18px; }
-.tm-slot__cover small { color: var(--t-muted); font-size: 13px; font-weight: 600; }
+.tm-slot__cover h3 { font-size: 19px; }
+.tm-slot__cover small { color: var(--t-muted); font-size: 14px; font-weight: 600; }
 
 .tm-slot ul { display: grid; margin: 0; padding: 0 6px; list-style: none; }
 
@@ -64,7 +64,7 @@
   gap: 10px;
   min-height: 40px;
   border-bottom: 1px dashed var(--t-line);
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
 }
 
@@ -82,21 +82,21 @@
   border-radius: 10px;
   background: var(--t-surface-2);
   color: var(--t-muted);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .tm-slot footer span { display: inline-flex; align-items: center; gap: 6px; }
 .tm-slot footer strong { color: var(--t-accent-strong); }
 
-.tm-swipe-hint { margin-top: 14px; color: var(--t-muted); font-size: 13px; text-align: center; }
+.tm-swipe-hint { margin-top: 14px; color: var(--t-muted); font-size: 14px; text-align: center; }
 @media (hover: hover) { .tm-swipe-hint { display: none; } }
 
 /* 오른쪽 사용 확정 패널 */
 .tm-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 .tm-panel__head { padding: 18px 14px 10px; border-bottom: 1px solid var(--t-line); }
-.tm-panel__head h2 { font-size: 20px; letter-spacing: -0.02em; }
-.tm-panel__head p { margin-top: 4px; color: var(--t-muted); font-size: 12px; }
+.tm-panel__head h2 { font-size: 21px; letter-spacing: -0.02em; }
+.tm-panel__head p { margin-top: 4px; color: var(--t-muted); font-size: 13px; }
 .tm-panel__body { display: grid; align-content: start; gap: 10px; flex: 1; min-height: 0; overflow-y: auto; padding: 12px 14px; }
 .tm-panel .t-segment button { padding: 0 8px; }
 .tm-panel__empty { padding: 16px 0; color: var(--t-muted); text-align: center; }
@@ -115,8 +115,8 @@
 
 .tm-meals li.is-waiting { border-color: var(--t-accent); box-shadow: inset 0 0 0 1px var(--t-accent); }
 .tm-meals li > div { display: grid; flex: 1; min-width: 0; }
-.tm-meals strong { font-size: 14px; }
-.tm-meals small { color: var(--t-muted); font-size: 12px; }
+.tm-meals strong { font-size: 15px; }
+.tm-meals small { color: var(--t-muted); font-size: 13px; }
 
 .tm-panel__actions {
   display: grid;
@@ -145,7 +145,7 @@
 }
 
 .tm-servings__label { display: grid; flex: 1; min-width: 140px; }
-.tm-servings small { color: var(--t-muted); font-size: 13px; }
+.tm-servings small { color: var(--t-muted); font-size: 14px; }
 
 .tm-stepper { display: flex; align-items: center; gap: 8px; }
 .tm-stepper input {
@@ -155,11 +155,11 @@
   border-radius: 12px;
   background: var(--t-surface);
   text-align: center;
-  font-size: 20px;
+  font-size: 21px;
   font-weight: 800;
 }
 
-.tm-stepper__ten { min-height: 44px; padding: 0 10px; border: 0; border-radius: 10px; font-weight: 800; font-size: 14px; }
+.tm-stepper__ten { min-height: 44px; padding: 0 10px; border: 0; border-radius: 10px; font-weight: 800; font-size: 15px; }
 body.t-ui .tm-stepper__ten { --button-bg: var(--t-accent-soft); --button-bg-hover: var(--t-accent-soft); --button-bg-disabled: var(--t-accent-soft); --button-text: var(--t-accent-strong); }
 
 @media (max-width: 420px) {
@@ -167,8 +167,8 @@ body.t-ui .tm-stepper__ten { --button-bg: var(--t-accent-soft); --button-bg-hove
   .tm-stepper input { flex: 1; width: auto; }
 }
 
-.tm-note { margin-top: 10px; color: var(--t-muted); font-size: 13px; }
-.tm-subtitle { margin: 18px 0 10px; font-size: 16px; }
+.tm-note { margin-top: 10px; color: var(--t-muted); font-size: 14px; }
+.tm-subtitle { margin: 18px 0 10px; font-size: 17px; }
 
 .tm-notice {
   display: grid;
@@ -176,10 +176,10 @@ body.t-ui .tm-stepper__ten { --button-bg: var(--t-accent-soft); --button-bg-hove
   margin-top: 14px;
   padding: 14px 16px;
   border-radius: 14px;
-  font-size: 14px;
+  font-size: 15px;
 }
 
-.tm-notice strong { display: flex; align-items: center; gap: 6px; font-size: 15px; }
+.tm-notice strong { display: flex; align-items: center; gap: 6px; font-size: 16px; }
 .tm-notice ul { margin: 0; padding-left: 18px; }
 .tm-notice a:not(.t-btn) { color: inherit; font-weight: 700; }
 .tm-notice .t-btn { justify-self: start; }
@@ -205,16 +205,16 @@ body.t-ui .tm-stepper__ten { --button-bg: var(--t-accent-soft); --button-bg-hove
   border-radius: 14px;
 }
 
-.tm-ingredients strong { font-size: 15px; }
+.tm-ingredients strong { font-size: 16px; }
 .tm-ingredients__use { color: var(--t-accent-strong); font-weight: 800; }
-.tm-ingredients__stock { grid-column: 1 / -1; color: var(--t-muted); font-size: 13px; }
+.tm-ingredients__stock { grid-column: 1 / -1; color: var(--t-muted); font-size: 14px; }
 .tm-ingredients__stock b { color: var(--t-text); }
 .tm-ingredients li.is-short { border-color: var(--t-danger); background: var(--t-danger-soft); }
-.tm-ingredients__short { grid-column: 1 / -1; color: var(--t-danger); font-size: 13px; font-weight: 800; }
+.tm-ingredients__short { grid-column: 1 / -1; color: var(--t-danger); font-size: 14px; font-weight: 800; }
 
 /* 특식 메뉴(보라: PC 식단표와 같은 색) */
 .tm-slot li.is-special { color: #5f3a91; font-weight: 800; }
-.tm-slot li.is-special::before { content: '★'; width: auto; height: auto; border-radius: 0; background: none; color: #7a4fb0; font-size: 12px; }
+.tm-slot li.is-special::before { content: '★'; width: auto; height: auto; border-radius: 0; background: none; color: #7a4fb0; font-size: 13px; }
 
 /* 2026-10-28 식단표 서류 받기 */
 .tm-docs { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }

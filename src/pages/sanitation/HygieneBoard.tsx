@@ -1,46 +1,78 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { HygieneCategory, HygieneRecord } from '../../api/hygiene'
-import { hygieneStatus, SIDE_LABEL, STATUS_LABEL, UNCATEGORIZED, type HygieneBoardState, type HygieneSide, type HygieneStatus } from '../../features/sanitation/useHygieneBoard'
+import { hygieneHas, hygieneStatus, SIDE_LABEL, UNKEYED, STATUS_LABEL, type HygieneBoardState, type HygieneFilter, type HygieneSide } from '../../features/sanitation/useHygieneBoard'
 import './HygieneBoard.css'
 
 const NOTE_FIELD = { problem: 'problem_note', clean: 'clean_note' } as const
 const IMAGE_FIELD = { problem: 'problem_image', clean: 'clean_image' } as const
+const STATUS_FILTERS: [HygieneFilter, string][] = [['', '전체'], ['CHECK', STATUS_LABEL.CHECK], ['DONE', '완료'], ['MISSING', '미점검']]
+const MONTHS = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'))
 const NOTE_PLACEHOLDER: Record<HygieneSide, string> = { problem: '부적합 내용 (예: 후드 내부 청소 미흡)', clean: '조치한 내용 (예: 후드 필터 세척 완료)' }
 
 /**
- * 위생 점검 관리 본문(PC VendorSanitation·터치 SanitationTouch 공용). 기간·상태·카테고리 거르기 → 기록 카드(부적합 | 조치) →
- * 등록·수정 창(사진 칸마다 1장, ERP 구조) · 사진 크게 보기 · 카테고리 관리(본사).
+ * 위생 점검 관리 본문(PC VendorSanitation·터치 SanitationTouch 공용). 점검 현황·기간·상태 → 카테고리 카드(전·후·상태·기록 요약) →
+ * '상세 보기'로 그 카테고리 기록 카드(부적합 | 조치) → 등록·수정 창(사진 칸마다 1장, ERP 구조) · 사진 크게 보기 · 카테고리 편집(본사).
  */
 export default function HygieneBoard({ board }: { board: HygieneBoardState }) {
   const [viewer, setViewer] = useState<{ url: string; label: string } | null>(null)
   const [categoryOpen, setCategoryOpen] = useState(false)
   const b = board
+  // 연·월 선택: month 'YYYY-MM'(빈 값 = 전체 기간). 연도는 올해부터 5년 전까지
+  const [year, monthNo] = b.month ? b.month.split('-') : ['', '']
+  const [now] = useState(() => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 7))
+  const thisMonthNo = now.slice(5, 7)
+  const years = Array.from({ length: 6 }, (_, i) => String(Number(now.slice(0, 4)) - i))
+  // 카테고리 카드: 전 = 부적합 기록, 후 = 조치 기록, 상태 = 미점검(기록 없음) · 조치 필요(조치 안 된 기록) · 완료. 상태 알약으로 카드를 거른다
+  // 카드 목록은 ERP 화면과 같게: 사용 안 함(use_yn N) 카테고리는 기록이 있을 때만, 목록에 없는 키의 기록은 그 키로,
+  // 카테고리 없는 예전 기록은 '구분 없음' 카드로(빼면 기존 기록 대부분이 안 보인다)
+  const keyed = new Set(b.records.map(record => record.category_key || ''))
+  const activeCategories: HygieneCategory[] = [
+    ...b.categories.filter(row => row.use_yn !== 'N' || keyed.has(row.category_key)),
+    ...[...keyed].filter(key => !b.categories.some(row => row.category_key === key))
+      .map(key => ({ category_key: key, category_name: key || '구분 없음', description: '', manage_point: '' })),
+  ]
+  const cards = activeCategories.map(row => {
+    const records = b.records.filter(record => (record.category_key || '') === row.category_key)
+    const open = records.filter(record => hygieneStatus(record) === 'CHECK').length
+    const state: 'missing' | 'check' | 'done' = !records.length ? 'missing' : open ? 'check' : 'done'
+    return { row, records, open, state, before: records.filter(record => hygieneHas(record, 'problem')).length,
+      after: records.filter(record => hygieneHas(record, 'clean')).length }
+  }).filter(card => !b.statusFilter || card.state === ({ CHECK: 'check', DONE: 'done', MISSING: 'missing' } as const)[b.statusFilter])
+  const detail = activeCategories.find(row => (row.category_key || UNKEYED) === b.categoryFilter)
 
   if (!b.accountId) return <p className="hg-empty">위 '관리 거래처'에서 거래처를 고르면 위생 점검 기록이 나옵니다.</p>
 
   return <div className="hg">
     <section className="hg-filters" aria-label="조회 조건">
-      <div className="hg-filters__row">
-        <label className="hg-field"><span>등록 월</span>
-          <input type="month" value={b.month} disabled={!b.month} onChange={event => b.setMonth(event.target.value)} />
-        </label>
-        <label className="hg-check"><input type="checkbox" checked={!b.month} onChange={event => b.setMonth(event.target.checked ? '' : new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 7))} /> 전체 기간</label>
-        <div className="hg-segment" role="group" aria-label="상태">
-          {([['', '전체', b.records.length], ['CHECK', STATUS_LABEL.CHECK, b.counts.CHECK], ['DONE', STATUS_LABEL.DONE, b.counts.DONE]] as const).map(([value, label, count]) =>
-            <button key={value || 'all'} type="button" className={`hg-btn t-btn is-small${b.statusFilter === value ? ' is-active' : ''}`} aria-pressed={b.statusFilter === value}
-              onClick={() => b.setStatusFilter(value as HygieneStatus | '')}>{label} {count}</button>)}
+      {/* 위: 전체 점검 현황(완료율·완료·조치 필요) | 연·월 (2026-10-29 사용자 시안) */}
+      <div className="hg-filters__row hg-filters__top">
+        <div className="hg-summary" aria-label="전체 점검 현황">
+          <span className="hg-summary__icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 12l2.5 2.5L16 9" /></svg></span>
+          <strong className="hg-summary__title">전체 점검 현황</strong>
+          <strong className="hg-summary__rate">{b.doneRate}%</strong>
+          <span className="hg-summary__chip is-done"><i aria-hidden="true" />완료 <b>{b.counts.DONE}건</b></span>
+          <span className="hg-summary__chip is-check"><i aria-hidden="true" />조치 필요 <b>{b.counts.CHECK}건</b></span>
         </div>
-        <span className="hg-filters__actions">
-          {b.headquarters ? <button type="button" className="hg-btn t-btn" onClick={() => setCategoryOpen(true)}>카테고리 관리</button> : null}
-          <button type="button" className="hg-btn t-btn is-primary" onClick={b.startNew}>＋ 부적합 등록</button>
+        <span className="hg-period">
+          <select aria-label="연도" value={year} onChange={event => b.setMonth(event.target.value ? `${event.target.value}-${monthNo || thisMonthNo}` : '')}>
+            <option value="">전체 기간</option>
+            {years.map(value => <option key={value} value={value}>{value}년</option>)}
+          </select>
+          {year ? <select aria-label="월" value={monthNo} onChange={event => b.setMonth(`${year}-${event.target.value}`)}>
+            {MONTHS.map(value => <option key={value} value={value}>{Number(value)}월</option>)}
+          </select> : null}
         </span>
       </div>
-      <div className="hg-pills" role="group" aria-label="카테고리">
-        <button type="button" className={`hg-pill${!b.categoryFilter ? ' is-active' : ''}`} aria-pressed={!b.categoryFilter} onClick={() => b.setCategoryFilter('')}>전체</button>
-        {b.categories.map(row => <button type="button" key={row.category_key} className={`hg-pill${b.categoryFilter === row.category_key ? ' is-active' : ''}`}
-          aria-pressed={b.categoryFilter === row.category_key} title={row.description || undefined} onClick={() => b.setCategoryFilter(row.category_key)}>{row.category_name}</button>)}
-        {b.hasUncategorized ? <button type="button" className={`hg-pill${b.categoryFilter === UNCATEGORIZED ? ' is-active' : ''}`} aria-pressed={b.categoryFilter === UNCATEGORIZED} onClick={() => b.setCategoryFilter(UNCATEGORIZED)}>분류 없음</button> : null}
+      <div className="hg-filters__row">
+        <div className="hg-pills hg-pills--status" role="group" aria-label="상태">
+          {STATUS_FILTERS.map(([value, label]) => <button key={value || 'all'} type="button" className={`hg-pill${b.statusFilter === value ? ' is-active' : ''}`} aria-pressed={b.statusFilter === value}
+            onClick={() => b.setStatusFilter(value)}>{label}</button>)}
+        </div>
+        <span className="hg-filters__actions">
+          <span className="hg-filters__count">점검 항목 <b>{activeCategories.length}개</b></span>
+          {b.headquarters ? <button type="button" className="hg-btn t-btn is-outline" onClick={() => setCategoryOpen(true)}>카테고리 편집</button> : null}
+        </span>
       </div>
     </section>
 
@@ -48,9 +80,49 @@ export default function HygieneBoard({ board }: { board: HygieneBoardState }) {
     {b.error && !b.draft ? <p className="hg-msg is-error" role="alert">{b.error}</p> : null}
     {b.loading ? <p className="hg-msg" role="status">위생 점검 기록을 불러오는 중…</p> : null}
 
-    {!b.loading ? <section className="hg-list" aria-label="점검 기록">
+    {/* 카테고리 카드(2026-10-29 사용자 시안): 전·후 건수, 상태, 기록 요약. '상세 보기'를 누르면 그 카테고리 기록 카드(부적합 | 조치) */}
+    {!b.loading && !detail ? <section className="hg-grid" aria-label="점검 항목">
+      {cards.map(card => <article key={card.row.category_key} className={`hg-cat is-${card.state}`}>
+        <header className="hg-cat__head">
+          <strong title={[card.row.description, card.row.manage_point].filter(Boolean).join(' · ') || undefined}>{card.row.category_name}</strong>
+          <button type="button" className="hg-more" onClick={() => b.setCategoryFilter(card.row.category_key || UNKEYED)}>상세 보기<span aria-hidden="true">›</span></button>
+        </header>
+        <div className="hg-cat__meta">
+          <span className="hg-count">전 <b>{card.before}</b></span>
+          <span className="hg-count is-after">후 <b>{card.after}</b></span>
+          <span className={`hg-status is-${card.state}`}>{card.state === 'missing' ? '미점검' : card.state === 'check' ? `조치 필요 ${card.open}건` : '완료'}</span>
+        </div>
+        {card.records.length ? <>
+          <ul className="hg-cat__list">
+            {card.records.slice(0, 4).map(record => {
+              const status = hygieneStatus(record)
+              return <li key={record.idx ?? record.reg_dt}>
+                <button type="button" className={`hg-cat__item is-${status.toLowerCase()}`} onClick={() => b.startEdit(record)} title={`${record.problem_note || '사진만 등록'} — 눌러서 ${status === 'CHECK' ? '조치 입력' : '수정'}`}>
+                  <span className="hg-cat__text"><span>{record.problem_note || record.clean_note || '사진만 등록'}</span>{record.reg_dt ? <small>{record.reg_dt.slice(5).replace('-', '/')}</small> : null}</span>
+                  <em>{status === 'CHECK' ? '조치 대기' : '조치 완료'}</em>
+                </button>
+              </li>
+            })}
+          </ul>
+          {card.records.length > 4 ? <button type="button" className="hg-cat__rest" onClick={() => b.setCategoryFilter(card.row.category_key || UNKEYED)}>외 {card.records.length - 4}건 더 보기</button> : null}
+          <button type="button" className="hg-cat__add" onClick={() => b.startNew(card.row.category_key)}><span aria-hidden="true">＋</span> 항목 추가</button>
+        </> : <button type="button" className="hg-cat__empty" onClick={() => b.startNew(card.row.category_key)}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 8h6M9 12h6" /></svg>
+          <span>등록된 점검 항목이 없습니다</span><b>눌러서 항목 추가</b>
+        </button>}
+      </article>)}
+      {!cards.length ? <p className="hg-empty">{b.categories.length ? '조건에 맞는 점검 항목이 없습니다.' : '등록된 위생 카테고리가 없습니다.'}</p> : null}
+    </section> : null}
+
+    {!b.loading && detail ? <section className="hg-list" aria-label={`${detail.category_name} 점검 기록`}>
+      <div className="hg-detail__head">
+        <button type="button" className="hg-btn t-btn is-ghost" onClick={() => b.setCategoryFilter('')}>‹ 전체 항목</button>
+        <strong>{detail.category_name}</strong>
+        {detail.description ? <small>{detail.description}</small> : null}
+        <button type="button" className="hg-btn t-btn is-primary" onClick={() => b.startNew(detail.category_key)}>＋ 부적합 등록</button>
+      </div>
       {b.visibleRecords.map(record => <RecordCard key={record.idx ?? record.reg_dt} record={record} board={b} onView={setViewer} />)}
-      {!b.visibleRecords.length ? <p className="hg-empty">{b.records.length ? '조건에 맞는 기록이 없습니다.' : `${b.month ? `${b.month.replace('-', '년 ')}월에` : '아직'} 등록된 위생 점검 기록이 없습니다.`}</p> : null}
+      {!b.visibleRecords.length ? <p className="hg-empty">{`${b.month ? `${b.month.replace('-', '년 ')}월에` : '아직'} 조건에 맞는 기록이 없습니다.`}</p> : null}
     </section> : null}
 
     {b.draft ? <RecordEditor board={b} onView={setViewer} /> : null}

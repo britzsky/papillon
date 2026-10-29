@@ -241,7 +241,7 @@ body.workspace-ui .header-shell .header-bar__actions .header-alerts__bell:hover 
   border: 2px solid #fff; border-radius: 9px; background: #d97706; color: #fff; font-weight: 800; line-height: 13px; text-align: center;
 }
 .header-alerts__badge.is-urgent { background: #dc2626; }
-body.workspace-ui > #root .header-alerts__badge { font-size: 9px !important; }
+body.workspace-ui > #root .header-alerts__badge { font-size: 10px !important; }
 .header-bar__user-info.header-alerts { width: min(380px, calc(100vw - 32px)); padding: 14px; }
 .header-alerts .header-bar__user-info-heading { flex-wrap: wrap; justify-content: flex-start; gap: 4px 10px; }
 .header-alerts .header-bar__user-info-heading small { color: #4e5e56; }
@@ -266,5 +266,5 @@ body.workspace-ui .header-bar--one-line > .header-breadcrumbs { flex: 1 1 auto; 
 @media (max-width: 760px) { body.workspace-ui .header-bar.header-bar--one-line { flex-wrap: wrap; } }
 
 /* 경로 마지막 = 지금 화면 이름(굵고 진하게). 본문 큰 제목(rd-h1)을 숨겨 이 자리가 화면 이름을 맡는다 (2026-10-16 사용자 요청) */
-body.workspace-ui .header-breadcrumbs .header-breadcrumbs__current.is-page { color: #14231b !important; font-size: 15px !important; font-weight: 800 !important; }
+body.workspace-ui .header-breadcrumbs .header-breadcrumbs__current.is-page { color: #14231b !important; font-size: 16px !important; font-weight: 800 !important; }
 body.workspace-ui .header-breadcrumbs .header-breadcrumbs__link { font-weight: 600; }

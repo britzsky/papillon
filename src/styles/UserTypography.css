@@ -2,13 +2,14 @@
  * General 10px; sidebar 12px; query controls/buttons 11px at 500;
  * All screens use the purchase-order-management font sizes.
  * Match route content and body portals with the same specificity.
+ * 2026-10-29: every size +1px (사용자 요청 '본사·현장 모든 글씨 1px 크게'). 다른 파일의 !important 글씨 크기와 터치 화면 글씨도 같이 +1px, 인쇄는 그대로.
  */
-body.workspace-ui { --query-control-font-size: 12px; --query-control-font-weight: 500; }
+body.workspace-ui { --query-control-font-size: 13px; --query-control-font-weight: 500; }
 body.workspace-ui > :is(#root, :not(#root)),
-body.workspace-ui > :is(#root, :not(#root)) * { font-size: 10px !important; }
+body.workspace-ui > :is(#root, :not(#root)) * { font-size: 11px !important; }
 body.workspace-ui > :is(#root, :not(#root)) .side-layout__sidebar,
-body.workspace-ui > :is(#root, :not(#root)) .side-layout__sidebar * { font-size: 13px !important; }
+body.workspace-ui > :is(#root, :not(#root)) .side-layout__sidebar * { font-size: 14px !important; }
 body.workspace-ui > :is(#root, :not(#root)) :is(.food-order-filters,.menu-manager-filters,.vendor-sanitation-filters,.table-meals-toolbar,.account-manager-toolbar,.welstory-toolbar,.supplier-integration-toolbar,.search-admin-toolbar,.shortage-order-filters,.purchase-orders__filters),
 body.workspace-ui > :is(#root, :not(#root)) :is(.food-order-filters,.menu-manager-filters,.vendor-sanitation-filters,.table-meals-toolbar,.account-manager-toolbar,.welstory-toolbar,.supplier-integration-toolbar,.search-admin-toolbar,.shortage-order-filters,.purchase-orders__filters) *,
 body.workspace-ui > :is(#root, :not(#root)) button,
-body.workspace-ui > :is(#root, :not(#root)) button * { font-size: 11px !important; font-weight: 500 !important; }
+body.workspace-ui > :is(#root, :not(#root)) button * { font-size: 12px !important; font-weight: 500 !important; }

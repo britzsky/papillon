@@ -1,23 +1,13 @@
 import DailyWork from '../components/DailyWork'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import HeaderBar from '../components/HeaderBar'
 import SideMenuLayout from '../components/SideMenuLayout'
 import { searchActions, searchIntentLabels, useHomeSearch } from '../features/home/useHomeSearch'
 import './Home.css'
 
-/** 자주 쓰는 화면. 홈에서 화면 입구는 '오늘 할 일'과 여기 두 곳뿐(왼쪽 메뉴에 전체 목록). */
-const shortcuts = [
-  // 업무 순서대로(식단표 → 발주하기 → 발주서·입고 → 재고), 그다음 자주 쓰는 기준정보
-  { title: '① 식단표', description: '식단 작성·주간 사용 확정', path: '/operations/table-meals', icon: 'operations' as const },
-  { title: '② 발주하기', description: '식단 부족량·추천 발주안·상품 검색', path: '/order_manager/order', icon: 'order' as const },
-  { title: '③ 발주서·입고', description: '접수 결과 확인·입고 확정·인쇄', path: '/order_manager/orders', icon: 'product' as const },
-  { title: '④ 재고', description: '현재고·직접구매·기초재고', path: '/inventory/account', icon: 'inventory' as const },
-  { title: '위생 점검', description: '거래처별 점검 상태', path: '/sanitation/vendor', icon: 'sanitation' as const },
-]
+/* '자주 쓰는 화면'은 2026-10-29 본사도 빼면서 없앴다(현장은 10-22에 이미 뺌). 화면 입구는 '오늘 할 일'과 왼쪽 메뉴. */
 
 function Home() {
-  const navigate = useNavigate()
   const {
     searchText, setSearchText, normalizedSearchText, searchMatches, primaryMatch, suggestedActions,
     isSearchDataLoading, searchDataError, recent, popular, navigateWithSearch, handleSearchSubmit,
@@ -59,15 +49,7 @@ function Home() {
       <main className="home-content">
         <SideMenuLayout header={<HeaderBar title="오늘의 운영" breadcrumbs={[{ label: '홈' }]} />}>
           <div className="home-dashboard rd rd-home">
-            {/* 자주 쓰는 화면: 거래처 한 곳이면 왼쪽 열(달력 왼쪽), 본사 여러 거래처면 맨 아래 */}
-            <DailyWork search={searchBox} shortcuts={<section className="rd-home__shortcuts" aria-labelledby="home-shortcuts-title">
-              <h2 id="home-shortcuts-title" className="rd-h2" style={{ marginBottom: 10 }}>자주 쓰는 화면</h2>
-              <div className="rd-shortcuts">
-                {shortcuts.map(card => <button key={card.path} type="button" className="rd-shortcut" onClick={() => navigate(card.path)}>
-                  <strong>{card.title}</strong><small>{card.description}</small>
-                </button>)}
-              </div>
-            </section>} />
+            <DailyWork search={searchBox} />
           </div>
         </SideMenuLayout>
       </main>

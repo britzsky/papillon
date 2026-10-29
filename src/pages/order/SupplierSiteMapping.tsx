@@ -44,13 +44,13 @@ export default function SupplierSiteMapping() {
       <div className="supplier-integration-grid"><section className="rd-card rd-page__box">
         <h2 className="rd-h2">거래처별 공급사 사업장 ({rows.length})</h2>
         <div className="supplier-integration-table-wrap"><table className="site-mapping-table"><thead><tr><th>거래처</th>{SUPPLIERS.map(({ code, label }) => <th key={code}>{label} 사업장</th>)}</tr></thead><tbody>
-          {rows.map(account => <tr key={account.value}><td><strong>{account.text}</strong><small>{account.value}</small></td>
+          {rows.map(account => <tr key={account.value}><td><strong>{account.text}</strong> <span className="site-mapping-account-id">({account.value})</span></td>
             {SUPPLIERS.map(({ code }) => {
               const current = mappingOf(account.value, code)
               const { ordered, suggestion } = rank(account, selectable(code))
               const key = `${account.value}:${code}`
               const inactiveCurrent = current && !ordered.some(item => item.site.external_site_code === current.external_site_code)
-              return <td key={code} className={current ? '' : 'site-mapping-missing'}>
+              return <td key={code} className={current ? '' : 'site-mapping-missing'}><div className="site-mapping-cell">
                 <select aria-label={`${account.text} ${code} 사업장`} value={current?.external_site_code || ''} disabled={busy} onChange={event => void save(account, code, event.target.value)}>
                   <option value="">{current ? '지정 해제' : '선택 안 함'}</option>
                   {inactiveCurrent ? <option value={current.external_site_code}>{current.external_site_name} · {current.external_site_code} (목록 제외됨)</option> : null}
@@ -63,7 +63,7 @@ export default function SupplierSiteMapping() {
                   : current ? <small>지정됨 · {current.mod_at ? current.mod_at.slice(0, 16).replace('T', ' ') : ''}{current.user_id ? ` · ${current.user_id}` : ''}</small>
                   : suggestion.best ? <small className="site-mapping-hint">{suggestion.close > 1 ? `비슷한 후보 ${suggestion.close}개, 코드·센터 확인 필요` : `추천: ${siteLabel(suggestion.best.site)}`}{suggestion.close === 1 ? <button type="button" disabled={busy} onClick={() => void save(account, code, suggestion.best!.site.external_site_code)}>추천 적용</button> : null}</small>
                   : <small>이름이 비슷한 후보 없음</small>}
-              </td>
+              </div></td>
             })}
           </tr>)}
           {!rows.length ? <tr><td colSpan={3}>조건에 맞는 거래처가 없습니다.</td></tr> : null}

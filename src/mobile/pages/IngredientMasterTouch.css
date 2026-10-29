@@ -1,40 +1,40 @@
 /* 식자재 관리(터치). 공용 부품은 TouchLayout.css */
 .im-search { gap: 10px; min-width: 240px; padding: 0 16px; }
-.im-search input { flex: 1; min-width: 0; min-height: 46px; border: 0; background: transparent; font-size: 16px; outline: none; }
+.im-search input { flex: 1; min-width: 0; min-height: 46px; border: 0; background: transparent; font-size: 17px; outline: none; }
 
 /* 분류: 가로로 밀어 고르는 작은 알약 */
 .im-cats { display: flex; gap: 8px; margin: 0 -24px 6px; padding: 2px 24px 8px; overflow-x: auto; scrollbar-width: none; }
 .im-cats::-webkit-scrollbar { display: none; }
-.im-cats button { flex: none; min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px; font-size: 14px; font-weight: 700; white-space: nowrap; }
+.im-cats button { flex: none; min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px; font-size: 15px; font-weight: 700; white-space: nowrap; }
 body.t-ui .im-cats button { --button-bg: var(--t-surface); --button-bg-hover: var(--t-surface); --button-text: var(--t-muted); box-shadow: inset 0 0 0 1.5px var(--t-line); }
 body.t-ui .im-cats button.is-active { --button-bg: var(--t-accent); --button-bg-hover: var(--t-accent); --button-text: #fff; box-shadow: none; }
 
 .im-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; margin-top: 8px; }
 .im-card { display: grid; align-content: start; gap: 4px; width: 100%; padding: 14px; border: 0; text-align: left; }
 .im-card__top { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-.im-card strong { font-size: 16px; line-height: 1.3; }
-.im-card small { color: var(--t-muted); font-size: 13px; }
-.im-card__id { color: var(--t-muted); font-size: 11px; opacity: 0.8; }
+.im-card strong { font-size: 17px; line-height: 1.3; }
+.im-card small { color: var(--t-muted); font-size: 14px; }
+.im-card__id { color: var(--t-muted); font-size: 12px; opacity: 0.8; }
 .im-more { margin-top: 16px; }
 
 .im-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 .im-panel__head { padding: 26px 20px 14px; border-bottom: 1px solid var(--t-line); }
-.im-panel__head h2 { font-size: 22px; letter-spacing: -0.02em; }
-.im-panel__head p { margin-top: 4px; color: var(--t-muted); font-size: 13px; }
+.im-panel__head h2 { font-size: 23px; letter-spacing: -0.02em; }
+.im-panel__head p { margin-top: 4px; color: var(--t-muted); font-size: 14px; }
 .im-panel__head--edit { display: flex; align-items: center; gap: 12px; padding-top: 22px; }
 .im-panel__head--edit > div { flex: 1; min-width: 0; }
 .im-panel__body { display: grid; align-content: start; gap: 12px; flex: 1; min-height: 0; overflow-y: auto; padding: 16px 20px; }
-.im-panel__hint { color: var(--t-muted); font-size: 13px; }
+.im-panel__hint { color: var(--t-muted); font-size: 14px; }
 .im-panel__actions { padding: 14px 20px 20px; }
 
 .im-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 .im-stats > div { display: grid; gap: 2px; padding: 14px; border-radius: 14px; background: var(--t-surface-2); }
-.im-stats span { color: var(--t-muted); font-size: 12px; font-weight: 700; }
-.im-stats strong { font-size: 22px; }
+.im-stats span { color: var(--t-muted); font-size: 13px; font-weight: 700; }
+.im-stats strong { font-size: 23px; }
 
 .im-form { gap: 6px; }
-.im-form__label { margin-top: 8px; color: var(--t-muted); font-size: 13px; font-weight: 700; }
-.im-input { width: 100%; min-height: 50px; padding: 0 14px; border: 1.5px solid var(--t-line); border-radius: 12px; background: var(--t-surface); font-size: 16px; font-weight: 600; }
+.im-form__label { margin-top: 8px; color: var(--t-muted); font-size: 14px; font-weight: 700; }
+.im-input { width: 100%; min-height: 50px; padding: 0 14px; border: 1.5px solid var(--t-line); border-radius: 12px; background: var(--t-surface); font-size: 17px; font-weight: 600; }
 .im-ok { padding: 14px 16px; background: var(--t-accent-soft); color: var(--t-accent-strong); text-align: left; }
 
 .im-units { display: flex; flex-wrap: wrap; gap: 6px; }

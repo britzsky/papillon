@@ -29,7 +29,7 @@
 
 .side-layout__sidebar,
 .side-layout__sidebar * {
-  font-size: 12px !important;
+  font-size: 13px !important;
 }
 
 .side-layout.is-collapsed .side-layout__sidebar {

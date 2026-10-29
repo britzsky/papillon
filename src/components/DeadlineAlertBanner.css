@@ -12,3 +12,6 @@
 .deadline-alert__groups ul { margin: 6px 0 0; padding-left: 18px; font-size: 13px; }
 .deadline-alert__groups small { color: #66796f; }
 @media (max-width: 700px) { .deadline-alert__actions { width: 100%; } .deadline-alert__actions button { flex: 1 1 auto; } }
+/* 본문 위 배너는 줄어들거나 자체 스크롤이 생기지 않게. ResponsiveWorkspace의 '.side-layout__content > section { flex-shrink:1; overflow:auto }'가
+   배너 높이를 몇 px 깎아 오른쪽에 스크롤바가 생겼다(2026-10-29 사용자 제보) */
+body.workspace-ui .side-layout__content > section.deadline-alert { flex-shrink: 0; max-height: none; overflow: visible; }

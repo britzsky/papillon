@@ -21,6 +21,68 @@
 .hg-pill { --button-width: 0px; --button-height: auto; min-height: 30px; padding: 0 12px; border-radius: 999px; font-size: 13px; cursor: pointer; }
 .hg-pill.is-active { --pos-card: #1f6f4a; --pos-line-strong: #1f6f4a; --button-bg: #1f6f4a; color: #fff !important; }
 
+/* 상단(2026-10-29 사용자 시안): 전체 점검 현황 카드 | 연·월 선택, 아래 상태 알약(전체·조치 필요·완료·미점검, 켜짐 파랑) */
+.hg-filters__top { justify-content: space-between; }
+.hg-summary { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 6px 12px 6px 6px; border: 1px solid #d6e4f5; border-radius: 999px; background: #f3f8fe; }
+.hg-summary__icon { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: #e2edfb; color: #2f6fd0; }
+.hg-summary__title { font-size: 13px; color: #24324a; }
+.hg-summary__rate { padding-right: 10px; border-right: 1px solid #d6e4f5; font-size: 17px; font-weight: 800; color: #1a73e8; }
+.hg-summary__chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border: 1px solid #dfe5ec; border-radius: 999px; background: #fff; font-size: 12px; color: #4a5568; }
+.hg-summary__chip i { width: 7px; height: 7px; border-radius: 50%; background: #1f6f4a; }
+.hg-summary__chip.is-check i { background: #a0561a; }
+.hg-summary__chip.is-done b { color: #1f6f4a; }
+.hg-summary__chip.is-check b { color: #a0561a; }
+.hg-period { display: inline-flex; gap: 8px; margin-left: auto; }
+.hg-period select { min-width: 110px; min-height: 36px; padding: 0 12px; border: 1px solid #cfd8d2; border-radius: 8px; background: #fff; font: inherit; }
+.hg-pills--status .hg-pill { --pos-card: #f1f3f5; --pos-line-strong: #e1e5ea; --button-bg: #f1f3f5; min-height: 32px; padding: 0 14px; color: #3d4852; }
+.hg-pills--status .hg-pill.is-active { --pos-card: #1a73e8; --pos-line-strong: #1a73e8; --button-bg: #1a73e8; color: #fff !important; font-weight: 700; }
+.hg-status.is-missing { background: #eef1f4; color: #4a5568; }
+.hg-status.is-check { background: #fff1de; color: #a0561a; }
+.hg-filters__count { color: #5b6660; font-size: 13px; }
+.hg-filters__count b { color: #1d2621; }
+.hg-btn.is-outline { --pos-card: #fff; --pos-line-strong: #1a73e8; --button-bg: #fff; color: #1a73e8; }
+
+/* 카테고리 카드(2026-10-29 사용자 시안): 5열, 조치 필요 카드는 주황 테두리 */
+.hg-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.hg-cat { display: flex; flex-direction: column; gap: 8px; min-height: 172px; padding: 12px; border: 1px solid #e3e8e4; border-radius: 10px; background: #fff; }
+.hg-cat.is-check { border: 2px solid #f0a35a; padding: 11px; }
+.hg-cat__head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.hg-cat__head strong { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hg .hg-link { --pos-card: transparent; --pos-line-strong: transparent; --button-bg: transparent; min-height: 0; padding: 0; border: 0; color: #1a73e8; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.hg-cat__meta { display: flex; align-items: center; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid #eef1ef; }
+.hg-count { padding: 1px 8px; border-radius: 6px; background: #f1f3f5; color: #4a5568; font-size: 12px; }
+.hg-count.is-after { background: #e8f5ec; color: #1f6f4a; }
+.hg-cat__meta .hg-status { margin-left: auto; }
+/* 상세 보기: 연한 파랑 알약, 화살표가 살짝 움직인다 */
+.hg .hg-more { --pos-card: #eef4fd; --pos-line-strong: #eef4fd; --button-bg: #eef4fd; display: inline-flex; align-items: center; gap: 3px; min-height: 24px; padding: 0 8px 0 10px; border-radius: 999px !important; color: #1a5fc4; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background .15s; }
+.hg .hg-more span { font-size: 14px; line-height: 1; transition: transform .15s; }
+.hg .hg-more:hover { --pos-card: #dce9fb; --button-bg: #dce9fb; }
+.hg .hg-more:hover span { transform: translateX(2px); }
+/* 기록 줄: 연한 바탕 카드, 왼쪽 상태 막대, 오른쪽 상태 알약 */
+.hg-cat__list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 5px; }
+.hg .hg-cat__item { --pos-card: #fbf7f2; --pos-line-strong: #f3e6d6; --button-bg: #fbf7f2; display: flex; align-items: center; gap: 8px; width: 100%; min-height: 38px; padding: 6px 8px 6px 10px; border-left: 3px solid #e08a1e !important; border-radius: 8px !important; text-align: left; cursor: pointer; color: #1d2621; transition: box-shadow .15s, transform .15s; }
+.hg .hg-cat__item.is-done { --pos-card: #f3f8f5; --pos-line-strong: #dcebe1; --button-bg: #f3f8f5; border-left-color: #1f6f4a !important; }
+.hg .hg-cat__item:hover { box-shadow: 0 2px 8px rgba(30, 40, 35, .08); transform: translateY(-1px); }
+.hg-cat__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.hg-cat__text span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 600; }
+.hg-cat__text small { color: #8a948e; font-size: 11px; }
+.hg-cat__item em { flex: none; padding: 2px 8px; border-radius: 999px; background: #fde9d2; color: #a0561a; font-size: 11px; font-style: normal; font-weight: 700; }
+.hg-cat__item.is-done em { background: #dff0e5; color: #1f6f4a; }
+.hg .hg-cat__rest { --pos-card: transparent; --pos-line-strong: transparent; --button-bg: transparent; align-self: center; min-height: 22px; padding: 0 6px; color: #5b6660; font-size: 12px; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+/* 항목 추가: 카드 맨 아래 점선 버튼 */
+.hg .hg-cat__add { --pos-card: #fff; --pos-line-strong: #c9d8ee; --button-bg: #fff; margin-top: auto; display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; min-height: 32px; border: 1px dashed #c9d8ee !important; border-radius: 8px !important; color: #1a73e8; font-size: 12px; font-weight: 600; cursor: pointer; transition: background .15s, border-color .15s; }
+.hg .hg-cat__add:hover { --pos-card: #f3f8fe; --button-bg: #f3f8fe; border-color: #1a73e8 !important; }
+.hg .hg-cat__empty { transition: background .15s, border-color .15s; --pos-card: #fafbfc; --pos-line-strong: #d6ddd8; --button-bg: #fafbfc; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; width: 100%; min-height: 90px; border: 1px dashed #d6ddd8; border-radius: 8px; color: #9aa49e; font-size: 12px; cursor: pointer; }
+.hg-cat__empty b { color: #1a73e8; font-weight: 600; }
+.hg .hg-cat__empty:hover { --pos-card: #f3f8fe; --button-bg: #f3f8fe; border-color: #1a73e8 !important; color: #5b6660; }
+.hg-detail__head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.hg-detail__head strong { font-size: 16px; }
+.hg-detail__head small { color: #5b6660; }
+.hg-detail__head .hg-btn.is-primary { margin-left: auto; }
+@media (max-width: 1280px) { .hg-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .hg-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .hg-grid { grid-template-columns: minmax(0, 1fr); } }
+
 .hg-msg { margin: 0; padding: 8px 12px; border-radius: 8px; background: #f4f6f5; color: #3d4842; }
 .hg-msg.is-ok { background: #eef7f1; color: #1f6f4a; }
 .hg-msg.is-error { background: #fdecec; color: #a12020; }

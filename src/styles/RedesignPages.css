@@ -206,6 +206,12 @@
 .rd.rd-map .supplier-integration-table-wrap td { padding: 9px 12px; border: 0 !important; border-top: 1px solid #EEF1EE !important; vertical-align: top; }
 .rd.rd-map .supplier-integration-table-wrap td small { display: block; margin-top: 4px; color: var(--rd-muted); }
 .rd.rd-map .supplier-integration-table-wrap select { width: 100%; min-height: 36px; border: 1px solid var(--rd-line-strong); border-radius: 8px; background: #fff; }
+/* 거래처명 (account_id) 한 줄, 사업장 칸은 select 오른쪽에 추천·지정 정보 (2026-10-29) */
+.rd.rd-map .site-mapping-table td { vertical-align: middle; }
+.rd.rd-map .site-mapping-account-id { color: var(--rd-muted); --rd-fs: 12px; white-space: nowrap; }
+.rd.rd-map .site-mapping-cell { display: flex; align-items: center; gap: 8px; }
+.rd.rd-map .site-mapping-cell select { flex: 0 0 260px; width: 260px; }
+.rd.rd-map .supplier-integration-table-wrap .site-mapping-cell small { display: inline-flex; align-items: center; gap: 6px; margin: 0; white-space: nowrap; }
 .rd.rd-map .site-mapping-missing select { border-color: var(--rd-orange-line); background: #FFFAF4; }
 .rd.rd-map .supplier-integration-table-wrap button { min-height: 30px; padding: 0 10px; border: 1px solid; }
 
@@ -252,7 +258,8 @@ body.workspace-ui > :is(#root, :not(#root)) .rd.rd :is(.rd-page__tile, .rd-acc__
 /* 전역 입력칸 높이 규칙이 개편 입력칸을 낮게 누르지 않게 */
 body.workspace-ui > :is(#root, :not(#root)) .rd.rd-page .rd-input { height: auto !important; min-height: 40px !important; }
 body.workspace-ui > :is(#root, :not(#root)) .rd.rd-page .rd-page__actions .rd-input { min-height: 44px !important; }
-.rd.rd-page .menu-manager-pagination { background: transparent !important; }
+/* 페이지 넘김 줄은 표 아래에 붙어 있어(sticky) 투명하면 스크롤할 때 뒤 행이 비친다 → 카드와 같은 흰 바탕 (2026-10-29 사용자 제보) */
+.rd.rd-page .menu-manager-pagination { background: var(--rd-card) !important; }
 .rd.rd-mm .menu-manager-layout > .menu-manager-panel:first-child { flex: 3 1 720px; }
 .rd.rd-mm .menu-manager-layout > .menu-manager-panel:last-child { flex: 2 1 460px; }
 .rd.rd-mm .menu-manager-menu-list-table { min-width: 900px; }

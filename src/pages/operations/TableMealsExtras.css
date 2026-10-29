@@ -98,7 +98,7 @@ body.workspace-ui .table-meals-heart.is-on { color: #e02424 !important; backgrou
 .tmx-copy__filters.is-touch { grid-template-columns: minmax(0, 1fr) auto; }
 @media (max-width: 720px) { .tmx-copy__filters { grid-template-columns: minmax(0, 1fr); } }
 /* 터치(가져오기 창): 손가락 크기 */
-body.t-ui .tmx-copy__filters input { height: 44px; font-size: 15px; }
+body.t-ui .tmx-copy__filters input { height: 44px; font-size: 16px; }
 body.t-ui .tmx-copy .tmx-btn { min-height: 44px; padding: 0 16px; }
 /* 2026-10-28: 전역 마우스 올림 규칙(Readability.css 초록 글자)에도 하트 색 유지 */
 body.workspace-ui button.table-meals-heart:hover:not(:disabled) { color: #9aa6b5 !important; }
