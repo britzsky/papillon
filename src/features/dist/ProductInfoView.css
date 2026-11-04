@@ -1,0 +1,22 @@
+/* 상품 상세 설명·표시사항(더채움몰 상세, 협력사 관리 미리 보기). .rd 안은 전역 글씨 규칙(.rd * font-size !important)이 --rd-fs로 크기를 정하므로 둘 다 준다 */
+.dist-info { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.dist-info__section > h3 { margin: 0 0 8px; padding-bottom: 6px; border-bottom: 2px solid #1f2a22; --rd-fs: 16px; font-size: 15px; font-weight: 800; }
+.dist-info__html { --rd-fs: 15px; font-size: 14px; line-height: 1.7; word-break: keep-all; overflow-wrap: anywhere; }
+.dist-info__html > :first-child { margin-top: 0; }
+.dist-info__html p { margin: 0 0 8px; min-height: 1em; }
+.dist-info__html h2 { margin: 18px 0 8px; --rd-fs: 23px; font-size: 22px; }
+.dist-info__html h3 { margin: 14px 0 6px; padding: 0; border: 0; --rd-fs: 19px; font-size: 18px; }
+.dist-info__html h4 { margin: 12px 0 6px; --rd-fs: 17px; font-size: 16px; }
+.dist-info__html ul, .dist-info__html ol { margin: 0 0 8px; padding-left: 22px; }
+.dist-info__html blockquote { margin: 0 0 8px; padding: 8px 14px; border-left: 4px solid #cfd8d1; background: #f6f8f6; color: #4b564e; }
+.dist-info__html img { display: block; max-width: 100%; height: auto; margin: 8px auto; border-radius: 8px; }
+.dist-info__html hr { margin: 14px 0; border: 0; border-top: 1px solid #dfe5e0; }
+.dist-info__html a { color: #1f6f43; text-decoration: underline; }
+.dist-info__html table { width: 100%; margin: 0 0 8px; border-collapse: collapse; }
+.dist-info__html th, .dist-info__html td { padding: 6px 8px; border: 1px solid #dfe5e0; vertical-align: top; }
+.dist-info__html th { background: #f2f5f2; font-weight: 700; }
+.dist-info__html th p, .dist-info__html td p { margin: 0; }
+.dist-info__table { width: 100%; border-collapse: collapse; --rd-fs: 14px; font-size: 13px; }
+.dist-info__table th, .dist-info__table td { padding: 7px 10px; border: 1px solid #dfe5e0; text-align: left; vertical-align: top; }
+.dist-info__table th { width: 34%; background: #f6f8f6; color: #4b564e; font-weight: 700; }
+.dist-info__table td { white-space: pre-wrap; word-break: break-word; }
