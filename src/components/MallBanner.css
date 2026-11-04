@@ -1,0 +1,18 @@
+/* 홈 → 더채움몰 띠 배너. 홈 글씨 규칙(.rd * font-size !important)을 피하려고 --rd-fs로 크기를 준다(.rd 밖이면 font-size 그대로) */
+.mall-banner { position: relative; display: flex; align-items: center; gap: 16px; overflow: hidden; padding: 10px 18px; border-radius: 14px;
+  background: linear-gradient(110deg, #FF7A3D 0%, #F2363F 55%, #B5174F 100%); color: #fff; text-decoration: none; box-shadow: 0 6px 16px rgba(242, 54, 63, .22);
+  transition: transform .15s, box-shadow .15s; }
+.mall-banner::after { content: ""; position: absolute; top: -60px; right: 90px; width: 160px; height: 160px; border-radius: 50%; background: rgba(255, 255, 255, .12); pointer-events: none; }
+.mall-banner:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(242, 54, 63, .3); }
+.mall-banner:focus-visible { outline: 3px solid #1F6B3A; outline-offset: 2px; }
+.mall-banner__logo { flex: none; padding: 4px 12px; border-radius: 999px; background: #fff; color: #1F6B3A; font-weight: 900; letter-spacing: -.5px; --rd-fs: 16px; font-size: 16px; }
+.mall-banner__logo b { color: #F2363F; font-weight: 900; }
+.mall-banner__text { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 12px; min-width: 0; flex: 1; }
+.mall-banner__text strong { font-weight: 800; --rd-fs: 16px; font-size: 16px; }
+.mall-banner__text small { opacity: .9; --rd-fs: 13px; font-size: 13px; }
+.mall-banner__go { position: relative; z-index: 1; flex: none; padding: 6px 14px; border-radius: 999px; background: rgba(0, 0, 0, .2); font-weight: 800; --rd-fs: 14px; font-size: 14px; }
+.mall-banner.is-compact { padding: 12px 14px; gap: 10px; }
+.mall-banner.is-compact .mall-banner__text small { display: none; }
+@media (max-width: 720px) {
+  .mall-banner__text small { display: none; }
+}

@@ -29,6 +29,13 @@ import SearchAnalytics from './pages/operations/SearchAnalytics.tsx'
 import AiUsage from './pages/operations/AiUsage.tsx'
 import MealPlanTemplates from './pages/operations/MealPlanTemplates.tsx'
 import MealSlots from './pages/operations/MealSlots.tsx'
+import DistProducts from './pages/distribution/DistProducts.tsx'
+import DistPartners from './pages/distribution/DistPartners.tsx'
+import DistOrders from './pages/distribution/DistOrders.tsx'
+import DistAccounts from './pages/distribution/DistAccounts.tsx'
+import MallProducts from './pages/mall/MallProducts.tsx'
+import MallCheckout from './pages/mall/MallCheckout.tsx'
+import MallOrders from './pages/mall/MallOrders.tsx'
 import { DeviceRoute } from './mobile/deviceMode'
 import OrderWorkspaceTouch from './mobile/pages/OrderWorkspaceTouch'
 import HomeTouch from './mobile/pages/HomeTouch'
@@ -103,6 +110,16 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/operations/account-menu/import" element={<DeviceRoute pc={<AccountMenuImport />} touch={<AccountMenuTouch />} />} />
         <Route path="/operations/meal-plan-templates" element={<DeviceRoute pc={<MealPlanTemplates />} touch={<MealPlanTemplatesTouch />} />} />
         <Route path="/operations/meal-slots" element={<MealSlots />} />
+        {/* 더채움 유통 협력사 관리(본사 전용, 2026-11-02) */}
+        <Route path="/distribution/products" element={<DistProducts />} />
+        <Route path="/distribution/partners" element={<DistPartners />} />
+        <Route path="/distribution/orders" element={<DistOrders />} />
+        <Route path="/distribution/accounts" element={<DistAccounts />} />
+        {/* 더채움몰(본사·현장 누구나 주문, 내 주문은 본인 것만) */}
+        <Route path="/mall" element={<MallProducts />} />
+        <Route path="/mall/cart" element={<MallCheckout />} />
+        <Route path="/mall/orders" element={<MallOrders />} />
+        <Route path="/mall/orders/:orderId" element={<MallOrders />} />
         <Route path="/operations/table-meals" element={<DeviceRoute pc={<TableMealsManager />} touch={<TableMealsTouch />} />} />
         <Route path="/operations/search-analytics" element={<DeviceRoute pc={<SearchAnalytics />} touch={<SearchAnalyticsTouch />} />} />
         <Route path="/operations/ai-usage" element={<DeviceRoute pc={<AiUsage />} touch={<AiUsageTouch />} />} />

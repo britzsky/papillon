@@ -1,0 +1,154 @@
+/* 협력사 관리(본사 유통 관리). 틀은 Redesign .rd-page, 색은 --rd-* 변수 */
+.dist-page { height: 100vh; }
+.dist-admin { display: flex; flex-direction: column; gap: 12px; }
+.dist-admin .rd-page__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.dist-admin .dist-card { padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.dist-admin .dist-card__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.dist-admin .dist-msg { margin: 0; padding: 10px 14px; border: 1px solid #b7dcc4; border-radius: 12px; background: #eef8f1; color: #14532d; }
+.dist-admin .dist-msg.is-error { border-color: var(--rd-red-line); background: var(--rd-red-soft); color: var(--rd-red-ink); }
+.dist-admin .dist-empty { padding: 18px 8px; color: var(--rd-muted); text-align: center; list-style: none; }
+
+/* 입력 칸: 2~3열 격자, 넓은 칸은 한 줄 전체 */
+.dist-admin .dist-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px 14px; }
+.dist-admin .dist-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.dist-admin .dist-field.is-wide { grid-column: 1 / -1; }
+.dist-admin .dist-field label { --rd-fs: 12px; font-weight: 700; color: var(--rd-soft-ink); }
+.dist-admin .dist-field label b { color: var(--rd-red); }
+.dist-admin .dist-field small { --rd-fs: 11px; }
+.dist-admin .dist-field .rd-input, .dist-admin .dist-field textarea { width: 100%; min-height: 36px; box-sizing: border-box; }
+.dist-admin .dist-field textarea { min-height: 96px; padding: 8px 10px; resize: vertical; font: inherit; }
+/* 공통 표 입력(ControlSizing.css)은 글자 수만큼만 넓어진다 — 이 화면 입력은 칸 폭을 채운다 */
+body.workspace-ui > :is(#root, :not(#root)) .dist-admin .dist-field input.rd-input:not([type=checkbox]):not([type=radio]) { field-sizing: fixed; width: 100% !important; }
+.dist-admin .dist-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+.dist-admin .dist-check { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.dist-admin .dist-inline { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.dist-admin .dist-inline .rd-input { min-height: 36px; flex: 0 1 220px; }
+.dist-admin .dist-inline .dist-url { flex: 1 1 280px; }
+.dist-admin .dist-editor { margin-top: 6px; padding: 14px; border: 1px solid var(--rd-line); border-radius: 12px; background: #FAFCFA; }
+.dist-admin .dist-editor__title { margin: 6px 0 8px; --rd-fs: 15px; font-weight: 800; }
+.dist-admin .dist-editor__title small { --rd-fs: 12px; font-weight: 400; margin-left: 6px; }
+
+/* 표 */
+.dist-admin .dist-table td, .dist-admin .dist-table th { vertical-align: middle; }
+.dist-admin .dist-table tr.is-off td { color: #94a3b8; }
+.dist-admin .dist-table tr.is-current td { background: #F4FAF5; }
+.dist-admin .dist-table tr.is-selected td { background: var(--rd-green-soft); }
+.dist-admin .dist-table .rd-chip { margin-left: 6px; }
+.dist-admin .dist-table td:first-child .rd-chip:first-child { margin-left: 0; }
+.dist-admin .dist-code { font-family: Consolas, ui-monospace, monospace; --rd-fs: 12px; }
+.dist-admin .dist-num { width: 64px; }
+body.workspace-ui > :is(#root, :not(#root)) .dist-admin table input.rd-input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file]) { field-sizing: fixed; width: 180px !important; min-width: 120px !important; }
+body.workspace-ui > :is(#root, :not(#root)) .dist-admin table input.rd-input.dist-num:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file]) { width: 64px !important; min-width: 64px !important; }
+
+/* 상품 관리: 왼쪽 목록 + 오른쪽 상세 */
+.dist-admin .dist-split { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+.dist-admin .dist-filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.dist-admin .dist-filters .rd-input { min-height: 36px; flex: 1 1 130px; }
+.dist-admin .dist-list .rd-page__scroll { max-height: calc(100vh - 290px); overflow: auto; }
+/* index.css가 모든 button 높이·폭을 var(--button-*)로 고정한다 — 목록 행·탭 버튼은 내용만큼(RedesignOrder의 rd-pick__body와 같은 방식) */
+body.workspace-ui > :is(#root, :not(#root)) .rd.dist-admin :is(button.dist-row-link, .dist-tabs button) { --button-height: auto; --button-width: 0; height: auto !important; min-height: 0 !important; box-shadow: none !important; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.dist-admin button.dist-row-link { width: 100% !important; padding: 2px 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; justify-content: flex-start !important; text-align: left !important; white-space: normal !important; color: var(--rd-ink) !important; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.dist-admin .dist-tabs button { width: auto !important; padding: 8px 14px !important; border-radius: 0 !important; background: none !important; border: 0 !important; border-bottom: 3px solid transparent !important; color: var(--rd-muted) !important; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.dist-admin .dist-tabs button.is-active { color: var(--rd-green-dark) !important; border-bottom-color: var(--rd-green) !important; }
+.dist-admin .dist-row-link { display: flex; align-items: center; gap: 10px; width: 100%; padding: 2px 0; border: 0; background: none; text-align: left; cursor: pointer; color: inherit; font: inherit; }
+.dist-admin .dist-row-link > span { display: flex; flex-direction: column; min-width: 0; }
+.dist-admin .dist-row-link small { --rd-fs: 12px; }
+.dist-admin .dist-row-link:focus-visible { outline: 2px solid var(--rd-green); outline-offset: 2px; border-radius: 6px; }
+.dist-admin .dist-row-link img, .dist-admin .dist-thumb { flex: none; width: 40px; height: 40px; border-radius: 8px; object-fit: cover; background: #EEF2EE; }
+.dist-admin .dist-status { display: flex; flex-wrap: wrap; gap: 6px; }
+.dist-admin .dist-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--rd-line); overflow-x: auto; }
+.dist-admin .dist-tabs button { padding: 8px 14px; border: 0; border-bottom: 3px solid transparent; background: none; cursor: pointer; color: var(--rd-muted); font: inherit; font-weight: 700; white-space: nowrap; }
+.dist-admin .dist-tabs button.is-active { color: var(--rd-green-dark); border-bottom-color: var(--rd-green); }
+.dist-admin .dist-tabs button:focus-visible { outline: 2px solid var(--rd-green); outline-offset: -2px; }
+.dist-admin .dist-panel { display: flex; flex-direction: column; gap: 10px; }
+.dist-admin .dist-subform { padding: 12px; border: 1px solid var(--rd-line); border-radius: 12px; background: #FAFCFA; }
+.dist-admin .dist-subform h4 { margin: 0 0 8px; --rd-fs: 13px; font-weight: 800; }
+.dist-admin .dist-images { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.dist-admin .dist-images li { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; padding: 8px; border: 1px solid var(--rd-line); border-radius: 10px; }
+.dist-admin .dist-images img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; background: #EEF2EE; }
+.dist-admin .dist-history { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.dist-admin .dist-history li { padding: 10px 12px; border: 1px solid var(--rd-line); border-radius: 10px; }
+.dist-admin .dist-history p { margin: 4px 0 0; word-break: break-all; }
+
+@media (max-width: 1100px) {
+  .dist-admin .dist-split { grid-template-columns: 1fr; }
+  .dist-admin .dist-list .rd-page__scroll { max-height: 420px; }
+}
+
+/* 주문 관리(3단계): 일감 타일·처리 패널 */
+.dist-admin .dist-work { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.dist-admin button.dist-work__tile { --button-height: auto; --button-width: 0; display: flex !important; justify-content: space-between !important; align-items: center; width: 100% !important; height: auto !important; padding: 14px 16px !important; border: 1px solid var(--rd-line) !important; border-radius: 14px !important; background: #fff !important; color: var(--rd-soft-ink) !important; box-shadow: none !important; cursor: pointer; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.dist-admin button.dist-work__tile.has-work { border-color: var(--rd-orange-line) !important; background: var(--rd-orange-soft) !important; color: var(--rd-orange-ink) !important; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.dist-admin button.dist-work__tile.is-active { border-color: var(--rd-green) !important; background: var(--rd-green-soft) !important; color: var(--rd-green-dark) !important; box-shadow: inset 0 0 0 1px var(--rd-green) !important; }
+.dist-admin .dist-work__tile b { --rd-fs: 22px; font-weight: 800; }
+.dist-admin .dist-block { display: block; }
+.dist-admin .dist-flags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.dist-admin .dist-flags .rd-chip { margin-left: 0; }
+.dist-admin .dist-order { display: flex; flex-direction: column; gap: 12px; }
+.dist-admin .dist-box { padding: 14px; border: 1px solid var(--rd-line); border-radius: 12px; display: flex; flex-direction: column; gap: 10px; }
+.dist-admin .dist-box h3, .dist-admin .dist-box summary { margin: 0; --rd-fs: 14px; font-weight: 800; }
+.dist-admin .dist-box summary, .dist-admin .dist-cancel summary { cursor: pointer; }
+.dist-admin .dist-dl { display: flex; flex-direction: column; gap: 4px; margin: 0; }
+.dist-admin .dist-dl > div { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 10px; }
+.dist-admin .dist-dl dt { color: var(--rd-muted); }
+.dist-admin .dist-dl dd { margin: 0; word-break: break-all; }
+.dist-admin .dist-po { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 10px; background: #FAFCFA; border: 1px solid var(--rd-line); }
+.dist-admin .dist-po-create { padding: 10px 12px; border-radius: 10px; background: var(--rd-orange-soft); }
+.dist-admin .dist-sheet { width: 100%; min-height: 160px; padding: 10px; font: 13px/1.6 Consolas, ui-monospace, monospace; white-space: pre; box-sizing: border-box; }
+.dist-admin .dist-shipments { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.dist-admin .dist-shipments > li { display: flex; flex-direction: column; gap: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--rd-line); }
+.dist-admin .dist-claim { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--rd-line); }
+.dist-admin .dist-claim.is-open { border-color: var(--rd-red-line); background: var(--rd-red-soft); }
+.dist-admin .dist-refund { padding: 10px; border-radius: 10px; background: var(--rd-yellow-soft); }
+.dist-admin .dist-refund p { margin: 0 0 8px; }
+.dist-admin .dist-log { display: flex; flex-direction: column; gap: 4px; margin: 8px 0 0; padding: 0; list-style: none; --rd-fs: 12px; color: var(--rd-soft-ink); }
+.dist-admin .dist-orders-table td { vertical-align: top; }
+@media (max-width: 900px) { .dist-admin .dist-work { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* 상세·표시사항 탭(2026-11-04): 상세 설명 편집기(TipTap)·표시사항 입력 */
+.dist-admin .dist-rte { border: 1px solid var(--rd-line); border-radius: 12px; background: #fff; }
+.dist-admin .dist-rte:focus-within { border-color: var(--rd-green); box-shadow: 0 0 0 2px var(--rd-green-soft); }
+.dist-admin .dist-rte.is-disabled { opacity: .7; }
+.dist-admin .dist-rte__toolbar { position: sticky; top: 0; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px; border-bottom: 1px solid var(--rd-line); border-radius: 12px 12px 0 0; background: #F6F8F6; }
+.dist-admin .dist-rte__group { display: inline-flex; gap: 2px; padding-left: 6px; border-left: 1px solid var(--rd-line); }
+.dist-admin .dist-rte__block { min-height: 30px; width: 104px; }
+.dist-admin .dist-rte__table { flex-basis: 100%; padding-left: 0; border-left: 0; flex-wrap: wrap; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.dist-admin :is(button.dist-rte__btn, button.dist-rte__pick) { --button-height: auto; --button-width: 0; height: auto !important; min-height: 0 !important; width: auto !important; box-shadow: none !important; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.dist-admin button.dist-rte__btn { padding: 4px 8px !important; border: 1px solid transparent !important; border-radius: 6px !important; background: transparent !important; color: var(--rd-soft-ink) !important; font-weight: 700; white-space: nowrap; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.dist-admin button.dist-rte__btn:hover:not(:disabled) { background: #fff !important; border-color: var(--rd-line) !important; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.dist-admin button.dist-rte__btn.is-active { background: var(--rd-green-soft) !important; border-color: var(--rd-green) !important; color: var(--rd-green-dark) !important; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.dist-admin button.dist-rte__btn:disabled { opacity: .4; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.dist-admin button.dist-rte__pick { padding: 0 !important; border: 2px solid transparent !important; border-radius: 8px !important; background: none !important; cursor: pointer; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.dist-admin button.dist-rte__pick:hover { border-color: var(--rd-green) !important; }
+.dist-admin .dist-rte__images { flex-basis: 100%; display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 8px; background: #fff; border: 1px solid var(--rd-line); }
+.dist-admin .dist-rte__images p { margin: 0; --rd-fs: 12px; }
+.dist-admin .dist-rte__images ul { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.dist-admin .dist-rte__images img { display: block; width: 64px; height: 64px; object-fit: cover; border-radius: 6px; background: #EEF2EE; }
+.dist-admin .dist-rte__content { --rd-fs: 15px; min-height: 260px; max-height: 60vh; overflow: auto; padding: 14px 16px; outline: none; line-height: 1.7; }
+.dist-admin .dist-rte__content > :first-child { margin-top: 0; }
+.dist-admin .dist-rte__content p { margin: 0 0 8px; }
+.dist-admin .dist-rte__content h2 { margin: 16px 0 8px; --rd-fs: 23px; }
+.dist-admin .dist-rte__content h3 { margin: 14px 0 6px; --rd-fs: 19px; }
+.dist-admin .dist-rte__content h4 { margin: 12px 0 6px; --rd-fs: 17px; }
+.dist-admin .dist-rte__content ul, .dist-admin .dist-rte__content ol { margin: 0 0 8px; padding-left: 22px; }
+.dist-admin .dist-rte__content blockquote { margin: 0 0 8px; padding: 8px 14px; border-left: 4px solid #cfd8d1; background: #f6f8f6; }
+.dist-admin .dist-rte__content img { display: block; max-width: 100%; height: auto; margin: 8px auto; border-radius: 8px; }
+.dist-admin .dist-rte__content img.ProseMirror-selectednode { outline: 3px solid var(--rd-green); }
+.dist-admin .dist-rte__content hr { margin: 14px 0; border: 0; border-top: 1px solid var(--rd-line); }
+.dist-admin .dist-rte__content hr.ProseMirror-selectednode { border-top-color: var(--rd-green); }
+.dist-admin .dist-rte__content a { color: #1f6f43; text-decoration: underline; }
+.dist-admin .dist-rte__content table { width: 100%; margin: 0 0 8px; border-collapse: collapse; table-layout: fixed; }
+.dist-admin .dist-rte__content th, .dist-admin .dist-rte__content td { position: relative; padding: 6px 8px; border: 1px solid #cfd8d1; vertical-align: top; }
+.dist-admin .dist-rte__content th { background: #f2f5f2; }
+.dist-admin .dist-rte__content th p, .dist-admin .dist-rte__content td p { margin: 0; }
+.dist-admin .dist-rte__content .selectedCell::after { content: ''; position: absolute; inset: 0; background: rgba(34, 139, 84, .12); pointer-events: none; }
+.dist-admin .dist-rte__content p.is-editor-empty:first-child::before { content: '상품 소개, 특징, 손질·조리 방법, 배송 안내 등을 적어 주세요.'; float: left; height: 0; color: #9aa39d; pointer-events: none; }
+.dist-admin .dist-info-form { margin: 0; padding: 12px 14px; border: 1px solid var(--rd-line); border-radius: 12px; background: #FAFCFA; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.dist-admin .dist-info-form legend { padding: 0 6px; --rd-fs: 15px; font-weight: 800; }
+.dist-admin .dist-info-form p { margin: 0; }
+.dist-admin .dist-actions.is-start { justify-content: flex-start; align-items: center; margin-top: 0; flex-wrap: wrap; }
+.dist-admin .dist-info-form__type { min-height: 36px; width: 200px; }
+.dist-admin .dist-info-form textarea.rd-input { min-height: 56px; }
+.dist-admin .dist-info-form__pair { display: grid; grid-template-columns: minmax(120px, 1fr) minmax(0, 2.4fr) auto; gap: 8px; align-items: start; }
+body.workspace-ui > :is(#root, :not(#root)) .dist-admin .dist-info-form__pair input.rd-input { field-sizing: fixed; width: 100% !important; }
+.dist-admin .dist-preview { padding: 16px; border: 1px dashed var(--rd-line); border-radius: 12px; background: #fff; }

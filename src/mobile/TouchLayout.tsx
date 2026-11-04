@@ -35,9 +35,18 @@ const NAV: NavGroup[] = [
     { label: '식자재 관리', to: '/inventory/ingredients', hint: '본사 식자재 목록' },
   ] },
   { key: 'sanitation', label: '위생', icon: 'sanitation', items: [{ label: '위생 점검', to: '/sanitation/vendor', hint: '' }] },
+  { key: 'mall', label: '더채움몰', icon: 'store', items: [
+    { label: '상품 보기', to: '/mall', hint: '산지 직송 · 더채움 상품 주문' },
+    { label: '장바구니·주문', to: '/mall/cart', hint: '담은 상품 주문' },
+    { label: '내 주문', to: '/mall/orders', hint: '입금 안내 · 배송조회 · 취소' },
+  ] },
   { key: 'hq', label: '본사', icon: 'hq', hqOnly: true, items: [
     { label: '고객사 관리', to: '/operations/account', hint: '고객사 · 식사 설정' },
     { label: '끼니 종류', to: '/operations/meal-slots', hint: '조식·중식·간식 등 끼니 추가' },
+    { label: '유통 주문 관리', to: '/distribution/orders', hint: '입금 확인 · 발주서 · 송장 · 취소' },
+    { label: '유통 상품 관리', to: '/distribution/products', hint: '협력사 상품 · 가격 · 판매 상태' },
+    { label: '거래처 결제 설정', to: '/distribution/accounts', hint: '후불 허용 · 한도 · 기본 배송지' },
+    { label: '협력사 설정', to: '/distribution/partners', hint: '판매 주체 · 협력사 · 카테고리' },
     { label: '검색어 관리', to: '/operations/search-analytics', hint: '검색 기록 분석' },
     { label: 'AI 사용 이력', to: '/operations/ai-usage', hint: 'AI 토큰 · 예상 비용' },
   ] },

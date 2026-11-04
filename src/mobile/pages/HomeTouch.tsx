@@ -6,6 +6,7 @@ import TouchLayout from '../TouchLayout'
 import TouchIcon, { type TouchIconName } from '../TouchIcon'
 import { TASKS, accountHref, needsSite, taskCount, useDailyWork, type TaskTile } from '../../features/workspace/useDailyWork'
 import HomeSearchTouch from './HomeSearchTouch'
+import MallBanner from '../../components/MallBanner'
 import NextStepSheet, { type NextStep } from '../NextStepSheet'
 import { useUpcomingMealDays } from '../../features/workspace/useWorkspaceCalendar'
 import { isHeadquarters, rememberWorkspaceAccount, workspaceAccountId } from '../../features/workspace/workspaceAccount'
@@ -54,6 +55,7 @@ export default function HomeTouch() {
     </section>}
     {sheet && single && <NextStepSheet accountId={single.account_id} step={sheet} onClose={() => { setSheet(null); refresh() }} />}
     <HomeSearchTouch />
+    <MallBanner compact />
     {/* 현장 계정(2026-10-22): 이번 주 식단표를 크게 */}
     {single && isSiteUser() && <div className="rd ht-week"><WeekMealBoard accountId={single.account_id} editHref={accountHref('/operations/table-meals', single.account_id)} /></div>}
     <h2 className="t-section-title">

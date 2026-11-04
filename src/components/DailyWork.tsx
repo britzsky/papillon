@@ -6,6 +6,7 @@ import { TASKS, accountHref as href, needsSite, taskCount as count, useDailyWork
 import { useUpcomingMealDays, useWorkspaceCalendar } from '../features/workspace/useWorkspaceCalendar'
 import { useAccountSummary } from '../features/workspace/useAccountSummary'
 import DeadlineAlertSlot from './DeadlineAlertSlot'
+import MallBanner from './MallBanner'
 import WeekMealBoard from './WeekMealBoard'
 import { isSiteUser } from '../features/workspace/roleScreens'
 import { useHqOverview } from '../features/workspace/useHqOverview'
@@ -156,6 +157,7 @@ export default function DailyWork({ search }: { search: ReactNode }) {
       <DeadlineAlertSlot />
       {search}
     </header>
+    <MallBanner />
 
     {error && <p role="alert">{error}</p>}
     {!data && !error && <p role="status" className="rd-muted">업무 현황을 확인하고 있습니다.</p>}

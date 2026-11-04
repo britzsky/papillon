@@ -167,8 +167,11 @@ function OrderPanel({ po, accountId }: { po: ReturnType<typeof usePurchaseOrders
         {receivable && <div><span>실입고일</span><input className="od-date" type="date" value={po.receiptDate} onChange={e => po.setReceiptDate(e.target.value)} /></div>}
         <div className="is-total"><span>주문 금액</span><span>{won(order.total_amount)}</span></div>
       </div>
-      <button type="button" className="t-btn is-primary is-large is-block" disabled={po.busy || !receivable || thisTime === 0} onClick={() => void po.receive()}>
-        {receivable ? `입고 확정 · ${thisTime}개 품목` : order.status === 'RECEIVED' ? '입고 완료된 발주서' : '입고할 수 없는 상태'}
+      {/* 2026-10-29 검수: 공급사 발주서별 검수완료 뒤에만 입고 확정(PC와 같음) */}
+      {receivable && !order.inspected_at ? <button type="button" className="t-btn is-primary is-large is-block" disabled={po.busy} onClick={() => void po.inspect(true)}>검수완료 · 물건 확인함</button> : null}
+      {receivable && order.inspected_at ? <button type="button" className="t-btn is-small" disabled={po.busy} onClick={() => { if (window.confirm(`${order.supplier_name} 검수완료를 취소할까요?`)) void po.inspect(false) }}>검수 취소 (검수완료 {String(order.inspected_at).replace('T', ' ').slice(5, 16)})</button> : null}
+      <button type="button" className="t-btn is-primary is-large is-block" disabled={po.busy || !receivable || !order.inspected_at || thisTime === 0} onClick={() => void po.receive()}>
+        {!receivable ? order.status === 'RECEIVED' ? '입고 완료된 발주서' : '입고할 수 없는 상태' : order.inspected_at ? `입고 확정 · ${thisTime}개 품목` : '검수완료 후 입고'}
       </button>
     </div>
   </div>

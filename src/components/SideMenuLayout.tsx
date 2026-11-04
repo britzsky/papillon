@@ -73,6 +73,29 @@ const majorMenus: MajorMenu[] = [
     items: [{ label: '위생 점검 관리', to: '/sanitation/vendor', exact: true }],
   },
   {
+    // 더채움몰(2026-11-02): 본사·현장 누구나 상품을 보고 주문. 내 주문(결제 안내·배송조회·취소)은 주문한 사람 본인 것만
+    key: 'mall',
+    label: '더채움몰',
+    basePaths: ['/mall'],
+    items: [
+      { label: '상품 보기', to: '/mall', exact: true },
+      { label: '장바구니·주문', to: '/mall/cart', exact: true },
+      { label: '내 주문', to: '/mall/orders' },
+    ],
+  },
+  {
+    // 더채움 유통(2026-11-02): 본사가 유통 관리자로 협력사·상품을 관리
+    key: 'distribution',
+    label: '협력사 관리',
+    basePaths: ['/distribution'],
+    items: [
+      { label: '주문 관리', to: '/distribution/orders', exact: true },
+      { label: '상품 관리', to: '/distribution/products', exact: true },
+      { label: '거래처 결제 설정', to: '/distribution/accounts', exact: true },
+      { label: '협력사·기본 설정', to: '/distribution/partners', exact: true },
+    ],
+  },
+  {
     key: 'headquarters',
     label: '본사관리',
     basePaths: ['/operations/account', '/operations/meal-slots', '/operations/search-analytics', '/operations/ai-usage'],
@@ -86,7 +109,7 @@ const majorMenus: MajorMenu[] = [
 ]
 
 /** 거래처를 고르지 않아도 되는 화면(본사 공통 기준정보·전체 현황) */
-const ACCOUNT_FREE_PATHS = ['/home', '/home/sidebar', '/operations/menu', '/inventory/ingredients', '/operations/search-analytics', '/operations/ai-usage', '/operations/meal-slots', '/order_manager/supplier-sites', '/order_manager/welstory', '/order_manager']
+const ACCOUNT_FREE_PATHS = ['/home', '/home/sidebar', '/operations/menu', '/inventory/ingredients', '/operations/search-analytics', '/operations/ai-usage', '/operations/meal-slots', '/order_manager/supplier-sites', '/order_manager/welstory', '/order_manager', '/distribution/products', '/distribution/partners', '/distribution/orders', '/distribution/accounts', '/mall', '/mall/cart', '/mall/orders']
 
 function AccountChoiceNotice() {
   return (
@@ -155,7 +178,8 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
 
   const activeMenuKey = useMemo(() => findActiveMenuKey(location.pathname), [location.pathname])
   // 본사가 '전체 거래처'인 채로 거래처가 필요한 화면을 열면 화면 대신 거래처 선택 안내
-  const needsAccountChoice = isHeadquarters() && !workspaceAccountId(location.search) && !ACCOUNT_FREE_PATHS.includes(location.pathname)
+  // 더채움몰 주문 상세(/mall/orders/번호)도 거래처와 무관
+  const needsAccountChoice = isHeadquarters() && !workspaceAccountId(location.search) && !ACCOUNT_FREE_PATHS.includes(location.pathname) && !location.pathname.startsWith('/mall/')
 
   const withAccount = (to: string) => {
     if (!to.startsWith('/')) return to
@@ -261,7 +285,7 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
 
 
 
-          {majorMenus.filter(menu => localStorage.getItem('user_type') !== '3' || menu.key !== 'headquarters').map((menu) => {
+          {majorMenus.filter(menu => localStorage.getItem('user_type') !== '3' || (menu.key !== 'headquarters' && menu.key !== 'distribution')).map((menu) => {
             const isOpen = openMenuKeys.has(menu.key)
             const isActive = activeMenuKey === menu.key
 

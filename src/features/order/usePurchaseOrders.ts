@@ -4,7 +4,7 @@ import { getSupplierSites } from '../../api/supplierIntegration'
 import { newRequestKey } from '../../utils/requestKey'
 
 export type OrderItem = { supplier_product_id?: number; favorite_yn?: 'Y' | 'N' | null; unit_price_snapshot?: number; line_amount?: number; source_ingredient_id?: string; ingredient_id?: string | null; ingredient_name?: string | null; base_unit?: string; base_qty_per_order_unit?: number; product_base_unit?: string; supplier_item_code?: string; client_ord_item: string; product_name: string; order_qty: number; received_order_qty: number; order_unit: string; item_status: string; supplier_result_code?: string; supplier_error_message?: string }
-export type PurchaseOrder = { supplier_id?: number | string; sold_to?: string; site_name?: string; account_name?: string; created_at?: string; client_note?: string; purchase_order_id: string; client_ord: string; supplier_name: string; status: string; requested_delivery_date: string; total_amount: number; items: OrderItem[]; supplier_result_code?: string; supplier_result_message?: string}
+export type PurchaseOrder = { supplier_id?: number | string; sold_to?: string; site_name?: string; account_name?: string; created_at?: string; client_note?: string; purchase_order_id: string; client_ord: string; supplier_name: string; status: string; requested_delivery_date: string; total_amount: number; items: OrderItem[]; supplier_result_code?: string; supplier_result_message?: string; supplier_code?: string; inspected_at?: string | null; inspected_by?: string | null }
 
 export const ORDER_STATUS_LABELS: Record<string, string> = { SENDING: '전송 중', UNKNOWN: '결과 확인 필요', ORDERED: '주문 접수', CONFIRMED: '주문 확인', PARTIAL_FAILED: '일부 품목 확인 필요', FAILED: '실패', PARTIAL_RECEIVED: '부분입고', RECEIVED: '입고완료', NOT_RECEIVED: '미입고', CANCELED: '취소' }
 /** 입고 확정을 할 수 있는 상태 */
@@ -98,6 +98,22 @@ export function usePurchaseOrders(accountId: string, focusedId: string) {
     finally { setBusy(false) }
   }
 
+  /** 검수완료(done=true)·검수 취소: 공급사 발주서 한 장 단위. 검수완료 뒤에만 입고 처리가 열린다(서버도 막음) */
+  const inspect = async (done: boolean) => {
+    if (!selected) return
+    setBusy(true)
+    try {
+      await request('/Procurement/Inspect', { account_id: accountId, purchase_order_id: selected.purchase_order_id, user_id: localStorage.getItem('user_id') || '', done })
+      await load(); setMessage(done ? `${selected.supplier_name} 검수완료 · 받은 수량 확인 후 입고 처리하세요.` : `${selected.supplier_name} 검수를 취소했습니다.`)
+    } catch (error) { setMessage(error instanceof Error ? error.message : '검수 처리 실패') }
+    finally { setBusy(false) }
+  }
+  /** 검수서 인쇄용: 납품일 하루치 발주서(공급사 구분 없이, 실패·취소 제외) */
+  const ordersForDelivery = async (date: string) => {
+    const result = await request(`/Procurement/Orders?${new URLSearchParams({ account_id: accountId, delivery_date: date, limit: '200' })}`)
+    return (result.orders as PurchaseOrder[]).filter(order => !['FAILED', 'CANCELED'].includes(order.status))
+  }
+
   /** 이번 입고 수량: 직접 고친 값, 없으면 미입고 잔량(주문량 − 기입고) */
   const receiptQuantity = (item: OrderItem) => quantities[item.client_ord_item]
     ?? String(Math.max(0, Math.round((Number(item.order_qty) - Number(item.received_order_qty)) * 1000) / 1000))
@@ -105,6 +121,7 @@ export function usePurchaseOrders(accountId: string, focusedId: string) {
 
   const receive = async () => {
     if (!selected) return
+    if (!selected.inspected_at) { setMessage('검수완료 전 · 검수서로 확인 후 검수완료 요망'); return }
     const receiving = selected.items.filter(item => Number(receiptQuantity(item)) > 0)
     const missing = receiving.filter(item => needsIngredient(item) && !receiptChoice(item).ingredient_id)
     if (missing.length) { setMessage(`재고에 넣을 식재료 선택 요망: ${missing.map(item => item.product_name).join(', ')}`); return }
@@ -124,7 +141,7 @@ export function usePurchaseOrders(accountId: string, focusedId: string) {
 
   return {
     from, setFrom, to, setTo, status, setStatus, offset, setOffset, supplierId, setSupplierId, suppliers,
-    orders, selected, selectOrder, busy, message, load, reconcile,
+    orders, selected, selectOrder, busy, message, load, reconcile, inspect, ordersForDelivery,
     receiptDate, setReceiptDate, receiptQuantity, setReceiptQuantity, receive,
     ingredients, receiptChoice, setReceiptChoice, needsIngredient,
   }

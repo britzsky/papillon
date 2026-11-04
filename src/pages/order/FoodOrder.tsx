@@ -68,6 +68,42 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
   const allRows = result?.ingredients || []
   const offerOf = (row: ShortageRow) => row.offers.find(o => o.supplier_offer_id === selected[row.ingredient_id]?.supplier_offer_id) || row.offers.find(o => o.orderable)
   const choose = (row: ShortageRow, id: number) => { const next = row.offers.find(o => o.supplier_offer_id === id && o.orderable); if (next && (next.orderability_status === 'AVAILABLE' || window.confirm(next.product_name + ' · ' + criteria.delivery_date + '\n공급사에 납품 가능일과 마감 조건을 직접 확인하셨습니까? 확인한 경우에만 선택하세요.'))) setSelected(current => ({ ...current, [row.ingredient_id]: { ingredient_id: row.ingredient_id, supplier_offer_id: next.supplier_offer_id, order_qty: next.recommended_qty, delivery_terms_confirmed: next.orderability_status !== 'AVAILABLE' } })) }
+  // 2026-10-29(사용자 요청): 상품 고르기는 select 대신, 식재료 표에서 줄을 누르면 오른쪽 웰스토리·아워홈 표에
+  // 그 식재료의 상품이 사진과 함께 위에서 아래로 나열되고 눌러서 고른다. 처음엔 첫 줄(또는 넘어온 식재료)을 보여준다
+  const [activeId, setActiveId] = useState('')
+  // 포함메뉴는 '포함메뉴 !'를 눌렀을 때만 말풍선으로(바깥을 누르면 닫힘)
+  const [menuTip, setMenuTip] = useState('')
+  useEffect(() => {
+    if (!menuTip) return
+    const close = (e: MouseEvent) => { if (!(e.target as HTMLElement).closest('.rd-order__menus')) setMenuTip('') }
+    document.addEventListener('click', close)
+    return () => document.removeEventListener('click', close)
+  }, [menuTip])
+  const active = rows.find(r => r.ingredient_id === activeId) || rows.find(r => r.ingredient_id === focusIngredient) || rows[0]
+  const activeOffer = active ? offerOf(active) : undefined
+  const supplierPanel = (code: string, label: string) => {
+    const list = active ? offerOptions(active).filter(o => o.supplier_code === code) : []
+    const ok = list.filter(o => o.orderable).length
+    return <section className={`rd-order__supplier is-${code}`} aria-label={`${label} 상품`}>
+      <div className="rd-order__supplier-head">
+        <span><span className={`rd-supplier is-${code}`}>{label}</span>{active ? <strong> {active.ingredient_name}</strong> : null}</span>
+        {active ? <small className={ok ? 'rd-muted' : 'rd-text-warn'}>{ok ? `발주 가능 ${ok}개` : '발주 가능한 상품 없음'}{list.length > ok ? ` · 불가 ${list.length - ok}개` : ''}</small> : null}
+      </div>
+      <div className="rd-order__supplier-list">
+        {/* 카드: 사진은 누르면 확대(고르지 않음), 나머지를 누르면 그 상품으로 고른다 */}
+        {active ? list.map(o => <div key={o.supplier_offer_id} className={`rd-pick${o.supplier_offer_id === activeOffer?.supplier_offer_id ? ' is-on' : ''}${!o.orderable || loading ? ' is-disabled' : ''}`} title={o.product_name}
+          onClick={e => { if (o.orderable && !loading && !(e.target as HTMLElement).closest('.rd-pick__img')) choose(active, o.supplier_offer_id) }}>
+          <span className="rd-pick__img"><ProductImage zoomable src={o.thumbnail_url || o.image_url || undefined} fullSrc={o.image_url || undefined} name={o.product_name} /></span>
+          <button type="button" className="rd-pick__body" disabled={!o.orderable || loading} aria-pressed={o.supplier_offer_id === activeOffer?.supplier_offer_id}>
+            <span className="rd-pick__name">{o.supplier_offer_id === active.recommended_offer_id ? <em>★ 늘 쓰는</em> : null}{o.product_name}</span>
+            <small>{o.orderable ? `${money(o.purchase_price)}원/${o.order_unit}` : o.availability_reason || '발주 불가'}</small>
+            {o.orderable && per100(o, active.base_unit) ? <small>{per100(o, active.base_unit)}</small> : null}
+          </button>
+        </div>) : null}
+        {!active ? <p className="rd-order__empty">왼쪽에서 식재료를 누르면 상품이 나와요.</p> : !list.length ? <p className="rd-order__empty">연결된 상품이 없어요.</p> : null}
+      </div>
+    </section>
+  }
   const setQty = (row: ShortageRow, offer: ShortageOffer, value: number) => setSelected(current => ({ ...current, [row.ingredient_id]: { ingredient_id: row.ingredient_id, supplier_offer_id: offer.supplier_offer_id, delivery_terms_confirmed: current[row.ingredient_id]?.delivery_terms_confirmed, order_qty: value } }))
   const groups = Object.values(selected).reduce<Record<string, { name: string; code: string; site: string; terms: string; names: string[]; amount: number }>>((acc, sel) => {
     const row = allRows.find(r => r.ingredient_id === sel.ingredient_id); const offer = row?.offers.find(o => o.supplier_offer_id === sel.supplier_offer_id)
@@ -147,8 +183,8 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
               <button key={value} type="button" aria-pressed={stockFilter === value} className={stockFilter === value ? 'is-active' : ''} onClick={() => setStockFilter(value)}>{label} {stockCounts[value]}</button>)}</div>
           </div>
         </div>
-        <div className="rd-order__scroll"><div className="rd-order__table">
-          <div className="rd-order__row is-head rd-fs-xs"><span /><span>식재료</span><span>재고 → 필요</span><span>시킬 상품 (100g당 가격)</span><span>주문 수량</span></div>
+        <div className="rd-order__split"><div className="rd-order__scroll"><div className="rd-order__table">
+          <div className="rd-order__row is-head rd-fs-xs"><span /><span>식재료</span><span>재고 → 필요</span><span>선택상품 (100g당 가격)</span><span>주문 수량</span></div>
           {sortedRows.map(row => {
             const selection = selected[row.ingredient_id]
             const offer = offerOf(row)
@@ -159,32 +195,39 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
             const warning = offer ? deliveryWarning(offer, criteria.delivery_date, guidanceNow) : ''
             const step = offer?.order_increment_qty || 1
             const max = offer ? (offer.quantity_basis === 'MANUAL' ? MANUAL_MAX_ORDER_QTY : Math.max(offer.recommended_qty, offer.minimum_order_qty)) : 0
-            return <div key={row.ingredient_id} className={`rd-order__row${row.ingredient_id === focusIngredient ? ' is-focused' : ''}${!offer ? ' is-blocked' : ''}`}>
+            const open = active?.ingredient_id === row.ingredient_id
+            return <div key={row.ingredient_id} className={`rd-order__row is-pickable${row.ingredient_id === focusIngredient ? ' is-focused' : ''}${!offer ? ' is-blocked' : ''}${open ? ' is-open' : ''}`}
+              onClick={e => { if (!(e.target as HTMLElement).closest('input, button, a, select, label')) setActiveId(row.ingredient_id) }}>
               <input aria-label={`${row.ingredient_name} 선택`} type="checkbox" checked={Boolean(selection)} disabled={!offer || loading} onChange={e => { if (e.target.checked && offer) choose(row, offer.supplier_offer_id); else setSelected(current => { const next = { ...current }; delete next[row.ingredient_id]; return next }) }} />
               <div className="rd-order__name">
                 <strong className="rd-fs-md">{row.ingredient_name}</strong>
+                <span className="rd-order__tags">
                 {row.quantity_basis === 'MANUAL' ? <span className="rd-chip is-urgent">현재고 없음 · 수량 직접 입력</span> : status !== 'GREEN' ? <span className={`rd-chip ${status === 'RED' ? 'is-urgent' : 'rd-tone-yellow'}`}>{status === 'RED' ? '모자람' : SHORTAGE_STOCK_LABELS[status]}</span> : null}
-                {row.menu_names.filter(Boolean).length ? <small className="rd-muted rd-fs-xs">{row.menu_names.filter(Boolean).join(', ')}</small> : null}
+                {row.menu_names.filter(Boolean).length ? <span className="rd-order__menus">
+                  <button type="button" className="rd-order__menus-btn rd-fs-xs" aria-expanded={menuTip === row.ingredient_id} aria-label={`${row.ingredient_name} 포함메뉴 보기`} title="포함메뉴 보기" onClick={() => setMenuTip(current => current === row.ingredient_id ? '' : row.ingredient_id)}><b aria-hidden="true">!</b></button>
+                  {menuTip === row.ingredient_id ? <span className="rd-order__menus-tip rd-fs-xs" role="tooltip">{row.menu_names.filter(Boolean).join(', ')}</span> : null}
+                </span> : null}
+                </span>
                 {row.issues.map(issue => <small className="rd-text-warn rd-fs-xs" key={issue}>{issue}</small>)}
               </div>
               <div className="rd-order__stock">
                 <span className="rd-bar" aria-hidden="true"><span style={{ width: `${Math.min(100, row.current_qty / total * 100)}%` }} /><span className="is-incoming" style={{ width: `${Math.min(100, row.incoming_qty / total * 100)}%` }} /></span>
-                <small className="rd-fs-xs">재고 {number(row.current_qty)}{row.base_unit}{row.incoming_qty ? ` + 입고예정 ${number(row.incoming_qty)}${row.base_unit}` : ''} · 필요 {number(row.required_qty)}{row.base_unit}{row.safe_stock_qty ? ` (+안전 ${number(row.safe_stock_qty)})` : ''}</small>
+                <small className="rd-fs-xs" title={`재고 ${number(row.current_qty)}${row.base_unit}${row.incoming_qty ? ` + 입고예정 ${number(row.incoming_qty)}${row.base_unit}` : ''} · 필요 ${number(row.required_qty)}${row.base_unit}${row.safe_stock_qty ? ` (+안전재고 ${number(row.safe_stock_qty)}${row.base_unit})` : ''}`}>{number(row.current_qty + row.incoming_qty)} → {number(row.required_qty + row.safe_stock_qty)}{row.base_unit}</small>
                 <strong className={`rd-fs-sm ${status === 'RED' ? 'rd-text-red' : 'rd-text-yellow'}`}>{number(row.shortage_qty)}{row.base_unit} 모자람</strong>
               </div>
               <div className="rd-order__offer">
                 {offer ? <ProductImage zoomable src={offer.thumbnail_url || offer.image_url || undefined} fullSrc={offer.image_url || undefined} name={offer.product_name} /> : null}
                 <div>
                   {offer ? <div className="rd-order__offer-name"><span className={`rd-supplier is-${offer.supplier_code}`}>{offer.supplier_name}</span>
-                    <select aria-label={`${row.ingredient_name} 공급상품`} value={offer.supplier_offer_id} disabled={loading || row.offers.filter(o => o.orderable).length < 2} onChange={e => choose(row, Number(e.target.value))}>
-                      {offerOptions(row).map(o => <option key={o.supplier_offer_id} value={o.supplier_offer_id} disabled={!o.orderable}>{o.supplier_offer_id === row.recommended_offer_id ? '★ 늘 쓰는 · ' : ''}{o.product_name} ({o.supplier_name}) · {o.orderable ? `${money(o.purchase_price)}원/${o.order_unit}${per100(o, row.base_unit) ? ` · ${per100(o, row.base_unit)}` : ''}` : o.availability_reason || '발주 불가'}</option>)}
-                    </select><FavoriteProductHeart key={offer.supplier_product_id} accountId={accountId} supplierProductId={offer.supplier_product_id} productName={offer.product_name} favorite={offer.favorite_yn === 'Y'} /></div>
+                    <strong className="rd-order__offer-title" title={offer.product_name}>{offer.supplier_offer_id === row.recommended_offer_id ? '★ ' : ''}{offer.product_name}</strong>
+                    <FavoriteProductHeart key={offer.supplier_product_id} accountId={accountId} supplierProductId={offer.supplier_product_id} productName={offer.product_name} favorite={offer.favorite_yn === 'Y'} /></div>
                     : <strong className="rd-text-warn">발주 가능한 상품 없음</strong>}
                   {offer ? <small className="rd-fs-sm">{money(offer.purchase_price)}원/{offer.order_unit}{per100(offer, row.base_unit) ? ` · ${per100(offer, row.base_unit)}` : ''} · {deliveryTerms(offer)}</small>
                     : <small className="rd-text-warn rd-fs-xs">{blockedReasons(row.offers.map(o => o.availability_reason)) || '주문 가능한 공급사 상품 없음 — 상품 검색에서 직접 골라주세요'}</small>}
                   {warning ? <small className="rd-text-warn rd-fs-xs" role="status">{warning}</small> : null}
                   {cheaper ? <button type="button" className="rd-link" onClick={() => choose(row, cheaper.offer.supplier_offer_id)}>{cheaper.offer.supplier_name} {cheaper.offer.product_name} {cheaper.label}으로 바꾸기</button>
                     : offer && row.offers.filter(o => o.orderable).length > 1 ? <small className="rd-text-ok rd-fs-xs">지금 상품이 기준단위당 가장 저렴해요</small> : null}
+                  {offer && !selection ? <small className="rd-muted rd-fs-xs">추천 상품 · 체크하거나 오른쪽 상품을 누르면 담겨요</small> : null}
                 </div>
               </div>
               <div className="rd-order__qty">
@@ -201,6 +244,9 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
           })}
           {!rows.length ? <div className="rd-order__empty">{loading ? '모자란 식재료를 계산하고 있어요.' : stockFilter && allRows.length ? '선택한 상태에 해당하는 식재료가 없어요.' : '이 기준으로 모자란 식재료가 없어요.'}</div> : null}
         </div></div>
+        {supplierPanel('WELSTORY', '웰스토리')}
+        {supplierPanel('OURHOME', '아워홈')}
+        </div>
         <div className="rd-order__foot rd-muted rd-fs-xs">계산 시각 {result?.checked_at.replace('T', ' ').slice(0, 19) || '—'}{result?.unconfigured_count ? ` · 필요량 기준 없는 품목 ${result.unconfigured_count}건` : ''} · 부족량 = 필요량 + 안전재고 − 현재고 − 기발주 미입고(같은 식재료는 합산, 현재고는 한 번만 차감) · <Link to={`/order_manager/order?${new URLSearchParams({ tab: 'products', account_id: accountId })}`}>새 상품·미연결 식자재 발주</Link></div>
       </section>
 

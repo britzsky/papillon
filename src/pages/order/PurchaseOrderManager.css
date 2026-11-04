@@ -84,3 +84,16 @@
 .rd-recv__ingredient { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
 .rd-recv__ingredient select { min-width: 160px; }
 .rd-recv__ingredient input { width: 130px; }
+
+/* 검수서(납품일 하루치, 공급사별 구획) — 발주서 인쇄 규칙(supplier-order-print)에 덧붙임 */
+@media print {
+  body.workspace-ui > #supplier-order-print.inspection-print .insp-doc__info th { width:20mm !important; text-align:center !important; }
+  body.workspace-ui > #supplier-order-print.inspection-print .insp-doc__supplier { margin-top:5mm; }
+  body.workspace-ui > #supplier-order-print.inspection-print .insp-doc__supplier h2 { display:flex; align-items:baseline; justify-content:space-between; gap:4mm; margin:0 0 1.5mm; padding:1.5mm 2mm; border-left:4px solid #000; background:#f1f3f5; font-size:12pt !important; font-weight:800; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body.workspace-ui > #supplier-order-print.inspection-print .insp-doc__supplier h2 small { font-size:9pt !important; font-weight:400; }
+  body.workspace-ui > #supplier-order-print.inspection-print .insp-doc__check { width:10mm !important; font-size:14pt !important; }
+  body.workspace-ui > #supplier-order-print.inspection-print .insp-doc__blank { width:20mm !important; }
+  body.workspace-ui > #supplier-order-print.inspection-print .insp-doc__note { width:42mm !important; }
+  body.workspace-ui > #supplier-order-print.inspection-print .po-doc__items td { height:8mm !important; }
+  body.workspace-ui > #supplier-order-print.inspection-print .po-doc__items thead { display:table-header-group; }
+}

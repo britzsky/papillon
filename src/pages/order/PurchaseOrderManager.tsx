@@ -6,6 +6,8 @@ import HeaderBar from '../../components/HeaderBar'
 import SideMenuLayout from '../../components/SideMenuLayout'
 import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import SupplierOrderPrint from './SupplierOrderPrint'
+import InspectionPrint from './InspectionPrint'
+import { flushSync } from 'react-dom'
 import { PrintIcon } from '../../components/ActionIcons'
 import { buildApiUrl } from '../../config/api'
 import { ORDER_STATUS_LABELS as labels, RECEIVABLE_STATUSES, UNCERTAIN_STATUSES, usePurchaseOrders, type PurchaseOrder } from '../../features/order/usePurchaseOrders'
@@ -22,10 +24,13 @@ const mondayOf = (value: string) => { const d = new Date(`${value}T00:00:00Z`); 
 const shortDate = (value: string) => `${Number(value.slice(5, 7))}/${Number(value.slice(8, 10))}`
 const money = (value: number) => Number(value || 0).toLocaleString('ko-KR')
 const DONE = ['RECEIVED', 'CANCELED', 'FAILED']
+/** 검수완료 시각 표시: 10/29 14:20 */
+const inspectedText = (value?: string | null) => { const v = String(value || '').replace('T', ' '); return v.length >= 16 ? `${Number(v.slice(5, 7))}/${Number(v.slice(8, 10))} ${v.slice(11, 16)}` : v }
 
 /**
  * 발주서·입고(PC, 2026-10-15 개편 — 시안 ③). 조회·접수 재조회·입고 확정 로직은 features/order/usePurchaseOrders(터치 화면과 공용).
  * 이번 주 납품일 칸 → 공급사 확인 요망 띠 → 그날 발주서 목록 + 선택한 발주서(단계·품목·공급사 출고·받은 수량·입고).
+ * 2026-10-29 검수: 검수서는 납품일 하루치를 공급사 구분 없이 한 번에 인쇄, 검수완료는 공급사 발주서별 → 검수완료 뒤에만 입고.
  */
 export default function PurchaseOrderManager() {
   const [params, setParams] = useSearchParams()
@@ -33,7 +38,7 @@ export default function PurchaseOrderManager() {
   const focusedId = params.get('purchase_order_id') || ''
   const {
     from, setFrom, to, setTo, status, setStatus, offset, setOffset, supplierId, setSupplierId, suppliers,
-    orders, selected, selectOrder, busy, message, load, reconcile,
+    orders, selected, selectOrder, busy, message, load, reconcile, inspect, ordersForDelivery,
     receiptDate, setReceiptDate, receiptQuantity, setReceiptQuantity, receive,
     ingredients, receiptChoice, setReceiptChoice, needsIngredient,
   } = usePurchaseOrders(accountId, focusedId)
@@ -53,6 +58,21 @@ export default function PurchaseOrderManager() {
     ].filter(p => p.n)
     return { date, pills }
   })
+
+  // 검수서 인쇄: 고른 납품일(없으면 선택한 발주서의 납품일, 그것도 없으면 오늘) 하루치를 공급사 구분 없이 한 장으로
+  const [inspection, setInspection] = useState<{ date: string; orders: PurchaseOrder[] } | null>(null)
+  const [printError, setPrintError] = useState('')
+  const inspectionDay = activeDay || selected?.requested_delivery_date || today
+  const printInspection = async () => {
+    setPrintError('')
+    try {
+      const list = await ordersForDelivery(inspectionDay)
+      if (!list.length) { setPrintError(`${shortDate(inspectionDay)} 납품 예정 발주서 없음`); return }
+      flushSync(() => setInspection({ date: inspectionDay, orders: list }))
+      window.print()
+    } catch (error) { setPrintError(error instanceof Error ? error.message : '검수서를 불러오지 못했습니다.') }
+    finally { setInspection(null) }
+  }
 
   // 공급사 확인 요망 띠: 저장된 업무 알림 중 공급사 출고·삭제 알림(배치가 매시간 갱신)
   const [notices, setNotices] = useState<Notice[]>([])
@@ -102,11 +122,13 @@ export default function PurchaseOrderManager() {
     const accept = UNCERTAIN_STATUSES.includes(selected.status) ? { text: '접수 확인 요망', tone: 'urgent' } : selected.status === 'FAILED' ? { text: '접수 실패', tone: 'urgent' } : { text: '접수 확인', tone: 'ok' }
     const ship = !isOurhome(selected) ? { text: '배송', tone: 'done' } : !lines.length ? { text: '출고 확인 중', tone: 'done' }
       : shippedCount && shippedCount === live.length ? { text: '출고완료', tone: 'info' } : shippedCount ? { text: `일부 출고 ${shippedCount}/${live.length}`, tone: 'info' } : { text: '출고 전', tone: 'done' }
+    const check = selected.inspected_at ? { text: `검수완료 ${inspectedText(selected.inspected_at)}`, tone: 'ok' } : RECEIVABLE_STATUSES.includes(selected.status) ? { text: '검수 대기', tone: 'done' } : null
     const recv = selected.status === 'RECEIVED' ? { text: '입고 완료', tone: 'ok' } : selected.status === 'PARTIAL_RECEIVED' ? { text: '부분 입고', tone: 'warn' } : selected.status === 'NOT_RECEIVED' ? { text: '미입고', tone: 'urgent' } : { text: '입고 대기', tone: 'done' }
-    return [accept, ship, recv]
+    return check ? [accept, ship, check, recv] : [accept, ship, recv]
   }, [selected, lines.length, shippedCount, live.length])
   const receivable = Boolean(selected && RECEIVABLE_STATUSES.includes(selected.status))
-  const note = !selected ? '' : !receivable ? '' : changedCount ? `공급사가 주문과 다른 수량을 출고한 품목 ${changedCount}개 · 받은 수량을 출고 수량으로 미리 채워뒀어요` : shippedCount && shippedCount === live.length ? '주문한 수량 그대로 출고됐어요' : '물건이 도착하면 받은 수량만 확인해 주세요'
+  const inspected = Boolean(selected?.inspected_at)
+  const note = !selected ? '' : !receivable ? '' : !inspected ? '물건이 도착하면 검수서로 확인하고 검수완료를 눌러 주세요' : changedCount ? `공급사가 주문과 다른 수량을 출고한 품목 ${changedCount}개 · 받은 수량을 출고 수량으로 미리 채워뒀어요` : shippedCount && shippedCount === live.length ? '주문한 수량 그대로 출고됐어요' : '물건이 도착하면 받은 수량만 확인해 주세요'
 
   return <main className="purchase-orders"><SideMenuLayout header={<HeaderBar title="발주서·입고 관리" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주관리', to: '/order_manager' }, { label: '발주서·입고 관리' }]} />}>
     <div className="rd rd-recv">
@@ -116,6 +138,7 @@ export default function PurchaseOrderManager() {
         <div className="rd-recv__head-actions">
           {accountId ? <Link className="rd-btn" to={`/inventory/account?${new URLSearchParams({ account_id: accountId })}`}>재고·직접구매 등록</Link> : null}
           {selected ? <button type="button" className="rd-btn print-button" disabled={busy} title="선택한 공급사 발주서 인쇄" onClick={() => window.print()}><PrintIcon />발주서 인쇄</button> : null}
+          {accountId ? <button type="button" className="rd-btn print-button" disabled={busy} title="이 날 납품되는 모든 공급사 발주서를 한 장의 검수서로 인쇄" onClick={() => void printInspection()}><PrintIcon />검수서 인쇄 ({shortDate(inspectionDay)} 납품)</button> : null}
         </div>
       </header>
       {focusedId ? <p className="rd-muted">선택한 발주서만 보고 있어요. <button type="button" className="rd-btn is-ghost" onClick={() => { setParams({ account_id: accountId }); setOffset(0) }}>전체 발주서 보기</button></p> : null}
@@ -148,6 +171,7 @@ export default function PurchaseOrderManager() {
           <button type="button" className="rd-btn is-primary" onClick={() => { setDay(''); void load() }} disabled={busy}>조회</button>
         </section>
       </details>
+      {printError ? <p className="rd-recv__message rd-text-warn" role="alert">{printError}</p> : null}
       {message && <p className="rd-recv__message" role="status">{message}
         {/* 업무 순서 ③→④: 입고를 반영하면 재고로 */}
         {message.startsWith('실제 입고수량을 재고에 반영') ? <> <Link className="rd-link" to={`/inventory/account?${new URLSearchParams({ account_id: accountId })}`}>다음: 재고 보기 →</Link></> : null}</p>}
@@ -159,7 +183,7 @@ export default function PurchaseOrderManager() {
             {activeDay ? <button type="button" className="rd-btn is-ghost" onClick={() => setDay('')}>전체 보기</button> : null}
           </div>
           {shown.map(order => <button key={order.purchase_order_id} type="button" className={`rd-recv__card${selectedId === order.purchase_order_id ? ' is-selected' : ''}`} onClick={() => selectOrder(order)}>
-            <span className="rd-recv__card-top"><span className={`rd-supplier is-${(order as PurchaseOrder & { supplier_code?: string }).supplier_code || ''}`}>{order.supplier_name}</span><OrderStatusBadge status={order.status} label={labels[order.status] || order.status} /></span>
+            <span className="rd-recv__card-top"><span className={`rd-supplier is-${(order as PurchaseOrder & { supplier_code?: string }).supplier_code || ''}`}>{order.supplier_name}</span><span className="rd-recv__card-chips">{order.inspected_at && RECEIVABLE_STATUSES.includes(order.status) ? <span className="rd-chip is-ok">검수완료</span> : null}<OrderStatusBadge status={order.status} label={labels[order.status] || order.status} /></span></span>
             <strong className="rd-fs-md">{order.site_name || order.sold_to || order.client_ord}</strong>
             <span className="rd-muted rd-fs-sm">{shortDate(order.requested_delivery_date)} 납품 · {order.items?.length ? `${order.items.length}품목 · ` : ''}{money(order.total_amount)}원</span>
           </button>)}
@@ -207,11 +231,13 @@ export default function PurchaseOrderManager() {
           <div className="rd-recv__actions">
             <span className={`rd-fs-sm ${changedCount ? 'rd-text-warn' : shippedCount ? 'rd-text-ok' : 'rd-muted'}`}>{note}</span>
             {receivable ? <label className="rd-fs-sm rd-recv__date">실입고일<input className="rd-input" type="date" value={receiptDate} onChange={e => setReceiptDate(e.target.value)} /></label> : null}
-            <button type="button" className="rd-btn is-primary" disabled={busy || !receivable} onClick={() => void receive()}>{receivable ? '받은 수량대로 입고' : labels[selected.status] || selected.status}</button>
+            {receivable && !inspected ? <button type="button" className="rd-btn is-primary" disabled={busy} title="검수서로 물건을 확인했으면 누르세요. 이 공급사 발주서만 검수완료됩니다." onClick={() => void inspect(true)}>검수완료</button> : null}
+            {receivable && inspected ? <button type="button" className="rd-btn is-ghost" disabled={busy} onClick={() => { if (window.confirm(`${selected.supplier_name} 검수완료를 취소할까요? 취소하면 다시 검수완료할 때까지 입고할 수 없습니다.`)) void inspect(false) }}>검수 취소</button> : null}
+            <button type="button" className={`rd-btn${inspected || !receivable ? ' is-primary' : ''}`} disabled={busy || !receivable || !inspected} title={receivable && !inspected ? '검수완료 후 입고할 수 있어요' : undefined} onClick={() => void receive()}>{!receivable ? labels[selected.status] || selected.status : inspected ? '받은 수량대로 입고' : '검수완료 후 입고'}</button>
           </div>
           {receivable ? <p className="rd-muted rd-fs-xs">받은 수량은 남은 수량(주문 − 이미 입고)으로 채워져요. 실제와 다르면 고치고, 안 온 품목은 0으로 바꾼 뒤 입고하세요.</p> : null}
         </> : <p className="rd-order__empty">왼쪽에서 발주서를 고르면 품목과 입고를 여기서 처리할 수 있어요.</p>}</section>
       </div>
     </div>
-  </SideMenuLayout>{selected && <SupplierOrderPrint order={selected} accountId={accountId} labels={labels} />}</main>
+  </SideMenuLayout>{inspection ? <InspectionPrint date={inspection.date} orders={inspection.orders} accountId={accountId} /> : selected && <SupplierOrderPrint order={selected} accountId={accountId} labels={labels} />}</main>
 }

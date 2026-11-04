@@ -45,13 +45,13 @@ body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-seg button { border: 0 !i
 .rd .rd-order__filters .shortage-order-check { flex-direction: row !important; align-items: center; }
 .rd .rd-order__notes { display: flex; flex-direction: column; gap: 4px; margin: 10px 0 2px; color: var(--rd-muted); }
 .rd .rd-order__grid { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
-.rd .rd-order__list { flex: 999 1 680px; min-width: 0; overflow: hidden; }
+.rd .rd-order__list { flex: 999 1 680px; min-width: 0; overflow: clip; }
 .rd .rd-order__list-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 20px; border-bottom: 1px solid #E8ECE9; }
 .rd .rd-order__list-head p { margin: 3px 0 0; }
 .rd .rd-order__tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .rd .rd-order__scroll { overflow-x: auto; }
-.rd .rd-order__table { min-width: 860px; }
-.rd .rd-order__row { display: grid; grid-template-columns: 28px minmax(120px, 1.1fr) minmax(150px, 1.1fr) minmax(260px, 2.1fr) minmax(150px, 1fr); gap: 14px; align-items: center; padding: 14px 20px; border-top: 1px solid #EEF1EE; }
+.rd .rd-order__table { min-width: 640px; }
+.rd .rd-order__row { display: grid; grid-template-columns: 28px minmax(100px, .7fr) minmax(96px, .55fr) minmax(220px, 2fr) minmax(124px, .5fr); gap: 14px; align-items: center; padding: 14px 20px; border-top: 1px solid #EEF1EE; }
 .rd .rd-order__row.is-head { padding: 9px 20px; border-top: 0; background: #F7F9F7; color: var(--rd-muted); font-weight: 700; }
 .rd .rd-order__row.is-focused { background: #F2F8F3; }
 .rd .rd-order__row.is-blocked { background: #FFF8F0; }
@@ -66,6 +66,67 @@ body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-seg button { border: 0 !i
 .rd .rd-order__offer-name { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .rd .rd-order__offer-name select { flex: 1; min-width: 0; max-width: 100%; min-height: 34px; border-radius: 8px; background: transparent; font: inherit; font-weight: 700; --rd-fs: 14px; text-overflow: ellipsis; }
 .rd .rd-order__qty { display: flex; flex-direction: column; gap: 4px; }
+/* 2026-10-29 상품 고르기: 식재료 표 오른쪽에 웰스토리·아워홈 표를 따로 두고, 누른 식재료의 상품을 위에서 아래로 나열해 눌러서 고른다 */
+.rd .rd-order__split { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; padding: 12px 16px 16px; }
+.rd .rd-order__split > .rd-order__scroll { flex: 999 1 640px; min-width: 0; border: 1px solid #E1E7E2; border-radius: 12px; background: #fff; }
+/* 식재료 표: 칸 사이 세로줄로 항목 구분(칸 간격 대신 칸 안쪽 여백) */
+.rd .rd-order__split .rd-order__row { gap: 0; padding: 0 0 0 14px; align-items: stretch; }
+.rd .rd-order__split .rd-order__row > input[type=checkbox] { align-self: center; }
+.rd .rd-order__split .rd-order__row > :not(input) { padding: 12px 14px; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.rd .rd-order__split .rd-order__row > .rd-order__offer { flex-direction: row; align-items: center; }
+.rd .rd-order__split .rd-order__row > .rd-order__qty { align-items: center; text-align: center; }
+.rd .rd-order__split .rd-order__row > .rd-order__qty .rd-stepper { align-self: center; }
+.rd .rd-order__split .rd-order__row.is-head > :last-child { align-items: center; }
+.rd .rd-order__split .rd-order__row.is-head > :not(input) { padding: 9px 14px; }
+.rd .rd-order__split .rd-order__row > :nth-child(n+3) { border-left: 1px solid #EEF1EE; }
+.rd .rd-order__split .rd-order__row.is-head > :nth-child(n+3) { border-left-color: #E3E8E4; }
+.rd .rd-order__supplier { flex: 1 0 300px; max-width: 400px; position: sticky; top: 8px; display: flex; flex-direction: column; max-height: calc(100vh - 24px); overflow: hidden; border: 1px solid #E1E7E2; border-radius: 12px; background: #fff; }
+.rd .rd-order__supplier.is-WELSTORY { border-top: 3px solid var(--rd-blue-ink, #2B5C9E); }
+.rd .rd-order__supplier.is-OURHOME { border-top: 3px solid var(--rd-orange-ink, #B4561B); }
+.rd .rd-order__supplier-head { display: flex; flex-direction: column; gap: 2px; padding: 9px 14px; background: #F7F9F7; border-bottom: 1px solid #EEF1EE; --rd-fs: 13px; }
+.rd .rd-order__supplier-head strong { font-weight: 800; }
+.rd .rd-order__supplier-list { display: flex; flex-direction: column; gap: 8px; padding: 10px; overflow-y: auto; }
+/* 식재료 표·공급사 표 스크롤바: 얇고 둥글게 */
+@supports not selector(::-webkit-scrollbar) { .rd .rd-order__scroll, .rd .rd-order__supplier-list { scrollbar-width: thin; scrollbar-color: #B9C8BD transparent; } }
+.rd .rd-order__scroll::-webkit-scrollbar, .rd .rd-order__supplier-list::-webkit-scrollbar { width: 8px; height: 8px; }
+.rd .rd-order__scroll::-webkit-scrollbar-track, .rd .rd-order__supplier-list::-webkit-scrollbar-track { background: #F1F4F1; border-radius: 999px; }
+.rd .rd-order__scroll::-webkit-scrollbar-thumb, .rd .rd-order__supplier-list::-webkit-scrollbar-thumb { background: #B9C8BD; border-radius: 999px; border: 2px solid #F1F4F1; }
+.rd .rd-order__scroll::-webkit-scrollbar-thumb:hover, .rd .rd-order__supplier-list::-webkit-scrollbar-thumb:hover { background: var(--rd-green); }
+.rd .rd-order__supplier-list .rd-order__empty { padding: 16px 8px; }
+.rd .rd-order__row.is-pickable { cursor: pointer; }
+.rd .rd-order__row.is-pickable:hover { background: #F7FAF7; }
+.rd .rd-order__row.is-open { background: #EEF6EF; box-shadow: inset 4px 0 0 var(--rd-green); }
+/* 포함메뉴: '포함메뉴 !'를 누르면 말풍선 */
+/* 식재료명은 검정, 상태 칩(모자람 등)과 포함메뉴는 한 줄 */
+.rd .rd-order__name > strong { color: #111; }
+.rd .rd-order__tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.rd .rd-order__menus { position: relative; display: inline-flex; }
+.rd .rd-order__menus-btn { --rd-fs: 12px; --rd-btn-fs-min: 12px; display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: none; color: var(--rd-muted); cursor: pointer; }
+.rd .rd-order__menus-btn b { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%; background: #D93A2B; color: #fff; font-size: 11px; font-weight: 800; line-height: 1; }
+.rd .rd-order__menus-tip { position: absolute; z-index: 30; top: calc(100% + 6px); left: 0; width: max-content; max-width: 280px; padding: 8px 10px; border-radius: 8px; background: #1E2A22; color: #fff; line-height: 1.5; box-shadow: 0 6px 18px rgba(0,0,0,.18); white-space: normal; }
+.rd .rd-order__menus-tip::before { content: ''; position: absolute; top: -5px; left: 18px; border: 5px solid transparent; border-top: 0; border-bottom-color: #1E2A22; left: 4px; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.rd button.rd-order__menus-btn { --button-height: auto; --button-width: 0; height: auto !important; min-height: 0 !important; padding: 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; color: var(--rd-muted) !important; font-weight: 600 !important; }
+/* 주문 수량 칸을 좁힌 만큼 수량 버튼도 작게(34+48+34) */
+body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-order__qty .rd-stepper input { width: 48px !important; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-order__qty .rd-stepper button { width: 34px !important; }
+.rd .rd-order__offer-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; --rd-fs: 14px; font-weight: 700; }
+.rd .rd-pick { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px; border: 1px solid #E3E8E4; border-radius: 10px; background: #fff; cursor: pointer; }
+.rd .rd-pick:hover:not(.is-disabled) { border-color: var(--rd-green); background: #F2F8F3; }
+.rd .rd-pick.is-on { padding: 7px; border: 2px solid var(--rd-green); background: #EAF5EC; }
+.rd .rd-pick.is-disabled { opacity: .55; cursor: not-allowed; background: #F7F8F7; }
+.rd .rd-pick__img { flex: 0 0 56px; width: 56px; height: 56px; display: inline-flex; overflow: hidden; border-radius: 8px; }
+/* 확대 버튼(image-zoom-trigger)은 전역에서 40px 고정이라 사진(56px)이 글자 쪽으로 넘친다 — 카드 안에서는 56px */
+body .rd .rd-pick__img .image-zoom-trigger[role='button'], body .rd .rd-pick__img .image-zoom-trigger[role='button']:hover { flex: 0 0 56px; width: 56px !important; min-width: 56px !important; max-width: 56px !important; height: 56px !important; }
+.rd .rd-pick .product-image { width: 56px; min-width: 56px; max-width: 56px; height: 56px; flex: 0 0 56px; border-radius: 8px; }
+.rd .rd-pick__body { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; flex: 1; }
+.rd .rd-pick__name { --rd-fs: 13px; font-weight: 700; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.rd .rd-pick__name em { font-style: normal; color: #B7791F; margin-right: 4px; }
+.rd .rd-pick__body small { --rd-fs: 12px; color: var(--rd-muted); font-weight: 500; }
+.rd .rd-pick.is-on .rd-pick__body small { color: var(--rd-green-dark); font-weight: 700; }
+/* 카드 안 고르기 버튼은 글자만(전역 버튼 높이·테두리 규칙 덮어씀) */
+body.workspace-ui > :is(#root, :not(#root)) .rd.rd button.rd-pick__body { --button-height: auto; --button-width: 0; height: auto !important; min-height: 0 !important; width: auto !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; justify-content: flex-start !important; align-items: flex-start !important; text-align: left !important; white-space: normal !important; color: var(--rd-ink) !important; cursor: inherit; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.rd button.rd-pick__body small { font-weight: 500 !important; }
+body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-pick.is-on button.rd-pick__body small { font-weight: 700 !important; }
 .rd .rd-stepper { display: inline-flex; align-items: center; align-self: flex-start; border: 1px solid var(--rd-line-strong); border-radius: 10px; overflow: hidden; background: #fff; }
 .rd .rd-stepper button { width: 38px; height: 38px; border: 0; background: #F7F9F7; cursor: pointer; --rd-fs: 17px; }
 .rd .rd-stepper button:disabled { color: #B8C0BB; cursor: not-allowed; }
@@ -151,6 +212,7 @@ body.workspace-ui .rd.rd button:disabled { background: var(--rd-btn-disabled-bg,
 .rd .rd-recv__card { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; width: 100%; padding: 14px 16px; text-align: left; cursor: pointer; border: 1px solid var(--rd-line); --rd-btn-radius: 14px; --rd-btn-line: var(--rd-line); }
 .rd .rd-recv__card.is-selected { --rd-btn-line: var(--rd-green); --rd-btn-bg: #F2F8F3; --rd-btn-hover-bg: #F2F8F3; box-shadow: inset 3px 0 0 var(--rd-green); }
 .rd .rd-recv__card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
+.rd .rd-recv__card-chips { display: inline-flex; align-items: center; gap: 4px; }
 .rd .rd-recv__pager { display: flex; gap: 6px; justify-content: center; }
 .rd .rd-recv__detail { flex: 999 1 560px; min-width: 0; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
 .rd .rd-recv__detail-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
