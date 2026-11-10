@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import logo from '../assets/logo/thefull.png'
 import logoDark from '../assets/logo/thefull-dark.png' // 어두운 테마용(글자 흰색, 투명 바탕 — 2026-11-10 사용자 제공)
@@ -8,7 +8,7 @@ import HomeSearchBox from './HomeSearchBox'
 import QuickLinks, { HeaderSns } from './QuickLinks'
 import FontPicker from './FontPicker'
 import ThemeSwitch from './ThemeSwitch'
-import { useHomeFont } from '../features/home/homeFont'
+import { useHomeFont, useHomeFontSize } from '../features/home/homeFont'
 import { useHomeTheme } from '../features/home/homeTheme'
 import { findActiveMenuKey, menusForRole } from '../features/workspace/menus'
 import { workspaceAccountId } from '../features/workspace/workspaceAccount'
@@ -34,6 +34,7 @@ export default function TopMenuLayout({ children, actionsInPage = false }: { chi
   const contentRef = useRef<HTMLElement>(null)
   // 글꼴 시험(임시, 오른쪽 아래 '가' 버튼)
   const [font, setFont] = useHomeFont()
+  const [fontPlus, setFontPlus] = useHomeFontSize()
   const [theme, setTheme] = useHomeTheme()
 
   // 화면을 옮기면 펼친 메뉴를 닫는다
@@ -57,7 +58,7 @@ export default function TopMenuLayout({ children, actionsInPage = false }: { chi
   }
 
   return (
-    <div className="rd top-layout" data-font={font} data-theme={theme}>
+    <div className="rd top-layout" data-font={font} data-theme={theme} style={{ '--home-fs-plus': `${fontPlus}px` } as CSSProperties}>
       {/* data-menus: 메뉴가 많으면(본사 7개) 한 줄에 들어가는 폭이 달라 줄바꿈 기준이 다르다(TopMenuLayout.css) */}
       <header className="top-layout__bar" data-menus={menus.length > 5 ? 'many' : 'few'}>
         <div className="top-layout__inner">
@@ -96,7 +97,7 @@ export default function TopMenuLayout({ children, actionsInPage = false }: { chi
         <DeadlineAlertBanner />
         {children}
       </main>
-      <QuickLinks scrollRef={contentRef}><FontPicker value={font} onChange={setFont} /></QuickLinks>
+      <QuickLinks scrollRef={contentRef}><FontPicker value={font} onChange={setFont} sizePlus={fontPlus} onSizeChange={setFontPlus} /></QuickLinks>
     </div>
   )
 }

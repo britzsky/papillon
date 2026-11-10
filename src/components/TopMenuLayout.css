@@ -13,6 +13,16 @@
 .rd.top-layout[data-font="honesty"], .rd [data-font="honesty"] { --home-font: '116angduk honesty', var(--home-font-base); }
 .rd.top-layout,
 .rd.top-layout :is(button, input, select, textarea) { font-family: var(--home-font); }
+/* 글씨 크기 시험(FontPicker, --home-fs-plus = 지금보다 몇 px): 전역 크기 규칙(Redesign.css: max(최솟값, --rd-fs − 빼는 값))의 값을 같은 px만큼 옮김.
+   안쪽 .rd(거래처 고르기 등)가 기본값을 다시 선언하므로 그 안까지 같이 준다 */
+.rd.top-layout, .rd.top-layout .rd {
+  --rd-fs-shift: calc(1px - var(--home-fs-plus, 0px));
+  --rd-fs-min: calc(12px + var(--home-fs-plus, 0px));
+  --rd-btn-fs-shift: calc(0px - var(--home-fs-plus, 0px));
+  --rd-btn-fs-min: calc(13px + var(--home-fs-plus, 0px));
+}
+/* 고르는 창 자체는 크기 그대로(누를 때마다 버튼 위치가 움직이지 않게) */
+.rd.top-layout .font-picker { --rd-fs-shift: 1px; --rd-fs-min: 12px; --rd-btn-fs-shift: 0px; --rd-btn-fs-min: 13px; }
 .rd .font-picker__option { font-family: var(--home-font); }
 
 .rd.top-layout {
@@ -211,6 +221,18 @@ body.workspace-ui .rd .quick-links button.quick-links__btn.font-picker__btn:hove
 .rd .font-picker__option input { margin: 0; accent-color: #1F6B3A; }
 .rd .font-picker__sample { --rd-fs: 16px; display: flex; flex-direction: column; color: var(--rd-ink); font-weight: 700; }
 .rd .font-picker__sample small { --rd-fs: 12px; color: var(--rd-muted); font-weight: 400; }
+.rd .font-picker__size { display: flex; align-items: center; gap: 6px; margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--rd-line); }
+.rd .font-picker__size-label { --rd-fs: 13px; flex: 1; white-space: nowrap; font-weight: 800; color: var(--rd-ink); }
+.rd .font-picker__size-value { --rd-fs: 13px; min-width: 44px; text-align: center; font-weight: 800; color: var(--rd-green-dark); }
+body.workspace-ui .rd .font-picker button.font-picker__step,
+body.workspace-ui .rd .font-picker button.font-picker__reset {
+  --rd-fs: 14px; min-width: 0 !important; height: 30px !important; min-height: 0 !important; padding: 0 !important;
+  border: 1px solid var(--rd-line-strong) !important; border-radius: 8px !important; background: var(--rd-card) !important; color: var(--rd-ink) !important; box-shadow: none !important; cursor: pointer;
+}
+body.workspace-ui .rd .font-picker button.font-picker__step { width: 30px !important; }
+body.workspace-ui .rd .font-picker button.font-picker__reset { --rd-fs: 12px; padding: 0 8px !important; }
+body.workspace-ui .rd .font-picker button:is(.font-picker__step, .font-picker__reset):hover:not(:disabled) { background: var(--rd-green-soft) !important; border-color: var(--rd-green) !important; }
+body.workspace-ui .rd .font-picker button:is(.font-picker__step, .font-picker__reset):disabled { opacity: .4; cursor: default; }
 @media (max-width: 760px) {
   body.workspace-ui .rd .quick-links button.quick-links__btn.font-picker__btn { width: 44px !important; height: 44px !important; }
   .rd .font-picker__menu { right: 54px; width: 240px; }
