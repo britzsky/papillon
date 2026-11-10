@@ -17,8 +17,8 @@
 
 .rd.top-layout {
   --top-bar-height: 68px;
-  /* 머리 줄 내용과 PC 홈 본문의 최대 폭 — 본사(메뉴 7개)도 머리 줄이 한 줄에 들어가는 폭(2026-11-10 사용자 요청: 넘치면 홈 폭을 넓혀 맞춤) */
-  --top-width: 1760px;
+  /* 머리 줄 내용과 PC 홈 본문의 최대 폭(2026-11-10 1760→1620, 사용자 요청: 본문과 머리 줄 항목을 같은 폭으로 화면 가운데) */
+  --top-width: 1620px;
   height: 100vh;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -37,7 +37,8 @@
   box-sizing: border-box;
   display: flex;
   align-items: center;
-  gap: 20px;
+  justify-content: center; /* 항목들을 한 묶음으로 화면 가운데(2026-11-10 사용자 요청: 테마 스위치도 거래처 바로 옆) */
+  gap: 28px;
   width: 100%;
   max-width: var(--top-width);
   min-height: var(--top-bar-height);
@@ -49,7 +50,7 @@
 .rd .top-layout__brand img { display: block; width: 112px; height: auto; }
 
 /* 카테고리 줄 — 로고와 검색창 사이 남는 폭의 가운데(2026-11-10 시안) */
-.rd .top-layout__nav { flex: 1 1 auto; display: flex; justify-content: center; align-items: stretch; align-self: stretch; gap: 18px; min-width: 0; }
+.rd .top-layout__nav { flex: none; /* 제 폭만(늘지도 줄지도 않음) — 좁으면 검색창이 먼저 줄어듦 */ display: flex; justify-content: center; align-items: stretch; align-self: stretch; gap: 18px; min-width: 0; }
 .rd .top-layout__cat { position: relative; display: flex; align-items: stretch; }
 .rd .top-layout__cat-btn {
   --rd-fs: 15px;
@@ -121,7 +122,7 @@
 .rd .top-layout__link.is-disabled { color: var(--rd-muted); cursor: default; }
 
 /* 검색창: 시안의 회색 둥근 막대 */
-.rd .top-layout__search.rd-home__search { flex: 0 1 360px; min-width: 180px; max-width: 360px; margin-left: auto; }
+.rd .top-layout__search.rd-home__search { flex: 0 1 360px; min-width: 180px; max-width: 360px; margin-left: 0; /* Redesign.css의 auto를 끔 → 항목 묶음이 가운데 */ }
 .rd .top-layout__search.rd-home__search label { min-height: 40px; border: 0; border-radius: 999px; background: #EEF1EE; }
 .rd .top-layout__search.rd-home__search > .rd-btn { display: none; }
 .rd .top-layout__bar .header-bar__actions { margin-left: 0; }
@@ -144,13 +145,13 @@ body.workspace-ui .rd.top-layout :is(.top-layout__cat.is-open, .top-layout__cat.
   .rd .top-layout__inner { flex-wrap: wrap; row-gap: 0; padding-top: 8px; }
   .rd .top-layout__nav { order: 3; flex-basis: 100%; height: 46px; }
 }
-@media (max-width: 1759px) {
+@media (max-width: 1519px) { /* 본사 한 줄 최소 ≈1514px(검색창 180) */
   .rd .top-layout__bar[data-menus="many"] .top-layout__inner { flex-wrap: wrap; row-gap: 0; padding-top: 8px; }
   .rd .top-layout__bar[data-menus="many"] .top-layout__nav { order: 3; flex-basis: 100%; height: 46px; }
 }
 
 /* 테마 스위치(ThemeSwitch): 달 · 스위치 · 해 */
-.rd .theme-switch { flex: none; display: flex; align-items: center; gap: 6px; margin-left: 4px; }
+.rd .theme-switch { flex: none; display: flex; align-items: center; gap: 6px; margin-left: -12px; } /* 거래처 바로 옆(묶음 간격 28 → 16) */
 .rd .theme-switch__icon { display: flex; color: #9AA59D; cursor: pointer; transition: color .15s ease; }
 .rd .theme-switch.is-dark .theme-switch__icon.is-moon,
 .rd .theme-switch:not(.is-dark) .theme-switch__icon.is-sun { color: #1E2A22; }

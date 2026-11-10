@@ -4,7 +4,7 @@
   --rd-card-pad: 18px; /* rd-account 카드 안쪽 여백(Redesign.css 홈 변수) */
   box-sizing: border-box;
   width: 100%;
-  max-width: var(--top-width, 1440px); /* 머리 줄 내용과 같은 폭(TopMenuLayout.css) */
+  max-width: var(--top-width, 1620px); /* 머리 줄 내용과 같은 폭(TopMenuLayout.css, 2026-11-10 1760→1480→1620) */
   margin: 0 auto;
   align-items: stretch;
   padding: 20px 28px 32px;
@@ -43,7 +43,7 @@
 }
 
 /* 슬라이드 + 인사·바로가기 카드(HomeProfileCard) */
-.rd .home-main__hero-row { display: grid; grid-template-columns: minmax(0, 3fr) minmax(300px, 1fr); gap: var(--home-gap); align-items: stretch; }
+.rd .home-main__hero-row { display: grid; grid-template-columns: minmax(0, 1fr) 430px; /* 접속자 카드 고정 폭(본사 담당자 한 줄, 2026-11-10) */ gap: var(--home-gap); align-items: stretch; }
 .rd .home-main__hero { min-height: 405px; /* 2026-11-10 +15px, 다시 +10px(사용자 요청) */ box-shadow: 0 6px 16px rgba(30, 42, 34, .16); }
 
 .rd .home-profile { display: flex; flex-direction: column; gap: 14px; padding: 22px 20px; border-radius: 16px; background: #fff; box-shadow: 0 6px 16px rgba(30, 42, 34, .14); min-width: 0; }
@@ -65,7 +65,8 @@ body.workspace-ui .rd.top-layout .home-profile button.home-profile__avatar:hover
 .rd .home-profile__hello { --rd-fs: 15px; font-weight: 800; }
 .rd .home-profile__who { --rd-fs: 14px; font-weight: 700; overflow-wrap: anywhere; }
 .rd .home-profile__bar { margin: 0 8px; color: var(--rd-muted); font-weight: 400; }
-.rd .home-profile__contact { --rd-fs: 12px; color: var(--rd-muted); }
+.rd .home-profile__contact { --rd-fs: 12px; color: var(--rd-muted); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } /* 담당자 줄은 한 줄(2026-11-10) */
+.rd .home-profile__tel { white-space: nowrap; }
 .rd .home-profile__picker { display: flex; }
 .rd .home-profile__budget { display: flex; flex-direction: column; gap: 8px; }
 /* 종 알림(HeaderAlerts)을 카드 오른쪽 위에 — 머리 줄 규칙(.header-shell …)이 안 닿으므로 여기서 모양을 준다 */

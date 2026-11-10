@@ -15,7 +15,12 @@ import { useAccountSummary } from '../features/workspace/useAccountSummary'
 /**
  * 본사 담당자(2026-11-10 사용자 요청: 일단 임의 값으로 고정 표시). 거래처별 본사 담당자 정보가 생기면 서버 값(account-summary)으로 바꿀 것.
  */
-const HQ_CONTACT = '임소현 매니저 · 010-4075-6785'
+const HQ_CONTACT = { name: '임소현 매니저', tel: '010-4075-6785' }
+
+/** 이름 · 전화. 카드가 좁으면 전화번호는 중간에서 끊기지 않고 통째로 다음 줄로 */
+function Contact({ name, tel }: { name: string; tel?: string }) {
+  return <>{name}{tel ? <> · <span className="home-profile__tel">{tel}</span></> : null}</>
+}
 
 export default function HomeProfileCard({ accountId, className = '' }: { accountId: string; className?: string }) {
   const summary = useAccountSummary(accountId)
@@ -35,9 +40,9 @@ export default function HomeProfileCard({ accountId, className = '' }: { account
               <strong>{summary?.account_name || ''}</strong>
               {userName ? <><span className="home-profile__bar" aria-hidden="true">|</span>{userName} 님</> : null}
             </p>
-            <p className="home-profile__contact">본사 담당자 : {HQ_CONTACT}</p>
+            <p className="home-profile__contact">본사 담당자 : <Contact {...HQ_CONTACT} /></p>
             <p className="home-profile__contact">
-              담당자 : {summary?.manager_name ? `${summary.manager_name}${summary.manager_tel ? ` · ${summary.manager_tel}` : ''}` : summary ? '등록 안 됨' : '확인 중'}
+              담당자 : {summary?.manager_name ? <Contact name={summary.manager_name} tel={summary.manager_tel || undefined} /> : summary ? '등록 안 됨' : '확인 중'}
             </p>
           </> : <>
             <p className="home-profile__who">{userName ? `${userName} 님` : ''}</p>

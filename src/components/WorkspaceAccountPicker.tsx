@@ -59,7 +59,7 @@ export default function WorkspaceAccountPicker() {
   }
   return (
     <div className="rd workspace-account" ref={box}>
-      <span className="rd-muted">관리 거래처</span>
+      <span className="rd-muted">거래처</span>
       <button type="button" className="workspace-account__trigger" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen(v => !v)}>
         <SupplierTint flags={suppliers.get(current)} /><strong title={supplierLabel(suppliers.get(current)) || undefined}>{name}</strong><span aria-hidden="true">▾</span>
       </button>
