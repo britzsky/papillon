@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import HeaderBar from '../../components/HeaderBar'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import { getPartners, text, won, qty, type Row } from '../../api/distAdmin'
 import {
   addShipment, approveCancelClaim, cancelOrderByHq, confirmDeposit, confirmPurchaseOrder, createPurchaseOrder, getAdminOrder, getAdminOrders, HQ_CANCEL_REASON_LABEL,
@@ -55,7 +54,7 @@ export default function DistOrders() {
   const act = async (action: () => Promise<unknown>) => { if (await runAction(setBusy, notice, action)) setRevision(value => value + 1) }
   const shown = detail && Number(detail.order.order_id) === selected ? detail : null
 
-  return <div className="dist-page"><SideMenuLayout header={<HeaderBar title="주문 관리" breadcrumbs={[{ label: '협력사 관리' }, { label: '주문 관리' }]} />}>
+  return <div className="dist-page"><TopMenuLayout title="주문 관리">
     <div className="rd rd-page dist-admin">
       <header className="rd-page__head"><div>
         <h1 className="rd-sr-only">주문 관리</h1>
@@ -117,7 +116,7 @@ export default function DistOrders() {
         </section>
       </div>
     </div>
-  </SideMenuLayout></div>
+  </TopMenuLayout></div>
 }
 
 function OrderPanel({ data, carriers, busy, act }: { data: AdminOrder; carriers: Row[]; busy: boolean; act: (action: () => Promise<unknown>) => Promise<void> }) {

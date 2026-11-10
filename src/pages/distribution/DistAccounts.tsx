@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import HeaderBar from '../../components/HeaderBar'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import { text, won } from '../../api/distAdmin'
 import { getAccountProfile, getAccountProfiles, saveAccountProfile, type Row } from '../../api/distOrders'
 import { Fields, Notice, type FieldDef } from './DistFields'
@@ -63,7 +62,7 @@ export default function DistAccounts() {
     if (form && await runAction(setBusy, notice, () => saveAccountProfile(form))) setRevision(value => value + 1)
   }
 
-  return <div className="dist-page"><SideMenuLayout header={<HeaderBar title="거래처 결제 설정" breadcrumbs={[{ label: '협력사 관리' }, { label: '거래처 결제 설정' }]} />}>
+  return <div className="dist-page"><TopMenuLayout title="거래처 결제 설정">
     <div className="rd rd-page dist-admin">
       <header className="rd-page__head"><div>
         <h1 className="rd-sr-only">거래처 결제 설정</h1>
@@ -108,5 +107,5 @@ export default function DistAccounts() {
         </section>
       </div>
     </div>
-  </SideMenuLayout></div>
+  </TopMenuLayout></div>
 }

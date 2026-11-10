@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import HeaderBar from '../../components/HeaderBar'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import AccountSearchSelect from '../operations/AccountSearchSelect'
 import { getAccountOptions, type AccountOption } from '../../api/operations'
 import {
@@ -127,7 +126,7 @@ export default function DistProducts() {
   const product = detail?.product
   const isNew = draft !== null && !selected
 
-  return <div className="dist-page"><SideMenuLayout header={<HeaderBar title="상품 관리" breadcrumbs={[{ label: '협력사 관리' }, { label: '상품 관리' }]} />}>
+  return <div className="dist-page"><TopMenuLayout title="상품 관리">
     <div className="rd rd-page dist-admin">
       <header className="rd-page__head">
         <div>
@@ -219,7 +218,7 @@ export default function DistProducts() {
         </section>
       </div>
     </div>
-  </SideMenuLayout></div>
+  </TopMenuLayout></div>
 }
 
 const IMAGE_TYPE_LABEL: Record<string, string> = { MAIN: '대표', DETAIL: '상세', LABEL: '표시사항' }

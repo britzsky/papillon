@@ -1,5 +1,4 @@
-import HeaderBar from '../../components/HeaderBar'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import ProductImage from '../../components/ProductImage'
 import { Link } from 'react-router-dom'
@@ -8,7 +7,7 @@ import { useWelstoryRaw, text, money } from '../../features/order/useWelstoryRaw
 
 function WelstoryOrder() {
   const { tab, setTab, workplaces, soldTo, periodYear, setPeriodYear, periodGroup, setPeriodGroup, deliveryDate, setDeliveryDate, query, setQuery, products, records, busy, message, selectedWorkplace, filtered, saveSoldTo, loadProducts, loadRecords } = useWelstoryRaw()
-  return <div className="welstory-page procurement-refresh"><SideMenuLayout header={<HeaderBar title="웰스토리 원문 조회" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '공급사 통합 연동', to: '/order_manager/suppliers' }, { label: '웰스토리 원문 조회' }]} />}>
+  return <div className="welstory-page procurement-refresh"><TopMenuLayout title="웰스토리 원문 조회">
     <div className="rd rd-page rd-wel">
     <header className="rd-page__head">
       <div>
@@ -50,6 +49,6 @@ function WelstoryOrder() {
       </section>
     </div> : <section className="welstory-panel records"><div className="welstory-panel__head"><h2>{tab === 'orders' ? '주문 내역' : tab === 'receives' ? '입고 내역' : '반품·교환 내역'}</h2><span>{records.length}건</span></div><div className="record-cards">{records.map((row, index) => <article key={index}><div>{Object.entries(row).slice(0, 12).map(([key, value]) => <span key={key}><small>{key}</small><strong>{text(value)}</strong></span>)}</div>{tab === 'orders' && text(row.confirmYn) === 'Y' ? <em>확정됨 · 수정/삭제 불가</em> : null}</article>)}</div></section>}
     </div>
-  </SideMenuLayout></div>
+  </TopMenuLayout></div>
 }
 export default WelstoryOrder

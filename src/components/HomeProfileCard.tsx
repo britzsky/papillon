@@ -4,7 +4,8 @@ import { LogoutButton, UserInfoPanel } from './HeaderBar'
 import HeaderAlerts from './HeaderAlerts'
 import WorkspaceAccountPicker from './WorkspaceAccountPicker'
 import { isHeadquarters } from '../features/workspace/workspaceAccount'
-import { useAccountSummary } from '../features/workspace/useAccountSummary'
+import { useAccountSummaryResult } from '../features/workspace/useAccountSummary'
+import { useReportReady } from '../features/home/homeReady'
 
 /**
  * PC 홈 슬라이드 오른쪽 접속자 카드(2026-11-10 시안): 사람 아이콘(누르면 사용자 정보) + 인사·거래처 | 이름·담당자,
@@ -23,14 +24,15 @@ function Contact({ name, tel }: { name: string; tel?: string }) {
 }
 
 export default function HomeProfileCard({ accountId, className = '' }: { accountId: string; className?: string }) {
-  const summary = useAccountSummary(accountId)
+  const { data: summary, done } = useAccountSummaryResult(accountId)
+  useReportReady('account', done)
   const userInfoId = useId()
   const userName = summary?.user_name || localStorage.getItem('user_name') || ''
   return (
     <section className={`home-profile ${className}`} aria-label="접속자 정보">
       <div className="home-profile__head">
         <button type="button" className="home-profile__avatar" popoverTarget={userInfoId} aria-label="사용자 정보" title="사용자 정보">
-          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.6" r="4.2" /><path d="M3.6 21c.6-4.6 4-7.4 8.4-7.4s7.8 2.8 8.4 7.4z" /></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.6" r="4.2" /><path d="M3.4 24v-2.6c.7-4.7 4.2-7.8 8.6-7.8s7.9 3.1 8.6 7.8V24z" /></svg>
         </button>
         <UserInfoPanel id={userInfoId} className="home-profile__user-info" />
         <div className="home-profile__text">

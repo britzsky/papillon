@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useInstagram, type InstagramPost } from '../features/home/useInstagram'
 import { INSTAGRAM_URL } from './QuickLinks'
+import { useReportReady } from '../features/home/homeReady'
 
 const COUNT = 4
 
@@ -24,6 +25,7 @@ function Tile({ post }: { post: InstagramPost }) {
  */
 export default function InstagramGrid() {
   const state = useInstagram(COUNT)
+  useReportReady('instagram', state.status !== 'loading')
   const posts = state.status === 'ok' ? state.posts.slice(0, COUNT) : []
   return (
     <section className="home-insta" aria-label="더채움 인스타그램" aria-busy={state.status === 'loading'}>

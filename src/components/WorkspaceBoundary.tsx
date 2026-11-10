@@ -2,9 +2,12 @@ import { visibleForRole } from '../features/workspace/roleScreens'
 import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { buildApiUrl } from '../config/api'
+import HomeSplash from './HomeSplash'
+import { splashPending } from '../features/home/homeReady'
 import { rememberWorkspaceAccount, urlAccountId, workspaceAccountId } from '../features/workspace/workspaceAccount'
 
 type Session = { userId: string; userType: string; accountId: string }
+const NOTHING_DONE = new Set<never>()
 function ProtectedWorkspace({ children }: { children: ReactNode }) {
   const [state, setState] = useState<'loading' | 'ready' | 'login' | 'error'>('loading')
   const [revision, setRevision] = useState(0)
@@ -23,7 +26,8 @@ function ProtectedWorkspace({ children }: { children: ReactNode }) {
     return () => controller.abort()
   }, [revision])
   if (state === 'login') return <Navigate to="/" replace />
-  if (state === 'loading') return <p role="status">로그인 정보를 확인하고 있습니다.</p>
+  // 로그인 직후 홈: 홈 준비 화면과 같은 모양으로 '로그인 확인' 단계부터(Home이 이어 그림)
+  if (state === 'loading') return location.pathname === '/home' && splashPending() ? <HomeSplash done={NOTHING_DONE} /> : <p role="status">로그인 정보를 확인하고 있습니다.</p>
   if (state === 'error') return <div role="alert"><p>서버 연결을 확인하지 못했습니다.</p><button onClick={() => { setState('loading'); setRevision(value => value + 1) }}>다시 확인</button></div>
   // 역할에 맞지 않는 화면(현장 → 본사 전용, 본사 → 거래처 메뉴 관리 등)은 홈으로
   if (!visibleForRole(location.pathname)) return <Navigate to="/home" replace />

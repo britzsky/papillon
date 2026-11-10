@@ -1,8 +1,7 @@
 import { workspaceAccountId } from '../../features/workspace/workspaceAccount'
 import { useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import HeaderBar from '../../components/HeaderBar'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import type { InventoryMovement } from '../../api/inventory'
 import {
@@ -34,8 +33,8 @@ export default function InventoryHistory() {
 
   return (
     <div className="menu-manager-page">
-      <main className="menu-manager-content">
-        <SideMenuLayout header={<HeaderBar title="재고 변동 이력" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '재고관리' }, { label: '재고 변동 이력' }]} />}>
+      <div className="menu-manager-content">
+        <TopMenuLayout title="재고 변동 이력">
           <div className="rd rd-page rd-hist">
             <header className="rd-page__head">
               <div>
@@ -177,8 +176,8 @@ export default function InventoryHistory() {
               </nav>
             </section>
           </div>
-        </SideMenuLayout>
-      </main>
+        </TopMenuLayout>
+      </div>
     </div>
   )
 }

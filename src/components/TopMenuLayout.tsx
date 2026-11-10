@@ -1,8 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import logo from '../assets/logo/thefull.png'
 import logoDark from '../assets/logo/thefull-dark.png' // 어두운 테마용(글자 흰색, 투명 바탕 — 2026-11-10 사용자 제공)
 import DeadlineAlertBanner from './DeadlineAlertBanner'
+import { DeadlineSlotContext } from './deadlineSlot'
+import WorkflowBar from './WorkflowBar'
+import AccountChoiceNotice from './AccountChoiceNotice'
+import { needsAccountChoice } from '../features/workspace/accountGate'
 import { HeaderActions } from './HeaderBar'
 import HomeSearchBox from './HomeSearchBox'
 import QuickLinks, { HeaderSns } from './QuickLinks'
@@ -24,7 +28,11 @@ import './TopMenuTheme.css'
  * actionsInPage: 종 알림·사용자 정보·로그아웃을 본문(PC 홈 접속자 카드)이 맡을 때 머리 줄에서 뺀다(관리 거래처만 남음).
  * 머리 줄 내용(로고·메뉴·검색·SNS·관리 거래처·테마 스위치)은 본문과 같은 폭(--top-width)으로 화면 가운데(2026-11-10 사용자 요청).
  */
-export default function TopMenuLayout({ children, actionsInPage = false }: { children: ReactNode; actionsInPage?: boolean }) {
+/**
+ * title: 업무 화면(식단표 관리 등, 2026-11-10 사용자 요청 '홈화면에 맞춰서')일 때 화면 이름 — 브라우저 탭 제목이 되고,
+ * 본문을 홈과 같은 폭의 밝은 판(.top-page)에 담아 업무 순서 줄(WorkflowBar)·거래처 선택 안내(본사)를 함께 그린다. 홈은 title 없이 자기 판(.home-main)을 쓴다.
+ */
+export default function TopMenuLayout({ children, actionsInPage = false, title }: { children: ReactNode; actionsInPage?: boolean; title?: string }) {
   const location = useLocation()
   const menus = useMemo(() => menusForRole(), [])
   const activeKey = findActiveMenuKey(location.pathname)
@@ -36,6 +44,11 @@ export default function TopMenuLayout({ children, actionsInPage = false }: { chi
   const [font, setFont] = useHomeFont()
   const [fontPlus, setFontPlus] = useHomeFontSize()
   const [theme, setTheme] = useHomeTheme()
+  useEffect(() => { if (title) document.title = `${title} · 더채움` }, [title])
+  // 화면 머리 줄에 마감 알림 자리(DeadlineAlertSlot)가 있으면 본문 위 공용 알림은 그리지 않는다(사이드 메뉴 틀과 같은 규칙)
+  const [deadlineSlots, setDeadlineSlots] = useState(0)
+  const registerDeadlineSlot = useCallback((present: boolean) => setDeadlineSlots(count => count + (present ? 1 : -1)), [])
+  const chooseAccount = Boolean(title) && needsAccountChoice(location.pathname, location.search)
 
   // 화면을 옮기면 펼친 메뉴를 닫는다
   const [menuPath, setMenuPath] = useState(location.pathname)
@@ -58,9 +71,10 @@ export default function TopMenuLayout({ children, actionsInPage = false }: { chi
   }
 
   return (
-    <div className="rd top-layout" data-font={font} data-theme={theme} style={{ '--home-fs-plus': `${fontPlus}px` } as CSSProperties}>
+    <div className={`rd top-layout${title ? ' is-work' : ''}`} data-font={font} data-theme={theme} style={{ '--home-fs-plus': `${fontPlus}px` } as CSSProperties}>
       {/* data-menus: 메뉴가 많으면(본사 7개) 한 줄에 들어가는 폭이 달라 줄바꿈 기준이 다르다(TopMenuLayout.css) */}
-      <header className="top-layout__bar" data-menus={menus.length > 5 ? 'many' : 'few'}>
+      {/* data-actions: 업무 화면은 종·사용자·로그아웃 아이콘까지 머리 줄에 있어 더 넓다(full) — 홈은 접속자 카드가 맡음(page) */}
+      <header className="top-layout__bar" data-menus={menus.length > 5 ? 'many' : 'few'} data-actions={actionsInPage ? 'page' : 'full'}>
         <div className="top-layout__inner">
         <Link to="/home" className="top-layout__brand" aria-label="홈으로"><img src={theme === 'dark' ? logoDark : logo} alt="더채움 THE CHAEWOOM" /></Link>
 
@@ -94,8 +108,12 @@ export default function TopMenuLayout({ children, actionsInPage = false }: { chi
       </header>
 
       <main className="top-layout__content" ref={contentRef}>
-        <DeadlineAlertBanner />
-        {children}
+        {deadlineSlots > 0 ? null : <DeadlineAlertBanner />}
+        <DeadlineSlotContext.Provider value={registerDeadlineSlot}>
+          {title
+            ? <div className="top-page"><WorkflowBar />{chooseAccount ? <AccountChoiceNotice /> : children}</div>
+            : children}
+        </DeadlineSlotContext.Provider>
       </main>
       <QuickLinks scrollRef={contentRef}><FontPicker value={font} onChange={setFont} sizePlus={fontPlus} onSizeChange={setFontPlus} /></QuickLinks>
     </div>

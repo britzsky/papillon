@@ -53,11 +53,12 @@
 .rd .home-profile__avatar { --rd-btn-bg: #1E98CF; --rd-btn-fg: #fff; --rd-btn-line: transparent; }
 body.workspace-ui .rd.top-layout .home-profile button.home-profile__avatar,
 body.workspace-ui .rd.top-layout .home-profile button.home-profile__avatar:hover:not(:disabled) {
-  flex: none; display: flex; align-items: flex-end; justify-content: center; overflow: hidden;
+  flex: none; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; box-sizing: border-box;
   width: 76px !important; min-width: 0 !important; height: 76px !important; min-height: 0 !important; padding: 0 !important;
-  border: 0 !important; border-radius: 50% !important; background: #1E98CF !important; color: #fff !important; box-shadow: none !important; cursor: pointer;
+  /* 둥근 테두리 1px(2026-11-10 사용자 요청): 흰 몸통이 원 끝까지 내려가도 아래쪽에 파란 테두리가 남게 */
+  border: 1px solid #1E98CF !important; border-radius: 50% !important; background: #1E98CF !important; color: #fff !important; box-shadow: none !important; cursor: pointer;
 }
-body.workspace-ui .rd.top-layout .home-profile button.home-profile__avatar:hover:not(:disabled) { background: #1786B8 !important; }
+body.workspace-ui .rd.top-layout .home-profile button.home-profile__avatar:hover:not(:disabled) { background: #1786B8 !important; border-color: #1786B8 !important; }
 .rd .home-profile__avatar:focus-visible { outline: 3px solid #1F6B3A; outline-offset: 2px; }
 .rd .home-profile__avatar svg { width: 66px; height: 66px; }
 .rd .home-profile__text { min-width: 0; display: flex; flex-direction: column; gap: 3px; }

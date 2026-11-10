@@ -2,8 +2,7 @@ import { workspaceAccountId } from '../../features/workspace/workspaceAccount'
 import CatalogPreparation from '../../components/CatalogPreparation'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import HeaderBar from '../../components/HeaderBar'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import BatchOrderResults from '../../components/BatchOrderResults'
 import ProductImage from '../../components/ProductImage'
 import type { SupplierOffer } from '../../api/supplierIntegration'
@@ -187,5 +186,5 @@ function ProductOrderContent({ accountId, initialSource, embedded, favorites }: 
     <BatchOrderResults result={result} accountId={accountId} />
   </div>
   if (embedded) return <div className="mixed-product-order">{body}</div>
-  return <div className="menu-manager-page mixed-product-order"><main className="menu-manager-content"><SideMenuLayout header={<HeaderBar title="상품발주" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주관리' }, { label: '상품발주' }]} />}>{body}</SideMenuLayout></main></div>
+  return <div className="menu-manager-page mixed-product-order"><div className="menu-manager-content"><TopMenuLayout title="상품발주">{body}</TopMenuLayout></div></div>
 }

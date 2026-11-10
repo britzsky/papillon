@@ -2241,3 +2241,18 @@ table .menu-manager-menu-cell .menu-manager-photo-button .menu-manager-thumbnail
 .ingredient-master-cost { display: inline-flex; align-items: center; gap: 4px; }
 .ingredient-master-cost input { width: 96px; }
 .ingredient-master-cost small { color: #5b6660; white-space: nowrap; }
+
+/* 2026-11-10 상단 메뉴 틀(TopMenuLayout .top-page): 예전처럼 한 화면 높이에 맞추고 메뉴 리스트·식자재 상세 안에서만 스크롤.
+   경로 머리 줄이 없어져 화면 이름을 본문 제목으로 보인다 */
+.rd.top-layout .top-page:has(> .rd-mm) { box-sizing: border-box; height: calc(100% - 36px); margin-top: 16px; margin-bottom: 20px; display: flex; flex-direction: column; min-height: 560px; }
+.rd.top-layout .top-page > .rd-mm { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.rd .rd-mm__title { margin: 0; }
+/* 패널은 홈 카드처럼(테두리 대신 그림자) — 개편 공통 규칙(RedesignPages .rd.rd-page .menu-manager-panel, !important)을 덮음 */
+.rd.top-layout .top-page .rd.rd-mm .menu-manager-panel { border-color: transparent !important; background: var(--rd-card) !important; box-shadow: 0 6px 16px rgba(30, 42, 34, .12) !important; }
+/* 어두운 테마: 패널·머리 칸·구분선 */
+.rd.top-layout[data-theme="dark"] .top-page .rd.rd-mm .menu-manager-panel { box-shadow: 0 6px 16px rgba(0, 0, 0, .4) !important; }
+.rd.top-layout[data-theme="dark"] .top-page .rd.rd-mm .menu-manager-table th { background: var(--dk-surface) !important; border-bottom-color: var(--dk-line) !important; }
+.rd.top-layout[data-theme="dark"] .top-page .rd.rd-mm :is(.menu-manager-panel__header, .menu-manager-panel-header) { border-bottom-color: var(--dk-line); background: transparent; }
+.rd.top-layout[data-theme="dark"] .top-page .rd.rd-mm .menu-manager-table td { border-top-color: var(--dk-line) !important; }
+.rd.top-layout[data-theme="dark"] .top-page .rd.rd-mm .menu-manager-table tbody tr.is-active,
+.rd.top-layout[data-theme="dark"] .top-page .rd.rd-mm .menu-manager-table tbody tr.is-active td { background: var(--rd-green-soft) !important; }

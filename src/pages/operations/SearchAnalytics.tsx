@@ -1,5 +1,4 @@
-import HeaderBar from '../../components/HeaderBar'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import { INTENT_NAMES, useSearchDashboard } from '../../features/operations/useSearchDashboard'
 import './SearchAnalytics.css'
@@ -11,7 +10,7 @@ function SearchAnalytics() {
   const { days, setDays, data, summary, error, maxPopular, maxIntent } = useSearchDashboard()
   const noResult = Number(summary.no_result_searches ?? 0)
 
-  return <div className="search-admin-page"><SideMenuLayout header={<HeaderBar title="검색어 관리" breadcrumbs={[{ label: '본사관리' }, { label: '검색어 관리' }]} />}>
+  return <div className="search-admin-page"><TopMenuLayout title="검색어 관리">
     <div className="rd rd-page rd-search">
       <header className="rd-page__head">
         <div>
@@ -41,6 +40,6 @@ function SearchAnalytics() {
         <section className="rd-card rd-page__main"><div className="rd-page__list-head"><h2 className="rd-h2">결과 없는 검색어</h2><span className="rd-chip is-warn">상품·메뉴 이름 보완 후보</span></div><div className="rd-page__scroll rd-search__table" tabIndex={0} role="region" aria-label="결과 없는 검색어 표"><table className="rd-table"><thead><tr><th>순위</th><th>검색어</th><th className="is-num">횟수</th></tr></thead><tbody>{data.no_result_searches.map((item, index) => <tr key={item.query}><td>{index + 1}</td><td><strong>{item.query}</strong></td><td className="is-num">{item.search_count}회</td></tr>)}</tbody></table>{!data.no_result_searches.length ? <p className="rd-page__empty">결과 없는 검색이 없습니다.</p> : null}</div></section>
       </div>
     </div>
-  </SideMenuLayout></div>
+  </TopMenuLayout></div>
 }
 export default SearchAnalytics

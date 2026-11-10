@@ -6,8 +6,7 @@ import FavoriteProductHeart from '../../components/FavoriteProductHeart'
 import { recoverMixedProcurement, startNewMixedProcurement } from '../../api/mixedProcurement'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
-import HeaderBar from '../../components/HeaderBar'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import { blockedReasons, MANUAL_MAX_ORDER_QTY, shortageStockStatus, SHORTAGE_STOCK_LABELS, type ShortageOffer, type ShortageRow } from '../../api/shortageProcurement'
 import { useEffect, useState } from 'react'
 import { getDeadlineAlertsCached } from '../../api/deadlineAlerts'
@@ -318,6 +317,6 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
     </section>{submitting ? <LoadingScreen overlay message={'공급사에 발주를 보내고 있습니다.\n창을 닫거나 새로고침하지 마세요.'} /> : null}</div>, document.body) : null}
   </div>
   if (embedded) return <div className="shortage-order-page procurement-refresh">{body}</div>
-  return <div className="shortage-order-page procurement-refresh"><SideMenuLayout header={<HeaderBar title="부족 식재료 발주" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주관리', to: '/order_manager' }, { label: '부족 식재료 발주' }]} />}>{body}</SideMenuLayout></div>
+  return <div className="shortage-order-page procurement-refresh"><TopMenuLayout title="부족 식재료 발주">{body}</TopMenuLayout></div>
 }
 export default FoodOrder

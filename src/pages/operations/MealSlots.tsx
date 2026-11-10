@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import HeaderBar from '../../components/HeaderBar'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import { createMealSlot, getMealSlots, reorderMealSlots, updateMealSlot, type MealSlot, type MealSlotKind } from '../../api/mealSlots'
 import './MealSlots.css'
 
@@ -62,7 +61,7 @@ export default function MealSlots() {
     void run(() => reorderMealSlots(codes), '기본 순서를 바꿨습니다.')
   }
 
-  return <div className="meal-slots-page"><SideMenuLayout header={<HeaderBar title="끼니 종류 관리" breadcrumbs={[{ label: '본사관리' }, { label: '끼니 종류 관리' }]} />}>
+  return <div className="meal-slots-page"><TopMenuLayout title="끼니 종류 관리">
     <div className="rd rd-page rd-meal-slots">
       <header className="rd-page__head">
         <div>
@@ -109,5 +108,5 @@ export default function MealSlots() {
         <p className="rd-muted rd-fs-sm">'사용 안 함'으로 바꾸면 거래처가 새로 고를 수 없고, 이미 고른 거래처에는 그대로 보입니다.</p>
       </section>
     </div>
-  </SideMenuLayout></div>
+  </TopMenuLayout></div>
 }

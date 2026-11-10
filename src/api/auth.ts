@@ -1,4 +1,5 @@
 import { buildApiUrl } from '../config/api'
+import { markSplashAfterLogin } from '../features/home/homeReady'
 
 export type LoginRequest = {
   user_id: string
@@ -266,6 +267,7 @@ export async function login(payload: LoginRequest): Promise<LoginResponse> {
     localStorage.setItem('user_id', user_id)
     localStorage.setItem('account_id', accountId)
     localStorage.setItem('account_name', accountName);
+    markSplashAfterLogin() // 홈이 조회를 마칠 때까지 준비 화면(features/home/homeReady.ts)
     window.location.assign('/home')
   }
 

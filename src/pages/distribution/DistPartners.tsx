@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import HeaderBar from '../../components/HeaderBar'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import {
   getCategories, getPartners, getSeller, PARTNER_TYPE_LABEL, PO_METHOD_LABEL, saveCategory, savePartner, saveSeller, text, type Row,
 } from '../../api/distAdmin'
@@ -104,7 +103,7 @@ export default function DistPartners() {
     }
   }
 
-  return <div className="dist-page"><SideMenuLayout header={<HeaderBar title="협력사·기본 설정" breadcrumbs={[{ label: '협력사 관리' }, { label: '협력사·기본 설정' }]} />}>
+  return <div className="dist-page"><TopMenuLayout title="협력사·기본 설정">
     <div className="rd rd-page dist-admin">
       <header className="rd-page__head">
         <div>
@@ -201,5 +200,5 @@ export default function DistPartners() {
         </div>
       </section>
     </div>
-  </SideMenuLayout></div>
+  </TopMenuLayout></div>
 }

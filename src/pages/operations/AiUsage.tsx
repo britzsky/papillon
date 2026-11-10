@@ -1,5 +1,4 @@
-import HeaderBar from '../../components/HeaderBar'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import { AI_FEATURE_LABELS } from '../../api/aiUsage'
 import { AI_USAGE_PERIODS, formatKrw, formatTokens, formatUsd, KRW_PER_USD, useAiUsage } from '../../features/operations/useAiUsage'
@@ -11,7 +10,7 @@ function AiUsage() {
   const report = u.report
   const todayCost = report?.today_cost_usd ?? 0
 
-  return <div className="ai-usage-page"><SideMenuLayout header={<HeaderBar title="AI 사용 이력" breadcrumbs={[{ label: '본사관리' }, { label: 'AI 사용 이력' }]} />}>
+  return <div className="ai-usage-page"><TopMenuLayout title="AI 사용 이력">
     <div className="rd rd-page rd-ai-usage">
       <header className="rd-page__head">
         <div>
@@ -75,6 +74,6 @@ function AiUsage() {
         </div>
       </section>
     </div>
-  </SideMenuLayout></div>
+  </TopMenuLayout></div>
 }
 export default AiUsage

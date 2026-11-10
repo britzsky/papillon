@@ -1,0 +1,58 @@
+/* 로그인 직후 홈 준비 화면(HomeSplash.tsx). 글씨는 .rd 규칙(--rd-fs) */
+.rd.home-splash {
+  --sp-bg: #F4F5F4; --sp-card: #FFFFFF; --sp-ink: #1E2A22; --sp-muted: #6B766F; --sp-line: #E1E7E2;
+  --sp-green: #5A9A3C; --sp-track: #E6ECE7;
+  position: fixed; inset: 0; z-index: 10050; /* 전역 조회 막대(GlobalLoading)보다 위 */
+  display: grid; place-items: center; overflow: hidden;
+  background: var(--sp-bg); color: var(--sp-ink);
+  font-family: 'Segoe UI', 'Pretendard', 'Noto Sans KR', sans-serif;
+  transition: opacity .35s ease;
+}
+.rd.home-splash[data-theme="dark"] {
+  --sp-bg: #121619; --sp-card: #1B2125; --sp-ink: #E5EBE7; --sp-muted: #9CA8A1; --sp-line: #343D43;
+  --sp-green: #5DB672; --sp-track: #2C3439;
+}
+.rd.home-splash.is-leaving { opacity: 0; pointer-events: none; }
+
+/* 화면 모서리 브랜드 곡선(슬라이드와 같은 모양, 크게) */
+.rd .home-splash__curves { position: absolute; inset: 0; pointer-events: none; }
+.rd .home-splash__curves .brand-curve.is-top { height: 24vh; }
+.rd .home-splash__curves .brand-curve.is-bottom { height: 18vh; }
+
+.rd .home-splash__panel {
+  position: relative; z-index: 2; box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  width: min(380px, calc(100vw - 32px)); padding: 34px 32px 28px;
+  border-radius: 20px; background: var(--sp-card); box-shadow: 0 14px 36px rgba(30, 42, 34, .16);
+}
+.rd.home-splash[data-theme="dark"] .home-splash__panel { box-shadow: 0 14px 36px rgba(0, 0, 0, .5); }
+.rd .home-splash__logo { display: block; width: 150px; height: auto; }
+.rd .home-splash__message { --rd-fs: 16px; margin: 0; font-weight: 800; color: var(--sp-ink); }
+
+.rd .home-splash__bar { width: 100%; height: 8px; border-radius: 999px; background: var(--sp-track); overflow: hidden; }
+.rd .home-splash__bar span {
+  display: block; height: 100%; border-radius: inherit;
+  background: linear-gradient(90deg, #F29A2E, var(--sp-green) 55%, #1E98CF);
+  background-size: 300px 100%; transition: width .45s ease;
+}
+
+.rd .home-splash__steps { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; width: 100%; margin: 2px 0 0; padding: 0; list-style: none; }
+.rd .home-splash__steps li { --rd-fs: 13px; display: flex; align-items: center; gap: 7px; color: var(--sp-muted); font-weight: 600; transition: color .25s ease; }
+.rd .home-splash__steps li.is-done { color: var(--sp-ink); }
+.rd .home-splash__mark {
+  flex: none; display: grid; place-items: center; width: 18px; height: 18px; box-sizing: border-box;
+  border: 2px solid var(--sp-line); border-radius: 50%; color: #fff;
+  transition: background .25s ease, border-color .25s ease;
+}
+/* 아직: 도는 테두리 */
+.rd .home-splash__steps li:not(.is-done) .home-splash__mark { border-top-color: var(--sp-green); animation: home-splash-spin .9s linear infinite; }
+.rd .home-splash__steps li.is-done .home-splash__mark { border-color: var(--sp-green); background: var(--sp-green); }
+@keyframes home-splash-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .rd.home-splash, .rd .home-splash__bar span, .rd .home-splash__steps li, .rd .home-splash__mark { transition: none; }
+  .rd .home-splash__steps li:not(.is-done) .home-splash__mark { animation: none; border-top-color: var(--sp-line); }
+}
+
+/* 준비 화면 동안에는 전역 조회 표시(맨 위 막대·로고 카드, GlobalLoading)를 겹쳐 띄우지 않는다 — 진행은 이 화면이 보여 줌 */
+body:has(.home-splash:not(.is-leaving)) :is(.global-loading-bar, .global-loading-chip) { display: none; }

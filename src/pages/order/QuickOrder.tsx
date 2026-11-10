@@ -1,8 +1,7 @@
 import { workspaceAccountId } from '../../features/workspace/workspaceAccount'
 import CatalogPreparation from '../../components/CatalogPreparation'
 import { Link, useSearchParams } from 'react-router-dom'
-import HeaderBar from '../../components/HeaderBar'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import BatchOrderResults from '../../components/BatchOrderResults'
 import ProductImage from '../../components/ProductImage'
 import { money, orderDay as day, useQuickOrder } from '../../features/order/useQuickOrder'
@@ -91,5 +90,5 @@ export default function QuickOrder({ embedded = false }: { embedded?: boolean })
       </aside>
     </div>
   </div>
-  return embedded ? body : <SideMenuLayout header={<HeaderBar title="준비된 발주안" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주안 확인' }]} />}>{body}</SideMenuLayout>
+  return embedded ? body : <TopMenuLayout title="준비된 발주안">{body}</TopMenuLayout>
 }

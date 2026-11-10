@@ -1,6 +1,5 @@
 ﻿import { Link } from 'react-router-dom'
-import HeaderBar from '../../components/HeaderBar'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import order from '../../assets/image/icons8-order-100-Photoroom.png'
 import hygiene from '../../assets/image/icons8-hygiene-64-Photoroom.png'
@@ -34,18 +33,8 @@ const orderMenus = [
 function OrderManager() {
   return (
     <div className="order-manager-page">
-      <main className="order-manager-content">
-        <SideMenuLayout
-          header={
-            <HeaderBar
-              title="발주 관리"
-              breadcrumbs={[
-                { label: 'Home', to: '/home' },
-                { label: '발주관리' },
-              ]}
-            />
-          }
-        >
+      <div className="order-manager-content">
+        <TopMenuLayout title="발주 관리">
 
           <div className="rd rd-page rd-om">
           <header className="rd-page__head">
@@ -88,8 +77,8 @@ function OrderManager() {
             })}
           </section>
           </div>
-        </SideMenuLayout>
-      </main>
+        </TopMenuLayout>
+      </div>
     </div>
   )
 }

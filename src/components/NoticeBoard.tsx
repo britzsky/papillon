@@ -1,5 +1,6 @@
 import { useId, useState } from 'react'
 import { useNotices } from '../features/home/useNotices'
+import { useReportReady } from '../features/home/homeReady'
 import type { PressArticle } from './PressSlide'
 
 /** 등록 후 이 날수 안이면 'N'(새 글) 표시 */
@@ -25,6 +26,7 @@ const TABS: { key: Tab; label: string }[] = [{ key: 'notice', label: '공지사�
  */
 export default function NoticeBoard({ press = [] }: { press?: PressArticle[] }) {
   const state = useNotices()
+  useReportReady('notices', state.status !== 'loading')
   const [tab, setTab] = useState<Tab>('notice')
   const baseId = useId()
   const notices = state.status === 'ok' ? state.notices : []

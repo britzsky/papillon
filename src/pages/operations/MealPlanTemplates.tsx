@@ -1,5 +1,4 @@
-import HeaderBar from '../../components/HeaderBar'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import { priceTierOf, won } from '../../api/mealPlanTemplates'
 import { cellKey, DAYS, planTypeName, useMealPlanTemplates } from '../../features/operations/useMealPlanTemplates'
 import { mealPlanTypeOptions } from './menuManagerShared'
@@ -14,8 +13,8 @@ export default function MealPlanTemplates() {
     openNew, openEdit, remove, addMenu, removeMenu, toggleSlot, closeDraft, save,
   } = useMealPlanTemplates()
   return <div className="meal-template-page">
-    <main>
-      <SideMenuLayout header={<HeaderBar title="템플릿 식단표 관리" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '운영관리', to: '/operations/table-meals' }, { label: '템플릿 식단표 관리' }]} />}>
+    {/* 2026-11-10 사용자 요청: 식단표 관리처럼 홈과 같은 상단 메뉴 틀 */}
+    <TopMenuLayout title="템플릿 식단표 관리">
         <div className="rd rd-page mpt">
           <header className="mpt__head">
             <div>
@@ -99,7 +98,6 @@ export default function MealPlanTemplates() {
             </section> : <section className="rd-card mpt__editor mpt__placeholder"><p>왼쪽에서 템플릿을 고르거나 '새 템플릿'을 누르세요. 거래처 식단표 편집기에서 본사 계정은 '템플릿으로 저장'으로도 만들 수 있습니다.</p></section>}
           </div>
         </div>
-      </SideMenuLayout>
-    </main>
+    </TopMenuLayout>
   </div>
 }

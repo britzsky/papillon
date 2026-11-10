@@ -1,17 +1,18 @@
+/* 2026-11-10 상단 메뉴 틀: 이 화면 바깥 상자(.purchase-orders)가 머리 줄까지 감싸므로, 요소 이름 규칙은 머리 줄(.top-layout__bar)에는 안 걸리게 :where(:not(...)) */
 .purchase-orders { height:100%; overflow:auto; color:#172b3a; }
 .purchase-orders__filters { display:flex; flex-wrap:wrap; gap:12px; align-items:end; margin-bottom:16px; }
-.purchase-orders label { display:flex; flex-direction:column; gap:5px; font-size:13px; }
+.purchase-orders label:where(:not(.top-layout__bar *)) { display:flex; flex-direction:column; gap:5px; font-size:13px; }
 .purchase-orders__layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.2fr); gap:20px; }
 .purchase-orders__layout section { overflow:auto; padding:16px; border:1px solid #dbe3eb; border-radius:8px; background:white; }
 .purchase-orders table { width:100%; border-collapse:collapse; margin:12px 0; font-size:13px; }
 .purchase-orders td,.purchase-orders th { padding:10px; border-bottom:1px solid #e5eaf0; text-align:left; }
 .purchase-orders th { background:#f4f7fa; white-space:nowrap; }
-.purchase-orders input,.purchase-orders select { border:1px solid #a8b8c8; border-radius:4px; padding:6px; min-height:36px; }
+.purchase-orders input:where(:not(.top-layout__bar *)),.purchase-orders select:where(:not(.top-layout__bar *)) { border:1px solid #a8b8c8; border-radius:4px; padding:6px; min-height:36px; }
 .purchase-orders td input { width:90px; }
-.purchase-orders small { display:block; color:#596b7a; }
+.purchase-orders small:where(:not(.top-layout__bar *)) { display:block; color:#596b7a; }
 .purchase-orders .is-selected { background:#eff6ff; }
-.purchase-orders h2 { font-size:17px; }
-.purchase-orders nav { display:flex; gap:8px; }
+.purchase-orders h2:where(:not(.top-layout__bar *)) { font-size:17px; }
+.purchase-orders nav:where(:not(.top-layout__bar *)) { display:flex; gap:8px; }
 .purchase-orders__receipt-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; align-items:end; flex-shrink:0; }
 .purchase-orders__receipt-actions > * { width:100%; min-width:0; }
 .purchase-orders__receipt-actions input { width:100%; min-width:0; }

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import HeaderBar from '../components/HeaderBar'
-import SideMenuLayout from '../components/SideMenuLayout'
+import TopMenuLayout from '../components/TopMenuLayout'
 import { getAccountOptions, getIngredientOptions, getMenuManagerList, type AccountOption, type IngredientOption, type MenuManagerItem } from '../api/operations'
 import { getHygieneGuides, getPopularSearches, trackAction, trackSearch, type HygieneGuide, type SearchEntity } from '../api/analytics'
 import './SearchAssistant.css'
@@ -74,8 +73,8 @@ function SearchAssistant() {
     navigate(result.path)
   }
 
-  return <div className="assistant-page"><SideMenuLayout header={<HeaderBar title="통합 추천 검색" breadcrumbs={[{ label: '홈' }, { label: '통합 추천 검색' }]} />}>
-    <main className="assistant-content">
+  return <div className="assistant-page"><TopMenuLayout title="통합 추천 검색">
+    <div className="assistant-content">
       <section className="assistant-hero"><p>THE FULL SEARCH</p><h1>메뉴·식자재·위생 상황을 한 번에 검색하세요</h1>
         <form onSubmit={submit}><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="예: 감자로 만들 수 있는 메뉴, 냉장고 온도가 높을 때 조치" autoFocus/><button>검색</button></form>
         <div className="assistant-examples">{['현재 재고로 만들 수 있는 메뉴','감자 활용 메뉴','냉장고 온도가 높을 때 조치'].map((text) => <button key={text} onClick={() => runSearch(text)}>{text}</button>)}</div>
@@ -85,6 +84,6 @@ function SearchAssistant() {
         {!loading && results.length === 0 ? <div className="assistant-empty"><strong>일치하는 결과가 없습니다.</strong><p>이 검색어는 결과 없음 항목으로 기록되어 서비스 개선에 활용됩니다.</p></div> : null}
         <div className="assistant-result-grid">{results.map((result) => <button className="assistant-result" key={`${result.entity_type}-${result.entity_id}`} onClick={() => selectResult(result)}><span>{result.category}</span><strong>{result.title}</strong><p>{result.description}</p><em>관련 화면으로 이동 →</em></button>)}</div>
       </section> : null}
-    </main></SideMenuLayout></div>
+    </div></TopMenuLayout></div>
 }
 export default SearchAssistant

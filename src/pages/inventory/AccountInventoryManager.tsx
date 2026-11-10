@@ -1,10 +1,9 @@
 import { isHeadquarters, workspaceAccountId } from '../../features/workspace/workspaceAccount'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import HeaderBar from '../../components/HeaderBar'
 import ProductImage from '../../components/ProductImage'
 import LoadingScreen from '../../components/LoadingScreen'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import AppAlert, { type AppAlertState } from '../../components/AppAlert'
 import { getAccountInventoryList, saveAccountInventory, type AccountInventoryItem } from '../../api/inventory'
@@ -333,19 +332,8 @@ function AccountInventoryManager() {
   return (
     <div className="menu-manager-page">
       {isSaving ? <LoadingScreen overlay message="거래처 재고를 저장하고 있습니다." /> : null}
-      <main className="menu-manager-content">
-        <SideMenuLayout
-          header={
-            <HeaderBar
-              title="거래처별 재고관리"
-              breadcrumbs={[
-                { label: 'Home', to: '/home' },
-                { label: '재고관리', to: '/inventory/account' },
-                { label: '거래처별 재고관리' },
-              ]}
-            />
-          }
-        >
+      <div className="menu-manager-content">
+        <TopMenuLayout title="거래처별 재고관리">
           <div className="rd rd-inv">
           <header className="rd-inv__head">
             <h1 className="rd-sr-only">거래처별 재고관리</h1>
@@ -599,8 +587,8 @@ function AccountInventoryManager() {
             </section>
           </section>
           </div>
-        </SideMenuLayout>
-      </main>
+        </TopMenuLayout>
+      </div>
       <AppAlert alert={alert} onClose={() => setAlert(null)} />
       {isDirectPurchaseOpen && (
         <DirectPurchaseModal

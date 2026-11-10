@@ -1,10 +1,9 @@
 import { planningCostSourceLabels } from '../../utils/planningCost'
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import HeaderBar from '../../components/HeaderBar'
 import AppAlert from '../../components/AppAlert'
 import LoadingScreen from '../../components/LoadingScreen'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import RecipeActionMenu from '../../components/RecipeActionMenu'
 import RecipeRegisterModal from '../../components/RecipeRegisterModal'
@@ -47,8 +46,8 @@ function AccountMenuManager() {
       {(isSaving || isSavingLike) ? (
         <LoadingScreen overlay message={isSavingLike ? '즐겨찾기를 저장하고 있습니다.' : '거래처 메뉴를 저장하고 있습니다.'} />
       ) : null}
-      <main className="menu-manager-content">
-        <SideMenuLayout header={<HeaderBar title="거래처 메뉴 관리" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '운영관리', to: '/operations/menu' }, { label: '거래처 메뉴 관리' }]} />}>
+      <div className="menu-manager-content">
+        <TopMenuLayout title="거래처 메뉴 관리">
           <div className="rd rd-page rd-am">
             <header className="rd-page__head">
               <div>
@@ -286,8 +285,8 @@ function AccountMenuManager() {
               </section>
             </div>
           </div>
-        </SideMenuLayout>
-      </main>
+        </TopMenuLayout>
+      </div>
       {likeTargetMenu ? (
         <MenuLikeConfirmModal
           isSaving={isSavingLike}

@@ -6,29 +6,15 @@ import WorkspaceIcon, { type WorkspaceIconName } from './WorkspaceIcon'
 import DeadlineAlertBanner from './DeadlineAlertBanner'
 import { DeadlineSlotContext } from './deadlineSlot'
 import WorkflowBar from './WorkflowBar'
-import WorkspaceAccountPicker from './WorkspaceAccountPicker'
-import { isHeadquarters, ownAccountName, workspaceAccountId } from '../features/workspace/workspaceAccount'
+import AccountChoiceNotice from './AccountChoiceNotice'
+import { needsAccountChoice as needsAccountChoiceAt } from '../features/workspace/accountGate'
+import { ownAccountName, workspaceAccountId } from '../features/workspace/workspaceAccount'
 import { findActiveMenuKey, majorMenus } from '../features/workspace/menus'
 import { visibleForRole } from '../features/workspace/roleScreens'
 
 type SideMenuLayoutProps = {
   children: ReactNode
   header?: ReactNode
-}
-
-/** 거래처를 고르지 않아도 되는 화면(본사 공통 기준정보·전체 현황) */
-const ACCOUNT_FREE_PATHS = ['/home', '/home/sidebar', '/operations/menu', '/inventory/ingredients', '/operations/search-analytics', '/operations/ai-usage', '/operations/meal-slots', '/order_manager/supplier-sites', '/order_manager/welstory', '/order_manager', '/distribution/products', '/distribution/partners', '/distribution/orders', '/distribution/accounts', '/mall', '/mall/cart', '/mall/orders']
-
-function AccountChoiceNotice() {
-  return (
-    <div className="rd rd-page">
-      <section className="rd-card rd-page__empty rd-account-choice">
-        <h2 className="rd-h2">관리할 거래처를 먼저 고르세요</h2>
-        <p>본사 계정은 거래처를 골라 관리합니다. 한 번 고르면 다른 화면으로 옮겨도 그 거래처가 유지됩니다.</p>
-        <WorkspaceAccountPicker />
-      </section>
-    </div>
-  )
 }
 
 /**
@@ -79,7 +65,7 @@ function SideMenuLayout({ children, header }: SideMenuLayoutProps) {
   const activeMenuKey = useMemo(() => findActiveMenuKey(location.pathname), [location.pathname])
   // 본사가 '전체 거래처'인 채로 거래처가 필요한 화면을 열면 화면 대신 거래처 선택 안내
   // 더채움몰 주문 상세(/mall/orders/번호)도 거래처와 무관
-  const needsAccountChoice = isHeadquarters() && !workspaceAccountId(location.search) && !ACCOUNT_FREE_PATHS.includes(location.pathname) && !location.pathname.startsWith('/mall/')
+  const needsAccountChoice = needsAccountChoiceAt(location.pathname, location.search)
 
   const withAccount = (to: string) => {
     if (!to.startsWith('/')) return to

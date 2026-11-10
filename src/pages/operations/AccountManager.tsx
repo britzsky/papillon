@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import HeaderBar from '../../components/HeaderBar'
 import LoadingScreen from '../../components/LoadingScreen'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import { useSearchParams } from 'react-router-dom'
 import { workspaceAccountId } from '../../features/workspace/workspaceAccount'
@@ -24,7 +23,7 @@ function AccountManager() {
   const accountName = useMemo(() => accounts.find((item) => item.value === accountId)?.text ?? '', [accounts, accountId])
 
   return (
-    <SideMenuLayout header={<HeaderBar title="고객사 관리" breadcrumbs={[{ label: "홈", to: "/home" }, { label: "본사관리" }, { label: "고객사 관리" }]} />}>
+    <TopMenuLayout title="고객사 관리">
       {saving ? <LoadingScreen overlay message="거래처 식사 설정을 저장하고 있습니다." /> : null}
       <div className="rd rd-page rd-acc">
         <header className="rd-page__head">
@@ -122,7 +121,7 @@ function AccountManager() {
           </>
         ) : null}
       </div>
-    </SideMenuLayout>
+    </TopMenuLayout>
   )
 }
 

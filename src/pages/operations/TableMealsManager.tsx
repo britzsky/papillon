@@ -13,9 +13,8 @@ import type { RecipeRequest } from '../../api/recipe'
 import { createPortal } from 'react-dom'
 import MenuRecommendations from './MenuRecommendations'
 import { Fragment, useEffect, useState } from 'react'
-import HeaderBar from '../../components/HeaderBar'
 import LoadingScreen from '../../components/LoadingScreen'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import AppAlert from '../../components/AppAlert'
 import RecipeActionMenu from '../../components/RecipeActionMenu'
@@ -110,19 +109,9 @@ function TableMealsManager() {
           </> : <button className="table-meals-modal__button is-primary table-meals-next" disabled={savedStockCheck.loading || isTableSaving || !!savedStockCheck.error} onClick={() => void persistPlan(savedStockCheck.payload)}>{isTableSaving ? '저장 중…' : '식단 저장 · 추가 발주 없음'}</button>}</div>
       </section></div>, document.body) : null}
       {isTableSaving ? <LoadingScreen overlay message="식단표를 저장하고 있습니다." /> : null}
-      <main className="table-meals-content">
-        <SideMenuLayout
-          header={
-            <HeaderBar
-              title="식단표 관리"
-              breadcrumbs={[
-                { label: 'Home', to: '/home' },
-                { label: '운영관리', to: '/operations/table-meals' },
-                { label: '식단표 관리' },
-              ]}
-            />
-          }
-        >
+      <div className="table-meals-content">
+        {/* 2026-11-10 사용자 요청: 홈화면에 맞춰 상단 메뉴 틀(사이드 메뉴·경로 머리 줄 → 홈과 같은 머리 줄·가운데 판) */}
+        <TopMenuLayout title="식단표 관리">
           {/* 2026-10-15 개편(시안 ⑧): 고른 식단표를 본문에 바로(예전 상세 창 내용 그대로), 오른쪽에 저장된 식단표·모자란 재료·새 식단 */}
           <div className="rd rd-meals">
           <header className="rd-meals__head">
@@ -482,8 +471,8 @@ function TableMealsManager() {
             </aside>
           </div>
           </div>
-        </SideMenuLayout>
-      </main>
+        </TopMenuLayout>
+      </div>
 
       {isManualEditorOpen ? (
         <div className="table-meals-modal-backdrop table-meals-modal-backdrop--manual" role="presentation" onClick={closeManualEditor}>

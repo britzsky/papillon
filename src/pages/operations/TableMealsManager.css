@@ -1914,3 +1914,8 @@ body.meal-print-measure .table-meals-hangyeol__logo { width: 52px; }
 .table-meals-modal--detail .table-meals-detail-table__name { font-weight: 600; overflow-wrap: anywhere; }
 .table-meals-modal--detail .table-meals-detail-table td.is-short { color: #c2410c; font-weight: 700; }
 .table-meals-modal--detail .table-meals-modal__actions { flex-wrap: wrap; padding-top: 12px; border-top: 1px solid #edf0f3; }
+
+/* 2026-11-10 상단 메뉴 틀(TopMenuLayout .top-page, 사용자 요청 '홈화면에 맞춰서'): 조회 줄도 홈 카드처럼(테두리 대신 그림자), 카드 사이 간격 조금 넓게 */
+.rd .top-page .rd-meals__filters { border-color: transparent; border-radius: 16px; box-shadow: 0 6px 16px rgba(30, 42, 34, .12); }
+.rd .top-page .rd-meals { display: flex; flex-direction: column; gap: 18px; }
+.rd .top-page .rd-meals__grid { gap: 18px; }

@@ -1,8 +1,7 @@
 import { workspaceAccountId } from '../../features/workspace/workspaceAccount'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import HeaderBar from '../../components/HeaderBar'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import LoadingScreen from '../../components/LoadingScreen'
 import { useWelstoryWorkspace } from '../../features/order/useWelstoryWorkspace'
@@ -76,7 +75,7 @@ function SupplierWorkspace({ accountId }: { accountId: string }) {
   } = useWelstoryWorkspace(accountId)
   const ourhome = useOurhomeSite(accountId)
 
-  return <div className="supplier-integration-page"><SideMenuLayout header={<HeaderBar title="공급사 통합 연동" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주관리', to: '/order_manager' }, { label: '공급사 통합 연동' }]} />}>
+  return <div className="supplier-integration-page"><TopMenuLayout title="공급사 통합 연동">
     <div className="rd rd-page rd-sup">
     <header className="rd-page__head">
       <div>
@@ -138,5 +137,5 @@ function SupplierWorkspace({ accountId }: { accountId: string }) {
       </section>
     </div>
     </div>
-  </SideMenuLayout></div>
+  </TopMenuLayout></div>
 }

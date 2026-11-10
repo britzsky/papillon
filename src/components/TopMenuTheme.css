@@ -3,7 +3,8 @@
  * 1) .rd 색 변수(--rd-*)를 어둡게 바꾸고 2) 홈 부품에 직접 적힌 밝은 색(#fff 등)만 골라 덮는다.
  * 사이드 메뉴 업무 화면에는 아직 적용 안 됨. 새 홈 부품에 밝은 색을 직접 쓰면 여기에도 어두운 값을 추가할 것.
  */
-.rd.top-layout[data-theme="dark"] {
+/* 안쪽 .rd(업무 화면 본문·거래처 표시 등)가 밝은 기본 변수를 다시 선언하므로 그 안에도 같은 어두운 값을 준다 */
+.rd.top-layout[data-theme="dark"], .rd.top-layout[data-theme="dark"] .rd {
   --dk-bg: #121619;
   --dk-surface: #1B2125;
   --dk-surface-2: #242B30;
@@ -15,9 +16,9 @@
   --rd-blue-soft: #1B2B3D; --rd-blue-ink: #9CC4F0;
   --rd-orange: #F0A055; --rd-orange-ink: #F5B979; --rd-orange-soft: #3A2A18;
   --rd-red: #F07468; --rd-red-ink: #F59990; --rd-red-soft: #3A1E1C;
-  background: var(--dk-bg);
-  color: var(--rd-ink);
+  --rd-blue: #6FB3E8; --rd-orange-line: #6B4A22; --rd-yellow-ink: #F2C94C; --rd-yellow-soft: #3A3218;
 }
+.rd.top-layout[data-theme="dark"] { background: var(--dk-bg); color: var(--rd-ink); }
 
 /* 머리 줄 */
 .rd.top-layout[data-theme="dark"] .top-layout__bar { background: var(--dk-surface); border-bottom-color: var(--dk-line); }
@@ -74,3 +75,70 @@ body.workspace-ui .rd.top-layout[data-theme="dark"] .quick-links button.quick-li
 .rd.top-layout[data-theme="dark"] .quick-links__btn:hover { box-shadow: 0 10px 22px rgba(0, 0, 0, .6); }
 .rd.top-layout[data-theme="dark"] .font-picker__menu { background: var(--dk-surface-2); border-color: var(--dk-line); box-shadow: 0 12px 28px rgba(0, 0, 0, .55); }
 .rd.top-layout[data-theme="dark"] .font-picker__option.is-on { border-color: var(--rd-green); background: var(--rd-green-soft); }
+
+/* 업무 화면 판(.top-page, 식단표 관리부터 2026-11-10) */
+.rd.top-layout[data-theme="dark"] .top-page :is(.rd-card, .rd.workflow-bar, .rd-meals__filters) { background: var(--dk-surface-2); box-shadow: 0 6px 16px rgba(0, 0, 0, .4); }
+/* 인쇄용 주간 식단표는 종이처럼 밝게 그대로(변수도 밝은 값으로 되돌림) */
+.rd.top-layout[data-theme="dark"] .table-meals-sheet {
+  --rd-ink: #1E2A22; --rd-muted: #5B6660; --rd-soft-ink: #4A5650; --rd-card: #FFFFFF; --rd-line: #E1E7E2; --rd-line-strong: #C9D3CC;
+  color: var(--rd-ink); border-radius: 12px;
+}
+/* 업무 화면 안 밝은 색이 직접 적힌 곳(대비 검사로 찾음, 식단표 관리 2026-11-10) */
+.rd.top-layout[data-theme="dark"], .rd.top-layout[data-theme="dark"] .rd { --rd-btn-bg: var(--dk-surface); --rd-btn-line: #46525A; --rd-btn-hover-bg: var(--dk-hover); }
+.rd.top-layout[data-theme="dark"] .top-page :is(h1, h2, h3, h4):not(.table-meals-sheet *) { color: var(--rd-ink); }
+.rd.top-layout[data-theme="dark"] .rd .workflow-bar__steps li.is-current :is(span, b) { background: #2F7A45; color: #fff; }
+.rd.top-layout[data-theme="dark"] .top-page .table-meals-field label,
+.rd.top-layout[data-theme="dark"] .top-page .rd-card dt { color: var(--rd-muted); }
+.rd.top-layout[data-theme="dark"] .top-page .tmx-text-ok { color: var(--rd-green-dark); }
+.rd.top-layout[data-theme="dark"] .top-page .rd-meals__item.is-selected { --rd-btn-bg: var(--rd-green-soft); --rd-btn-hover-bg: var(--rd-green-soft); background: var(--rd-green-soft); }
+.rd.top-layout[data-theme="dark"] a.rd-btn:not(.is-primary, .is-selected) { background: var(--dk-surface); border-color: #46525A; color: var(--rd-ink); }
+.rd.top-layout[data-theme="dark"] a.rd-btn:not(.is-primary, .is-selected):hover { background: var(--dk-hover); }
+/* 전역 입력 이름표 색(!important)을 덮음 */
+body.workspace-ui .rd.top-layout[data-theme="dark"] .top-page .table-meals-field label { color: var(--rd-muted) !important; }
+body.workspace-ui .rd.top-layout[data-theme="dark"] .top-page .rd-meals__filters { border-color: transparent !important; }
+.rd.top-layout[data-theme="dark"] .top-page .meal-usage-panel { background: var(--rd-green-soft); border-color: #2D4A36; color: var(--rd-ink); }
+.rd.top-layout[data-theme="dark"] .top-page .meal-usage-panel :is(strong, p, span, small) { color: inherit; }
+/* 주 버튼(초록 바탕 흰 글씨): 어두운 테마의 밝은 초록에선 대비가 낮아 진한 초록으로 */
+.rd.top-layout[data-theme="dark"] .rd-btn.is-primary { --rd-btn-bg: #2F7A45; --rd-btn-line: #2F7A45; --rd-btn-hover-bg: #276A3B; --rd-btn-hover-line: #276A3B; --rd-btn-fg: #fff; --rd-btn-hover-fg: #fff; }
+.rd.top-layout[data-theme="dark"] a.rd-btn.is-primary { background: #2F7A45; border-color: #2F7A45; color: #fff; }
+/* 전역 표 칸 흰 바탕·남색 글씨(WorkspaceTheme .workspace-ui table td)를 업무 화면 어두운 테마에서 끔.
+   우선순위는 그 규칙보다 한 단계만 높게(:where) — 화면이 칸에 직접 준 색(클래스 규칙)은 그대로 이김. 인쇄용 식단표는 제외 */
+.workspace-ui :where(.rd.top-layout[data-theme="dark"] .top-page) table tbody td:not(:where(.table-meals-sheet *)) { background: transparent; color: var(--rd-ink); }
+
+/* 모든 업무 화면을 상단 메뉴로 옮기며(2026-11-10) 대비 검사로 찾은 밝은 색 직접 지정 곳 */
+/* 표 머리 칸 */
+.rd.top-layout[data-theme="dark"] .top-page :is(th, .rd-order__row.is-head) { background-color: var(--dk-surface); border-color: var(--dk-line); }
+/* 구간 버튼(이번 달·지난 달 등) */
+.rd.top-layout[data-theme="dark"] .top-page .rd-seg { background: var(--dk-surface); }
+.rd.top-layout[data-theme="dark"] .top-page .rd-seg button { --rd-btn-hover-bg: var(--dk-hover); }
+.rd.top-layout[data-theme="dark"] .top-page .rd-seg button.is-active { --rd-btn-bg: var(--dk-hover); --rd-btn-hover-bg: var(--dk-hover); --rd-btn-fg: var(--rd-ink); }
+/* 흰 바탕이 직접 적힌 카드·칸 */
+.rd.top-layout[data-theme="dark"] .top-page :is(.order-manager-card, .rd-inv__tile, .rd-order__table, .rd-order__supplier-list, .rd-order__prep) { background-color: var(--dk-surface-2); border-color: var(--dk-line); color: var(--rd-ink); }
+.rd.top-layout[data-theme="dark"] .rd.rd-om .order-manager-card { background: var(--dk-surface-2); border-color: var(--dk-line); }
+.rd.top-layout[data-theme="dark"] .top-page .rd-inv__tile { --rd-btn-bg: var(--dk-surface-2); --rd-btn-hover-bg: var(--dk-hover); }
+.rd.top-layout[data-theme="dark"] .top-page .rd-inv__filters { border-bottom-color: var(--dk-line); }
+body.workspace-ui > #root .rd.top-layout[data-theme="dark"] .rd.dist-admin button.dist-work__tile { background: var(--dk-surface-2) !important; border-color: var(--dk-line) !important; color: var(--rd-ink) !important; }
+body.workspace-ui .rd.top-layout[data-theme="dark"] .procurement-refresh .welstory-panel__head { background: transparent; border-color: var(--dk-line); }
+/* 날짜 줄 고른 날(초록 바탕 흰 글씨) */
+body.workspace-ui > #root .rd.top-layout[data-theme="dark"] .rd.rd .rd-daystrip__day.is-active { background: #2F7A45 !important; border-color: #2F7A45 !important; color: #fff !important; }
+.rd.top-layout[data-theme="dark"] .rd .rd-daystrip__day.is-active .rd-daystrip__badge { background: var(--dk-bg); color: var(--rd-green-dark); }
+/* 글자색이 직접 적힌 곳 */
+.rd.top-layout[data-theme="dark"] .top-page .rd-page__tile.is-info strong { color: var(--rd-blue-ink); }
+.rd.top-layout[data-theme="dark"] .top-page .rd-page__notice.is-warn { color: var(--rd-orange-ink); }
+.rd.top-layout[data-theme="dark"] .top-page .rd-supplier.is-OURHOME { background: var(--rd-orange-soft); }
+.rd.top-layout[data-theme="dark"] .top-page .hg-empty { color: var(--rd-muted); border-color: var(--dk-line); }
+/* 전역 흰 패널 규칙(WorkspaceTheme .workspace-ui :is(...) — 고객사·공급사·검색어·위생·웰스토리·발주 관리 카드 등) */
+.workspace-ui .rd.top-layout[data-theme="dark"] .top-page :is(.account-manager-panel, .account-manager-config, .supplier-integration-grid section, .supplier-integration-summary article, .search-admin-kpis article, .search-admin-charts article, .search-admin-grid article, .vendor-sanitation-card, .welstory-panel, .food-order-panel) { background: var(--dk-surface-2); border-color: var(--dk-line); color: var(--rd-ink); }
+.workspace-ui .rd.top-layout[data-theme="dark"] .top-page :is(.account-manager-panel__header, .account-manager-config__heading, .vendor-sanitation-card__header, .welstory-panel__header, .menu-manager-panel__header, .table-meals-panel__header) { background: transparent; border-bottom-color: var(--dk-line); }
+.workspace-ui .rd.top-layout[data-theme="dark"] .top-page :is(.account-manager-slot, .menu-card, .order-manager-card) { background: var(--dk-surface-2) !important; border-color: var(--dk-line) !important; }
+.workspace-ui .rd.top-layout[data-theme="dark"] .top-page .account-manager-slot.is-selected { background: var(--rd-blue-soft) !important; border-color: var(--rd-blue) !important; }
+.rd.top-layout[data-theme="dark"] .rd.rd-sup :is(.supplier-work-table, .ourhome-sites-table) th { background: var(--dk-surface) !important; }
+body.workspace-ui > #root .rd.top-layout[data-theme="dark"] .rd.rd .rd-daystrip__day:not(.is-active) { background: var(--dk-surface-2) !important; border-color: var(--dk-line) !important; color: var(--rd-ink) !important; }
+body.workspace-ui > #root .rd.top-layout[data-theme="dark"] .rd.rd .rd-daystrip__day:not(.is-active):hover:not(:disabled) { background: var(--dk-hover) !important; }
+.rd.top-layout[data-theme="dark"] .top-page :is(.shortage-info-line, .catalog-preparation-inline) .is-warn { color: var(--rd-orange-ink); }
+.rd.top-layout[data-theme="dark"] .rd.rd-map .supplier-integration-table-wrap th { background: var(--dk-surface) !important; }
+.rd.top-layout[data-theme="dark"] .top-page .welstory-panel__head { background: transparent !important; border-color: var(--dk-line) !important; }
+.rd.top-layout[data-theme="dark"] .top-page .rd.rd-page .menu-manager-panel { background: var(--dk-surface-2) !important; border-color: var(--dk-line) !important; }
+body.workspace-ui > #root .rd.top-layout[data-theme="dark"] .top-page :is(.account-inventory-layout, .rd-page) .menu-manager-panel { background: var(--dk-surface-2) !important; border-color: var(--dk-line) !important; }
+/* 빈 상태 안내 글(밝은 바탕용 회색이 직접 적힘) */
+body.workspace-ui > #root .rd.top-layout[data-theme="dark"] .top-page :is(.procurement-empty, .menu-manager-empty) { color: var(--rd-muted) !important; }

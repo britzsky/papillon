@@ -1,8 +1,7 @@
 import { Link } from 'react-router-dom'
-import HeaderBar from '../../components/HeaderBar'
 import AppAlert from '../../components/AppAlert'
 import LoadingScreen from '../../components/LoadingScreen'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import MenuThumbnail from './MenuThumbnail'
 import { mealCategoryOptions, mealPlanTypeOptions, menuGubunOptions, menuTypeOptions } from './menuManagerShared'
@@ -23,8 +22,8 @@ function AccountMenuImport() {
   return (
     <div className="menu-manager-page">
       {m.isSaving ? <LoadingScreen overlay message="거래처 메뉴로 등록하고 있습니다." /> : null}
-      <main className="menu-manager-content">
-        <SideMenuLayout header={<HeaderBar title="본사 메뉴 가져오기" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '운영관리', to: '/operations/menu' }, { label: '본사 메뉴 가져오기' }]} />}>
+      <div className="menu-manager-content">
+        <TopMenuLayout title="본사 메뉴 가져오기">
           <div className="rd rd-page rd-mi">
             <header className="rd-page__head">
               <div>
@@ -177,8 +176,8 @@ function AccountMenuImport() {
               </aside>
             </div>
           </div>
-        </SideMenuLayout>
-      </main>
+        </TopMenuLayout>
+      </div>
       <AppAlert alert={m.alert} onClose={() => m.setAlert(null)} />
     </div>
   )

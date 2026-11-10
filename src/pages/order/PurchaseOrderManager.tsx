@@ -2,8 +2,7 @@ import { workspaceAccountId } from '../../features/workspace/workspaceAccount'
 import { OrderStatusBadge } from '../../components/WorkspaceTheme'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import HeaderBar from '../../components/HeaderBar'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import SupplierOrderPrint from './SupplierOrderPrint'
 import InspectionPrint from './InspectionPrint'
@@ -130,7 +129,7 @@ export default function PurchaseOrderManager() {
   const inspected = Boolean(selected?.inspected_at)
   const note = !selected ? '' : !receivable ? '' : !inspected ? '물건이 도착하면 검수서로 확인하고 검수완료를 눌러 주세요' : changedCount ? `공급사가 주문과 다른 수량을 출고한 품목 ${changedCount}개 · 받은 수량을 출고 수량으로 미리 채워뒀어요` : shippedCount && shippedCount === live.length ? '주문한 수량 그대로 출고됐어요' : '물건이 도착하면 받은 수량만 확인해 주세요'
 
-  return <main className="purchase-orders"><SideMenuLayout header={<HeaderBar title="발주서·입고 관리" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주관리', to: '/order_manager' }, { label: '발주서·입고 관리' }]} />}>
+  return <div className="purchase-orders"><TopMenuLayout title="발주서·입고 관리">
     <div className="rd rd-recv">
       <header className="rd-recv__head">
         <h1 className="rd-sr-only">발주서·입고 관리</h1>
@@ -239,5 +238,5 @@ export default function PurchaseOrderManager() {
         </> : <p className="rd-order__empty">왼쪽에서 발주서를 고르면 품목과 입고를 여기서 처리할 수 있어요.</p>}</section>
       </div>
     </div>
-  </SideMenuLayout>{inspection ? <InspectionPrint date={inspection.date} orders={inspection.orders} accountId={accountId} /> : selected && <SupplierOrderPrint order={selected} accountId={accountId} labels={labels} />}</main>
+  </TopMenuLayout>{inspection ? <InspectionPrint date={inspection.date} orders={inspection.orders} accountId={accountId} /> : selected && <SupplierOrderPrint order={selected} accountId={accountId} labels={labels} />}</div>
 }

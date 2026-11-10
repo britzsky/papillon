@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import HeroSlider, { BrandCurves, type HeroSlide } from '../components/HeroSlider'
 import HomeProfileCard from '../components/HomeProfileCard'
@@ -8,6 +8,8 @@ import InstagramGrid from '../components/InstagramGrid'
 import NoticeBoard from '../components/NoticeBoard'
 import PressSlide, { type PressArticle } from '../components/PressSlide'
 import TopMenuLayout from '../components/TopMenuLayout'
+import HomeSplash from '../components/HomeSplash'
+import { HOME_READY_STEPS, HomeReadyContext, SPLASH_MAX_MS, clearSplashFlag, splashPending, type HomeReadyKey } from '../features/home/homeReady'
 import { workspaceAccountId } from '../features/workspace/workspaceAccount'
 import bannerImage from '../assets/image/3.png'
 import lunchboxImage from '../assets/image/home-d1-lunchbox.jpg'
@@ -97,7 +99,31 @@ export default function Home() {
   const accountId = workspaceAccountId(params)
   useEffect(() => { document.title = '홈 · 더채움' }, [])
 
+  // 로그인 직후에만 준비 화면(features/home/homeReady.ts): on → (다 끝나거나 최대 시간) leaving(사라지는 중) → off
+  const [splash, setSplash] = useState<'on' | 'leaving' | 'off'>(() => splashPending() ? 'on' : 'off')
+  const [ready, setReady] = useState<ReadonlySet<HomeReadyKey>>(() => new Set<HomeReadyKey>(['session']))
+  const report = useCallback((key: HomeReadyKey) => setReady(prev => prev.has(key) ? prev : new Set(prev).add(key)), [])
+  const allReady = HOME_READY_STEPS.every(step => ready.has(step.key))
+  useEffect(() => {
+    clearSplashFlag()
+    const timer = window.setTimeout(() => setSplash(value => value === 'on' ? 'leaving' : value), SPLASH_MAX_MS)
+    return () => window.clearTimeout(timer)
+  }, [])
+  useEffect(() => {
+    if (!allReady || splash !== 'on') return
+    // 마지막 체크가 보이게 잠깐 두고 사라짐
+    const timer = window.setTimeout(() => setSplash('leaving'), 400)
+    return () => window.clearTimeout(timer)
+  }, [allReady, splash])
+  useEffect(() => {
+    if (splash !== 'leaving') return
+    const timer = window.setTimeout(() => setSplash('off'), 380)
+    return () => window.clearTimeout(timer)
+  }, [splash])
+
   return (
+    <HomeReadyContext.Provider value={report}>
+    {splash !== 'off' ? <HomeSplash done={ready} leaving={splash === 'leaving'} /> : null}
     <TopMenuLayout actionsInPage>
       <div className="home-main">
         <section className="home-main__panel" aria-labelledby="home-main-title">
@@ -125,5 +151,6 @@ export default function Home() {
         </figure>
       </div>
     </TopMenuLayout>
+    </HomeReadyContext.Provider>
   )
 }

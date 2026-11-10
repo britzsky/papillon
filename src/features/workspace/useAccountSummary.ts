@@ -11,6 +11,11 @@ export type AccountSummary = {
 }
 
 export function useAccountSummary(accountId: string) {
+  return useAccountSummaryResult(accountId).data
+}
+
+/** data + done(조회가 끝났는지: 실패해도 true, 거래처가 없으면 바로 true) — 홈 준비 화면용 */
+export function useAccountSummaryResult(accountId: string) {
   const [result, setResult] = useState<{ id: string; data: AccountSummary | null } | null>(null)
   useEffect(() => {
     if (!accountId) return
@@ -21,5 +26,6 @@ export function useAccountSummary(accountId: string) {
       .catch(() => { if (!controller.signal.aborted) setResult({ id: accountId, data: null }) })
     return () => controller.abort()
   }, [accountId])
-  return result?.id === accountId ? result.data : null
+  const mine = result?.id === accountId
+  return { data: mine ? result.data : null, done: !accountId || mine }
 }

@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import HeaderBar from '../../components/HeaderBar'
 import LoadingScreen from '../../components/LoadingScreen'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import AppAlert, { type AppAlertState } from '../../components/AppAlert'
 import { STORAGE_OPTIONS as storageOptions, isIngredientChanged as isChanged, useIngredientMaster } from '../../features/inventory/useIngredientMaster'
@@ -32,8 +31,8 @@ function IngredientMasterManager() {
       {isSaving ? (
         <LoadingScreen overlay message={'식자재 정보를 저장하고 있습니다.'} />
       ) : null}
-      <main className="menu-manager-content">
-        <SideMenuLayout header={<HeaderBar title="식자재 관리" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '재고관리' }, { label: '식자재 관리' }]} />}>
+      <div className="menu-manager-content">
+        <TopMenuLayout title="식자재 관리">
           <div className="rd rd-page rd-master">
             <header className="rd-page__head">
               <div>
@@ -92,8 +91,8 @@ function IngredientMasterManager() {
               ) : null}
             </section>
           </div>
-        </SideMenuLayout>
-      </main>
+        </TopMenuLayout>
+      </div>
       <AppAlert alert={alert} onClose={() => setAlert(null)} />
     </div>
   )

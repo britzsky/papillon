@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import HeaderBar from '../../components/HeaderBar'
 import AppAlert from '../../components/AppAlert'
 import LoadingScreen from '../../components/LoadingScreen'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import RecipeActionMenu from '../../components/RecipeActionMenu'
 import RecipeRegisterModal from '../../components/RecipeRegisterModal'
@@ -20,23 +19,13 @@ function MenuManager() {
   return (
     <div className="menu-manager-page">
       {isSaving ? <LoadingScreen overlay message="메뉴 정보를 저장하고 있습니다." /> : null}
-      <main className="menu-manager-content">
-        <SideMenuLayout
-          header={
-            <HeaderBar
-              title="메뉴 관리"
-              breadcrumbs={[
-                { label: 'Home', to: '/home' },
-                { label: '운영관리', to: '/operations/menu' },
-                { label: '메뉴 관리' },
-              ]}
-            />
-          }
-        >
+      <div className="menu-manager-content">
+        {/* 2026-11-10 사용자 요청: 식단표 관리처럼 홈과 같은 상단 메뉴 틀(사이드 메뉴 → 상단 메뉴, 넓은 업무 화면 폭) */}
+        <TopMenuLayout title="메뉴 관리">
           <div className="rd rd-page rd-mm">
           <header className="rd-page__head">
             <div>
-              <h1 className="rd-sr-only">메뉴 관리</h1>
+              <h1 className="rd-h1 rd-mm__title">메뉴 관리</h1>
               <p className="rd-muted">본사 메뉴 마스터와 본사 레시피를 관리합니다. 식단표에 넣고 저장하면 거래처 메뉴로 자동 복사됩니다.</p>
             </div>
             <DeadlineAlertSlot />
@@ -376,8 +365,8 @@ function MenuManager() {
             </section>
           </section>
           </div>
-        </SideMenuLayout>
-      </main>
+        </TopMenuLayout>
+      </div>
       {imageEditorMenu ? (
         <div className="menu-manager-modal-backdrop" role="presentation" onClick={() => setImageEditorMenuId(null)}>
           <section className="menu-manager-image-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>

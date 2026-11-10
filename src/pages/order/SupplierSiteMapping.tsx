@@ -1,5 +1,4 @@
-import HeaderBar from '../../components/HeaderBar'
-import SideMenuLayout from '../../components/SideMenuLayout'
+import TopMenuLayout from '../../components/TopMenuLayout'
 import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import LoadingScreen from '../../components/LoadingScreen'
 import { SITE_SUPPLIERS as SUPPLIERS, rankSites as rank, siteLabel, useSiteMapping } from '../../features/order/useSiteMapping'
@@ -13,7 +12,7 @@ export default function SupplierSiteMapping() {
     mappingOf, selectable, names, rows, unassigned, excluded, save, sync, toggleUse, busy,
   } = useSiteMapping()
 
-  return <div className="supplier-integration-page"><SideMenuLayout header={<HeaderBar title="공급사 사업장 매핑" breadcrumbs={[{ label: 'Home', to: '/home' }, { label: '발주관리', to: '/order_manager' }, { label: '공급사 사업장 매핑' }]} />}>
+  return <div className="supplier-integration-page"><TopMenuLayout title="공급사 사업장 매핑">
     {syncing ? <LoadingScreen overlay message={`${SUPPLIERS.find(item => item.code === syncing)?.label} 사업장 목록을 받아오고 있습니다.`} /> : null}
     <div className="rd rd-page rd-sup rd-map">
     <header className="rd-page__head">
@@ -83,5 +82,5 @@ export default function SupplierSiteMapping() {
       </section></div>
     </>}
     </div>
-  </SideMenuLayout></div>
+  </TopMenuLayout></div>
 }
