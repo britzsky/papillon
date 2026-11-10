@@ -11,6 +11,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 import Home from './pages/Home.tsx'
+import HomeClassic from './pages/HomeClassic.tsx'
 import AccountInventoryManager from './pages/inventory/AccountInventoryManager.tsx'
 import IngredientMasterManager from './pages/inventory/IngredientMasterManager.tsx'
 import OrderManager from './pages/order/OrderManager.tsx'
@@ -90,7 +91,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/billing/fail" element={<PaymentResult />} />
         <Route path="/home" element={<DeviceRoute pc={<Home />} touch={<HomeTouch />} />} />
         <Route path="/search" element={<Navigate to={`/home${window.location.search}`} replace />} />
-        <Route path="/home/sidebar" element={<DeviceRoute pc={<Home />} touch={<HomeTouch />} />} />
+        <Route path="/home/sidebar" element={<DeviceRoute pc={<HomeClassic />} touch={<HomeTouch />} />} />
         <Route path="/home/sidebar/food-order" element={<DeviceRoute pc={<OrderWorkspace initialTab="shortage" />} touch={<OrderWorkspaceTouch initialTab="shortage" />} />} />
         <Route path="/order_manager/orders" element={<DeviceRoute pc={<PurchaseOrderManager />} touch={<OrdersTouch />} />} />
         <Route path="/order_manager" element={<DeviceRoute pc={<OrderManager />} touch={<OrderWorkspaceTouch />} />} />

@@ -1,0 +1,208 @@
+/* PC 홈(2026-11-09 시안). 글씨는 .rd 규칙(--rd-fs) */
+.rd .home-main {
+  --home-gap: 28px;
+  --rd-card-pad: 18px; /* rd-account 카드 안쪽 여백(Redesign.css 홈 변수) */
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--top-width, 1440px); /* 머리 줄 내용과 같은 폭(TopMenuLayout.css) */
+  margin: 0 auto;
+  align-items: stretch;
+  padding: 20px 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--home-gap);
+}
+
+.rd .home-main__panel {
+  padding: 18px 16px 20px;
+  border-radius: 20px;
+  background: #F4F5F4;
+  box-shadow: 0 8px 24px rgba(30, 42, 34, .14); /* 2026-11-10 시안: 밝은 판 + 그림자 */
+  display: flex;
+  flex-direction: column;
+  gap: var(--home-gap);
+}
+/* 바로가기 — 슬라이드와 공지사항 사이(시안: 물방울 모양 아이콘, 파랑·주황 번갈아, 아래 이름) */
+/* 간격: 전엔 판 폭에 고르게 퍼짐(space-around, 1920 화면에서 아이콘 사이 약 150px) → 2026-11-10 사용자 요청으로 절반 정도로 촘촘하게 가운데 모음 */
+.rd .home-shortcuts { display: flex; justify-content: center; gap: clamp(40px, 4vw, 76px); padding: 4px 0 2px; }
+.rd .home-shortcuts__item { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 88px; border-radius: 12px; color: var(--rd-ink); text-decoration: none; }
+.rd .home-shortcuts__drop {
+  display: flex; align-items: center; justify-content: center; width: 64px; height: 64px;
+  border-radius: 50% 50% 50% 14%; color: #fff; background: #1E98CF;
+  box-shadow: 0 6px 12px rgba(30, 152, 207, .28); transition: transform .15s ease, box-shadow .15s ease;
+}
+.rd .home-shortcuts__item.is-orange .home-shortcuts__drop { background: #E38A2A; box-shadow: 0 6px 12px rgba(227, 138, 42, .3); }
+.rd .home-shortcuts__item:hover .home-shortcuts__drop { transform: translateY(-3px); box-shadow: 0 10px 18px rgba(30, 42, 34, .22); }
+.rd .home-shortcuts__item:focus-visible { outline: 3px solid #1F6B3A; outline-offset: 2px; }
+.rd .home-shortcuts__label { --rd-fs: 14px; font-weight: 700; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .rd .home-shortcuts__drop { transition: none; } .rd .home-shortcuts__item:hover .home-shortcuts__drop { transform: none; } }
+@media (max-width: 760px) {
+  .rd .home-shortcuts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .rd .home-shortcuts__item { min-width: 0; }
+  .rd .home-shortcuts__drop { width: 52px; height: 52px; }
+}
+
+/* 슬라이드 + 인사·바로가기 카드(HomeProfileCard) */
+.rd .home-main__hero-row { display: grid; grid-template-columns: minmax(0, 3fr) minmax(300px, 1fr); gap: var(--home-gap); align-items: stretch; }
+.rd .home-main__hero { min-height: 405px; /* 2026-11-10 +15px, 다시 +10px(사용자 요청) */ box-shadow: 0 6px 16px rgba(30, 42, 34, .16); }
+
+.rd .home-profile { display: flex; flex-direction: column; gap: 14px; padding: 22px 20px; border-radius: 16px; background: #fff; box-shadow: 0 6px 16px rgba(30, 42, 34, .14); min-width: 0; }
+.rd .home-profile__head { display: flex; align-items: center; gap: 14px; }
+.rd .home-profile__text { padding-right: 40px; } /* 오른쪽 위 종·로그아웃 자리 */
+/* 사람 아이콘 = 사용자 정보 열기 버튼. 전역 버튼 테마(body.workspace-ui .rd.rd button → --rd-btn-bg, 흰색)를 덮으려고 선택자를 더 구체적으로 + 변수도 지정 */
+.rd .home-profile__avatar { --rd-btn-bg: #1E98CF; --rd-btn-fg: #fff; --rd-btn-line: transparent; }
+body.workspace-ui .rd.top-layout .home-profile button.home-profile__avatar,
+body.workspace-ui .rd.top-layout .home-profile button.home-profile__avatar:hover:not(:disabled) {
+  flex: none; display: flex; align-items: flex-end; justify-content: center; overflow: hidden;
+  width: 76px !important; min-width: 0 !important; height: 76px !important; min-height: 0 !important; padding: 0 !important;
+  border: 0 !important; border-radius: 50% !important; background: #1E98CF !important; color: #fff !important; box-shadow: none !important; cursor: pointer;
+}
+body.workspace-ui .rd.top-layout .home-profile button.home-profile__avatar:hover:not(:disabled) { background: #1786B8 !important; }
+.rd .home-profile__avatar:focus-visible { outline: 3px solid #1F6B3A; outline-offset: 2px; }
+.rd .home-profile__avatar svg { width: 66px; height: 66px; }
+.rd .home-profile__text { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.rd .home-profile__text p { margin: 0; }
+.rd .home-profile__hello { --rd-fs: 15px; font-weight: 800; }
+.rd .home-profile__who { --rd-fs: 14px; font-weight: 700; overflow-wrap: anywhere; }
+.rd .home-profile__bar { margin: 0 8px; color: var(--rd-muted); font-weight: 400; }
+.rd .home-profile__contact { --rd-fs: 12px; color: var(--rd-muted); }
+.rd .home-profile__picker { display: flex; }
+.rd .home-profile__budget { display: flex; flex-direction: column; gap: 8px; }
+/* 종 알림(HeaderAlerts)을 카드 오른쪽 위에 — 머리 줄 규칙(.header-shell …)이 안 닿으므로 여기서 모양을 준다 */
+.rd .home-profile__head { position: relative; }
+.rd .home-profile__actions { position: absolute; top: -8px; right: -6px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+/* 로그아웃(종 아래) */
+body.workspace-ui .rd.top-layout .home-profile__actions button.home-profile__logout,
+body.workspace-ui .rd.top-layout .home-profile__actions button.home-profile__logout:hover:not(:disabled) {
+  display: flex; align-items: center; justify-content: center; color: #14634d !important;
+  width: 36px !important; min-width: 0 !important; height: 36px !important; min-height: 0 !important; padding: 0 !important;
+  border: 0 !important; border-radius: 50% !important; background: transparent !important; box-shadow: none !important; cursor: pointer;
+}
+body.workspace-ui .rd.top-layout .home-profile__actions button.home-profile__logout:hover:not(:disabled) { background: #F1F3F1 !important; }
+.rd .home-profile__logout:focus-visible { outline: 2px solid #1F6B3A; outline-offset: 1px; }
+body.workspace-ui .rd .home-profile__bell button.header-alerts__bell,
+body.workspace-ui .rd .home-profile__bell button.header-alerts__bell:hover:not(:disabled) {
+  position: relative; display: flex; align-items: center; justify-content: center; overflow: visible;
+  width: 36px !important; min-width: 0 !important; height: 36px !important; min-height: 0 !important; padding: 0 !important;
+  border: 0 !important; border-radius: 50% !important; background: transparent !important; box-shadow: none !important; color: #14634d !important; cursor: pointer;
+}
+body.workspace-ui .rd .home-profile__bell button.header-alerts__bell:hover:not(:disabled) { background: #F1F3F1 !important; }
+.rd .home-profile__bell button.header-alerts__bell:focus-visible { outline: 2px solid #1F6B3A; outline-offset: 1px; }
+
+/* 아래 줄: 더채움 소식 + 사진 4칸(C) */
+.rd .home-main__lower { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--home-gap); }
+
+/* 준비 중 자리: 회색 뼈대 + 이름표 */
+.rd .home-main__slot { position: relative; min-height: 120px; border-radius: 14px; }
+.rd .home-main__slot-tag {
+  --rd-fs: 12px;
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(30, 42, 34, .72);
+  color: #fff;
+  font-weight: 800;
+}
+/* 더채움 소식(NoticeBoard): 흰 카드 + 파란 세로 막대 제목 + 탭, 줄 = 분류 알약 · 날짜 | 제목 */
+.rd .home-news { display: flex; flex-direction: column; min-width: 0; padding: 16px 20px 12px; border-radius: 14px; background: #fff; box-shadow: 0 6px 16px rgba(30, 42, 34, .14); }
+.rd .home-news__head { display: flex; align-items: center; gap: 18px; padding-bottom: 8px; }
+.rd .home-news__title { --rd-fs: 19px; position: relative; margin: 0; padding-left: 14px; font-weight: 900; }
+/* 전역 .workspace-ui h2 색(#182433)보다 구체적으로 — 어두운 테마에서 흰 글씨가 되게 */
+.rd.top-layout h2.home-news__title { color: var(--rd-ink); }
+.rd .home-news__title::before { content: ""; position: absolute; left: 0; top: 50%; width: 4px; height: 18px; transform: translateY(-50%); border-radius: 2px; background: #1E98CF; }
+.rd .home-news__tabs { display: flex; align-items: center; }
+body.workspace-ui .rd .home-news__tabs button.home-news__tab,
+body.workspace-ui .rd .home-news__tabs button.home-news__tab:hover:not(:disabled) {
+  --rd-fs: 13px; min-width: 0 !important; min-height: 0 !important; height: auto !important; padding: 2px 12px !important;
+  border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; color: var(--rd-muted) !important; font-weight: 700; cursor: pointer;
+}
+body.workspace-ui .rd .home-news__tabs button.home-news__tab + button.home-news__tab { border-left: 1px solid #C9CFCA !important; }
+body.workspace-ui .rd .home-news__tabs button.home-news__tab.is-active { color: var(--rd-ink) !important; font-weight: 900; }
+.rd .home-news__tab:focus-visible { outline: 2px solid #1F6B3A; outline-offset: 2px; }
+.rd .home-news__msg { margin: 8px 0 0; }
+/* 다섯 줄 높이 — 넘으면 목록 안에서 스크롤 */
+.rd .home-news__list { --news-row: 40px; margin: 0; padding: 0; list-style: none; max-height: calc(var(--news-row) * 5); overflow-y: auto; }
+.rd .home-news__list li { display: grid; grid-template-columns: 92px 74px minmax(0, 1fr); align-items: center; min-height: var(--news-row); box-sizing: border-box; }
+.rd .home-news__list li + li { border-top: 1px solid #C9DCE6; }
+.rd .home-news__pill { --rd-fs: 12px; justify-self: start; max-width: 84px; padding: 2px 10px; border-radius: 999px; color: #fff; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: #5A8A3A; }
+.rd .home-news__pill.is-orange { background: #F29A2E; }
+.rd .home-news__pill.is-blue { background: #1E98CF; }
+.rd .home-news__date { --rd-fs: 13px; color: var(--rd-ink); font-variant-numeric: tabular-nums; border-right: 1px solid #9AA59D; padding-right: 10px; margin-right: 12px; line-height: 1.1; }
+.rd .home-news__text { --rd-fs: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--rd-ink); text-decoration: none; }
+.rd a.home-news__text:hover { text-decoration: underline; }
+.rd .home-news__new { --rd-fs: 11px; display: inline-block; margin-right: 6px; padding: 0 5px; border-radius: 4px; background: var(--rd-red, #C62828); color: #fff; vertical-align: 1px; }
+.rd .home-news__file { --rd-fs: 12px; display: inline-flex; align-items: center; gap: 2px; margin-left: 6px; color: var(--rd-muted); vertical-align: -1px; }
+
+/* C: 인스타그램 최근 게시물 4칸(InstagramGrid) — 같은 높이로 아래·위·아래·위 교차(시안, 2026-11-10 사용자 확인): 1·3번째는 아래에 붙고 2·4번째는 위에 붙음 */
+.rd .home-insta { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.rd .home-insta__grid { flex: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: stretch; min-height: 230px; }
+.rd .home-insta__tile { position: relative; display: block; height: 86%; align-self: start; overflow: hidden; border-radius: 6px; background: #D6DCD7; box-shadow: 0 4px 10px rgba(30, 42, 34, .16); }
+.rd .home-insta__tile:nth-child(odd) { align-self: end; }
+.rd .home-insta__tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .25s ease; }
+.rd a.home-insta__tile:hover img { transform: scale(1.04); }
+.rd a.home-insta__tile:focus-visible { outline: 3px solid #1F6B3A; outline-offset: 2px; }
+.rd .home-insta__kind { --rd-fs: 13px; position: absolute; top: 6px; right: 8px; color: #fff; text-shadow: 0 1px 4px rgba(0, 0, 0, .6); }
+.rd .home-insta__msg { --rd-fs: 12px; margin: 0; color: var(--rd-muted); }
+@media (prefers-reduced-motion: reduce) { .rd .home-insta__tile img { transition: none; } .rd a.home-insta__tile:hover img { transform: none; } }
+
+/* 판 아래: 사진 카드 3개(D) + 넓은 배너(E, 오른쪽 아래 로고 색 곡선은 BrandCurves) */
+.rd .home-main__cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--home-gap); }
+.rd .home-main__card { height: 205px; /* 2026-11-10 +15px, 다시 +10px(사용자 요청) */ background: #EDF0ED; }
+/* D-1~D-3 사진 카드 — 세로 사진을 가로로 채움(보일 부분은 Home.tsx photoCards.position) */
+/* 사진 카드 = 크게 보기 버튼(HomePhotoCards). 전역 버튼 테마를 덮는다 */
+.rd .home-main__photo { --rd-btn-bg: #EDF0ED; --rd-btn-line: transparent; }
+body.workspace-ui .rd.top-layout button.home-main__photo,
+body.workspace-ui .rd.top-layout button.home-main__photo:hover:not(:disabled) {
+  position: relative; display: block; width: 100%; height: 205px !important; min-height: 0 !important; margin: 0; padding: 0 !important; overflow: hidden;
+  border: 0 !important; border-radius: 14px !important; background: #EDF0ED !important; box-shadow: 0 6px 16px rgba(30, 42, 34, .14) !important; cursor: zoom-in;
+}
+.rd .home-main__photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .25s ease; }
+.rd .home-main__photo:hover img { transform: scale(1.03); }
+.rd .home-main__photo:focus-visible { outline: 3px solid #1F6B3A; outline-offset: 3px; }
+.rd .home-main__photo-zoom { position: absolute; right: 10px; bottom: 10px; display: flex; padding: 7px; border-radius: 50%; background: rgba(0, 0, 0, .5); color: #fff; opacity: 0; transition: opacity .15s ease; }
+.rd .home-main__photo:is(:hover, :focus-visible) .home-main__photo-zoom { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .rd .home-main__photo img { transition: none; } .rd .home-main__photo:hover img { transform: none; } }
+
+/* 사진 크게 보기(dialog) — 원래 비율 그대로, 화면 안에 맞춤 */
+.rd .photo-viewer { box-sizing: border-box; max-width: 100vw; max-height: 100vh; width: 100vw; height: 100vh; margin: 0; padding: 48px 72px; border: 0; background: transparent; color: #fff; }
+.rd .photo-viewer::backdrop { background: rgba(10, 14, 12, .86); }
+.rd .photo-viewer[open] { display: flex; align-items: center; justify-content: center; }
+.rd .photo-viewer__figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; max-width: 100%; max-height: 100%; pointer-events: none; }
+.rd .photo-viewer__figure img { display: block; max-width: 100%; max-height: calc(100vh - 140px); object-fit: contain; border-radius: 8px; box-shadow: 0 16px 40px rgba(0, 0, 0, .5); pointer-events: auto; }
+.rd .photo-viewer__figure figcaption { --rd-fs: 14px; text-align: center; opacity: .92; pointer-events: auto; }
+body.workspace-ui .rd .photo-viewer button.photo-viewer__btn,
+body.workspace-ui .rd .photo-viewer button.photo-viewer__btn:hover:not(:disabled) {
+  position: absolute; display: flex; align-items: center; justify-content: center;
+  width: 48px !important; min-width: 0 !important; height: 48px !important; min-height: 0 !important; padding: 0 !important;
+  border: 0 !important; border-radius: 50% !important; background: rgba(255, 255, 255, .14) !important; color: #fff !important; box-shadow: none !important; cursor: pointer;
+}
+body.workspace-ui .rd .photo-viewer button.photo-viewer__btn:hover:not(:disabled) { background: rgba(255, 255, 255, .28) !important; }
+.rd .photo-viewer__btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.rd .photo-viewer__btn.is-close { top: 16px; right: 16px; }
+.rd .photo-viewer__btn.is-prev { left: 16px; top: 50%; transform: translateY(-50%); }
+.rd .photo-viewer__btn.is-next { right: 16px; top: 50%; transform: translateY(-50%); }
+.rd .home-main__banner { position: relative; margin: 0; height: 220px; border-radius: 14px; overflow: hidden; background: #EDF0ED; }
+.rd .home-main__banner img { width: 100%; height: 100%; object-fit: cover; object-position: center 40%; display: block; }
+
+@media (max-width: 1100px) {
+  .rd .home-main { padding: 16px; }
+  .rd .home-main__hero-row,
+  .rd .home-main__lower { grid-template-columns: minmax(0, 1fr); }
+  .rd .home-main__hero { min-height: 325px; }
+}
+@media (max-width: 760px) {
+  .rd .home-main__cards { grid-template-columns: minmax(0, 1fr); }
+  .rd .home-insta__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* 접속자 카드 종 알림 창·사용자 정보 창: 머리 줄 기준(오른쪽 위 고정) 대신 종 바로 아래에 — 앵커 위치를 지원하는 브라우저만, 아니면 원래 자리 */
+@supports (anchor-name: --home-bell) {
+  .rd .home-profile__bell button.header-alerts__bell { anchor-name: --home-bell; }
+  .rd .home-profile__bell .header-bar__user-info.header-alerts { position-anchor: --home-bell; inset: auto; top: anchor(bottom); right: anchor(right); margin-top: 6px; }
+  /* 사용자 정보 창은 사람 아이콘 바로 아래 */
+  .rd button.home-profile__avatar { anchor-name: --home-avatar; }
+  .rd .header-bar__user-info.home-profile__user-info { position-anchor: --home-avatar; inset: auto; top: anchor(bottom); left: anchor(left); margin-top: 8px; }
+}

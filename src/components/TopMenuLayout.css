@@ -1,0 +1,225 @@
+/* 상단 메뉴 틀(2026-11-09). 글씨는 .rd 규칙(--rd-fs)으로 준다 — 전역 !important 규칙이 일반 font-size를 덮는다 */
+
+/* 새 홈 글꼴 시험(2026-11-09 사용자 요청, 임시): 오른쪽 아래 '가' 버튼(FontPicker)으로 data-font를 바꾼다.
+   - April16th: 사월십육일체 안전체(4·16재단 https://416foundation.org/April16th/ 공식 woff2). 원본은 글자마다 노란색이 박힌 컬러 폰트라
+     사용자 요청(검정 글씨)대로 색 표(COLR·CPAL·SVG)만 뺀 파일. 글자 모양은 원본 그대로.
+   - honesty: 116앵덕정직체 1.5(제작 WOO, 상업 무료·수정 금지 — 눈누 배포 woff2 그대로). 한글 일부만 들어 있어 없는 글자는 다음 글꼴로.
+   굵기는 둘 다 한 가지라 굵은 글씨는 브라우저가 굵게 그린다 */
+@font-face { font-family: 'April16th Safety'; src: url('../assets/fonts/April16th-Safety.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: '116angduk honesty'; src: url('../assets/fonts/116angduk_honesty15.woff2') format('woff2'); font-display: swap; }
+.rd.top-layout { --home-font-base: 'Segoe UI', 'Pretendard', 'Noto Sans KR', sans-serif; --home-font: var(--home-font-base); }
+.rd [data-font="segoe"] { --home-font: var(--home-font-base); }
+.rd.top-layout[data-font="april16th"], .rd [data-font="april16th"] { --home-font: 'April16th Safety', var(--home-font-base); }
+.rd.top-layout[data-font="honesty"], .rd [data-font="honesty"] { --home-font: '116angduk honesty', var(--home-font-base); }
+.rd.top-layout,
+.rd.top-layout :is(button, input, select, textarea) { font-family: var(--home-font); }
+.rd .font-picker__option { font-family: var(--home-font); }
+
+.rd.top-layout {
+  --top-bar-height: 68px;
+  /* 머리 줄 내용과 PC 홈 본문의 최대 폭 — 본사(메뉴 7개)도 머리 줄이 한 줄에 들어가는 폭(2026-11-10 사용자 요청: 넘치면 홈 폭을 넓혀 맞춤) */
+  --top-width: 1760px;
+  height: 100vh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  background: #ffffff;
+  color: var(--rd-ink);
+}
+
+.rd .top-layout__bar {
+  position: relative;
+  z-index: 50;
+  border-bottom: 1px solid var(--rd-line);
+  background: #ffffff;
+}
+/* 머리 줄 내용: 본문과 같은 폭으로 화면 가운데. 맨 오른쪽은 테마 스위치 */
+.rd .top-layout__inner {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: var(--top-width);
+  min-height: var(--top-bar-height);
+  margin: 0 auto;
+  padding: 0 28px;
+}
+
+.rd .top-layout__brand { display: flex; align-items: center; flex: none; }
+.rd .top-layout__brand img { display: block; width: 112px; height: auto; }
+
+/* 카테고리 줄 — 로고와 검색창 사이 남는 폭의 가운데(2026-11-10 시안) */
+.rd .top-layout__nav { flex: 1 1 auto; display: flex; justify-content: center; align-items: stretch; align-self: stretch; gap: 18px; min-width: 0; }
+.rd .top-layout__cat { position: relative; display: flex; align-items: stretch; }
+.rd .top-layout__cat-btn {
+  --rd-fs: 15px;
+  --button-height: auto;
+  --button-width: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: auto;
+  min-height: 0;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--rd-ink);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.rd .top-layout__cat-btn::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: transparent;
+  transition: background .15s ease;
+}
+.rd .top-layout__cat.is-open .top-layout__cat-btn,
+.rd .top-layout__cat.is-current .top-layout__cat-btn { color: var(--rd-green-dark); }
+.rd .top-layout__cat.is-open .top-layout__cat-btn::after { background: var(--rd-green); }
+.rd .top-layout__cat.is-current .top-layout__cat-btn::after { background: var(--rd-line-strong); }
+.rd .top-layout__cat-btn:focus-visible { outline: 2px solid var(--rd-green); outline-offset: -2px; }
+
+/* 내려오는 메뉴 */
+.rd .top-layout__drop {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 200px;
+  padding: 8px;
+  border: 1px solid var(--rd-line);
+  border-top: 0;
+  border-radius: 0 0 14px 14px;
+  background: #ffffff;
+  box-shadow: 0 14px 30px rgba(30, 42, 34, .12);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: top-layout-drop .16s ease-out;
+}
+.rd .top-layout__drop[hidden] { display: none; }
+@keyframes top-layout-drop { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .rd .top-layout__drop { animation: none; } }
+
+.rd .top-layout__link {
+  --rd-fs: 14px;
+  display: block;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--rd-ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.rd .top-layout__link:hover,
+.rd .top-layout__link:focus-visible { background: var(--rd-green-soft); color: var(--rd-green-dark); outline: none; }
+.rd .top-layout__link.is-active { color: var(--rd-green-dark); font-weight: 800; }
+.rd .top-layout__link.is-disabled { color: var(--rd-muted); cursor: default; }
+
+/* 검색창: 시안의 회색 둥근 막대 */
+.rd .top-layout__search.rd-home__search { flex: 0 1 360px; min-width: 180px; max-width: 360px; margin-left: auto; }
+.rd .top-layout__search.rd-home__search label { min-height: 40px; border: 0; border-radius: 999px; background: #EEF1EE; }
+.rd .top-layout__search.rd-home__search > .rd-btn { display: none; }
+.rd .top-layout__bar .header-bar__actions { margin-left: 0; }
+/* 전역 머리 줄 규칙(WorkspaceTheme·ResponsiveWorkspace·PosTheme의 .header-shell: 세로 쌓기·여백·바탕)을 이 묶음에서는 끈다 */
+body.workspace-ui .rd.top-layout .top-layout__actions.header-shell {
+  position: static; flex: none; display: flex; flex-direction: row; align-items: center;
+  padding: 0; border: 0; background: none; backdrop-filter: none;
+}
+/* 전역 버튼 테마(PosTheme body.workspace-ui button !important)가 카테고리 버튼을 상자로 만들지 않게 */
+body.workspace-ui .rd.top-layout button.top-layout__cat-btn,
+body.workspace-ui .rd.top-layout button.top-layout__cat-btn:hover:not(:disabled) {
+  border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; color: var(--rd-ink) !important;
+}
+body.workspace-ui .rd.top-layout :is(.top-layout__cat.is-open, .top-layout__cat.is-current) button.top-layout__cat-btn { color: var(--rd-green-dark) !important; }
+
+.rd .top-layout__content { min-height: 0; overflow: auto; }
+
+/* 한 줄에 다 안 들어가는 폭에서는 메뉴 줄을 로고 아래 둘째 줄로(메뉴 5개 이하 / 본사처럼 많을 때 기준이 다름) */
+@media (max-width: 1459px) {
+  .rd .top-layout__inner { flex-wrap: wrap; row-gap: 0; padding-top: 8px; }
+  .rd .top-layout__nav { order: 3; flex-basis: 100%; height: 46px; }
+}
+@media (max-width: 1759px) {
+  .rd .top-layout__bar[data-menus="many"] .top-layout__inner { flex-wrap: wrap; row-gap: 0; padding-top: 8px; }
+  .rd .top-layout__bar[data-menus="many"] .top-layout__nav { order: 3; flex-basis: 100%; height: 46px; }
+}
+
+/* 테마 스위치(ThemeSwitch): 달 · 스위치 · 해 */
+.rd .theme-switch { flex: none; display: flex; align-items: center; gap: 6px; margin-left: 4px; }
+.rd .theme-switch__icon { display: flex; color: #9AA59D; cursor: pointer; transition: color .15s ease; }
+.rd .theme-switch.is-dark .theme-switch__icon.is-moon,
+.rd .theme-switch:not(.is-dark) .theme-switch__icon.is-sun { color: #1E2A22; }
+body.workspace-ui .rd .theme-switch button.theme-switch__track,
+body.workspace-ui .rd .theme-switch button.theme-switch__track:hover:not(:disabled) {
+  position: relative; width: 38px !important; min-width: 0 !important; height: 20px !important; min-height: 0 !important; padding: 0 !important;
+  border: 1.5px solid #1E2A22 !important; border-radius: 999px !important; background: #fff !important; box-shadow: none !important; cursor: pointer;
+}
+.rd .theme-switch__thumb { position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 50%; background: #1E2A22; transition: transform .2s ease; }
+.rd .theme-switch.is-dark .theme-switch__thumb { transform: translateX(18px); }
+.rd .theme-switch__track:focus-visible { outline: 2px solid #1F6B3A; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .rd .theme-switch__thumb { transition: none; } }
+
+/* 오른쪽 아래 바로가기(QuickLinks): 글꼴 선택기 · 맨 위로(인스타·블로그는 2026-11-10 머리 줄로) */
+.rd .quick-links { position: fixed; right: 24px; bottom: 24px; z-index: 60; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.rd .quick-links__btn {
+  --button-height: auto;
+  --button-width: 0;
+  width: 52px; height: 52px; padding: 0; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
+  box-shadow: 0 6px 18px rgba(30, 42, 34, .18); text-decoration: none; cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease, opacity .2s ease;
+}
+.rd .quick-links__btn:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(30, 42, 34, .24); }
+.rd .quick-links__btn:focus-visible { outline: 3px solid var(--rd-green); outline-offset: 2px; }
+/* 맨 위로: 전역 버튼 테마(PosTheme !important)를 더 구체적으로 덮는다 */
+body.workspace-ui .rd .quick-links button.quick-links__btn.is-top,
+body.workspace-ui .rd .quick-links button.quick-links__btn.is-top:hover:not(:disabled) {
+  border: 1px solid var(--rd-line-strong) !important; border-radius: 50% !important; background: #fff !important; color: var(--rd-ink) !important;
+  width: 52px !important; min-width: 0 !important; height: 52px !important; min-height: 0 !important; padding: 0 !important;
+}
+@media (max-width: 760px) {
+  body.workspace-ui .rd .quick-links button.quick-links__btn.is-top { width: 44px !important; height: 44px !important; }
+}
+.rd .quick-links__top-label { --rd-fs: 10px; font-weight: 800; line-height: 1; margin-top: -2px; }
+.rd .quick-links__btn.is-top.is-hidden { opacity: 0; pointer-events: none; transform: translateY(8px); }
+@media (prefers-reduced-motion: reduce) { .rd .quick-links__btn { transition: none; } }
+@media (max-width: 760px) { .rd .quick-links { right: 16px; bottom: 16px; } .rd .quick-links__btn { width: 44px; height: 44px; } }
+
+/* 글꼴 시험 선택기(임시, 인스타 위). 버튼은 맨 위로와 같은 방식으로 전역 버튼 테마를 덮는다 */
+.rd .font-picker { position: relative; }
+body.workspace-ui .rd .quick-links button.quick-links__btn.font-picker__btn,
+body.workspace-ui .rd .quick-links button.quick-links__btn.font-picker__btn:hover:not(:disabled) {
+  border: 0 !important; border-radius: 50% !important; background: #1E2A22 !important; color: #fff !important;
+  width: 52px !important; min-width: 0 !important; height: 52px !important; min-height: 0 !important; padding: 0 !important;
+  --rd-fs: 20px; font-weight: 800;
+}
+.rd .font-picker__btn[aria-expanded="true"] { outline: 3px solid #F2C94C; outline-offset: 2px; }
+.rd .font-picker__menu {
+  position: absolute; right: 64px; bottom: 0; width: 280px; display: flex; flex-direction: column; gap: 6px; padding: 12px;
+  border: 1px solid var(--rd-line-strong); border-radius: 14px; background: #fff; box-shadow: 0 12px 28px rgba(30, 42, 34, .2);
+}
+.rd .font-picker__title { --rd-fs: 13px; font-weight: 800; color: var(--rd-ink); }
+.rd .font-picker__title small { --rd-fs: 11px; margin-left: 4px; color: var(--rd-muted); font-weight: 600; }
+.rd .font-picker__option { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--rd-line); border-radius: 10px; cursor: pointer; }
+.rd .font-picker__option.is-on { border-color: #1F6B3A; background: #E7F2EA; }
+.rd .font-picker__option input { margin: 0; accent-color: #1F6B3A; }
+.rd .font-picker__sample { --rd-fs: 16px; display: flex; flex-direction: column; color: var(--rd-ink); font-weight: 700; }
+.rd .font-picker__sample small { --rd-fs: 12px; color: var(--rd-muted); font-weight: 400; }
+@media (max-width: 760px) {
+  body.workspace-ui .rd .quick-links button.quick-links__btn.font-picker__btn { width: 44px !important; height: 44px !important; }
+  .rd .font-picker__menu { right: 54px; width: 240px; }
+}
+
+/* 검색창 오른쪽 SNS 아이콘(2026-11-10 시안) */
+.rd .header-sns { flex: none; display: flex; align-items: center; gap: 4px; }
+.rd .header-sns__link { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; text-decoration: none; }
+.rd .header-sns__link:hover { background: #F1F3F1; }
+.rd .header-sns__link:focus-visible { outline: 2px solid #1F6B3A; outline-offset: 1px; }
+.rd .header-sns__link.is-blog span { --rd-fs: 21px; font-family: Arial, sans-serif; font-weight: 900; color: #03C75A; line-height: 1; }
+.rd .header-sns__link.is-instagram { color: #E1306C; }
+.rd .header-sns__link.is-youtube { color: #FF0000; }

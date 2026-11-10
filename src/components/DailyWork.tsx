@@ -4,37 +4,12 @@ import { Fragment, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { TASKS, accountHref as href, needsSite, taskCount as count, useDailyWork, type TaskTile, type TaskTone } from '../features/workspace/useDailyWork'
 import { useUpcomingMealDays, useWorkspaceCalendar } from '../features/workspace/useWorkspaceCalendar'
-import { useAccountSummary } from '../features/workspace/useAccountSummary'
+import AccountBudgetCard from './AccountBudgetCard'
 import DeadlineAlertSlot from './DeadlineAlertSlot'
 import MallBanner from './MallBanner'
 import WeekMealBoard from './WeekMealBoard'
 import { isSiteUser } from '../features/workspace/roleScreens'
 import { useHqOverview } from '../features/workspace/useHqOverview'
-
-const won = (value: number) => Math.round(value).toLocaleString('ko-KR')
-/** 예산 묶음 하나(예산·사용·여유 + 사용 막대) */
-/** 예산 사용률 단계(2026-10-26 사용자 결정): 80% 이상 주황, 90% 이상 빨강, 100% 넘으면 빨강 + 심장 뛰듯 굵기 애니메이션 */
-function budgetLevel(budget: number, used: number) {
-  if (!budget) return ''
-  if (used > budget) return 'is-over'
-  const ratio = used / budget
-  return ratio >= 0.9 ? 'is-danger' : ratio >= 0.8 ? 'is-warn' : ''
-}
-
-function budgetBlock(title: string, budget = 0, used = 0, remaining = 0) {
-  const pct = budget ? Math.round(used / budget * 100) : 0
-  const level = budgetLevel(budget, used)
-  // 한 줄 제목(사용률) + 막대 + 예산|사용|여유 가로 3칸 — 홈이 스크롤 없이 한 화면에 들어가게(사용자 요청)
-  return <div className={`rd-budget${level ? ` ${level}` : ''}`}>
-    <div className="rd-budget__head"><strong className="rd-budget__title">{title}</strong>{budget ? <span className="rd-budget__pct rd-muted rd-fs-xs" role={level === 'is-over' ? 'status' : undefined}>{pct}% 사용{level === 'is-over' ? ' · 예산 초과' : ''}</span> : null}</div>
-    {budget ? <span className="rd-bar rd-account__bar" aria-hidden="true"><span className={used > budget ? 'is-over' : ''} style={{ width: `${Math.min(100, pct)}%` }} /></span> : null}
-    <dl className="rd-budget__nums">
-      <div><dt>예산</dt><dd>{won(budget)}원</dd></div>
-      <div><dt>사용</dt><dd>{won(used)}원</dd></div>
-      <div><dt>여유</dt><dd className={remaining < 0 ? 'rd-text-red' : 'rd-text-ok'}>{won(remaining)}원</dd></div>
-    </dl>
-  </div>
-}
 
 /**
  * PC 홈 본문(2026-10-15 개편, 시안 ① 홈). 조회·계산은 features/workspace/useDailyWork(터치 홈과 공용).
@@ -90,8 +65,6 @@ export default function DailyWork({ search }: { search: ReactNode }) {
   const hqOpenTile = hqTiles.find(tile => tile.key === hqOpen && tile.accounts.length > 1)
   const calendar = useWorkspaceCalendar(single?.account_id || '')
   const upcomingMealDays = useUpcomingMealDays(single?.account_id || '')
-  const summary = useAccountSummary(single?.account_id || '')
-  const userName = summary?.user_name || localStorage.getItem('user_name') || ''
 
   // 거래처 한 곳: 두 번째 칸은 '공급사 확인 요망'(접수 불명확 발주서 + 아워홈 출고·삭제 알림)
   const notices = single ? Number(single.supplier_notices) || 0 : 0
@@ -196,23 +169,7 @@ export default function DailyWork({ search }: { search: ReactNode }) {
       </div>
 
       <aside className="rd-home__side" aria-label="거래처 정보와 달력">
-      <section className="rd-card rd-account" aria-label="거래처 정보">
-        {/* 거래처명 왼쪽 · 로그인한 사람 이름 오른쪽(서버 값, 없으면 로그인 때 저장한 이름 — 사이드 메뉴 카드와 같은 값) */}
-        <div className="rd-account__who">
-          <strong className="rd-fs-lg">{summary?.account_name || single.account_name}</strong>
-          {userName ? <span className="rd-account__user">{userName} 님</span> : null}
-        </div>
-        <dl className="rd-account__rows">
-          <div><dt>담당자</dt><dd>{summary?.manager_name ? `${summary.manager_name}${summary.manager_tel ? ` · ${summary.manager_tel}` : ''}` : '등록 안 됨'}</dd></div>
-        </dl>
-        {/* 예산: 기존 ERP 예산관리 값 그대로(식자재 budget_grant/day_use_amount, 소모품 supplies_budget/supplies_used) */}
-        {!summary ? <p className="rd-muted rd-fs-sm">예산을 확인하고 있어요.</p>
-          : summary.budget.status === 'ERROR' ? <p className="rd-text-warn rd-fs-sm">ERP 예산을 불러오지 못했어요. 잠시 후 새로고침해 주세요.</p>
-          : summary.budget.status === 'NONE' ? <p className="rd-muted rd-fs-sm">{Number(summary.month.slice(5))}월 예산이 아직 등록되지 않았어요.</p>
-          : <>{budgetBlock('식자재 예산', summary.budget.food_budget, summary.budget.food_used, summary.budget.food_remaining)}
-            {budgetBlock('소모품 예산', summary.budget.supplies_budget, summary.budget.supplies_used, summary.budget.supplies_remaining)}
-            <small className="rd-muted rd-fs-xs">{Number(summary.month.slice(5))}월 · ERP 예산관리 기준{summary.budget.note ? ` · ${summary.budget.note}` : ''}</small></>}
-      </section>
+      <AccountBudgetCard accountId={single.account_id} fallbackName={single.account_name} />
 
       <section className="rd-card rd-cal" aria-label="발주·입고 달력">
         <div className="rd-cal__head">

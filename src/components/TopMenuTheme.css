@@ -1,0 +1,76 @@
+/*
+ * 상단 메뉴 화면(PC 홈) 어두운 테마(2026-11-10 사용자 요청, 머리 줄 맨 오른쪽 ThemeSwitch → TopMenuLayout data-theme="dark").
+ * 1) .rd 색 변수(--rd-*)를 어둡게 바꾸고 2) 홈 부품에 직접 적힌 밝은 색(#fff 등)만 골라 덮는다.
+ * 사이드 메뉴 업무 화면에는 아직 적용 안 됨. 새 홈 부품에 밝은 색을 직접 쓰면 여기에도 어두운 값을 추가할 것.
+ */
+.rd.top-layout[data-theme="dark"] {
+  --dk-bg: #121619;
+  --dk-surface: #1B2125;
+  --dk-surface-2: #242B30;
+  --dk-hover: #2C3439;
+  --dk-line: #343D43;
+  --rd-ink: #E5EBE7; --rd-muted: #9CA8A1; --rd-soft-ink: #C3CCC6;
+  --rd-bg: var(--dk-bg); --rd-card: var(--dk-surface); --rd-line: var(--dk-line); --rd-line-strong: #46525A;
+  --rd-green: #5DB672; --rd-green-dark: #8FD3A0; --rd-green-soft: #1E3326;
+  --rd-blue-soft: #1B2B3D; --rd-blue-ink: #9CC4F0;
+  --rd-orange: #F0A055; --rd-orange-ink: #F5B979; --rd-orange-soft: #3A2A18;
+  --rd-red: #F07468; --rd-red-ink: #F59990; --rd-red-soft: #3A1E1C;
+  background: var(--dk-bg);
+  color: var(--rd-ink);
+}
+
+/* 머리 줄 */
+.rd.top-layout[data-theme="dark"] .top-layout__bar { background: var(--dk-surface); border-bottom-color: var(--dk-line); }
+.rd.top-layout[data-theme="dark"] .top-layout__drop { background: var(--dk-surface); box-shadow: 0 14px 30px rgba(0, 0, 0, .45); }
+.rd.top-layout[data-theme="dark"] .top-layout__search.rd-home__search label { background: var(--dk-surface-2); color: var(--rd-ink); }
+.rd.top-layout[data-theme="dark"] .rd-home__search input { color: var(--rd-ink); }
+.rd.top-layout[data-theme="dark"] .rd-home__search-pop { background: var(--dk-surface); box-shadow: 0 12px 32px rgba(0, 0, 0, .5); }
+.rd.top-layout[data-theme="dark"] .header-sns__link:hover { background: var(--dk-hover); }
+.rd.top-layout[data-theme="dark"] .header-sns__link.is-blog span { color: #2FD873; }
+.rd.top-layout[data-theme="dark"] .workspace-account__pop { background: var(--dk-surface); box-shadow: 0 12px 32px rgba(0, 0, 0, .5); }
+body.workspace-ui .rd.top-layout[data-theme="dark"] button.workspace-account__trigger { background: var(--rd-green-soft) !important; color: var(--rd-green-dark) !important; border-color: var(--rd-green) !important; }
+body.workspace-ui .rd.top-layout[data-theme="dark"] .rd-input { background: var(--dk-surface-2) !important; color: var(--rd-ink) !important; border-color: var(--dk-line) !important; }
+
+/* 테마 스위치 */
+.rd.top-layout[data-theme="dark"] .theme-switch__icon { color: #5F6B65; }
+.rd.top-layout[data-theme="dark"] .theme-switch.is-dark .theme-switch__icon.is-moon { color: #F2C94C; }
+body.workspace-ui .rd.top-layout[data-theme="dark"] .theme-switch button.theme-switch__track { background: var(--dk-surface-2) !important; border-color: var(--rd-ink) !important; }
+.rd.top-layout[data-theme="dark"] .theme-switch__thumb { background: var(--rd-ink); }
+
+/* 홈 판·카드 */
+.rd.top-layout[data-theme="dark"] .home-main__panel { background: var(--dk-surface); box-shadow: 0 8px 24px rgba(0, 0, 0, .45); }
+.rd.top-layout[data-theme="dark"] :is(.home-profile, .home-news) { background: var(--dk-surface-2); box-shadow: 0 6px 16px rgba(0, 0, 0, .4); }
+.rd.top-layout[data-theme="dark"] .rd-budget { background: var(--dk-surface); }
+.rd.top-layout[data-theme="dark"] .rd-bar { background: var(--dk-line); }
+.rd.top-layout[data-theme="dark"] .rd-text-ok { color: var(--rd-green-dark); }
+body.workspace-ui .rd.top-layout[data-theme="dark"] :is(.home-profile__bell button.header-alerts__bell, .home-profile__actions button.home-profile__logout) { color: var(--rd-green-dark) !important; }
+body.workspace-ui .rd.top-layout[data-theme="dark"] :is(.home-profile__bell button.header-alerts__bell, .home-profile__actions button.home-profile__logout):hover:not(:disabled) { background: var(--dk-hover) !important; }
+.rd.top-layout[data-theme="dark"] .home-news__list li + li { border-top-color: var(--dk-line); }
+.rd.top-layout[data-theme="dark"] .home-news__date { border-right-color: #56625B; }
+body.workspace-ui .rd.top-layout[data-theme="dark"] .home-news__tabs button.home-news__tab + button.home-news__tab { border-left-color: var(--dk-line) !important; }
+.rd.top-layout[data-theme="dark"] :is(.home-insta__tile, .home-main__card, .home-main__banner, .hero-slider) { background: var(--dk-surface-2); }
+.rd.top-layout[data-theme="dark"] .home-shortcuts__item.is-orange .home-shortcuts__drop,
+.rd.top-layout[data-theme="dark"] .home-shortcuts__drop { box-shadow: 0 6px 12px rgba(0, 0, 0, .4); }
+
+/* 알림·사용자 정보 창(팝오버) */
+.rd.top-layout[data-theme="dark"] .header-bar__user-info { background: var(--dk-surface-2); color: var(--rd-ink); border-color: var(--dk-line); box-shadow: 0 12px 36px rgba(0, 0, 0, .55); }
+.rd.top-layout[data-theme="dark"] .header-bar__user-info :is(h2, dt, dd, small, p) { color: var(--rd-ink); }
+.rd.top-layout[data-theme="dark"] .header-bar__user-info dt { color: var(--rd-muted); }
+.rd.top-layout[data-theme="dark"] .header-alerts li { background: var(--rd-orange-soft); border-color: var(--dk-line); }
+.rd.top-layout[data-theme="dark"] .header-alerts li.is-urgent { background: var(--rd-red-soft); }
+body.workspace-ui > #root .rd.top-layout[data-theme="dark"] .header-alerts li button,
+body.workspace-ui > #root .rd.top-layout[data-theme="dark"] .header-alerts li button :is(strong, small) { color: var(--rd-ink) !important; }
+body.workspace-ui .rd.top-layout[data-theme="dark"] .header-bar__user-info button.header-bar__icon-button { color: var(--rd-ink) !important; background: transparent !important; border-color: transparent !important; }
+
+/* 오른쪽 아래 떠 있는 버튼: 맨 위로 · 글꼴 선택기(2026-11-10 사용자 요청: 테마에 맞게) */
+body.workspace-ui .rd.top-layout[data-theme="dark"] .quick-links button.quick-links__btn.is-top,
+body.workspace-ui .rd.top-layout[data-theme="dark"] .quick-links button.quick-links__btn.is-top:hover:not(:disabled) {
+  background: var(--dk-surface-2) !important; color: var(--rd-ink) !important; border-color: #4A565E !important;
+}
+body.workspace-ui .rd.top-layout[data-theme="dark"] .quick-links button.quick-links__btn.is-top:hover:not(:disabled) { background: var(--dk-hover) !important; }
+body.workspace-ui .rd.top-layout[data-theme="dark"] .quick-links button.quick-links__btn.font-picker__btn,
+body.workspace-ui .rd.top-layout[data-theme="dark"] .quick-links button.quick-links__btn.font-picker__btn:hover:not(:disabled) { background: var(--rd-ink) !important; color: var(--dk-bg) !important; }
+.rd.top-layout[data-theme="dark"] .quick-links__btn { box-shadow: 0 6px 18px rgba(0, 0, 0, .5); }
+.rd.top-layout[data-theme="dark"] .quick-links__btn:hover { box-shadow: 0 10px 22px rgba(0, 0, 0, .6); }
+.rd.top-layout[data-theme="dark"] .font-picker__menu { background: var(--dk-surface-2); border-color: var(--dk-line); box-shadow: 0 12px 28px rgba(0, 0, 0, .55); }
+.rd.top-layout[data-theme="dark"] .font-picker__option.is-on { border-color: var(--rd-green); background: var(--rd-green-soft); }

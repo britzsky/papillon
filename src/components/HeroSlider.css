@@ -1,0 +1,89 @@
+/* PC 홈 큰 이미지 슬라이드(2026-11-10 시안). 버튼은 전역 버튼 테마(PosTheme body.workspace-ui button !important)를 더 구체적으로 덮는다 */
+.hero-slider { position: relative; overflow: hidden; border-radius: 16px; background: #DDE3DE; }
+.hero-slider__track { position: absolute; inset: 0; display: flex; transition: transform .5s ease; }
+.hero-slider__slide { position: relative; flex: 0 0 100%; width: 100%; height: 100%; overflow: hidden; }
+.hero-slider__slide > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 35%; }
+@media (prefers-reduced-motion: reduce) { .hero-slider__track { transition: none; } }
+
+/* 로고 색 곡선(BrandCurves) — 장 안에 그려서 장과 함께 넘어간다 */
+.brand-curve { position: absolute; z-index: 1; display: block; height: auto; pointer-events: none; }
+/* 반투명(2026-11-10 사용자 요청): 겹친 곡선끼리·아래 사진이 비쳐 보이게. 색마다 따로 투명도라 겹친 곳은 색이 섞여 진해진다 */
+.brand-curve path { fill-opacity: .72; }
+/* 높이 비율로 크기(가로는 viewBox 비율로 자동) — 시안 틀에서 곡선이 차지하던 높이 비율 */
+.brand-curve { width: auto; }
+.brand-curve.is-top { top: 0; left: 0; height: 37%; }
+.brand-curve.is-bottom { right: 0; bottom: 0; height: 28%; }
+.brand-curve.is-banner { right: 0; bottom: 0; height: 50%; }
+
+/* 왼쪽 아래 조작: 이전 · 멈춤/재생 · 다음, 그 아래 점 */
+.hero-slider__controls { position: absolute; left: 36px; bottom: 10px; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 2px 6px 6px; border-radius: 14px; background: rgba(0, 0, 0, .26); }
+.hero-slider__buttons { display: flex; align-items: center; gap: 2px; }
+body.workspace-ui .rd .hero-slider button.hero-slider__ctrl,
+body.workspace-ui .rd .hero-slider button.hero-slider__ctrl:hover:not(:disabled) {
+  display: flex; align-items: center; justify-content: center;
+  width: 30px !important; min-width: 0 !important; height: 30px !important; min-height: 0 !important; padding: 0 !important;
+  border: 0 !important; border-radius: 50% !important; background: transparent !important; color: #fff !important;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .55)); box-shadow: none !important; cursor: pointer;
+}
+body.workspace-ui .rd .hero-slider button.hero-slider__ctrl:hover:not(:disabled) { background: rgba(255, 255, 255, .22) !important; }
+.hero-slider__ctrl:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+
+.hero-slider__dots { display: flex; gap: 5px; }
+body.workspace-ui .rd .hero-slider button.hero-slider__dot,
+body.workspace-ui .rd .hero-slider button.hero-slider__dot:hover:not(:disabled) {
+  width: 6px !important; min-width: 0 !important; height: 6px !important; min-height: 0 !important; padding: 0 !important;
+  border: 0 !important; border-radius: 999px !important; background: rgba(255, 255, 255, .6) !important; box-shadow: 0 0 2px rgba(0, 0, 0, .5) !important; cursor: pointer;
+}
+body.workspace-ui .rd .hero-slider button.hero-slider__dot.is-active { background: #F29A2E !important; }
+.hero-slider__dot:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* 2번째 장: 더채움몰 홍보(이미지 없이 HTML로 그림, 색은 홈 띠 배너 MallBanner와 같게) */
+.rd .hero-mall {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  padding: 24px 56px 64px; color: #fff; text-decoration: none; overflow: hidden;
+  background: linear-gradient(115deg, #FF7A3D 0%, #F2363F 55%, #B5174F 100%);
+}
+.rd .hero-mall::before { content: ""; position: absolute; width: 420px; height: 420px; right: -80px; top: -140px; border-radius: 50%; background: rgba(255, 255, 255, .10); pointer-events: none; }
+.rd .hero-mall::after { content: ""; position: absolute; width: 260px; height: 260px; left: 38%; bottom: -170px; border-radius: 50%; background: rgba(255, 255, 255, .08); pointer-events: none; }
+.rd .hero-mall:focus-visible { outline: 4px solid #fff; outline-offset: -6px; }
+.rd .hero-mall__copy { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; min-width: 0; }
+.rd .hero-mall__logo { --rd-fs: 17px; padding: 5px 14px; border-radius: 999px; background: #fff; color: #1F6B3A; font-weight: 900; letter-spacing: -.5px; }
+.rd .hero-mall__logo b { color: #F2363F; font-weight: 900; }
+.rd .hero-mall__title { --rd-fs: 32px; margin: 0; font-weight: 900; line-height: 1.25; letter-spacing: -.8px; }
+.rd .hero-mall__sub { --rd-fs: 15px; margin: 0; opacity: .92; line-height: 1.5; }
+.rd .hero-mall__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.rd .hero-mall__chips span { --rd-fs: 13px; padding: 4px 12px; border: 1px solid rgba(255, 255, 255, .55); border-radius: 999px; font-weight: 700; }
+.rd .hero-mall__go { --rd-fs: 16px; margin-top: 4px; padding: 10px 22px; border-radius: 999px; background: #fff; color: #D72C3B; font-weight: 900; box-shadow: 0 6px 16px rgba(0, 0, 0, .18); transition: transform .15s ease; }
+.rd .hero-mall:hover .hero-mall__go { transform: translateX(4px); }
+/* 오른쪽 장식: 장바구니 그림 + 꼬리표 */
+.rd .hero-mall__art { position: relative; z-index: 1; flex: none; width: 260px; height: 220px; }
+.rd .hero-mall__basket { position: absolute; left: 30px; bottom: 10px; width: 200px; height: 200px; color: #fff; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .2)); }
+.rd .hero-mall__tag { --rd-fs: 14px; position: absolute; padding: 6px 12px; border-radius: 10px; background: #fff; color: #B5174F; font-weight: 900; box-shadow: 0 6px 14px rgba(0, 0, 0, .18); white-space: nowrap; }
+.rd .hero-mall__tag.is-1 { top: 6px; left: 0; transform: rotate(-6deg); }
+.rd .hero-mall__tag.is-2 { top: 40px; right: 0; transform: rotate(5deg); color: #1F6B3A; }
+@media (max-width: 1280px) {
+  .rd .hero-mall { padding: 20px 40px 60px; }
+  .rd .hero-mall__title { --rd-fs: 26px; }
+  .rd .hero-mall__art { width: 200px; height: 180px; }
+  .rd .hero-mall__basket { width: 160px; height: 160px; left: 20px; }
+}
+@media (max-width: 760px) { .rd .hero-mall__art { display: none; } .rd .hero-mall { padding: 20px 24px 60px; } }
+
+/* 언론 보도 기사 장(PressSlide, 2026-11-10 시안): 기사 사진을 꽉 채우고 왼쪽 아래에 흰 큰 글씨 */
+.rd .press-slide { position: absolute; inset: 0; display: block; overflow: hidden; color: #fff; text-decoration: none; background: linear-gradient(115deg, #1F6B3A 0%, #174F2C 100%); }
+.rd .press-slide__photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 40%; }
+.rd .press-slide::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, rgba(0, 0, 0, .62) 0%, rgba(0, 0, 0, .35) 45%, rgba(0, 0, 0, 0) 75%), linear-gradient(0deg, rgba(0, 0, 0, .35) 0%, rgba(0, 0, 0, 0) 40%); }
+.rd .press-slide.is-text-only::after { display: none; }
+.rd .press-slide:focus-visible { outline: 4px solid #fff; outline-offset: -6px; }
+.rd .press-slide__copy { position: absolute; z-index: 2; left: 40px; right: 38%; bottom: 66px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.rd .press-slide__title {
+  --rd-fs: 34px; font-weight: 900; line-height: 1.22; letter-spacing: -.8px; text-shadow: 0 2px 12px rgba(0, 0, 0, .45); white-space: pre-line; word-break: keep-all;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden;
+}
+.rd .press-slide__sub { --rd-fs: 14px; font-weight: 700; line-height: 1.4; white-space: pre-line; text-shadow: 0 1px 6px rgba(0, 0, 0, .5); }
+.rd .press-slide__meta { --rd-fs: 12px; display: inline-flex; align-items: center; gap: 8px; opacity: .95; text-shadow: 0 1px 4px rgba(0, 0, 0, .5); }
+.rd .press-slide__go { --rd-fs: 12px; padding: 2px 10px; border: 1px solid rgba(255, 255, 255, .7); border-radius: 999px; font-weight: 800; text-shadow: none; }
+.rd .press-slide:hover .press-slide__go { background: #fff; color: #1F6B3A; }
+@media (max-width: 1280px) { .rd .press-slide__title { --rd-fs: 28px; } .rd .press-slide__copy { right: 30%; } }
+@media (max-width: 760px) { .rd .press-slide__title { --rd-fs: 22px; } .rd .press-slide__copy { left: 20px; right: 20px; } .hero-slider__controls { left: 20px; } }
