@@ -83,10 +83,12 @@ function SignedInCard({ accountId, className = '' }: CardProps) {
               {userName ? <><span className="home-profile__bar" aria-hidden="true">|</span>{userName} 님</> : null}
               <LogoutButton className="home-profile__logout" size={15} variant="line" />
             </p>
-            <p className="home-profile__contact">본사 담당자 : <Contact {...HQ_CONTACT} /></p>
-            <p className="home-profile__contact">
-              담당자 : {summary?.manager_name ? <Contact name={summary.manager_name} tel={summary.manager_tel || undefined} /> : summary ? '등록 안 됨' : '확인 중'}
-            </p>
+            {/* 이름표 칸 폭을 맞춰 ':'와 이름이 위아래 같은 줄에 오게(2026-11-16 사용자 요청) */}
+            <dl className="home-profile__contacts">
+              <dt>본사 담당자</dt><dd>: <Contact {...HQ_CONTACT} /></dd>
+              <dt>담당자</dt>
+              <dd>: {summary?.manager_name ? <Contact name={summary.manager_name} tel={summary.manager_tel || undefined} /> : summary ? '등록 안 됨' : '확인 중'}</dd>
+            </dl>
           </> : <>
             <p className="home-profile__who">{userName ? `${userName} 님` : ''}<LogoutButton className="home-profile__logout" size={15} variant="line" /></p>
             <p className="home-profile__contact">{isHeadquarters() ? '관리 거래처를 고르면 담당자와 이달 예산이 보입니다.' : '로그인한 계정에 거래처 정보가 없습니다.'}</p>

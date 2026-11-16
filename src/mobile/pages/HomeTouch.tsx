@@ -134,8 +134,11 @@ function ProfileCard({ accountId }: { accountId: string }) {
           </button>
         </p>
         {accountId ? <>
-          <p className="ht-profile__contact">본사 담당자 : {HQ_CONTACT.name} · <span className="ht-nowrap">{HQ_CONTACT.tel}</span></p>
-          <p className="ht-profile__contact">담당자 : {summary?.manager_name ? <>{summary.manager_name}{summary.manager_tel ? <> · <span className="ht-nowrap">{summary.manager_tel}</span></> : null}</> : summary ? '등록 안 됨' : '확인 중'}</p>
+          {/* PC 접속자 카드처럼 이름표 칸 폭을 맞춤(2026-11-16) */}
+          <dl className="ht-profile__contact ht-profile__contacts">
+            <dt>본사 담당자</dt><dd>: {HQ_CONTACT.name} · <span className="ht-nowrap">{HQ_CONTACT.tel}</span></dd>
+            <dt>담당자</dt><dd>: {summary?.manager_name ? <>{summary.manager_name}{summary.manager_tel ? <> · <span className="ht-nowrap">{summary.manager_tel}</span></> : null}</> : summary ? '등록 안 됨' : '확인 중'}</dd>
+          </dl>
         </> : <p className="ht-profile__contact">{isHeadquarters() ? '위에서 거래처를 고르면 담당자와 이달 예산이 보입니다.' : '로그인한 계정에 거래처 정보가 없습니다.'}</p>}
       </div>
     </div>

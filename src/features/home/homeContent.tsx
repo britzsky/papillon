@@ -52,7 +52,10 @@ export const pressArticles: PressArticle[] = [
  * 순서(2026-11-10 사용자 요청): 더채움몰 홍보(이미지 없이 HTML, 누르면 /mall)가 첫 장 → 언론 기사 최신순(e스포츠 대회부터). 처음 있던 회사 유니폼 사진(1.png) 장은 2026-11-10 사용자 요청으로 뺌.
  * 더채움몰 문구는 몰에 실제 있는 표시(특가·산지 직송·냉장/냉동)만 쓴다. 기사는 누르면 원문 새 창.
  */
-export const pressSlides: HeroSlide[] = pressArticles.map(article => ({ key: article.url, label: `언론 보도: ${article.title}`, content: <PressSlide article={article} /> }))
+/** 소식 '홍보' 탭에는 남기고 슬라이드에서만 뺄 기사(2026-11-16 사용자 요청: 세스코 MOU) */
+const NOT_IN_SLIDES = new Set(['https://www.kdpress.co.kr/news/articleView.html?idxno=111200'])
+
+export const pressSlides: HeroSlide[] = pressArticles.filter(article => !NOT_IN_SLIDES.has(article.url)).map(article => ({ key: article.url, label: `언론 보도: ${article.title}`, content: <PressSlide article={article} /> }))
 
 export const heroSlides: HeroSlide[] = [
   {

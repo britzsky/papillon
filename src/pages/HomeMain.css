@@ -71,6 +71,10 @@ body.workspace-ui .rd.top-layout .home-profile button.home-profile__avatar:hover
 .rd .home-profile__bar { margin: 0 8px; color: var(--rd-muted); font-weight: 400; }
 .rd .home-profile__contact { --rd-fs: 12px; color: var(--rd-muted); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } /* 담당자 줄은 한 줄(2026-11-10) */
 .rd .home-profile__tel { white-space: nowrap; }
+/* 본사 담당자·담당자 두 줄: 이름표 칸(가장 긴 '본사 담당자' 폭)을 같이 써서 ':'·이름이 위아래 맞음(2026-11-16) */
+.rd .home-profile__contacts { --rd-fs: 12px; display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 4px; row-gap: 3px; margin: 0; color: var(--rd-muted); font-weight: 700; }
+.rd .home-profile__contacts dt, .rd .home-profile__contacts dd { --rd-fs: 12px; margin: 0; font-weight: 700; }
+.rd .home-profile__contacts dd { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rd .home-profile__picker { display: flex; }
 .rd .home-profile__budget { display: flex; flex-direction: column; gap: 8px; }
 /* 로그인 전(손님) 카드: 예산 자리에 로그인 칸(2026-11-12). 사람 아이콘은 버튼이 아닌 그림 */
@@ -149,7 +153,8 @@ body.workspace-ui .rd .home-news__tabs button.home-news__tab.is-active, body.t-u
 .rd .home-news__list { --news-row: 40px; margin: 0; padding: 0; list-style: none; max-height: calc(var(--news-row) * 5); overflow-y: auto; }
 .rd .home-news__list li { display: grid; grid-template-columns: 92px 74px minmax(0, 1fr); align-items: center; min-height: var(--news-row); box-sizing: border-box; }
 .rd .home-news__list li + li { border-top: 1px solid #C9DCE6; }
-.rd .home-news__pill { --rd-fs: 12px; justify-self: start; max-width: 84px; padding: 2px 10px; border-radius: 999px; color: #fff; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: #5A8A3A; }
+/* 분류 알약은 글자 수와 상관없이 같은 크기(2026-11-16 사용자 요청) */
+.rd .home-news__pill { --rd-fs: 12px; justify-self: start; box-sizing: border-box; width: 80px; padding: 2px 6px; text-align: center; border-radius: 999px; color: #fff; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: #5A8A3A; }
 .rd .home-news__pill.is-orange { background: #F29A2E; }
 .rd .home-news__pill.is-blue { background: #1E98CF; }
 .rd .home-news__date { --rd-fs: 13px; color: var(--rd-ink); font-variant-numeric: tabular-nums; border-right: 1px solid #9AA59D; padding-right: 10px; margin-right: 12px; line-height: 1.1; }

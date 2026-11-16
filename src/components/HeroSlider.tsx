@@ -19,7 +19,7 @@ const GREEN = '#5A9A3C'
  * slide: 왼쪽 위(파란 큰 원 · 오른쪽 주황 초승달 · 아래 초록) + 오른쪽 아래(주황 · 파랑 · 오른쪽 끝 초록).
  * banner: 홈 E 배너 오른쪽 아래(뒤 주황 · 파랑 · 앞 초록).
  */
-export function BrandCurves({ variant = 'slide' }: { variant?: 'slide' | 'banner' }) {
+export function BrandCurves({ variant = 'slide', bottom = true }: { variant?: 'slide' | 'banner'; bottom?: boolean }) {
   if (variant === 'banner') return (
     <svg className="brand-curve is-banner" viewBox="820 85 180 83" aria-hidden="true">
       <path d="M826 168C858 135 900 114 952 109H1000V168Z" fill={ORANGE} />
@@ -33,11 +33,11 @@ export function BrandCurves({ variant = 'slide' }: { variant?: 'slide' | 'banner
       <path d="M0 0H335C290 52 200 88 85 98H0Z" fill={ORANGE} />
       <path d="M0 0H225C205 70 140 104 60 104C35 104 15 101 0 96Z" fill={BLUE} />
     </svg>
-    <svg className="brand-curve is-bottom" viewBox="770 370 230 116" aria-hidden="true">
+    {bottom ? <svg className="brand-curve is-bottom" viewBox="770 370 230 116" aria-hidden="true">
       <path d="M776 486C815 452 880 432 965 428H1000V486Z" fill={ORANGE} />
       <path d="M900 445C930 408 962 386 1000 372V445Z" fill={GREEN} />
       <path d="M851 486C885 452 935 432 1000 426V486Z" fill={BLUE} />
-    </svg>
+    </svg> : null}
   </>
 }
 
@@ -77,7 +77,8 @@ export default function HeroSlider({ slides, className = '' }: { slides: HeroSli
           <div key={slide.key} className="hero-slider__slide" role="group" aria-roledescription="slide"
             aria-label={`${i + 1} / ${count}: ${slide.label}`} aria-hidden={i !== current} inert={i !== current}>
             {slide.content}
-            {slide.curves === false ? null : <BrandCurves />}
+            {/* 슬라이드는 왼쪽 위 곡선만(2026-11-16 사용자 요청: 오른쪽 아래 뺌). 준비 화면(HomeSplash)은 그대로 둘 다 */}
+            {slide.curves === false ? null : <BrandCurves bottom={false} />}
           </div>
         ))}
       </div>

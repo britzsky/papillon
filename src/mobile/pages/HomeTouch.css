@@ -148,6 +148,8 @@ body.t-ui .hs-keyword { flex: none; min-height: 34px; padding: 0 12px; border: 0
 .ht-profile__who { display: flex; flex-wrap: wrap; align-items: center; font-size: 15px; font-weight: 700; overflow-wrap: anywhere; }
 .ht-profile__bar { margin: 0 8px; color: var(--t-muted); font-weight: 400; }
 .ht-profile__contact { color: var(--t-muted); font-size: 13px; font-weight: 700; }
+.ht-profile__contacts { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 4px; row-gap: 3px; margin: 0; }
+.ht-profile__contacts dt, .ht-profile__contacts dd { margin: 0; }
 .ht-nowrap { white-space: nowrap; }
 /* 이름 옆 작은 로그아웃(PC와 같은 자리). 손가락으로 누르기 쉽게 누르는 칸은 36px */
 body.t-ui .ht-profile__logout { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; min-height: 0; margin: -8px 0 -8px 2px; padding: 0;
