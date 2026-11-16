@@ -9,7 +9,6 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import './index.css'
-import App from './App.tsx'
 import Home from './pages/Home.tsx'
 import HomeClassic from './pages/HomeClassic.tsx'
 import AccountInventoryManager from './pages/inventory/AccountInventoryManager.tsx'
@@ -37,6 +36,7 @@ import DistAccounts from './pages/distribution/DistAccounts.tsx'
 import MallProducts from './pages/mall/MallProducts.tsx'
 import MallCheckout from './pages/mall/MallCheckout.tsx'
 import MallOrders from './pages/mall/MallOrders.tsx'
+import { MallSignedInOnly } from './pages/mall/MallLayout.tsx'
 import { DeviceRoute } from './mobile/deviceMode'
 import OrderWorkspaceTouch from './mobile/pages/OrderWorkspaceTouch'
 import HomeTouch from './mobile/pages/HomeTouch'
@@ -52,7 +52,6 @@ import SearchAnalyticsTouch from './mobile/pages/SearchAnalyticsTouch'
 import AiUsageTouch from './mobile/pages/AiUsageTouch'
 import MenuManagerTouch from './mobile/pages/MenuManagerTouch'
 import AccountMenuTouch from './mobile/pages/AccountMenuTouch'
-import LoginTouch from './mobile/pages/LoginTouch'
 import WelstoryRawTouch from './mobile/pages/WelstoryRawTouch'
 import SanitationTouch from './mobile/pages/SanitationTouch'
 import MealPlanTemplatesTouch from './mobile/pages/MealPlanTemplatesTouch'
@@ -83,7 +82,8 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/order_manager/order" element={<DeviceRoute pc={<OrderWorkspace />} touch={<OrderWorkspaceTouch />} />} />
         <Route path="/order_manager/recommended" element={<DeviceRoute pc={<OrderWorkspace initialTab="recommended" />} touch={<OrderWorkspaceTouch initialTab="recommended" />} />} />
         <Route path="/inventory/history" element={<DeviceRoute pc={<InventoryHistory />} touch={<HistoryTouch />} />} />
-        <Route path="/" element={<DeviceRoute pc={<App />} touch={<LoginTouch />} />} />
+        {/* 따로 로그인 화면 없이 홈으로 — 로그인은 홈 접속자 카드에서(PC·터치 모두, 2026-11-12 사용자 요청, features/auth/session) */}
+        <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="/payment" element={<Payment />} />
         <Route path="/payment/success" element={<PaymentResult />} />
         <Route path="/payment/fail" element={<PaymentResult />} />
@@ -118,9 +118,9 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/distribution/accounts" element={<DistAccounts />} />
         {/* 더채움몰(본사·현장 누구나 주문, 내 주문은 본인 것만) */}
         <Route path="/mall" element={<MallProducts />} />
-        <Route path="/mall/cart" element={<MallCheckout />} />
-        <Route path="/mall/orders" element={<MallOrders />} />
-        <Route path="/mall/orders/:orderId" element={<MallOrders />} />
+        <Route path="/mall/cart" element={<MallSignedInOnly what="장바구니 금액 확인·주문"><MallCheckout /></MallSignedInOnly>} />
+        <Route path="/mall/orders" element={<MallSignedInOnly what="내 주문 보기"><MallOrders /></MallSignedInOnly>} />
+        <Route path="/mall/orders/:orderId" element={<MallSignedInOnly what="내 주문 보기"><MallOrders /></MallSignedInOnly>} />
         <Route path="/operations/table-meals" element={<DeviceRoute pc={<TableMealsManager />} touch={<TableMealsTouch />} />} />
         <Route path="/operations/search-analytics" element={<DeviceRoute pc={<SearchAnalytics />} touch={<SearchAnalyticsTouch />} />} />
         <Route path="/operations/ai-usage" element={<DeviceRoute pc={<AiUsage />} touch={<AiUsageTouch />} />} />

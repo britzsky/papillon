@@ -18,23 +18,23 @@
 /* 왼쪽 아래 조작: 이전 · 멈춤/재생 · 다음, 그 아래 점 */
 .hero-slider__controls { position: absolute; left: 36px; bottom: 10px; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 2px 6px 6px; border-radius: 14px; background: rgba(0, 0, 0, .26); }
 .hero-slider__buttons { display: flex; align-items: center; gap: 2px; }
-body.workspace-ui .rd .hero-slider button.hero-slider__ctrl,
-body.workspace-ui .rd .hero-slider button.hero-slider__ctrl:hover:not(:disabled) {
+body.workspace-ui .rd .hero-slider button.hero-slider__ctrl, body.t-ui .rd .hero-slider button.hero-slider__ctrl,
+body.workspace-ui .rd .hero-slider button.hero-slider__ctrl:hover:not(:disabled), body.t-ui .rd .hero-slider button.hero-slider__ctrl:hover:not(:disabled) {
   display: flex; align-items: center; justify-content: center;
   width: 30px !important; min-width: 0 !important; height: 30px !important; min-height: 0 !important; padding: 0 !important;
   border: 0 !important; border-radius: 50% !important; background: transparent !important; color: #fff !important;
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .55)); box-shadow: none !important; cursor: pointer;
 }
-body.workspace-ui .rd .hero-slider button.hero-slider__ctrl:hover:not(:disabled) { background: rgba(255, 255, 255, .22) !important; }
+body.workspace-ui .rd .hero-slider button.hero-slider__ctrl:hover:not(:disabled), body.t-ui .rd .hero-slider button.hero-slider__ctrl:hover:not(:disabled) { background: rgba(255, 255, 255, .22) !important; }
 .hero-slider__ctrl:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
 
 .hero-slider__dots { display: flex; gap: 5px; }
-body.workspace-ui .rd .hero-slider button.hero-slider__dot,
-body.workspace-ui .rd .hero-slider button.hero-slider__dot:hover:not(:disabled) {
+body.workspace-ui .rd .hero-slider button.hero-slider__dot, body.t-ui .rd .hero-slider button.hero-slider__dot,
+body.workspace-ui .rd .hero-slider button.hero-slider__dot:hover:not(:disabled), body.t-ui .rd .hero-slider button.hero-slider__dot:hover:not(:disabled) {
   width: 6px !important; min-width: 0 !important; height: 6px !important; min-height: 0 !important; padding: 0 !important;
   border: 0 !important; border-radius: 999px !important; background: rgba(255, 255, 255, .6) !important; box-shadow: 0 0 2px rgba(0, 0, 0, .5) !important; cursor: pointer;
 }
-body.workspace-ui .rd .hero-slider button.hero-slider__dot.is-active { background: #F29A2E !important; }
+body.workspace-ui .rd .hero-slider button.hero-slider__dot.is-active, body.t-ui .rd .hero-slider button.hero-slider__dot.is-active { background: #F29A2E !important; }
 .hero-slider__dot:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
 /* 2번째 장: 더채움몰 홍보(이미지 없이 HTML로 그림, 색은 홈 띠 배너 MallBanner와 같게) */

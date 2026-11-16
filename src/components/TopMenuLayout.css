@@ -129,6 +129,8 @@
 .rd .top-layout__link:focus-visible { background: var(--rd-green-soft); color: var(--rd-green-dark); outline: none; }
 .rd .top-layout__link.is-active { color: var(--rd-green-dark); font-weight: 800; }
 .rd .top-layout__link.is-disabled { color: var(--rd-muted); cursor: default; }
+.rd .top-layout__link.is-locked { cursor: not-allowed; opacity: .6; } /* 로그인 전: 메뉴 이름만 보임(2026-11-12) */
+.rd .top-layout__search.is-locked { opacity: .7; cursor: not-allowed; }
 
 /* 검색창: 시안의 회색 둥근 막대 */
 .rd .top-layout__search.rd-home__search { flex: 0 1 360px; min-width: 180px; max-width: 360px; margin-left: 0; /* Redesign.css의 auto를 끔 → 항목 묶음이 가운데 */ }

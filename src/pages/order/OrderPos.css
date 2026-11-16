@@ -25,7 +25,7 @@
 
 /* 상품 카드 */
 .pos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 12px; }
-.pos-card { display: grid; grid-template-rows: auto auto auto auto auto 1fr; gap: 5px; padding: 10px; border: 1px solid var(--pos-line, #e9ebef); border-radius: 12px; background: #fff; transition: border-color .15s, box-shadow .15s; min-width: 0; }
+.pos-card { display: grid; grid-template-rows: auto auto auto auto auto auto 1fr; gap: 5px; padding: 10px; border: 1px solid var(--pos-line, #e9ebef); border-radius: 12px; background: #fff; transition: border-color .15s, box-shadow .15s; min-width: 0; }
 .pos-card:hover { border-color: #cfd6c8; box-shadow: 0 4px 14px rgba(16, 24, 40, .06); }
 .pos-card.is-in-cart { border-color: var(--pos-accent, #508028); box-shadow: 0 0 0 2px var(--pos-accent-soft, #eef5e6); }
 .pos-card__image { display: grid; place-items: center; height: 112px; border-radius: 10px; background: #f6f7f9; overflow: hidden; }
@@ -37,6 +37,11 @@
 .pos-card__status { justify-self: start; max-width: 100%; padding: 2px 8px; border-radius: 999px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pos-card__status.is-ok { background: var(--pos-accent-soft, #eef5e6); color: var(--pos-accent-strong, #3f6a1d); }
 .pos-card__status.is-warn { background: var(--pos-orange-soft, #fdf2e3); color: var(--pos-orange, #b0650c); }
+.pos-card__deadline { display: grid; justify-self: start; max-width: 100%; color: var(--pos-text, #1f2430); font-size: 12px; font-weight: 700; }
+.pos-card__deadline > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pos-card__left { padding-left: 18px; font-size: 12px; font-weight: 700; }
+.pos-card__deadline.is-soon { color: #C0392B; }
+.pos-card__deadline.is-unknown { color: var(--pos-muted, #6b7280); font-weight: 600; }
 .pos-card__foot { display: flex; align-items: center; justify-content: space-between; gap: 6px; align-self: end; padding-top: 4px; }
 .pos-card__price { color: var(--pos-accent-strong, #3f6a1d); font-weight: 800; }
 body.workspace-ui .pos-card .pos-add { min-height: 30px; padding: 4px 12px; border-radius: 999px !important; border: 1px solid var(--pos-accent, #508028) !important; background: #fff !important; color: var(--pos-accent-strong, #3f6a1d) !important; font-weight: 700; white-space: nowrap; }

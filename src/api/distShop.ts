@@ -40,6 +40,8 @@ const post = <T,>(path: string, body: object, fallback: string) =>
 const BASE = '/v2/dist/shop'
 
 export type MallContext = {
+  /** 로그인 전 손님(개인 구매가로 상품만, 2026-11-12) */
+  guest?: boolean
   buyer_types: BuyerType[]
   user_id: string
   account_id?: string

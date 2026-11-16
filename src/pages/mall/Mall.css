@@ -309,3 +309,10 @@ body.workspace-ui > :is(#root, :not(#root)) .rd.mall .mall-order-row.is-selected
   .mall .mall-lines li { grid-template-columns: 44px minmax(0, 1fr) auto; }
   .mall .mall-lines li .mall-qty { grid-column: 2; }
 }
+
+/* 로그인 전 장바구니·주문 안내(2026-11-12) */
+.mall-site .mall-login-needed { padding: 56px 16px; text-align: center; }
+.mall-site .mall-login-needed h1 { margin: 0 0 10px; font-size: 22px; }
+.mall-site .mall-login-needed p { margin: 0 0 8px; color: var(--rd-muted); }
+.mall-site .mall-login-needed__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 18px !important; }
+

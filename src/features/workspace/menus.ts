@@ -1,5 +1,5 @@
 import { matchesBase } from './workflow'
-import { visibleForRole } from './roleScreens'
+import { HQ_ONLY_PATHS, visibleForRole } from './roleScreens'
 
 /** PC 메뉴 정의 — 사이드 메뉴(SideMenuLayout)와 상단 메뉴(TopMenuLayout, 2026-11-09 홈)가 같이 쓴다 */
 export type SubMenuItem = {
@@ -103,10 +103,11 @@ export function findActiveMenuKey(pathname: string) {
 }
 
 /** 지금 로그인한 역할이 볼 수 있는 대분류·메뉴(현장 계정은 본사관리·협력사 관리 없음) */
-export function menusForRole(): MajorMenu[] {
-  const site = localStorage.getItem('user_type') === '3'
+/** guest: 로그인 전 홈 머리 줄 — 현장 계정과 같은 공통 메뉴만 보여 준다(본사 전용·유통 메뉴는 안 보임, 2026-11-12) */
+export function menusForRole({ guest = false }: { guest?: boolean } = {}): MajorMenu[] {
+  const site = guest || localStorage.getItem('user_type') === '3'
   return majorMenus
     .filter(menu => !site || (menu.key !== 'headquarters' && menu.key !== 'distribution'))
-    .map(menu => ({ ...menu, items: menu.items.filter(item => visibleForRole(item.to)) }))
+    .map(menu => ({ ...menu, items: menu.items.filter(item => guest ? !HQ_ONLY_PATHS.includes(item.to?.split('?')[0] ?? '') : visibleForRole(item.to)) }))
     .filter(menu => menu.items.length > 0)
 }

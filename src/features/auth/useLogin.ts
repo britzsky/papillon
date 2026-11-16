@@ -6,7 +6,7 @@ export type LoginAlertState =
   | { kind: 'info'; message: string }
   | { kind: 'payment'; message: string; accountId: string; status: PaymentRequiredSubscriptionStatus }
 
-/** 로그인(PC·터치 공용): 아이디·비밀번호 로그인, 구독 결제가 필요하면 결제 안내, 결제 테스트 화면 바로가기 */
+/** 로그인(PC·터치 홈 접속자 카드 공용): 아이디·비밀번호 로그인, 구독 결제가 필요하면 결제 안내 */
 export function useLogin() {
   const navigate = useNavigate()
   const [user_id, setUserId] = useState('')
@@ -37,10 +37,6 @@ export function useLogin() {
     navigateToPayment(alertState.accountId, alertState.status)
   }
 
-  const handleOpenPaymentSandbox = () => {
-    navigateToPayment('TEST_ACCOUNT_001', 'EMPTY')
-  }
-
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     try {
@@ -50,12 +46,12 @@ export function useLogin() {
       if (error instanceof SubscriptionActionRequiredError) {
         setAlertState({ kind: 'payment', message: error.message, accountId: error.accountId, status: error.status })
       } else {
-        setAlertState({ kind: 'info', message: error instanceof Error ? error.message : 'Login failed.' })
+        setAlertState({ kind: 'info', message: error instanceof Error ? error.message : '로그인하지 못했습니다. 잠시 후 다시 시도해주세요.' })
       }
     } finally {
       setIsLoading(false)
     }
   }
 
-  return { user_id, setUserId, password, setPassword, isLoading, alertState, closeAlert, handleMoveToPayment, handleOpenPaymentSandbox, handleSubmit }
+  return { user_id, setUserId, password, setPassword, isLoading, alertState, closeAlert, handleMoveToPayment, handleSubmit }
 }

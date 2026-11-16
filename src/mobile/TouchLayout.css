@@ -623,3 +623,7 @@ body.t-ui .t-account-list button.is-selected { box-shadow: inset 0 0 0 2px var(-
 .t-account-list button .t-icon { flex: none; color: var(--t-accent); }
 body.t-ui :is(.t-account-trigger, .t-account-list button) { position: relative; isolation: isolate; overflow: hidden; }
 .t-account-tint { position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; }
+
+/* 로그인 전(손님): 메뉴 이름만 보이고 누를 수 없음(2026-11-12) */
+body.t-ui .t-rail__item.is-locked, body.t-ui .t-rail__sub button.is-locked, body.t-ui .t-flyout button.is-locked { opacity: .45; cursor: not-allowed; }
+

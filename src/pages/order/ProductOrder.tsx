@@ -7,6 +7,7 @@ import BatchOrderResults from '../../components/BatchOrderResults'
 import ProductImage from '../../components/ProductImage'
 import type { SupplierOffer } from '../../api/supplierIntegration'
 import { lineKey, useProductOrder, SOURCE_REASON, type CartLine } from '../../features/order/useProductOrder'
+import { deadlineInfo } from '../../features/order/orderDeadline'
 import '../operations/MenuManager.css'
 import './ProductOrder.css'
 import './OrderPos.css'
@@ -53,11 +54,12 @@ const SORTS = {
 } as const
 type SortKey = keyof typeof SORTS
 
-/** 상품 카드: 사진 · 공급사 · D-N · 이름 · 규격 · 발주 상태 · 단가 · 담기 */
+/** 상품 카드: 사진 · 공급사 · D-N · 이름 · 규격 · 발주 상태 · 마감 일시 · 단가 · 담기 */
 function OfferCard({ offer, inCart, canAdd, onAdd, cheapest, line, onQty, disabled, onFavorite }: { offer: SupplierOffer; inCart: boolean; canAdd: boolean; onAdd: () => void; cheapest: boolean; line?: CartLine; onQty: (line: CartLine, quantity: number) => void; disabled: boolean; onFavorite: () => void }) {
   const available = offer.orderability_status === 'AVAILABLE'
   const reason = offer.orderability_reason || offer.availability_reason
   const cost = unitCost(offer)
+  const deadline = deadlineInfo(offer.order_deadline)
   return <article className={`pos-card${inCart ? ' is-in-cart' : ''}`}>
     <div className="pos-card__image"><ProductImage src={offer.thumbnail_url || offer.image_url} fullSrc={offer.image_url} name={offer.product_name} zoomable />
       <button type="button" className={`pos-card__heart${offer.favorite_yn === 'Y' ? ' is-on' : ''}`} aria-pressed={offer.favorite_yn === 'Y'}
@@ -70,6 +72,9 @@ function OfferCard({ offer, inCart, canAdd, onAdd, cheapest, line, onQty, disabl
     <strong className="pos-card__name" title={offer.product_name}>{offer.product_name}</strong>
     <span className="pos-card__sub">{offer.supplier_item_code} · {offer.base_qty}{offer.base_unit}/{offer.order_unit}</span>
     <span className={`pos-card__status ${available ? 'is-ok' : 'is-warn'}`} title={reason}>{available ? '발주 가능' : reason || '납품일자·마감 확인 요망'}</span>
+    {deadline && !deadline.passed
+      ? <span className={`pos-card__deadline${deadline.soon ? ' is-soon' : ''}`} title={reason}><span><span aria-hidden>⏰</span> 마감 {deadline.text}</span>{deadline.left ? <small className="pos-card__left">{deadline.left}</small> : null}</span>
+      : offer.orderability_status === 'REVIEW_REQUIRED' ? <span className="pos-card__deadline is-unknown" title={reason}><span><span aria-hidden>⏰</span> 마감 시간 미확인</span></span> : null}
     <div className="pos-card__price-row"><b className="pos-card__price">{won(offer.purchase_price)}<small>/{offer.order_unit}</small></b>{cost ? <span className="rd-muted">{cost.per}당 {won(cost.value)}</span> : null}</div>
     <div className="pos-card__foot">
       {line ? <span className="rd-stepper">

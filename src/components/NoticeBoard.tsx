@@ -2,6 +2,7 @@ import { useId, useState } from 'react'
 import { useNotices } from '../features/home/useNotices'
 import { useReportReady } from '../features/home/homeReady'
 import type { PressArticle } from './PressSlide'
+import { useSignedIn } from '../features/auth/session'
 
 /** 등록 후 이 날수 안이면 'N'(새 글) 표시 */
 const NEW_DAYS = 7
@@ -25,7 +26,8 @@ const TABS: { key: Tab; label: string }[] = [{ key: 'notice', label: '공지사�
  * 다섯 줄 높이를 넘으면 목록 안에서 스크롤. 공지 상세 화면은 아직 없음(소분류·작성자는 제목에 마우스를 올리면 보임).
  */
 export default function NoticeBoard({ press = [] }: { press?: PressArticle[] }) {
-  const state = useNotices()
+  const signedIn = useSignedIn()
+  const state = useNotices(signedIn)
   useReportReady('notices', state.status !== 'loading')
   const [tab, setTab] = useState<Tab>('notice')
   const baseId = useId()
@@ -66,6 +68,7 @@ export default function NoticeBoard({ press = [] }: { press?: PressArticle[] }) 
                 </li>
               ))}
             </ul>
+          : !signedIn ? <p className="rd-muted home-news__msg">로그인하면 공지사항을 볼 수 있어요.</p>
           : state.status === 'loading' ? <p className="rd-muted home-news__msg" role="status">공지사항을 불러오고 있어요.</p>
           : state.status === 'error' ? <p className="rd-text-warn home-news__msg" role="alert">공지사항을 불러오지 못했어요. 잠시 후 새로고침해 주세요.</p>
           : !notices.length ? <p className="rd-muted home-news__msg">등록된 공지사항이 없어요.</p>

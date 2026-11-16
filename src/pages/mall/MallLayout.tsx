@@ -2,8 +2,12 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Link, NavLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { logout } from '../../api/auth'
 import { useCart } from '../../features/mall/mallCart'
+import { useSignedIn } from '../../features/auth/session'
 import './Mall.css'
 
+/**
+ * 로그인 전(손님)은 상품 보기·장바구니 담기만(개인 구매가). 장바구니 금액·주문·내 주문은 로그인 안내(MallSignedInOnly, 2026-11-12).
+ */
 /**
  * 더채움몰 전용 틀(2026-11-03 사용자 요청): 발주 프로그램의 왼쪽 메뉴·머리 줄 없이 따로 운영되는 쇼핑몰처럼.
  * 맨 위 오른쪽 '발주 프로그램 가기'로 홈(/home)에 돌아간다. 검색은 어느 몰 화면에서든 상품 보기(/mall?q=)로.
@@ -18,15 +22,18 @@ export default function MallLayout({ children }: { children: ReactNode }) {
   if (shownQuery !== query) { setShownQuery(query); setKeyword(query) }
   useEffect(() => { document.title = '더채움몰' }, [])
   const count = cart.lines.reduce((sum, line) => sum + line.qty, 0)
-  const userName = localStorage.getItem('user_name')?.trim() || localStorage.getItem('user_id') || ''
+  const signedIn = useSignedIn()
+  const userName = signedIn ? localStorage.getItem('user_name')?.trim() || localStorage.getItem('user_id') || '' : ''
 
   return <div className="rd mall-site">
     <div className="mall-top">
       <div className="mall-wrap mall-top__inner">
         <span className="mall-top__hello">{userName ? <><b>{userName}</b>님, 반갑습니다</> : '더채움몰'}</span>
         <nav className="mall-top__links" aria-label="계정">
-          <Link to="/mall/orders">내 주문</Link>
-          <button type="button" onClick={logout}>로그아웃</button>
+          {signedIn ? <>
+            <Link to="/mall/orders">내 주문</Link>
+            <button type="button" onClick={logout}>로그아웃</button>
+          </> : <Link to="/home">로그인</Link>}
           <Link to="/home" className="mall-top__back">발주 프로그램 가기<span aria-hidden="true"> →</span></Link>
         </nav>
       </div>
@@ -69,4 +76,20 @@ export default function MallLayout({ children }: { children: ReactNode }) {
       </div>
     </footer>
   </div>
+}
+
+/** 장바구니·주문·내 주문: 로그인 전이면 안내만(담아 둔 장바구니는 이 브라우저에 그대로 남음) */
+export function MallSignedInOnly({ children, what }: { children: ReactNode; what: string }) {
+  const signedIn = useSignedIn()
+  if (signedIn) return children
+  return <MallLayout>
+    <section className="mall-wrap mall-login-needed" aria-labelledby="mall-login-needed-title">
+      <h1 id="mall-login-needed-title">로그인이 필요해요</h1>
+      <p>{what}은 로그인한 뒤 이용할 수 있어요. 홈 화면 오른쪽 위 접속자 카드에서 로그인해 주세요.</p>
+      <p className="mall-login-needed__actions">
+        <Link to="/home" className="rd-btn is-primary">로그인하러 가기</Link>
+        <Link to="/mall" className="rd-btn">상품 계속 보기</Link>
+      </p>
+    </section>
+  </MallLayout>
 }

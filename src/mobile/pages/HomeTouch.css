@@ -135,3 +135,68 @@ body.t-ui .hs-keyword { flex: none; min-height: 34px; padding: 0 12px; border: 0
 
 /* 현장 홈 이번 주 식단표: 터치는 바깥 여백만 줄임(카드 모양은 WeekMealBoard.css) */
 .rd.ht-week { margin-bottom: 8px; }
+
+/* ── 2026-11-12 PC 홈 구성(접속자 카드·바로가기 물방울·홍보 부품) ── */
+.ht-profile { display: grid; gap: 14px; margin-bottom: 14px; }
+.ht-profile__head { display: flex; align-items: center; gap: 14px; }
+.ht-profile__avatar { flex: none; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; box-sizing: border-box;
+  width: 64px; height: 64px; border: 1px solid #1E98CF; border-radius: 50%; background: #1E98CF; color: #fff; }
+.ht-profile__avatar svg { width: 56px; height: 56px; }
+.ht-profile__text { display: grid; gap: 3px; min-width: 0; }
+.ht-profile__text p { margin: 0; }
+.ht-profile__hello { font-size: 16px; font-weight: 800; }
+.ht-profile__who { display: flex; flex-wrap: wrap; align-items: center; font-size: 15px; font-weight: 700; overflow-wrap: anywhere; }
+.ht-profile__bar { margin: 0 8px; color: var(--t-muted); font-weight: 400; }
+.ht-profile__contact { color: var(--t-muted); font-size: 13px; font-weight: 700; }
+.ht-nowrap { white-space: nowrap; }
+/* 이름 옆 작은 로그아웃(PC와 같은 자리). 손가락으로 누르기 쉽게 누르는 칸은 36px */
+body.t-ui .ht-profile__logout { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; min-height: 0; margin: -8px 0 -8px 2px; padding: 0;
+  border: 0; border-radius: 10px; background: transparent; color: var(--t-muted); box-shadow: none; }
+body.t-ui .ht-profile__logout:active { background: var(--t-surface-2); color: var(--t-accent); }
+.ht-profile__budget { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+/* 예산은 작게(2026-11-12 사용자 요청: 너무 크게 나옴) — 식자재·소모품 나란히, 글자 작게, 막대 얇게 */
+.ht-profile__budget > :is(p, small) { grid-column: 1 / -1; margin: 0; }
+.ht-profile__budget .rd-budget { gap: 4px; padding: 8px 10px; border-radius: 10px; }
+.ht-profile__budget .rd-budget__head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; white-space: nowrap; }
+.ht-profile__budget .rd-budget__title { font-size: 13px !important; }
+.ht-profile__budget .rd-budget__pct { font-size: 12px !important; }
+.ht-profile__budget .rd-account__bar { height: 6px; }
+.ht-profile__budget .rd-budget.is-over .rd-account__bar { animation: none; height: 6px; }
+.ht-profile__budget .rd-budget__nums dt { font-size: 11px !important; white-space: nowrap; }
+.ht-profile__budget .rd-budget__nums dd { font-size: 13px !important; white-space: nowrap; }
+.ht-profile__budget > :is(p, small) { font-size: 12px !important; }
+
+/* 로그인 전 카드(따로 있던 터치 로그인 화면 대신) — 큰 입력칸, 버튼은 바로가기 주황(PC와 같음) */
+.ht-login { display: grid; gap: 12px; }
+.ht-login__field { display: grid; gap: 6px; color: var(--t-muted); font-size: 14px; font-weight: 700; }
+.ht-login__field input { min-height: 54px; padding: 0 16px; border: 1.5px solid var(--t-line); border-radius: 14px; background: var(--t-surface); color: var(--t-text); font-size: 18px; }
+.ht-login__field input:focus { border-color: #1E98CF; outline: none; box-shadow: 0 0 0 4px rgba(30, 152, 207, .18); }
+body.t-ui .t-btn.ht-login__btn { --button-bg: #E38A2A; --button-text: #fff; background: #E38A2A; border-color: #E38A2A; color: #fff; font-weight: 800; }
+body.t-ui .t-btn.ht-login__btn:active:not(:disabled) { background: #CF7A1F; }
+.ht-login__msg { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; color: var(--t-danger); font-size: 14px; font-weight: 700; }
+.ht-login__help { margin: 0; color: var(--t-muted); font-size: 13px; text-align: center; }
+
+/* PC 홈 부품을 터치 본문에: 바로가기 물방울 줄, 아래 홍보 묶음 */
+.ht-pc { margin: 6px 0 18px; }
+.ht-pc .home-shortcuts { padding: 10px 0; }
+.ht-stories { display: grid; gap: 16px; margin-top: 26px; }
+.ht-stories .home-main__hero { min-height: 260px; border-radius: 16px; }
+.ht-stories .home-main__lower { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.ht-stories .home-main__banner { height: 160px; }
+@media (min-width: 1000px) { .ht-stories .home-main__lower { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .ht-stories .home-main__hero { min-height: 320px; } }
+@media (max-width: 767px) {
+  .ht-profile__avatar { width: 56px; height: 56px; }
+  .ht-profile__avatar svg { width: 48px; height: 48px; }
+  /* 휴대폰 예산: 칸마다 사용률·막대·여유 한 줄만(예산·사용 금액은 뺌) */
+  .ht-profile__budget .rd-budget__nums { grid-template-columns: minmax(0, 1fr); }
+  .ht-profile__budget .rd-budget__nums > div:not(:last-child) { display: none; }
+  .ht-profile__budget .rd-budget__nums > div { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+  /* 휴대폰: 더채움몰 장 글이 잘리지 않을 높이, 알약 줄은 뺌 */
+  .ht-stories .home-main__hero { min-height: 340px; }
+  .ht-stories .hero-mall__chips { display: none; }
+  /* 사진 3장은 옆으로 넘기기(세로로 쌓으면 너무 길다) */
+  .ht-stories .home-main__cards { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 82%; gap: 12px;
+    overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin: 0 -16px; padding: 0 16px 4px; scroll-padding-inline: 16px; }
+  .ht-stories .home-main__cards::-webkit-scrollbar { display: none; }
+  .ht-stories .home-main__photo { scroll-snap-align: start; }
+}

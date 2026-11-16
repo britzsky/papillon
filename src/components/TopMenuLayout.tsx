@@ -16,6 +16,7 @@ import { useHomeFont, useHomeFontSize } from '../features/home/homeFont'
 import { useHomeTheme } from '../features/home/homeTheme'
 import { findActiveMenuKey, menusForRole } from '../features/workspace/menus'
 import { workspaceAccountId } from '../features/workspace/workspaceAccount'
+import { LOGIN_REQUIRED_TITLE, guestCanOpen, useSignedIn } from '../features/auth/session'
 import './HeaderBar.css'
 import './TopMenuLayout.css'
 import './TopMenuTheme.css'
@@ -34,7 +35,9 @@ import './TopMenuTheme.css'
  */
 export default function TopMenuLayout({ children, actionsInPage = false, title }: { children: ReactNode; actionsInPage?: boolean; title?: string }) {
   const location = useLocation()
-  const menus = useMemo(() => menusForRole(), [])
+  // 로그인 전(손님): 메뉴는 펼쳐 볼 수 있지만 더채움몰 말고는 누를 수 없다. 검색·거래처·마감 알림도 없음(2026-11-12 사용자 요청)
+  const signedIn = useSignedIn()
+  const menus = useMemo(() => menusForRole({ guest: !signedIn }), [signedIn])
   const activeKey = findActiveMenuKey(location.pathname)
   const [openKey, setOpenKey] = useState('')
   const closeTimer = useRef<number | undefined>(undefined)
@@ -89,26 +92,27 @@ export default function TopMenuLayout({ children, actionsInPage = false, title }
                 <button type="button" className="top-layout__cat-btn" aria-expanded={isOpen} aria-controls={`top-menu-${menu.key}`}
                   onClick={() => setOpenKey(current => current === menu.key ? '' : menu.key)}>{menu.label}</button>
                 <div id={`top-menu-${menu.key}`} className="top-layout__drop" hidden={!isOpen}>
-                  {menu.items.map(item => item.to ? (
+                  {menu.items.map(item => item.to && (signedIn || guestCanOpen(item.to)) ? (
                     <NavLink key={item.label} to={withAccount(item.to)} end={item.exact} onClick={() => setOpenKey('')}
                       className={({ isActive }) => `top-layout__link${isActive ? ' is-active' : ''}`}>{item.label}</NavLink>
-                  ) : <span key={item.label} className="top-layout__link is-disabled">{item.label}</span>)}
+                  ) : <span key={item.label} className={`top-layout__link is-disabled${item.to ? ' is-locked' : ''}`} aria-disabled="true"
+                    title={item.to ? LOGIN_REQUIRED_TITLE : undefined}>{item.label}{item.to ? <span className="rd-sr-only"> (로그인 후 이용)</span> : null}</span>)}
                 </div>
               </div>
             )
           })}
         </nav>
 
-        <HomeSearchBox className="top-layout__search" />
+        {signedIn ? <HomeSearchBox className="top-layout__search" /> : <GuestSearchBox />}
         <HeaderSns />
         {/* header-shell: 머리 줄 아이콘 버튼 규칙(HeaderBar.css)이 이 묶음에도 걸리게 */}
-        <div className="header-shell top-layout__actions"><HeaderActions accountOnly={actionsInPage} /></div>
+        {signedIn ? <div className="header-shell top-layout__actions"><HeaderActions accountOnly={actionsInPage} /></div> : null}
         <ThemeSwitch theme={theme} onChange={setTheme} />
         </div>
       </header>
 
       <main className="top-layout__content" ref={contentRef}>
-        {deadlineSlots > 0 ? null : <DeadlineAlertBanner />}
+        {deadlineSlots > 0 || !signedIn ? null : <DeadlineAlertBanner />}
         <DeadlineSlotContext.Provider value={registerDeadlineSlot}>
           {title
             ? <div className="top-page"><WorkflowBar />{chooseAccount ? <AccountChoiceNotice /> : children}</div>
@@ -118,4 +122,15 @@ export default function TopMenuLayout({ children, actionsInPage = false, title }
       <QuickLinks scrollRef={contentRef}><FontPicker value={font} onChange={setFont} sizePlus={fontPlus} onSizeChange={setFontPlus} /></QuickLinks>
     </div>
   )
+}
+
+/** 로그인 전 머리 줄 검색창 자리: 같은 모양으로 비활성(검색은 업무 데이터라 로그인 후) */
+function GuestSearchBox() {
+  return <div className="rd-home__search top-layout__search is-locked" role="search" title={LOGIN_REQUIRED_TITLE}>
+    <label>
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="#5B6660" strokeWidth="2" fill="none" /><path d="M16 16 L21 21" stroke="#5B6660" strokeWidth="2" strokeLinecap="round" /></svg>
+      <input type="search" className="rd-bare-input" aria-label="통합 검색" placeholder="로그인 후 검색할 수 있어요" disabled />
+    </label>
+    <button type="button" className="rd-btn is-primary" disabled>검색</button>
+  </div>
 }

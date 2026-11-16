@@ -120,7 +120,8 @@ export default function MallProducts() {
     {context.buyer_types.map(type => <button key={type} type="button" className={buyerType === type ? 'is-active' : ''} aria-pressed={buyerType === type} onClick={() => chooseBuyer(type)}>
       <b>{BUYER_LABEL[type]}</b><small>{type === 'ACCOUNT' ? `${text(context.account_name)} 이름으로 · 후불 가능` : '내 돈으로 · 무통장 입금'}</small>
     </button>)}
-  </div> : context ? <p className="mall-buyer-note">본사 계정은 개인 구매만 할 수 있습니다(거래처 구매는 거래처 계정으로).</p> : null
+  </div> : context?.guest ? <p className="mall-buyer-note">로그인 전에는 개인 구매가로 보여요. 주문은 <Link to="/home">로그인</Link> 후 할 수 있어요(거래처 계정은 거래처 구매가도 보임).</p>
+    : context ? <p className="mall-buyer-note">본사 계정은 개인 구매만 할 수 있습니다(거래처 구매는 거래처 계정으로).</p> : null
 
   const grid = (items: Row[]) => <ul className="mall-grid">
     {items.map(product => <ProductCard key={text(product.product_id)} product={product} onOpen={() => setDetailId(Number(product.product_id))} onAdd={() => add(product)} />)}

@@ -208,7 +208,7 @@ export async function login(payload: LoginRequest): Promise<LoginResponse> {
   })
 
   if (!response.ok) {
-    throw new Error('Invalid ID or password.')
+    throw new Error('아이디 또는 비밀번호를 확인해주세요.')
   }
 
   const rawData = (await response.json()) as unknown

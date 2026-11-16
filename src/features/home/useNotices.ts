@@ -10,9 +10,11 @@ export type Notice = {
 
 type State = { status: 'loading' } | { status: 'error' } | { status: 'ok'; notices: Notice[] }
 
-export function useNotices(): State {
+/** enabled=false(로그인 전)면 조회하지 않고 빈 목록 — 공지는 로그인한 사용자만(서버도 막음) */
+export function useNotices(enabled = true): State {
   const [state, setState] = useState<State>({ status: 'loading' })
   useEffect(() => {
+    if (!enabled) return
     const controller = new AbortController()
     fetch(buildApiUrl('/v2/workspace/notices'), { signal: controller.signal })
       .then(r => r.ok ? r.json() as Promise<{ status: string; notices: Notice[] }> : null)
@@ -22,6 +24,6 @@ export function useNotices(): State {
       })
       .catch(() => { if (!controller.signal.aborted) setState({ status: 'error' }) })
     return () => controller.abort()
-  }, [])
-  return state
+  }, [enabled])
+  return enabled ? state : { status: 'ok', notices: [] }
 }

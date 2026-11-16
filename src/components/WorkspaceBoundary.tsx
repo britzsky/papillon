@@ -5,19 +5,22 @@ import { buildApiUrl } from '../config/api'
 import HomeSplash from './HomeSplash'
 import { splashPending } from '../features/home/homeReady'
 import { rememberWorkspaceAccount, urlAccountId, workspaceAccountId } from '../features/workspace/workspaceAccount'
+import { SessionContext, forgetLocalUser, isGuestPath } from '../features/auth/session'
 
 type Session = { userId: string; userType: string; accountId: string }
 const NOTHING_DONE = new Set<never>()
-function ProtectedWorkspace({ children }: { children: ReactNode }) {
+/** guest: 로그인 안 해도 여는 화면(PC 홈·더채움몰) — 세션이 없으면 손님으로 그린다(features/auth/session) */
+function ProtectedWorkspace({ children, guest = false }: { children: ReactNode; guest?: boolean }) {
   const [state, setState] = useState<'loading' | 'ready' | 'login' | 'error'>('loading')
   const [revision, setRevision] = useState(0)
   const location = useLocation()
   useEffect(() => {
     const controller = new AbortController()
     void fetch(buildApiUrl('/User/Session'), { signal: controller.signal }).then(async response => {
-      if (!response.ok) { if (!controller.signal.aborted) setState(response.status === 401 || response.status === 403 ? 'login' : 'error'); return }
+      const noUser = () => { forgetLocalUser(); setState('login') }
+      if (!response.ok) { if (!controller.signal.aborted) { if (response.status === 401 || response.status === 403) noUser(); else setState('error') } return }
       const user = await response.json() as Session
-      if (!['2', '3'].includes(user.userType)) { setState('login'); return }
+      if (!['2', '3'].includes(user.userType)) { noUser(); return }
       localStorage.setItem('user_id', user.userId)
       localStorage.setItem('user_type', user.userType)
       if (user.userType === '3') localStorage.setItem('account_id', user.accountId)
@@ -25,13 +28,14 @@ function ProtectedWorkspace({ children }: { children: ReactNode }) {
     }).catch(() => { if (!controller.signal.aborted) setState('error') })
     return () => controller.abort()
   }, [revision])
-  if (state === 'login') return <Navigate to="/" replace />
+  // 세션 없음: 손님 화면(홈·더채움몰)은 손님으로 그리고, 그 밖은 / (→ 홈, 접속자 카드에서 로그인)로
+  if (state === 'login') return guest ? <SessionContext.Provider value="guest">{children}</SessionContext.Provider> : <Navigate to="/" replace />
   // 로그인 직후 홈: 홈 준비 화면과 같은 모양으로 '로그인 확인' 단계부터(Home이 이어 그림)
   if (state === 'loading') return location.pathname === '/home' && splashPending() ? <HomeSplash done={NOTHING_DONE} /> : <p role="status">로그인 정보를 확인하고 있습니다.</p>
   if (state === 'error') return <div role="alert"><p>서버 연결을 확인하지 못했습니다.</p><button onClick={() => { setState('loading'); setRevision(value => value + 1) }}>다시 확인</button></div>
   // 역할에 맞지 않는 화면(현장 → 본사 전용, 본사 → 거래처 메뉴 관리 등)은 홈으로
   if (!visibleForRole(location.pathname)) return <Navigate to="/home" replace />
-  return <AccountScope>{children}</AccountScope>
+  return <SessionContext.Provider value="user"><AccountScope>{children}</AccountScope></SessionContext.Provider>
 }
 
 /**
@@ -47,5 +51,5 @@ function AccountScope({ children }: { children: ReactNode }) {
 export default function WorkspaceBoundary({ children }: { children: ReactNode }) {
   const { pathname } = useLocation()
   if (pathname === '/' || pathname.startsWith('/payment') || pathname.startsWith('/billing')) return children
-  return <ProtectedWorkspace>{children}</ProtectedWorkspace>
+  return <ProtectedWorkspace guest={isGuestPath(pathname)}>{children}</ProtectedWorkspace>
 }

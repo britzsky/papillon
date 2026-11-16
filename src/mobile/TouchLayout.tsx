@@ -1,4 +1,5 @@
-import { visibleForRole } from '../features/workspace/roleScreens'
+import { HQ_ONLY_PATHS, visibleForRole } from '../features/workspace/roleScreens'
+import { guestCanOpen, useSignedIn } from '../features/auth/session'
 import { rememberWorkspaceAccount, workspaceAccountId } from '../features/workspace/workspaceAccount'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
@@ -85,21 +86,23 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, asideNarr
   // 관리 거래처(PC와 같은 규칙: 거래처 계정 고정, 본사는 주소 → 마지막 선택)
   const accountId = workspaceAccountId(searchParams)
   const accountUser = isAccountUser()
+  // 로그인 전(손님, 2026-11-12): 메뉴는 보이지만 홈·더채움몰 말고는 누를 수 없고, 거래처 선택·사용자·로그아웃이 없다
+  const signedIn = useSignedIn()
   // 공급사 사업장 매핑 색(왼쪽 웰스토리 주황 · 오른쪽 아워홈 파랑) — 본사만
-  const suppliers = useAccountSuppliers(!accountUser)
+  const suppliers = useAccountSuppliers(!accountUser && signedIn)
 
   useTouchBody()
 
   useEffect(() => {
-    if (accountUser) return
+    if (accountUser || !signedIn) return
     let alive = true
     getAccountOptions().then(rows => { if (alive) setAccounts(rows) }).catch(() => { if (alive) setAccounts([]) })
     return () => { alive = false }
-  }, [accountUser])
+  }, [accountUser, signedIn])
 
   const groups = NAV
-    .filter(group => !(accountUser && group.hqOnly))
-    .map(group => ({ ...group, items: group.items.filter(item => visibleForRole(item.to)) }))
+    .filter(group => !((accountUser || !signedIn) && group.hqOnly))
+    .map(group => ({ ...group, items: group.items.filter(item => signedIn ? visibleForRole(item.to) : !HQ_ONLY_PATHS.includes(item.to)) }))
     .filter(group => group.items.length > 0)
   const activeGroup = groups.find(group => group.items.some(item => pathname === item.to || pathname.startsWith(`${item.to}/`)))?.key || ''
   const flyout = groups.find(group => group.key === openGroup)
@@ -107,12 +110,14 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, asideNarr
   const [expandedChoice, setExpandedChoice] = useState<string | null>(null)
   const expanded = expandedChoice ?? activeGroup
 
+  const canOpen = (to: string) => signedIn || to === '/home' || guestCanOpen(to)
   const go = (to: string) => {
+    if (!canOpen(to)) return
     setOpenGroup('')
     navigate(accountId ? `${to}?${new URLSearchParams({ account_id: accountId })}` : to)
   }
   const pressGroup = (group: NavGroup) => {
-    if (group.items.length === 1) go(group.items[0].to)
+    if (group.items.length === 1) { if (canOpen(group.items[0].to)) go(group.items[0].to) }
     else if (window.matchMedia('(min-width: 1100px)').matches) setExpandedChoice(expanded === group.key ? '' : group.key)
     else setOpenGroup(current => current === group.key ? '' : group.key)
   }
@@ -138,7 +143,8 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, asideNarr
           const expandedHere = group.items.length > 1 && expanded === group.key
           return <div key={group.key} className="t-rail__group">
             <button type="button"
-              className={`t-rail__item${activeGroup === group.key ? ' is-active' : ''}${openGroup === group.key ? ' is-open' : ''}`}
+              className={`t-rail__item${activeGroup === group.key ? ' is-active' : ''}${openGroup === group.key ? ' is-open' : ''}${group.items.length === 1 && !canOpen(group.items[0].to) ? ' is-locked' : ''}`}
+              aria-disabled={group.items.length === 1 && !canOpen(group.items[0].to) ? true : undefined}
               aria-expanded={group.items.length > 1 ? expandedHere || openGroup === group.key : undefined}
               onClick={() => pressGroup(group)}>
               <TouchIcon name={group.icon} />
@@ -147,19 +153,19 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, asideNarr
             {/* 넓은 화면: 묶음 안 화면을 메뉴 아래에 펼친다(좁은 화면은 펼침 창) */}
             {expandedHere && <ul className="t-rail__sub">
               {group.items.map(item => <li key={item.to}>
-                <button type="button" className={pathname === item.to ? 'is-active' : ''} onClick={() => go(item.to)}>{item.label}</button>
+                <button type="button" className={`${pathname === item.to ? 'is-active' : ''}${canOpen(item.to) ? '' : ' is-locked'}`} aria-disabled={canOpen(item.to) ? undefined : true} onClick={() => go(item.to)}>{item.label}</button>
               </li>)}
             </ul>}
           </div>
         })}
       </div>
-      <div className="t-rail__foot">
+      {signedIn && <div className="t-rail__foot">
         {userName && <span className="t-rail__user"><i>{userName.slice(0, 1)}</i><span>{userName}</span></span>}
         <button type="button" className="t-rail__item t-rail__logout" onClick={logout}>
           <TouchIcon name="logout" />
           <span>로그아웃</span>
         </button>
-      </div>
+      </div>}
     </nav>
 
     {flyout && <div className="t-flyout-backdrop" role="presentation" onClick={() => setOpenGroup('')}>
@@ -167,9 +173,9 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, asideNarr
         <h2>{flyout.label}</h2>
         <ul>
           {flyout.items.map(item => <li key={item.to}>
-            <button type="button" className={pathname === item.to ? 'is-active' : ''} onClick={() => go(item.to)}>
+            <button type="button" className={`${pathname === item.to ? 'is-active' : ''}${canOpen(item.to) ? '' : ' is-locked'}`} aria-disabled={canOpen(item.to) ? undefined : true} onClick={() => go(item.to)}>
               <strong>{item.label}</strong>
-              {item.hint && <small>{item.hint}</small>}
+              {canOpen(item.to) ? item.hint && <small>{item.hint}</small> : <small>로그인 후 이용할 수 있어요</small>}
             </button>
           </li>)}
         </ul>
@@ -184,7 +190,7 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, asideNarr
           {subtitle && <span>{subtitle}</span>}
         </div>
         {toolbar && <div className="t-top__toolbar">{toolbar}</div>}
-        {!hideAccount && <div className="t-top__account">
+        {!hideAccount && signedIn && <div className="t-top__account">
           {accountUser
             ? <span className="t-chip"><TouchIcon name="store" />{accountName || '내 거래처'}</span>
             : <TouchAccountPicker accounts={accounts} accountId={accountId} suppliers={suppliers} onChange={changeAccount} />}
