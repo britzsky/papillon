@@ -23,6 +23,8 @@
 /* 머리 줄 */
 .rd.top-layout[data-theme="dark"] .top-layout__bar { background: var(--dk-surface); border-bottom-color: var(--dk-line); }
 .rd.top-layout[data-theme="dark"] .top-layout__drop { background: var(--dk-surface); box-shadow: 0 14px 30px rgba(0, 0, 0, .45); }
+.rd.top-layout[data-theme="dark"] .top-layout__nav.is-mega .top-layout__drop { background: transparent; box-shadow: none; }
+.rd.top-layout[data-theme="dark"] .top-layout__mega { background: var(--dk-surface); border-color: var(--dk-line, rgba(255,255,255,.12)); box-shadow: 0 14px 30px rgba(0, 0, 0, .45); }
 .rd.top-layout[data-theme="dark"] .top-layout__search.rd-home__search label { background: var(--dk-surface-2); color: var(--rd-ink); }
 .rd.top-layout[data-theme="dark"] .rd-home__search input { color: var(--rd-ink); }
 .rd.top-layout[data-theme="dark"] .rd-home__search-pop { background: var(--dk-surface); box-shadow: 0 12px 32px rgba(0, 0, 0, .5); }

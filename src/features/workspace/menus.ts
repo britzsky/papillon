@@ -26,7 +26,7 @@ export const majorMenus: MajorMenu[] = [
     basePaths: ['/operations/table-meals', '/operations/menu', '/operations/account-menu', '/operations/meal-plan-templates'],
     items: [
       { label: '식단표 관리', to: '/operations/table-meals', exact: true },
-      { label: '템플릿 식단표 관리', to: '/operations/meal-plan-templates', exact: true },
+      { label: '템플릿 관리', to: '/operations/meal-plan-templates', exact: true },
       // 2026-10-26: 거래처 메뉴 관리·본사 메뉴 가져오기는 메뉴에서 뺌(레시피 수정은 식단표에서 메뉴를 눌러 '이 업장 레시피 수정'). 주소는 당분간 열림
       { label: '메뉴 관리', to: '/operations/menu', exact: true },
     ],
@@ -37,9 +37,9 @@ export const majorMenus: MajorMenu[] = [
     basePaths: ['/order_manager'],
     items: [
       { label: '발주하기', to: '/order_manager/order', exact: true },
-      { label: '발주서·입고 관리', to: '/order_manager/orders', exact: true },
-      { label: '공급사 통합 연동', to: '/order_manager/suppliers', exact: true },
-      { label: '공급사 사업장 매핑', to: '/order_manager/supplier-sites', exact: true },
+      { label: '발주서 관리', to: '/order_manager/orders', exact: true },
+      { label: '공급사 연동', to: '/order_manager/suppliers', exact: true },
+      { label: '공급사 매핑', to: '/order_manager/supplier-sites', exact: true },
     ],
   },
   {
@@ -47,7 +47,7 @@ export const majorMenus: MajorMenu[] = [
     label: '재고관리',
     basePaths: ['/inventory'],
     items: [
-      { label: '거래처별 재고관리', to: '/inventory/account', exact: true },
+      { label: '거래처 재고 관리', to: '/inventory/account', exact: true },
       { label: '재고 변동 이력', to: '/inventory/history', exact: true },
       { label: '식자재 관리', to: '/inventory/ingredients', exact: true },
     ],

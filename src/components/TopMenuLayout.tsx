@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import logo from '../assets/logo/thefull.png'
 import logoDark from '../assets/logo/thefull-dark.png' // 어두운 테마용(글자 흰색, 투명 바탕 — 2026-11-10 사용자 제공)
@@ -66,6 +66,16 @@ export default function TopMenuLayout({ children, actionsInPage = false, title }
   // 마우스가 카테고리 → 내려온 메뉴로 옮겨 가는 사이 잠깐 비어도 닫히지 않게 조금 늦게 닫는다
   const open = (key: string) => { window.clearTimeout(closeTimer.current); setOpenKey(key) }
   const closeSoon = () => { window.clearTimeout(closeTimer.current); closeTimer.current = window.setTimeout(() => setOpenKey(''), 120) }
+  // 전체 메뉴(2026-11-17 사용자 요청): 어느 대분류에 올려도 모든 대분류의 하위 메뉴를 각자 아래에 한꺼번에 펼친다.
+  // openKey = 마우스가 올라간 대분류(밑줄 강조), 비어 있으면 닫힘. 뒤 판(.top-layout__mega)은 가장 긴 열 높이에 맞춘다
+  const allOpen = openKey !== ''
+  const navRef = useRef<HTMLElement>(null)
+  const [megaHeight, setMegaHeight] = useState(0)
+  useLayoutEffect(() => {
+    if (!allOpen || !navRef.current) return
+    const drops = [...navRef.current.querySelectorAll<HTMLElement>('.top-layout__drop')]
+    setMegaHeight(Math.max(0, ...drops.map(drop => drop.offsetHeight)))
+  }, [allOpen, menus])
 
   // 메뉴로 옮겨도 관리 거래처 유지(사이드 메뉴와 같은 규칙, 거래처 계정은 자기 거래처)
   const withAccount = (to: string) => {
@@ -81,7 +91,7 @@ export default function TopMenuLayout({ children, actionsInPage = false, title }
         <div className="top-layout__inner">
         <Link to="/home" className="top-layout__brand" aria-label="홈으로"><img src={theme === 'dark' ? logoDark : logo} alt="더채움 THE CHAEWOOM" /></Link>
 
-        <nav className="top-layout__nav" aria-label="메뉴">
+        <nav ref={navRef} className={`top-layout__nav${allOpen ? ' is-mega' : ''}`} aria-label="메뉴">
           {menus.map(menu => {
             const isOpen = openKey === menu.key
             return (
@@ -89,9 +99,9 @@ export default function TopMenuLayout({ children, actionsInPage = false, title }
                 onMouseEnter={() => open(menu.key)} onMouseLeave={closeSoon}
                 onFocus={() => open(menu.key)}
                 onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) closeSoon() }}>
-                <button type="button" className="top-layout__cat-btn" aria-expanded={isOpen} aria-controls={`top-menu-${menu.key}`}
-                  onClick={() => setOpenKey(current => current === menu.key ? '' : menu.key)}>{menu.label}</button>
-                <div id={`top-menu-${menu.key}`} className="top-layout__drop" hidden={!isOpen}>
+                <button type="button" className="top-layout__cat-btn" aria-expanded={allOpen} aria-controls={`top-menu-${menu.key}`}
+                  onClick={() => setOpenKey(current => current ? '' : menu.key)}>{menu.label}</button>
+                <div id={`top-menu-${menu.key}`} className="top-layout__drop" hidden={!allOpen}>
                   {menu.items.map(item => item.to && (signedIn || guestCanOpen(item.to)) ? (
                     <NavLink key={item.label} to={withAccount(item.to)} end={item.exact} onClick={() => setOpenKey('')}
                       className={({ isActive }) => `top-layout__link${isActive ? ' is-active' : ''}`}>{item.label}</NavLink>
@@ -109,6 +119,8 @@ export default function TopMenuLayout({ children, actionsInPage = false, title }
         {signedIn ? <div className="header-shell top-layout__actions"><HeaderActions accountOnly={actionsInPage} /></div> : null}
         <ThemeSwitch theme={theme} onChange={setTheme} />
         </div>
+        {/* 전체 메뉴 뒤 흰 판(화면 폭 전체). 열 사이 빈 곳으로 마우스가 지나가도 닫히지 않게 판에서도 열림 유지 */}
+        {allOpen ? <div className="top-layout__mega" aria-hidden="true" style={{ height: megaHeight }} onMouseEnter={() => window.clearTimeout(closeTimer.current)} onMouseLeave={closeSoon} /> : null}
       </header>
 
       <main className="top-layout__content" ref={contentRef}>

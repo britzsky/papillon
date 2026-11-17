@@ -59,7 +59,7 @@
 .rd .top-layout__brand img { display: block; width: 112px; height: auto; }
 
 /* 카테고리 줄 — 로고와 검색창 사이 남는 폭의 가운데(2026-11-10 시안) */
-.rd .top-layout__nav { flex: 1 0 auto; /* 남는 폭을 메뉴 줄이 차지(메뉴는 그 가운데) → 로고는 본문 판 왼쪽 끝, 테마 스위치는 오른쪽 끝(2026-11-10 사용자 요청: 머리 줄과 본문 폭 맞춤). 메뉴는 안 줄고 좁으면 검색창이 먼저 줄어듦 */ display: flex; justify-content: center; align-items: stretch; align-self: stretch; gap: 18px; min-width: 0; }
+.rd .top-layout__nav { flex: 1 0 auto; /* 남는 폭을 메뉴 줄이 차지(메뉴는 그 가운데) → 로고는 본문 판 왼쪽 끝, 테마 스위치는 오른쪽 끝(2026-11-10 사용자 요청: 머리 줄과 본문 폭 맞춤). 메뉴는 안 줄고 좁으면 검색창이 먼저 줄어듦 */ display: flex; justify-content: center; align-items: stretch; align-self: stretch; gap: 32px; min-width: 0; }
 .rd .top-layout__cat { position: relative; display: flex; align-items: stretch; }
 .rd .top-layout__cat-btn {
   --rd-fs: 15px;
@@ -115,6 +115,37 @@
 .rd .top-layout__drop[hidden] { display: none; }
 @keyframes top-layout-drop { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .rd .top-layout__drop { animation: none; } }
+/* 전체 메뉴(2026-11-17): 모든 대분류의 하위 메뉴를 각자 아래 열로, 뒤에 화면 폭 흰 판(.top-layout__mega).
+   열은 대분류 가운데 기준으로 글자 폭만큼(한 줄). 옆 열과 안 겹치게 대분류 사이 간격(.top-layout__nav gap)을 넓혀 둠 */
+.rd .top-layout__nav.is-mega .top-layout__drop {
+  z-index: 2;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: none;
+  width: max-content;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 12px 0 16px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: center;
+}
+.rd .top-layout__nav.is-mega .top-layout__link { padding: 9px 8px; white-space: nowrap; }
+.rd .top-layout__mega {
+  position: absolute;
+  z-index: 1;
+  top: 100%;
+  left: 0;
+  right: 0;
+  border-top: 1px solid var(--rd-line);
+  border-bottom: 1px solid var(--rd-line);
+  background: #ffffff;
+  box-shadow: 0 14px 30px rgba(30, 42, 34, .12);
+  animation: top-layout-drop .16s ease-out;
+}
+@media (prefers-reduced-motion: reduce) { .rd .top-layout__mega { animation: none; } }
 
 .rd .top-layout__link {
   --rd-fs: 14px;
