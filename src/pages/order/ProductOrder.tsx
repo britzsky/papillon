@@ -1,6 +1,7 @@
 import { workspaceAccountId } from '../../features/workspace/workspaceAccount'
 import CatalogPreparation from '../../components/CatalogPreparation'
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useSearchParams } from 'react-router-dom'
 import TopMenuLayout from '../../components/TopMenuLayout'
 import BatchOrderResults from '../../components/BatchOrderResults'
@@ -13,6 +14,7 @@ import './ProductOrder.css'
 import './OrderPos.css'
 
 const PAGE_SIZE = 24
+const SOURCE_TITLE = '담는 상품 모두 이 식재료 재고로 들어갑니다. 비우면 상품마다 맞힌 식재료로 담고, 장바구니에서 바꿀 수 있습니다'
 const won = (value: number) => `${Math.round(value).toLocaleString('ko-KR')}원`
 /** 수량 한 칸 이동: 발주배수만큼, 최소 발주수량 아래로는 내려가지 않음 */
 const stepQty = (line: CartLine, direction: 1 | -1) => {
@@ -31,10 +33,10 @@ function unitCost(offer: SupplierOffer) {
 }
 
 /** 상품 검색 발주(PC). 로직은 features/order/useProductOrder(터치와 공용). embedded: 발주하기(OrderWorkspace) 탭 안에서 레이아웃 없이 내용만 그린다 */
-export default function ProductOrder({ embedded = false, favorites = false }: { embedded?: boolean; favorites?: boolean }) {
+export default function ProductOrder({ embedded = false, favorites = false, headSlot = null }: { embedded?: boolean; favorites?: boolean; headSlot?: HTMLElement | null }) {
   const [params] = useSearchParams()
   const accountId = workspaceAccountId(params)
-  return <ProductOrderContent key={accountId} accountId={accountId} initialSource={params.get('ingredient_id') || ''} embedded={embedded} favorites={favorites} />
+  return <ProductOrderContent key={accountId} accountId={accountId} initialSource={params.get('ingredient_id') || ''} embedded={embedded} favorites={favorites} headSlot={headSlot} />
 }
 
 /** 같은 기준단위(100g·100ml·개)끼리 단가 비교. 단위가 다르면 100g → 100ml → 그 외 순서로 묶는다 */
@@ -87,7 +89,7 @@ function OfferCard({ offer, inCart, canAdd, onAdd, cheapest, line, onQty, disabl
   </article>
 }
 
-function ProductOrderContent({ accountId, initialSource, embedded, favorites }: { accountId: string; initialSource: string; embedded: boolean; favorites: boolean }) {
+function ProductOrderContent({ accountId, initialSource, embedded, favorites, headSlot }: { accountId: string; initialSource: string; embedded: boolean; favorites: boolean; headSlot: HTMLElement | null }) {
   const {
     sites, ingredients, source, chooseSource, site, setSite, date, changeDate, query, setQuery, cart, busy, locked, message, result, page, setPage,
     search, order, newCart, canAdd, addToCart, setLineQuantity, setLineSource, ingredientName, removeLine, filtered, groups, cartTotal, canOrder, toggleFavorite, favoriteMode,
@@ -108,15 +110,30 @@ function ProductOrderContent({ accountId, initialSource, embedded, favorites }: 
   const pages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE))
   const inCart = (offer: SupplierOffer) => cart.some(line => line.offer.supplier_offer_id === offer.supplier_offer_id && line.date === date)
 
+  // 조회조건: 발주하기 안(headSlot 있음)에서는 머리 줄 검색창 자리에 한 줄로(♥ 버튼은 같은 줄 '♥ 나만의 식재료' 탭이 대신), 따로 연 화면에서는 예전처럼 위 칸에
+  const canSearch = !busy && Boolean(date) && Boolean(accountId)
+  const sourceSelect = <select className="rd-input" aria-label="재고에 넣을 식재료" title={SOURCE_TITLE} disabled={busy || locked} value={source} onChange={e => chooseSource(e.target.value)}><option value="">{headSlot ? '재고 식재료: 상품마다 자동' : '상품마다 자동'}</option>{ingredients.map(i => <option key={i.ingredient_id} value={i.ingredient_id}>{i.ingredient_name}</option>)}</select>
+  const siteSelect = <select className="rd-input" aria-label="공급사 · 사업장" disabled={busy} value={site} onChange={e => { setSite(e.target.value); setPage(1) }}><option value="">전체 공급사·사업장</option>{sites.map(s => <option key={s.supplier_account_site_id} value={s.supplier_account_site_id}>{s.supplier_name} · {s.external_site_name || s.external_site_code}</option>)}</select>
+  const dateInput = <input className="rd-input" aria-label="납품일" title="납품일" disabled={busy} type="date" value={date} onChange={e => changeDate(e.target.value)} />
+  const favoriteButton = <button type="button" className={headSlot ? `rd-btn${favoriteMode ? ' is-selected' : ''}` : favoriteMode ? 'is-primary' : ''} disabled={!canSearch} onClick={() => void search(true)} title="하트를 누른 웰스토리·아워홈 상품만 봅니다">♥ 나만의 식재료</button>
+  const headTools = <>
+    {sourceSelect}{siteSelect}{dateInput}
+    <form className="rd-order__search" role="search" onSubmit={event => { event.preventDefault(); if (canSearch) void search() }}>
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="#5B6660" strokeWidth="2" fill="none" /><path d="M16 16 L21 21" stroke="#5B6660" strokeWidth="2" strokeLinecap="round" /></svg>
+      <input type="search" className="rd-bare-input" aria-label="상품 검색" placeholder="상품명 · 코드 · 공급사" value={query} onChange={e => { setQuery(e.target.value); setPage(1) }} />
+      <button type="submit" className="rd-btn is-selected" disabled={!canSearch}>{busy ? '조회 중…' : '검색'}</button>
+    </form>
+  </>
+
   const body = <div className="pos-order rd rd-pos">
-    <section className="pos-filters" aria-label="상품 조회 조건">
-      <label title="담는 상품 모두 이 식재료 재고로 들어갑니다. 비우면 상품마다 맞힌 식재료로 담고, 장바구니에서 바꿀 수 있습니다">재고에 넣을 식재료<select disabled={busy || locked} value={source} onChange={e => chooseSource(e.target.value)}><option value="">상품마다 자동</option>{ingredients.map(i => <option key={i.ingredient_id} value={i.ingredient_id}>{i.ingredient_name}</option>)}</select></label>
-      <label>공급사 · 사업장<select disabled={busy} value={site} onChange={e => { setSite(e.target.value); setPage(1) }}><option value="">전체 공급사·사업장</option>{sites.map(s => <option key={s.supplier_account_site_id} value={s.supplier_account_site_id}>{s.supplier_name} · {s.external_site_name || s.external_site_code}</option>)}</select></label>
-      <label>납품일<input disabled={busy} type="date" value={date} onChange={e => changeDate(e.target.value)} /></label>
-      <label className="pos-filters__search">상품 검색<input placeholder="상품명 · 코드 · 공급사" value={query} onChange={e => { setQuery(e.target.value); setPage(1) }} onKeyDown={e => { if (e.key === 'Enter' && !busy && date && accountId) void search() }} /></label>
-      <button type="button" className="is-primary" disabled={busy || !date || !accountId} onClick={() => void search()}>{busy ? '조회 중…' : '상품 조회'}</button>
-      <button type="button" className={favoriteMode ? 'is-primary' : ''} disabled={busy || !date || !accountId} onClick={() => void search(true)} title="하트를 누른 웰스토리·아워홈 상품만 봅니다">♥ 나만의 식재료</button>
-    </section>
+    {headSlot ? createPortal(headTools, headSlot) : <section className="pos-filters" aria-label="상품 조회 조건">
+      <label title={SOURCE_TITLE}>재고에 넣을 식재료{sourceSelect}</label>
+      <label>공급사 · 사업장{siteSelect}</label>
+      <label>납품일{dateInput}</label>
+      <label className="pos-filters__search">상품 검색<input placeholder="상품명 · 코드 · 공급사" value={query} onChange={e => { setQuery(e.target.value); setPage(1) }} onKeyDown={e => { if (e.key === 'Enter' && canSearch) void search() }} /></label>
+      <button type="button" className="is-primary" disabled={!canSearch} onClick={() => void search()}>{busy ? '조회 중…' : '상품 조회'}</button>
+      {favoriteButton}
+    </section>}
     <div className="pos-notes">
       <CatalogPreparation key={accountId + date} accountId={accountId} date={date} onReady={() => void search(favorites || favoriteMode)} />
       {message && <p role="status" className="pos-message">{message}</p>}

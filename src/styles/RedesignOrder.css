@@ -26,6 +26,13 @@ body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-seg button { border: 0 !i
 .rd .rd-order__search { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 4px 0 14px; border: 1px solid #D5DDD7; border-radius: 12px; background: #fff; min-width: 340px; }
 .rd .rd-order__search input { flex: 1; min-width: 0; font: inherit; }
 .rd .rd-order__search .rd-btn { min-height: 38px; }
+/* 상품 검색 탭: 조회조건 + 검색칸을 머리 줄 한 줄에(ProductOrder headSlot, 2026-11-17) */
+.rd.rd-order__head > .rd-order__head-tools { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; margin-left: auto; min-width: 0; }
+.rd.rd-order__head > .rd-order__head-tools > .rd-input { width: auto; min-width: 0; max-width: 190px; padding: 0 12px; border: 1px solid #D5DDD7; border-radius: 12px; background: #fff; }
+/* 검색창(48px)과 같은 높이. 전역 30px 규칙(ControlSizing.css, 특정도 1-7-2)을 이기려고 :not(#_) 로 id 특정도를 하나 더 얹음 */
+.rd.rd-order__head > .rd-order__head-tools > .rd-input:not(#_):not(#__) { height: 48px !important; min-height: 48px !important; }
+.rd .rd-order__head-tools > .rd-order__search { flex: 1 1 240px; min-width: 220px; max-width: 360px; }
+.rd .rd-order__head-tools > .rd-btn { min-height: 48px; white-space: nowrap; }
 .rd.rd-order__hint { margin: -4px 0 12px; }
 
 /* ---- 부족량 화면 ---- */

@@ -39,6 +39,9 @@ export default function OrderWorkspace({ initialTab }: { initialTab?: OrderTab |
   }
 
   const [search, setSearch] = useState(() => params.get('q') || '')
+  // 상품 검색 탭: 조회조건·검색칸을 이 머리 줄(검색창 자리)에 탭이 직접 그린다(2026-11-17 사용자 요청, ProductOrder headSlot)
+  const [headSlot, setHeadSlot] = useState<HTMLDivElement | null>(null)
+  const productTab = tab === 'products' || tab === 'myProducts'
   const go = (next: OrderTab, extra?: Record<string, string>) => {
     const query = new URLSearchParams({ tab: next, ...extra })
     const account = params.get('account_id')
@@ -57,16 +60,16 @@ export default function OrderWorkspace({ initialTab }: { initialTab?: OrderTab |
           title={TABS.find(t => t.key === item.key)?.hint} onClick={() => select(item.key)}>{item.label}</button>)}
       </div>
       <DeadlineAlertSlot />
-      <div className="rd-order__head-right">
+      {productTab ? <div ref={setHeadSlot} className="rd-order__head-tools" /> : <div className="rd-order__head-right">
         <form className="rd-order__search" role="search" onSubmit={event => { event.preventDefault(); go('products', search.trim() ? { q: search.trim() } : undefined) }}>
           <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="#5B6660" strokeWidth="2" fill="none" /><path d="M16 16 L21 21" stroke="#5B6660" strokeWidth="2" strokeLinecap="round" /></svg>
           <input type="search" className="rd-bare-input" aria-label="상품 직접 검색" placeholder="다른 상품 직접 찾아 담기" value={search} onChange={e => setSearch(e.target.value)} />
-          <button type="submit" className={`rd-btn${tab === 'products' ? ' is-selected' : ''}`}>검색</button>
+          <button type="submit" className="rd-btn">검색</button>
         </form>
-      </div>
+      </div>}
     </header>
     <div role="tabpanel" aria-label={TABS.find(item => item.key === tab)?.label}>
-      {tab === 'recommended' ? <QuickOrder embedded /> : tab === 'products' ? <ProductOrder embedded /> : tab === 'myProducts' ? <ProductOrder key="my" embedded favorites /> : <FoodOrder key={tab} embedded fixedSource={SOURCE[tab]} />}
+      {tab === 'recommended' ? <QuickOrder embedded /> : tab === 'products' ? <ProductOrder embedded headSlot={headSlot} /> : tab === 'myProducts' ? <ProductOrder key="my" embedded favorites headSlot={headSlot} /> : <FoodOrder key={tab} embedded fixedSource={SOURCE[tab]} />}
     </div>
   </TopMenuLayout></div>
 }
