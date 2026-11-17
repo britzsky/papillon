@@ -5,6 +5,7 @@ import { getAccountIngredients, importStandardMenu, registerAccountIngredient, r
 import { deleteAccountRecipeRow, getAccountRecipe, saveAccountRecipeRow, type AccountRecipeRow } from '../../api/accountRecipes'
 import IngredientSearchSelect from './IngredientSearchSelect'
 import './AccountRecipeEditModal.css'
+import { confirmDialog } from '../../utils/dialog'
 
 type Props = {
   accountId: string
@@ -150,8 +151,8 @@ export default function AccountRecipeEditModal({ accountId, accountName, menuId,
   // body에 붙인다: 식단표 화면 안쪽 규칙(여백·버튼)에 덮이지 않게. 버튼은 PC·터치 공통 버튼 모양(t-btn·is-primary)을 그대로 쓴다
   /** 본사 레시피로 되돌리기: 저장하지 않은 수정은 버려진다. 끝나면 서버 레시피를 다시 읽어 창에 보여준다 */
   const resetToStandard = async () => {
-    if (!window.confirm(`'${menuName}'의 이 업장 레시피를 본사 레시피로 되돌릴까요?
-이 업장에서 바꾼 식재료·사용량이 모두 본사 기준으로 바뀝니다.`)) return
+    if (!(await confirmDialog(`'${menuName}'의 이 업장 레시피를 본사 레시피로 되돌릴까요?
+이 업장에서 바꾼 식재료·사용량이 모두 본사 기준으로 바뀝니다.`))) return
     setBusy(true); setError(''); setNotice('')
     try {
       const result = await resetAccountRecipeToStandard(accountId, menuId)

@@ -6,6 +6,7 @@ import { submitMixedProcurement, type BatchResult } from '../../api/mixedProcure
 import { getTableMealsList, type TableMealsItem } from '../../api/operations'
 import { getSupplierSites, type SupplierSite } from '../../api/supplierIntegration'
 import { getPlanDates, getShortages, MANUAL_MAX_ORDER_QTY, matchesStockFilter, previewShortageOrder, shortageStockStatus, type OrderPreview, type OrderSelection, type ShortageCriteria, type ShortageResult, type ShortageOffer, type ShortageRow, type ShortageStockFilter } from '../../api/shortageProcurement'
+import { showAlert, showOrderResult } from '../../utils/dialog'
 
 export const day = (offset = 0) => { const date = new Date(); date.setDate(date.getDate() + offset); return date.toLocaleDateString('sv-SE') }
 export const number = (value: number) => value.toLocaleString('ko-KR', { maximumFractionDigits: 3 })
@@ -215,7 +216,11 @@ export function useShortageOrder(fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY' | 
       })
       setBatchResult(response); setCompleted(true); setSelected({}); clearDeadlineAlertCache()
       setMessage('공급사별 발주 결과를 확인해주세요.')
-    } catch (e) { setMessage(e instanceof Error ? e.message : '발주 결과를 확인하지 못했습니다.') }
+      void showOrderResult(response)
+    } catch (e) {
+      const text = e instanceof Error ? e.message : '발주 결과를 확인하지 못했습니다.'
+      setMessage(text); void showAlert('error', '발주에 실패했습니다', text)
+    }
     finally { setSubmitting(false) }
   }
   const closePreview = () => { if (submitting) return; setPreview(null); setRevision(value => value + 1) }

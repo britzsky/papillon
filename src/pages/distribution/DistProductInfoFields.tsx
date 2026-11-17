@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { STORAGE_LABEL, text, type Row } from '../../api/distAdmin'
 import { FOOD_LABEL_FIELDS, NOTICE_TYPES, parseInfo, serializeInfo, withFields, type InfoField, type InfoItem } from '../../features/dist/productInfo'
+import { confirmDialog } from '../../utils/dialog'
 
 /**
  * 식품 표시사항·상품정보제공고시 입력(2026-11-04). 정해진 항목은 칸으로, 그 밖의 항목은 '항목 추가'로 이름·내용을 직접.
@@ -39,9 +40,9 @@ export function NoticeFields({ draft, onChange, disabled }: { draft: Row; onChan
     setType(nextType); setItems(next)
     onChange({ notice_json: nextType ? serializeInfo({ type: nextType, type_name: NOTICE_TYPES[nextType]?.label, items: next }) : '' })
   }
-  const changeType = (nextType: string) => {
+  const changeType = async (nextType: string) => {
     if (!nextType) {
-      if (items.some(item => item.value.trim()) && !window.confirm('입력한 고시 내용을 모두 지울까요?')) return
+      if (items.some(item => item.value.trim()) && !(await confirmDialog('입력한 고시 내용을 모두 지울까요?'))) return
       update('', []); return
     }
     // 종류를 바꿔도 같은 항목(key)·직접 추가한 항목의 값은 옮긴다

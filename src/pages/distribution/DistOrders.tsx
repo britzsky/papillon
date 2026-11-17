@@ -9,6 +9,7 @@ import { BUYER_LABEL, ORDER_STATUS_LABEL, PAYMENT_METHOD_LABEL, PAYMENT_STATUS_L
 import { Notice } from './DistFields'
 import { runAction } from './distActions'
 import './DistAdmin.css'
+import { confirmDialog } from '../../utils/dialog'
 
 const STATUS_TONE: Record<string, string> = { PENDING_PAYMENT: 'is-warn', PAID: 'is-info', PREPARING: 'is-info', PARTIALLY_SHIPPED: 'is-info', SHIPPED: 'is-info', DELIVERED: 'is-ok', COMPLETED: 'is-ok', CANCELED: 'is-done' }
 const WORK_KEYS: WorkKey[] = ['need_deposit', 'need_po', 'need_invoice', 'cancel_requested']
@@ -58,7 +59,6 @@ export default function DistOrders() {
     <div className="rd rd-page dist-admin">
       <header className="rd-page__head"><div>
         <h1 className="rd-sr-only">주문 관리</h1>
-        <p className="rd-muted">더채움몰의 모든 주문입니다. 위 일감을 눌러 처리할 주문만 볼 수 있습니다. 입금·송장·배송 완료는 지금은 확인 후 직접 눌러 주세요.</p>
       </div></header>
       <Notice message={message} failed={failed} />
 
@@ -361,7 +361,7 @@ function HqCancelForm({ paid, amount, busy, onSubmit }: { paid: boolean; amount:
   const [reason, setReason] = useState('')
   const [refund, setRefund] = useState<Refund>({ bank_name: '', account_no: '', holder: '' })
   return <details className="dist-cancel"><summary>본사에서 주문 취소</summary>
-    <form className="dist-subform" onSubmit={event => { event.preventDefault(); if (window.confirm('이 주문을 취소할까요? 되돌릴 수 없습니다.')) void onSubmit({ reason_code: reasonCode, reason, refund: paid ? refund : undefined }) }}>
+    <form className="dist-subform" onSubmit={async event => { event.preventDefault(); if ((await confirmDialog('이 주문을 취소할까요? 되돌릴 수 없습니다.'))) void onSubmit({ reason_code: reasonCode, reason, refund: paid ? refund : undefined }) }}>
       <div className="dist-fields">
         <div className="dist-field"><label htmlFor="dist-cancel-code">취소 사유</label>
           <select id="dist-cancel-code" className="rd-input" value={reasonCode} disabled={busy} onChange={event => setReasonCode(event.target.value)}>

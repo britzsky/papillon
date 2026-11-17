@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { qty, statusLabel, dayLabel, useMealUsage, type Meal } from '../features/mealUsage/useMealUsage'
+import { confirmDialog } from '../utils/dialog'
 
 /**
  * 식단표(주) 사용 확정 — PC 화면. 로직은 features/mealUsage/useMealUsage(모바일과 공용).
@@ -15,8 +16,8 @@ export default function MealUsageControls({ accountId, tableId, onChanged }: { a
   const [showMeals, setShowMeals] = useState(false)
 
   const cancelMeal = async (meal: Meal) => {
-    if (!window.confirm(`${meal.meal_date} ${meal.meal_slot}의 사용 확정을 취소할까요?
-차감했던 재고가 원래 상품·LOT로 복원되고, 이 식사는 다시 확정해야 합니다.`)) return
+    if (!(await confirmDialog(`${meal.meal_date} ${meal.meal_slot}의 사용 확정을 취소할까요?
+차감했던 재고가 원래 상품·LOT로 복원되고, 이 식사는 다시 확정해야 합니다.`))) return
     await cancelUsage(meal)
   }
 

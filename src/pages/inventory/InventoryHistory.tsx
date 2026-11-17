@@ -39,7 +39,6 @@ export default function InventoryHistory() {
             <header className="rd-page__head">
               <div>
                 <h1 className="rd-sr-only">재고 변동 이력</h1>
-                <p className="rd-muted">입고·사용·조정·폐기로 재고가 언제 얼마나 바뀌었는지 봅니다. 상품 이름을 누르면 그 상품 이력만 봅니다.</p>
               </div>
               <DeadlineAlertSlot />
               <div className="rd-page__actions">

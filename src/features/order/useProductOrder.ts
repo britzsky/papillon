@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { buildApiUrl } from '../../config/api'
 import { getSupplierSites, getSupplierOffers, setFavoriteProduct, type SupplierOffer, type SupplierSite } from '../../api/supplierIntegration'
 import { submitMixedProcurement, recoverMixedProcurement, startNewMixedProcurement, type BatchResult } from '../../api/mixedProcurement'
+import { confirmDialog, showAlert, showOrderResult } from '../../utils/dialog'
 
 export type ProductIngredient = { ingredient_id: string; ingredient_name: string; product_name?: string }
 /** source: 재고에 넣을 식재료(빈 값 = 입고할 때 고르기). sourceBy: 누가 정했나(USER 사람 · 그 밖은 서버 추정 근거) */
@@ -71,11 +72,16 @@ export function useProductOrder(accountId: string, initialSource: string, favori
     if (pending.current || (!recover && !cart.length)) return
     pending.current = true; setBusy(true); setLocked(true); setMessage('')
     try {
-      setResult(await (recover ? recoverMixedProcurement(accountId) : submitMixedProcurement({ account_id: accountId,
+      const done = await (recover ? recoverMixedProcurement(accountId) : submitMixedProcurement({ account_id: accountId,
         items: cart.map(line => ({ delivery_terms_confirmed: line.confirmed, supplier_offer_id: line.offer.supplier_offer_id, delivery_date: line.date, order_qty: line.quantity, expected_price: line.offer.purchase_price,
           // 재고에 넣을 식재료: 장바구니 줄의 값(위에서 고른 것 또는 서버 추정, 줄에서 바꿀 수 있음). 비우면 입고 때 선택
-          source_ingredient_id: line.source })) })))
-    } catch (e) { setMessage(e instanceof Error ? e.message : '발주 결과 확인 실패') }
+          source_ingredient_id: line.source })) }))
+      setResult(done)
+      void showOrderResult(done)
+    } catch (e) {
+      const text = e instanceof Error ? e.message : '발주 결과 확인 실패'
+      setMessage(text); void showAlert('error', '발주에 실패했습니다', text)
+    }
     finally { pending.current = false; setBusy(false) }
   }
   const newCart = () => {
@@ -87,8 +93,8 @@ export function useProductOrder(accountId: string, initialSource: string, favori
   const inCart = (offer: SupplierOffer) => cart.some(l => l.offer.supplier_offer_id === offer.supplier_offer_id && l.date === date)
   const canAdd = (offer: SupplierOffer) => !busy && !locked && offer.orderable_yn === 'Y' && offer.minimum_order_qty > 0 && !inCart(offer)
   /** 담기: 납품·마감이 확인되지 않은 상품은 사용자가 공급사에 직접 확인했는지 묻는다 */
-  const addToCart = (offer: SupplierOffer) => {
-    if (offer.orderability_status !== 'AVAILABLE' && !window.confirm(offer.product_name + ' · ' + date + '\n공급사에 납품 가능일과 마감 조건을 직접 확인하셨습니까?')) return
+  const addToCart = async (offer: SupplierOffer) => {
+    if (offer.orderability_status !== 'AVAILABLE' && !(await confirmDialog(offer.product_name + ' · ' + date + '\n공급사에 납품 가능일과 마감 조건을 직접 확인하셨습니까?'))) return
     const picked = source || offer.suggested_ingredient_id
     setCart(current => [...current, { offer, date, source: picked, sourceBy: source ? 'USER' : offer.suggested_reason, quantity: offer.minimum_order_qty, confirmed: offer.orderability_status !== 'AVAILABLE' }])
   }

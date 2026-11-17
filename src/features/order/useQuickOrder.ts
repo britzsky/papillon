@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { clearDeadlineAlertCache } from '../../api/deadlineAlerts'
 import { getShortages, previewShortageOrder, type OrderPreview, type OrderSelection, type ShortageCriteria, type ShortageResult } from '../../api/shortageProcurement'
 import { recoverMixedProcurement, startNewMixedProcurement, submitMixedProcurement, type BatchResult } from '../../api/mixedProcurement'
+import { showAlert, showOrderResult } from '../../utils/dialog'
 
 export const orderDay = (offset = 0) => { const date = new Date(); date.setDate(date.getDate() + offset); return date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }) }
 export const money = (n: number) => Number(n).toLocaleString('ko-KR')
@@ -55,8 +56,12 @@ export function useQuickOrder(accountId: string) {
       if (signature(current) !== signature(preview)) { setPreview(current); setError('가격 또는 수량이 바뀌었습니다. 변경된 발주안을 확인한 뒤 다시 확정해주세요.'); return }
       setAttempted(true)
       clearDeadlineAlertCache()
-      setBatch(await submitMixedProcurement({ account_id: accountId, shortage_criteria: current.criteria, items: current.items.map(row => ({ source_ingredient_id: row.ingredient_id, supplier_offer_id: row.offer.supplier_offer_id, delivery_date: current.criteria.delivery_date, order_qty: row.order_qty, expected_price: row.offer.purchase_price })) }))
-    } catch (e) { setError(e instanceof Error ? e.message : '발주 결과 확인 필요') }
+      const done = await submitMixedProcurement({ account_id: accountId, shortage_criteria: current.criteria, items: current.items.map(row => ({ source_ingredient_id: row.ingredient_id, supplier_offer_id: row.offer.supplier_offer_id, delivery_date: current.criteria.delivery_date, order_qty: row.order_qty, expected_price: row.offer.purchase_price })) })
+      setBatch(done); void showOrderResult(done)
+    } catch (e) {
+      const text = e instanceof Error ? e.message : '발주 결과 확인 필요'
+      setError(text); void showAlert('error', '발주에 실패했습니다', text)
+    }
     finally { setBusy(false) }
   }
   const recover = async () => { setBusy(true); setError(''); try { setBatch(await recoverMixedProcurement(accountId)); setAttempted(true) } catch (e) { setError(e instanceof Error ? e.message : '이전 요청 확인 실패') } finally { setBusy(false) } }

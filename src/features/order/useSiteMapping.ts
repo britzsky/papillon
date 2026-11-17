@@ -5,6 +5,7 @@ import {
   assignSite, getMasterSites, getSiteMappings, nameScore, setMasterSiteUse, SharedSiteError, syncMasterSites,
   type SupplierCode, type SupplierMasterSite, type SupplierSiteMapping,
 } from '../../api/supplierSites'
+import { confirmDialog } from '../../utils/dialog'
 
 export const SITE_SUPPLIERS: { code: SupplierCode; label: string }[] = [{ code: 'WELSTORY', label: '웰스토리' }, { code: 'OURHOME', label: '아워홈' }]
 const RECOMMEND_MIN = 0.55
@@ -26,7 +27,7 @@ export function rankSites(account: AccountOption, sites: SupplierMasterSite[]): 
 
 /**
  * 거래처별 공급사 사업장 매핑(PC·터치 공용): 조회·지정/해제(같이 쓰는 사업장 확인)·공급사 목록 갱신·매핑 제외.
- * 확인 창은 window.confirm(두 화면 같은 문구).
+ * 확인 창은 utils/dialog confirmDialog(두 화면 같은 문구).
  */
 export function useSiteMapping() {
   const [accounts, setAccounts] = useState<AccountOption[]>([])
@@ -79,7 +80,7 @@ export function useSiteMapping() {
     const previous = mappingOf(account.value, supplier)
     if (previous && previous.external_site_code !== siteCode) {
       const next = siteCode ? `'${sites.find(s => s.supplier_code === supplier && s.external_site_code === siteCode)?.external_site_name || siteCode}'(으)로 바꿉니다` : '지정을 해제합니다'
-      if (!window.confirm(`${account.text}의 ${label} 사업장 '${previous.external_site_name}'을(를) ${next}.\n기존 사업장으로 저장된 상품·판가는 이 거래처에서 더 이상 보이지 않습니다. 계속할까요?`)) return
+      if (!(await confirmDialog(`${account.text}의 ${label} 사업장 '${previous.external_site_name}'을(를) ${next}.\n기존 사업장으로 저장된 상품·판가는 이 거래처에서 더 이상 보이지 않습니다. 계속할까요?`))) return
     }
     const key = `${account.value}:${supplier}`
     setSaving(key); setMessage(''); setError('')
@@ -87,7 +88,7 @@ export function useSiteMapping() {
       try { await assignSite(account.value, supplier, siteCode) }
       catch (reason) {
         if (!(reason instanceof SharedSiteError)) throw reason
-        if (!window.confirm(`이 ${label} 사업장은 이미 [${names(reason.accountIds)}]에 지정되어 있습니다.\n본원과 주간보호처럼 같은 사업장으로 발주하는 경우에만 함께 사용하세요. 함께 사용할까요?`)) return
+        if (!(await confirmDialog(`이 ${label} 사업장은 이미 [${names(reason.accountIds)}]에 지정되어 있습니다.\n본원과 주간보호처럼 같은 사업장으로 발주하는 경우에만 함께 사용하세요. 함께 사용할까요?`))) return
         await assignSite(account.value, supplier, siteCode, true)
       }
       setMessage(`${account.text} · ${label} 사업장을 ${siteCode ? '저장' : '해제'}했습니다.`)

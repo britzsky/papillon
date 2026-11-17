@@ -6,6 +6,7 @@ import {
 import { getMealSlots } from '../../api/mealSlots'
 import { normalizeMenuText } from '../tableMeals/useTableMealsWorkspace'
 import { mealPlanTypeOptions } from '../../pages/operations/menuManagerShared'
+import { confirmDialog } from '../../utils/dialog'
 
 export const DAYS = ['월', '화', '수', '목', '금', '토', '일']
 /** 끼니 목록: 본사 끼니 종류(/v2/meal-slots, 사용 중인 것)를 받기 전·실패 시 쓰는 기본값 */
@@ -116,7 +117,7 @@ export function useMealPlanTemplates() {
     finally { setBusy(false) }
   }
   const remove = async (template: MealPlanTemplate) => {
-    if (!window.confirm(`'${template.template_name}' 템플릿을 삭제할까요?`)) return
+    if (!(await confirmDialog(`'${template.template_name}' 템플릿을 삭제할까요?`))) return
     try { await deleteMealPlanTemplate(template.meal_plan_template_id); setRevision(value => value + 1); if (draft?.meal_plan_template_id === template.meal_plan_template_id) setDraft(null) }
     catch (error) { setMessage(error instanceof Error ? error.message : '템플릿을 삭제하지 못했습니다.') }
   }

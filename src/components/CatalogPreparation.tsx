@@ -17,10 +17,12 @@ export default function CatalogPreparation({ accountId, date, onReady, inline = 
       {(error || result?.suppliers.some(s => s.status !== 'READY')) && <button type="button" className="catalog-preparation-inline__retry" onClick={retry}>다시 확인</button>}
     </span>
   }
+  if (!error && result && result.suppliers.length && result.suppliers.every(s => s.status === 'READY')) return null
   return <section aria-label="납품일 상품 준비" role="status">
     {!result && !error && <p>납품일별 상품·가격을 준비하고 있습니다.</p>}
     {result?.suppliers.length === 0 && <p>공급사 사업장을 먼저 지정해주세요.</p>}
-    {result?.suppliers.map(s => <p key={s.supplier_code}>{s.supplier_name}: {s.status === 'READY' ? '준비 완료' : s.status === 'PREPARING' ? '준비 중' : '확인 필요'} · {s.message}{s.last_succeeded_at ? ` · 마지막 성공 ${s.last_succeeded_at}` : ''}</p>)}
+    {/* 준비 완료된 공급사는 문구를 보이지 않는다(2026-11-17 사용자 요청) — 준비 중·확인 필요만 */}
+    {result?.suppliers.filter(s => s.status !== 'READY').map(s => <p key={s.supplier_code}>{s.supplier_name}: {preparationLabel(s.status)}{s.message ? ` · ${s.message}` : ''}</p>)}
     {error && <p role="alert">{error}</p>}
     {(error || result?.suppliers.some(s => s.status !== 'READY')) && <button type="button" onClick={retry}>준비 상태 다시 확인</button>}
   </section>

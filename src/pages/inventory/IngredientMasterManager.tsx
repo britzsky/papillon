@@ -37,7 +37,6 @@ function IngredientMasterManager() {
             <header className="rd-page__head">
               <div>
                 <h1 className="rd-sr-only">식자재 관리</h1>
-                <p className="rd-muted">본사 표준 식자재와 표준 단가를 관리합니다. 표준 단가는 거래처에 입고 기록이 없을 때 식단 원가 계산에 씁니다(입고되면 그 거래처 입고 단가를 씁니다).</p>
               </div>
               <DeadlineAlertSlot />
               <div className="rd-page__actions">

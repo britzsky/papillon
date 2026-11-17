@@ -11,6 +11,7 @@ import AccountRecipeEditModal from '../../pages/operations/AccountRecipeEditModa
 import MealDocumentButtons from '../../features/tableMeals/MealDocumentButtons'
 import { isHeadquarters } from '../../features/workspace/workspaceAccount'
 import './TableMealsTouch.css'
+import { confirmDialog } from '../../utils/dialog'
 
 const SOURCE_LABEL: Record<string, string> = { auto: '자동', pdf: '파일', manual: '수기', template: '템플릿' }
 const noop = () => {}
@@ -193,7 +194,7 @@ function UsagePanel({ day, dayUsage, usage }: { day: TableMealsDetailDay; dayUsa
   const scopeLabel = scope === 'day' ? dayLabel(day.date) : '주간'
 
   const cancelMeal = async (meal: Meal) => {
-    if (!window.confirm(`${dayLabel(meal.meal_date)} ${meal.meal_slot} 사용 확정을 취소할까요?\n차감했던 재고가 복원되고, 다시 확정해야 합니다.`)) return
+    if (!(await confirmDialog(`${dayLabel(meal.meal_date)} ${meal.meal_slot} 사용 확정을 취소할까요?\n차감했던 재고가 복원되고, 다시 확정해야 합니다.`))) return
     await usage.cancelMeal(meal)
   }
 

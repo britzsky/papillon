@@ -17,6 +17,7 @@ import { type RecipeRequest } from '../../api/recipe'
 import { requestAiTableMealsMatch } from '../../api/ai'
 import { getIngredientStockStatus } from '../../utils/ingredientStockStatus'
 import { buildTableMealsDetailDays, formatDateValue, formatMonthValue, getCurrentMonthWeekOptions, getTableMealsQueryPeriod, parseMonthValue, toMealSlotRows, weekOfDate, type MealSlotKey, type MealSlotRow, type MonthWeekOption } from './tableMealsView'
+import { confirmDialog } from '../../utils/dialog'
 
 GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()
 
@@ -727,11 +728,11 @@ export function useTableMealsWorkspace() {
   const persistPlan = async (payload: TableMealsSavePayload): Promise<string | null> => {
     // 사용 확정한 주를 다시 저장하면 그 주의 확정이 모두 풀리고 차감했던 재고가 복원된다(서버 저장 규칙).
     const confirmedMeals = await countConfirmedMeals(payload)
-    if (confirmedMeals > 0 && !window.confirm(`이 식단표에는 사용 확정된 식사 ${confirmedMeals}개가 있습니다.
+    if (confirmedMeals > 0 && !(await confirmDialog(`이 식단표에는 사용 확정된 식사 ${confirmedMeals}개가 있습니다.
 저장하면 이 주의 사용 확정이 모두 풀리고 차감했던 재고가 복원됩니다.
 저장한 뒤 식단표 상세에서 '주간 사용 확정'을 다시 해야 재고가 맞습니다.
 
-계속 저장할까요?`)) return null
+계속 저장할까요?`))) return null
     setIsTableSaving(true)
     try {
       const saved = await saveTableMeals(payload)

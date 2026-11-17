@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import type { HygieneCategory, HygieneRecord } from '../../api/hygiene'
 import { hygieneHas, hygieneStatus, SIDE_LABEL, UNKEYED, STATUS_LABEL, type HygieneBoardState, type HygieneFilter, type HygieneSide } from '../../features/sanitation/useHygieneBoard'
 import './HygieneBoard.css'
+import { confirmDialog } from '../../utils/dialog'
 
 const NOTE_FIELD = { problem: 'problem_note', clean: 'clean_note' } as const
 const IMAGE_FIELD = { problem: 'problem_image', clean: 'clean_image' } as const
@@ -235,10 +236,10 @@ function CategoryEditor({ board, onClose }: { board: HygieneBoardState; onClose:
     ;[next[index], next[target]] = [next[target], next[index]]
     return next
   })
-  const remove = (index: number) => {
+  const remove = async (index: number) => {
     const row = draft[index]
     const count = row.category_key ? used(row.category_key) : 0
-    if (count && !window.confirm(`'${row.category_name}' 카테고리에 이 기간 기록 ${count}건이 있습니다. 카테고리를 빼면 그 기록은 '분류 없음'으로 보입니다. 뺄까요?`)) return
+    if (count && !(await confirmDialog(`'${row.category_name}' 카테고리에 이 기간 기록 ${count}건이 있습니다. 카테고리를 빼면 그 기록은 '분류 없음'으로 보입니다. 뺄까요?`))) return
     setDraft(rows => rows.filter((_, i) => i !== index))
   }
   const save = async () => {

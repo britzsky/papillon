@@ -12,6 +12,7 @@ import { buildApiUrl } from '../../config/api'
 import { ORDER_STATUS_LABELS as labels, RECEIVABLE_STATUSES, UNCERTAIN_STATUSES, usePurchaseOrders, type PurchaseOrder } from '../../features/order/usePurchaseOrders'
 import './PurchaseOrderManager.css'
 import FavoriteProductHeart from '../../components/FavoriteProductHeart'
+import { confirmDialog } from '../../utils/dialog'
 
 /** 아워홈 품목별 출고 상태(서버 /Procurement/SupplierShipment, 실시간 조회·재고 반영 없음) */
 type ShipmentLine = { client_ord_item: string; state: 'SHIPPED' | 'OPEN' | 'DELETED' | 'MISSING'; shipped_qty?: string }
@@ -231,7 +232,7 @@ export default function PurchaseOrderManager() {
             <span className={`rd-fs-sm ${changedCount ? 'rd-text-warn' : shippedCount ? 'rd-text-ok' : 'rd-muted'}`}>{note}</span>
             {receivable ? <label className="rd-fs-sm rd-recv__date">실입고일<input className="rd-input" type="date" value={receiptDate} onChange={e => setReceiptDate(e.target.value)} /></label> : null}
             {receivable && !inspected ? <button type="button" className="rd-btn is-primary" disabled={busy} title="검수서로 물건을 확인했으면 누르세요. 이 공급사 발주서만 검수완료됩니다." onClick={() => void inspect(true)}>검수완료</button> : null}
-            {receivable && inspected ? <button type="button" className="rd-btn is-ghost" disabled={busy} onClick={() => { if (window.confirm(`${selected.supplier_name} 검수완료를 취소할까요? 취소하면 다시 검수완료할 때까지 입고할 수 없습니다.`)) void inspect(false) }}>검수 취소</button> : null}
+            {receivable && inspected ? <button type="button" className="rd-btn is-ghost" disabled={busy} onClick={async () => { if ((await confirmDialog(`${selected.supplier_name} 검수완료를 취소할까요? 취소하면 다시 검수완료할 때까지 입고할 수 없습니다.`))) void inspect(false) }}>검수 취소</button> : null}
             <button type="button" className={`rd-btn${inspected || !receivable ? ' is-primary' : ''}`} disabled={busy || !receivable || !inspected} title={receivable && !inspected ? '검수완료 후 입고할 수 있어요' : undefined} onClick={() => void receive()}>{!receivable ? labels[selected.status] || selected.status : inspected ? '받은 수량대로 입고' : '검수완료 후 입고'}</button>
           </div>
           {receivable ? <p className="rd-muted rd-fs-xs">받은 수량은 남은 수량(주문 − 이미 입고)으로 채워져요. 실제와 다르면 고치고, 안 온 품목은 0으로 바꾼 뒤 입고하세요.</p> : null}

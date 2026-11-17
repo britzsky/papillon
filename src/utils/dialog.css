@@ -1,0 +1,27 @@
+/* sweetalert2 창(utils/dialog.ts): 다른 모달(z-index 5000 포털 등) 위에, 문구 줄바꿈 유지 */
+.app-swal.swal2-container {
+  z-index: 6000;
+}
+
+.app-swal .swal2-popup {
+  border-radius: 14px;
+  font-family: inherit;
+}
+
+.app-swal .swal2-title {
+  font-size: 20px;
+  color: #0f172a;
+}
+
+.app-swal .swal2-html-container {
+  white-space: pre-line;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #334155;
+}
+
+.app-swal .swal2-actions button {
+  min-width: 96px;
+  border-radius: 8px;
+  font-weight: 700;
+}

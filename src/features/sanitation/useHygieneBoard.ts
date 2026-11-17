@@ -7,6 +7,7 @@ import {
   type HygieneCategory, type HygieneRecord,
 } from '../../api/hygiene'
 import { isHeadquarters, workspaceAccountId } from '../workspace/workspaceAccount'
+import { confirmDialog } from '../../utils/dialog'
 
 export type HygieneStatus = 'CHECK' | 'DONE'
 /** 상태 거르기: 기록 상태 + 미점검(그 기간에 기록이 없는 카테고리) */
@@ -128,9 +129,9 @@ export function useHygieneBoard() {
     })
   }
 
-  const remove = (record: HygieneRecord) => {
+  const remove = async (record: HygieneRecord) => {
     if (!record.idx || !accountId) return
-    if (!window.confirm(`이 점검 기록을 삭제할까요?\n${record.problem_note || '(내용 없음)'}`)) return
+    if (!(await confirmDialog(`이 점검 기록을 삭제할까요?\n${record.problem_note || '(내용 없음)'}`))) return
     void run('delete', async () => {
       await saveHygieneRecord(accountId, { ...record, del_yn: 'Y' })
       setNotice('점검 기록을 삭제했습니다.')

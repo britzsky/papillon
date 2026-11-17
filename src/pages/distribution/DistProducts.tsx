@@ -13,6 +13,7 @@ import DistRichEditor from './DistRichEditor'
 import { FoodLabelFields, NoticeFields } from './DistProductInfoFields'
 import ProductInfoView from '../../features/dist/ProductInfoView'
 import './DistAdmin.css'
+import { confirmDialog } from '../../utils/dialog'
 
 type Tab = 'basic' | 'content' | 'price' | 'availability' | 'images' | 'history'
 const TABS: Array<[Tab, string]> = [['basic', '기본 정보'], ['content', '상세·표시사항'], ['price', '가격'], ['availability', '판매 가능'], ['images', '이미지'], ['history', '변경 이력']]
@@ -131,7 +132,6 @@ export default function DistProducts() {
       <header className="rd-page__head">
         <div>
           <h1 className="rd-sr-only">상품 관리</h1>
-          <p className="rd-muted">더채움 유통으로 파는 상품입니다. <b>판매중</b>인 상품만 더채움몰에 보입니다. 가격을 바꾸면 이전 가격은 기록으로 남습니다.</p>
         </div>
         <button type="button" className="rd-btn is-primary" disabled={busy || partners.length === 0} onClick={startNew}>상품 등록</button>
       </header>
@@ -271,7 +271,7 @@ function PricePanel({ detail, busy, setBusy, notice, reload }: PanelProps) {
     if (await runAction(setBusy, notice, () => addCostPrice({ ...cost, product_id: productId }))) { setCost({ unit_cost: '', start_date: '', change_reason: '' }); await reload() }
   }
   const end = async (row: Row) => {
-    if (!window.confirm(`${PRICE_TYPE_LABEL[text(row.price_type) as PriceType]} ${won(row.unit_price)}을(를) 지금 끝낼까요?`)) return
+    if (!(await confirmDialog(`${PRICE_TYPE_LABEL[text(row.price_type) as PriceType]} ${won(row.unit_price)}을(를) 지금 끝낼까요?`))) return
     if (await runAction(setBusy, notice, () => endSalePrice(productId, Number(row.sale_price_id)))) await reload()
   }
 
@@ -409,7 +409,7 @@ function ImagePanel({ detail, busy, setBusy, notice, reload }: PanelProps) {
     if (await runAction(setBusy, notice, () => addProductImage(productId, url.trim(), type))) { setUrl(''); await reload() }
   }
   const remove = async (image: Row) => {
-    if (!window.confirm('이 이미지를 뺄까요?')) return
+    if (!(await confirmDialog('이 이미지를 뺄까요?'))) return
     if (await runAction(setBusy, notice, () => deleteProductImage(productId, Number(image.product_image_id)))) await reload()
   }
   return <div className="dist-panel">

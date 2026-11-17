@@ -15,7 +15,6 @@ function VendorSanitation() {
             <header className="rd-page__head">
               <div>
                 <h1 className="rd-sr-only">위생 점검 관리</h1>
-                <p className="rd-muted">{board.accountName ? `${board.accountName} · ` : ''}부적합 사항과 조치 내용을 사진으로 남깁니다. 기존 위생점검 앱과 같은 기록입니다.</p>
               </div>
               <DeadlineAlertSlot />
             </header>

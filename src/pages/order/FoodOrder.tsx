@@ -13,6 +13,7 @@ import { getDeadlineAlertsCached } from '../../api/deadlineAlerts'
 import { availableSelection, day, deliveryTerms, deliveryWarning, money, number, offerOptions, per100, taxLabel, unitCost, useShortageOrder } from '../../features/order/useShortageOrder'
 import { PrintIcon } from '../../components/ActionIcons'
 import './ShortageFoodOrder.css'
+import { confirmDialog } from '../../utils/dialog'
 
 /**
  * embedded: 발주하기(OrderWorkspace) 탭 안에서 레이아웃 없이 내용만 그린다.
@@ -66,7 +67,7 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
   // ---- 2026-10-15 개편(시안 ② 발주하기) 화면 계산: 로직은 useShortageOrder 그대로 ----
   const allRows = result?.ingredients || []
   const offerOf = (row: ShortageRow) => row.offers.find(o => o.supplier_offer_id === selected[row.ingredient_id]?.supplier_offer_id) || row.offers.find(o => o.orderable)
-  const choose = (row: ShortageRow, id: number) => { const next = row.offers.find(o => o.supplier_offer_id === id && o.orderable); if (next && (next.orderability_status === 'AVAILABLE' || window.confirm(next.product_name + ' · ' + criteria.delivery_date + '\n공급사에 납품 가능일과 마감 조건을 직접 확인하셨습니까? 확인한 경우에만 선택하세요.'))) setSelected(current => ({ ...current, [row.ingredient_id]: { ingredient_id: row.ingredient_id, supplier_offer_id: next.supplier_offer_id, order_qty: next.recommended_qty, delivery_terms_confirmed: next.orderability_status !== 'AVAILABLE' } })) }
+  const choose = async (row: ShortageRow, id: number) => { const next = row.offers.find(o => o.supplier_offer_id === id && o.orderable); if (next && (next.orderability_status === 'AVAILABLE' || (await confirmDialog(next.product_name + ' · ' + criteria.delivery_date + '\n공급사에 납품 가능일과 마감 조건을 직접 확인하셨습니까? 확인한 경우에만 선택하세요.')))) setSelected(current => ({ ...current, [row.ingredient_id]: { ingredient_id: row.ingredient_id, supplier_offer_id: next.supplier_offer_id, order_qty: next.recommended_qty, delivery_terms_confirmed: next.orderability_status !== 'AVAILABLE' } })) }
   // 2026-10-29(사용자 요청): 상품 고르기는 select 대신, 식재료 표에서 줄을 누르면 오른쪽 웰스토리·아워홈 표에
   // 그 식재료의 상품이 사진과 함께 위에서 아래로 나열되고 눌러서 고른다. 처음엔 첫 줄(또는 넘어온 식재료)을 보여준다
   const [activeId, setActiveId] = useState('')
@@ -166,7 +167,8 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
         <div className="rd-order__list-head">
           <div>
             <h2 className="rd-h2">{dayLabel(criteria.delivery_date || day(1))} {criteria.source === 'FAVORITE_MENU' ? '나만의 메뉴 식재료' : criteria.source === 'STOCK' ? '지금 부족한 식재료' : criteria.source === 'INVENTORY' ? '사용량 기준 부족 예상' : criteria.source === 'DRAFT' ? '구성 중인 식단에 모자란 식재료' : '식단에 모자란 식재료'} {allRows.length}개</h2>
-            <p className="rd-muted rd-fs-sm">{criteria.source === 'FAVORITE_MENU' ? '나만의 메뉴(♥)에 쓰이는 식재료예요. 필요한 수량을 직접 넣어 주문하세요.' : criteria.source === 'STOCK' ? '현재고가 없거나 안전재고보다 적어요. 사용 이력이 없으면 수량을 직접 정해 주세요.' : criteria.source === 'INVENTORY' ? '최근 평균 사용량 × 확보일수 + 안전재고 기준이에요. 사용 확정 이력이 없으면 0으로 계산돼요.' : '필요량에서 지금 재고와 들어올 예정 수량을 빼고 계산했어요. 수량만 고치면 됩니다.'}</p>
+            {/* 식단 기준(기본) 안내 문구는 뺌(2026-11-17 사용자 요청) */}
+            {criteria.source === 'FAVORITE_MENU' || criteria.source === 'STOCK' || criteria.source === 'INVENTORY' ? <p className="rd-muted rd-fs-sm">{criteria.source === 'FAVORITE_MENU' ? '나만의 메뉴(♥)에 쓰이는 식재료예요. 필요한 수량을 직접 넣어 주문하세요.' : criteria.source === 'STOCK' ? '현재고가 없거나 안전재고보다 적어요. 사용 이력이 없으면 수량을 직접 정해 주세요.' : '최근 평균 사용량 × 확보일수 + 안전재고 기준이에요. 사용 확정 이력이 없으면 0으로 계산돼요.'}</p> : null}
             <span className="rd-order__tools-end">
               <select className="rd-input" aria-label="줄 순서" value={rowSort} onChange={e => setRowSort(e.target.value as RowSort)}>
                 <option value="default">모자란 순</option><option value="amount_desc">금액 높은 순</option><option value="amount_asc">금액 낮은 순</option>
@@ -246,13 +248,11 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
         {supplierPanel('WELSTORY', '웰스토리')}
         {supplierPanel('OURHOME', '아워홈')}
         </div>
-        <div className="rd-order__foot rd-muted rd-fs-xs">계산 시각 {result?.checked_at.replace('T', ' ').slice(0, 19) || '—'}{result?.unconfigured_count ? ` · 필요량 기준 없는 품목 ${result.unconfigured_count}건` : ''} · 부족량 = 필요량 + 안전재고 − 현재고 − 기발주 미입고(같은 식재료는 합산, 현재고는 한 번만 차감) · <Link to={`/order_manager/order?${new URLSearchParams({ tab: 'products', account_id: accountId })}`}>새 상품·미연결 식자재 발주</Link></div>
       </section>
 
       <aside className="rd-order__side" aria-label="발주서 미리보기">
         <div className="rd-card rd-order__summary">
           <h2 className="rd-h2">{Object.keys(groups).length ? `발주서 ${Object.keys(groups).length}장으로 나눠 보내요` : '발주서 미리보기'}</h2>
-          <p className="rd-muted rd-fs-sm">공급사·사업장·납품일마다 따로 접수되고 마감도 따로예요.</p>
           {Object.entries(groups).map(([key, group]) => <div key={key} className={`rd-order__sheet is-${group.code}`}>
             <div className="rd-order__sheet-top"><span className={`rd-supplier is-${group.code}`}>{group.name} · {group.site}</span><span className="rd-fs-xs rd-muted">{group.terms}</span></div>
             <div className="rd-fs-md">{dayLabel(criteria.delivery_date)} 납품 · {group.names.slice(0, 3).join(', ')}{group.names.length > 3 ? ` 외 ${group.names.length - 3}` : ''}</div>
@@ -261,7 +261,6 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
           {!Object.keys(groups).length ? <p className="rd-order__empty">왼쪽에서 식재료를 고르면 여기에 공급사별로 정리돼요.</p> : null}
           <div className="rd-order__total"><span className="rd-muted">상품금액 합계</span><strong>{loading ? '계산 중…' : `${money(selectedAmount)}원`}</strong></div>
           <button type="button" className="rd-btn is-primary rd-order__confirm" disabled={!selectionCount || loading || previewing} onClick={() => void makePreview()}>{previewing ? '서버 검증 중…' : `${selectionCount}품목 발주서 확인`}</button>
-          <p className="rd-muted rd-fs-xs" style={{ textAlign: 'center' }}>확인 단계에서 공급사 가격·발주 가능 여부를 다시 검증해요</p>
           <div className="rd-order__side-actions">
             <button type="button" className="rd-btn is-ghost" disabled={submitting || previewing} onClick={() => { try { startNewMixedProcurement(accountId); setBatchResult(null); setCompleted(false); setSelected({}); setPreview(null); setRevision(value => value + 1); setError('') } catch (e) { setError(e instanceof Error ? e.message : '기존 발주 확인 필요') } }}>새 발주 작성</button>
             <button type="button" className="rd-btn is-ghost" disabled={submitting} onClick={() => { setSubmitting(true); void recoverMixedProcurement(accountId).then(setBatchResult).catch(e => setError(e.message)).finally(() => setSubmitting(false)) }}>이전 요청 결과 확인</button>
@@ -300,7 +299,6 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
             </div> })}
           <div className="rd-preview__subtotal"><span className="rd-muted">소계</span><b>{money(sheet.amount)}원</b></div>
         </article>)}
-        <p className="rd-muted rd-fs-xs">주문 직전에 판매상태·실시간 가격·최소수량·발주배수와 최신 부족량을 다시 검증해요. 평일·주말 마감이 다를 수 있고 사업장 배송일과 공급사 공지가 우선이에요. 입고가 확정될 때 재고에 반영돼요.</p>
         {message ? <p role="status">{message}</p> : null}
         <BatchOrderResults result={batchResult} accountId={accountId} />
       </div>

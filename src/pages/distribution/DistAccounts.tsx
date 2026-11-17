@@ -66,7 +66,6 @@ export default function DistAccounts() {
     <div className="rd rd-page dist-admin">
       <header className="rd-page__head"><div>
         <h1 className="rd-sr-only">거래처 결제 설정</h1>
-        <p className="rd-muted">더채움몰 거래처 구매의 후불 허용·한도·정지와 주문 화면 기본 배송지입니다. <b>설정이 없는 거래처는 후불이 허용</b>됩니다.</p>
       </div></header>
       <Notice message={message} failed={failed} />
       <div className="dist-split">

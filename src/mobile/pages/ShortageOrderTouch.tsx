@@ -11,6 +11,7 @@ import { day, deliveryTerms, deliveryWarning, money, number, offerOptions, per10
 import { preparationLabel, useCatalogPreparation } from '../../features/order/useCatalogPreparation'
 import './ShortageOrderTouch.css'
 import TouchSelect from '../TouchSelect'
+import { confirmDialog } from '../../utils/dialog'
 
 const FILTERS: { key: ShortageStockFilter; label: string; icon: TouchIconName }[] = [
   { key: '', label: '전체', icon: 'inventory' },
@@ -35,10 +36,10 @@ export default function ShortageOrderTouch({ methodBar, fixedSource, title }: { 
   const prep = useCatalogPreparation(o.accountId, o.criteria.delivery_date, () => o.setRevision(n => n + 1))
   const busy = o.loading || o.previewing
 
-  const choose = (row: ShortageRow, offerId: number) => {
+  const choose = async (row: ShortageRow, offerId: number) => {
     const next = row.offers.find(item => item.supplier_offer_id === offerId && item.orderable)
     if (!next) return
-    if (next.orderability_status !== 'AVAILABLE' && !window.confirm(next.product_name + ' · ' + o.criteria.delivery_date + '\n공급사에 납품 가능일과 마감 조건을 직접 확인하셨습니까? 확인한 경우에만 선택하세요.')) return
+    if (next.orderability_status !== 'AVAILABLE' && !(await confirmDialog(next.product_name + ' · ' + o.criteria.delivery_date + '\n공급사에 납품 가능일과 마감 조건을 직접 확인하셨습니까? 확인한 경우에만 선택하세요.'))) return
     o.setSelected(current => ({ ...current, [row.ingredient_id]: { ingredient_id: row.ingredient_id, supplier_offer_id: next.supplier_offer_id, order_qty: next.recommended_qty, delivery_terms_confirmed: next.orderability_status !== 'AVAILABLE' } }))
   }
   const unselect = (row: ShortageRow) => o.setSelected(current => { const next = { ...current }; delete next[row.ingredient_id]; return next })

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import TopMenuLayout from '../../components/TopMenuLayout'
 import { createMealSlot, getMealSlots, reorderMealSlots, updateMealSlot, type MealSlot, type MealSlotKind } from '../../api/mealSlots'
 import './MealSlots.css'
+import { confirmDialog } from '../../utils/dialog'
 
 const KIND_LABEL: Record<MealSlotKind, string> = { MAIN: '본식', SNACK: '간식' }
 
@@ -45,12 +46,12 @@ export default function MealSlots() {
     if (!trimmed) { setFailed(true); setMessage('끼니 이름을 입력해 주세요.'); return }
     void run(async () => { await createMealSlot(trimmed, kind); setName('') }, `'${trimmed}' 끼니를 추가했습니다. 거래처 식사 설정에서 고를 수 있습니다.`)
   }
-  const save = (slot: MealSlot) => {
+  const save = async (slot: MealSlot) => {
     const value = valueOf(slot)
     if (!value.meal_slot_name.trim()) { setFailed(true); setMessage('끼니 이름을 입력해 주세요.'); return }
     // 본식/간식을 바꾸면 이 끼니를 쓰는 거래처의 1인 단가 계산이 바뀐다
     if (value.slot_kind !== slot.slot_kind && slot.account_count > 0
-      && !window.confirm(`${slot.meal_slot_name}을(를) ${KIND_LABEL[value.slot_kind]}으로 바꾸면 이 끼니를 쓰는 거래처 ${slot.account_count}곳의 1인 식단가 계산이 바뀝니다. 바꿀까요?`)) return
+      && !(await confirmDialog(`${slot.meal_slot_name}을(를) ${KIND_LABEL[value.slot_kind]}으로 바꾸면 이 끼니를 쓰는 거래처 ${slot.account_count}곳의 1인 식단가 계산이 바뀝니다. 바꿀까요?`))) return
     void run(() => updateMealSlot({ meal_slot_code: slot.meal_slot_code, ...value, meal_slot_name: value.meal_slot_name.trim() }), `'${value.meal_slot_name.trim()}' 저장했습니다.`)
   }
   const move = (index: number, direction: -1 | 1) => {
@@ -66,8 +67,6 @@ export default function MealSlots() {
       <header className="rd-page__head">
         <div>
           <h1 className="rd-sr-only">끼니 종류 관리</h1>
-          <p className="rd-muted">모든 거래처가 함께 쓰는 끼니 목록입니다. 거래처는 고객사 관리 · 식사 설정에서 이 중 쓸 끼니를 고릅니다.
-            <br /><b>본식</b>은 1일 식단가를 나누는 끼니(요양원·학교), <b>간식</b>은 간식 단가를 씁니다.</p>
         </div>
       </header>
       {message ? <p className={`meal-slots__msg${failed ? ' is-error' : ''}`} role="status">{message}</p> : null}

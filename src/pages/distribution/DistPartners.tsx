@@ -108,8 +108,6 @@ export default function DistPartners() {
       <header className="rd-page__head">
         <div>
           <h1 className="rd-sr-only">협력사·기본 설정</h1>
-          <p className="rd-muted">더채움 유통으로 파는 상품의 공급 협력사(완도 수산회사, 하츄핑 등)와 상품 카테고리를 관리합니다.
-            상품을 등록하려면 <b>판매 주체(더채움 사업자 정보)</b>가 먼저 있어야 합니다.</p>
         </div>
       </header>
       <Notice message={message} failed={failed} />

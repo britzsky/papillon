@@ -18,6 +18,7 @@ import { createPortal } from 'react-dom'
 import '../operations/MenuManager.css'
 import '../../components/IngredientProductLinkModal.css'
 import { LOCATION_OPTIONS as locationOptions, getInventoryStockStatus, getLocationName, inventoryOrderPath, matchesInventoryKeyword, orderStockFirst } from '../../features/inventory/inventoryView'
+import { confirmDialog } from '../../utils/dialog'
 
 type EditableAccountInventoryItem = AccountInventoryItem & {
   row_id: string
@@ -390,9 +391,9 @@ function AccountInventoryManager() {
                 <span className="rd-inv__spacer" />
                 <span className="rd-muted rd-fs-sm">{locationFilteredItems.length}건</span>
                 <button type="button" className="rd-btn is-ghost" disabled={isLoading || isSaving}
-                  onClick={() => {
+                  onClick={async () => {
                     if (items.some((item) => isInventoryItemChanged(item, originalItemsByRowId))
-                      && !window.confirm('저장하지 않은 변경사항을 버리고 최신 재고를 조회할까요?')) return
+                      && !(await confirmDialog('저장하지 않은 변경사항을 버리고 최신 재고를 조회할까요?'))) return
                     setReloadVersion((current) => current + 1)
                   }}>새로고침</button>
                 <button type="button" className="rd-btn" onClick={handleAddRow}>행 추가</button>

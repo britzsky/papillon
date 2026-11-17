@@ -19,7 +19,6 @@ export default function MealPlanTemplates() {
           <header className="mpt__head">
             <div>
               <h1 className="rd-h1">템플릿 식단표 관리</h1>
-              <p className="rd-muted">1일 식단가(본식 1인 합계, 1,000원 단위로 올림)·식단유형마다 3개까지. 거래처 식단표의 '템플릿 식단표 불러오기'에 같은 금액대만 보입니다(예: 12,900원 → 13,000원).</p>
             </div>
             <button type="button" className="rd-btn is-primary" onClick={openNew}>새 템플릿</button>
           </header>

@@ -1,4 +1,5 @@
-import './AppAlert.css'
+import { useEffect, useRef } from 'react'
+import { showAlert } from '../utils/dialog'
 
 export type AppAlertState = {
   type: 'success' | 'error'
@@ -11,34 +12,20 @@ type AppAlertProps = {
   onClose: () => void
 }
 
+/**
+ * 알림 창. 2026-11-17부터 sweetalert2 창으로 띄운다(utils/dialog showAlert).
+ * 쓰는 쪽(alert 상태 + onClose)은 예전 그대로 — 상태가 생기면 창을 띄우고, 확인을 누르면 onClose.
+ */
 function AppAlert({ alert, onClose }: AppAlertProps) {
-  if (!alert) {
-    return null
-  }
-
-  return (
-    <div className="app-alert-backdrop" role="presentation" onClick={onClose}>
-      <section
-        className={`app-alert is-${alert.type}`}
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby="app-alert-title"
-        aria-describedby="app-alert-message"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="app-alert__icon" aria-hidden="true">
-          {alert.type === 'success' ? '✓' : '!'}
-        </div>
-        <div className="app-alert__body">
-          <h2 id="app-alert-title">{alert.title}</h2>
-          <p id="app-alert-message">{alert.message}</p>
-        </div>
-        <button type="button" className="app-alert__button" onClick={onClose} autoFocus>
-          확인
-        </button>
-      </section>
-    </div>
-  )
+  const close = useRef(onClose)
+  useEffect(() => { close.current = onClose }, [onClose])
+  useEffect(() => {
+    if (!alert) return
+    let active = true
+    void showAlert(alert.type, alert.title, alert.message).then(() => { if (active) close.current() })
+    return () => { active = false }
+  }, [alert])
+  return null
 }
 
 export default AppAlert
