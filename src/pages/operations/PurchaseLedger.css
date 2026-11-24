@@ -1,0 +1,30 @@
+/* 매입 관리(본사, ASP 2026-11-23). 틀은 Redesign .rd-page — InitialSetup.css와 같은 결 */
+.purchase-ledger-page { min-height: 100vh; }
+.rd-ledger { display: flex; flex-direction: column; gap: 12px; }
+.rd-ledger .ledger__msg { margin: 0; padding: 10px 14px; border: 1px solid #b7dcc4; border-radius: 12px; background: #eef8f1; color: #14532d; }
+.rd-ledger .ledger__msg.is-error { border-color: var(--rd-red-line); background: var(--rd-red-soft); color: var(--rd-red-ink); }
+.rd-ledger .ledger__filters { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 14px; }
+.rd-ledger .ledger__filters .rd-input { min-height: 36px; height: 36px; }
+.rd-ledger .ledger__search { flex: 1 1 180px; max-width: 240px; }
+.rd-ledger .ledger__main { gap: 10px; padding: 14px 16px; overflow: visible; }
+.rd-ledger .ledger__bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.rd-ledger .ledger__bar h2 { margin: 0; }
+.rd-ledger .ledger__actions { display: flex; gap: 8px; }
+.rd-ledger .ledger__scroll { max-height: 62vh; overflow: auto; }
+.rd-ledger .ledger__scroll.is-short { max-height: 40vh; }
+.rd-ledger .ledger__table td.is-num, .rd-ledger .ledger__table th.is-num { text-align: right; white-space: nowrap; }
+.rd-ledger .ledger__table td small { white-space: nowrap; }
+.rd-ledger .ledger__pager { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.rd-ledger .ledger__check { display: flex; flex-direction: column; gap: 10px; }
+.rd-ledger .ledger__check > p { margin: 0; }
+.rd-ledger .ledger__bills summary { cursor: pointer; font-weight: 700; padding: 6px 0; }
+.rd-ledger .ledger__bad { color: var(--rd-red-ink); }
+.rd-ledger button.rd-page__tile { text-align: left; cursor: pointer; }
+/* 좁은 화면: 카드·표가 화면보다 넓어지지 않게(표는 안에서 가로 스크롤) */
+.rd-ledger, .rd-ledger .ledger__main { min-width: 0; max-width: 100%; }
+.rd-ledger .rd-page__head p, .rd-ledger .ledger__check > p { white-space: normal; overflow-wrap: anywhere; }
+@media (max-width: 900px) {
+  .rd-ledger .rd-page__tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rd-ledger .ledger__filters > .rd-input { flex: 1 1 140px; }
+  .rd-ledger .ledger__search { max-width: none; }
+}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode, type TouchEvent } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import TouchLayout from '../TouchLayout'
 import TouchIcon from '../TouchIcon'
@@ -11,6 +11,13 @@ import AccountRecipeEditModal from '../../pages/operations/AccountRecipeEditModa
 import MealDocumentButtons from '../../features/tableMeals/MealDocumentButtons'
 import { isHeadquarters } from '../../features/workspace/workspaceAccount'
 import './TableMealsTouch.css'
+import TableMealsManager from '../../pages/operations/TableMealsManager'
+
+/** 태블릿(700px 이상) 여부 — 화면을 열 때 한 번만(deviceMode와 같은 원칙) */
+const IS_TABLET = typeof window !== 'undefined' && Boolean(window.matchMedia?.('(min-width: 700px)').matches)
+import { isMainSlot } from '../../api/mealSlots'
+import { getBudgetSummary, type BudgetSummary } from '../../api/mealPlanTemplates'
+import MenuOrigins from '../../pages/operations/MenuOrigins'
 import { confirmDialog } from '../../utils/dialog'
 
 const SOURCE_LABEL: Record<string, string> = { auto: '자동', pdf: '파일', manual: '수기', template: '템플릿' }
@@ -26,6 +33,11 @@ type Usage = ReturnType<typeof useMealUsage>
  */
 /** 식단표 화면 + 만들기 화면 전환. 만들기를 닫으면 조회 화면을 새로 열어 방금 저장한 식단표가 보이게 한다 */
 export default function TableMealsTouch() {
+  // 2026-11-23 사용자 결정: 태블릿 식단표 = 브라우저 디자인(PC 본문을 태블릿 틀에). 휴대폰은 아래 터치 화면 그대로
+  return IS_TABLET ? <TableMealsManager shell="tablet" /> : <PhoneTableMeals />
+}
+
+function PhoneTableMeals() {
   const [creating, setCreating] = useState(false)
   const [revision, setRevision] = useState(0)
   if (creating) return <TableMealsCreateTouch onClose={() => { setCreating(false); setRevision(v => v + 1) }} />
@@ -61,8 +73,10 @@ function TableMealsView({ onCreate }: { onCreate: () => void }) {
     </TouchLayout>
   }
 
+  const createButton = isHeadquarters() ? <button type="button" className="t-btn is-primary" onClick={onCreate}><span aria-hidden="true">＋</span>식단표 만들기</button> : null
   return <WeekView key={table.table_id} table={table} accountId={accountId} tables={view.tables} onSelectTable={view.setSelectedTable}
-    days={view.detailDays} slotRows={view.slotRows} toolbar={toolbar} onAccountChange={view.setAccountId} />
+    days={view.detailDays} slotRows={view.slotRows} toolbar={createButton} onAccountChange={view.setAccountId}
+    monthLabel={`${year}년 ${month}월`} onShiftMonth={view.shiftMonth} />
 }
 
 /** 주차 고르기(이 달에 저장된 식단표) */
@@ -77,7 +91,7 @@ function WeekSwitch({ tables, selected, onSelect }: { tables: TableMealsItem[]; 
   </div>
 }
 
-function WeekView({ table, accountId, tables, onSelectTable, days, slotRows, toolbar, onAccountChange }: {
+function WeekView({ table, accountId, tables, onSelectTable, days, slotRows, toolbar, onAccountChange, monthLabel, onShiftMonth }: {
   table: TableMealsItem
   accountId: string
   tables: TableMealsItem[]
@@ -86,103 +100,134 @@ function WeekView({ table, accountId, tables, onSelectTable, days, slotRows, too
   slotRows: Array<Pick<MealSlotRow, 'id' | 'key' | 'label'>>
   toolbar: ReactNode
   onAccountChange: (accountId: string) => void
+  monthLabel: string
+  onShiftMonth: (delta: number) => void
 }) {
   const [dayIndex, setDayIndex] = useState(() => Math.max(0, days.findIndex(day => day.date === today())))
   const usage = useMealUsage(accountId, table.table_id, noop)
-  const touchStart = useRef<{ x: number; y: number } | null>(null)
   /** 이 업장 레시피 수정 창(메뉴를 누르면 연다) */
   const [recipeMenu, setRecipeMenu] = useState<{ menu_id: string; menu_name: string } | null>(null)
   const [recipeNotice, setRecipeNotice] = useState('')
-  const daysRef = useRef<HTMLDivElement | null>(null)
   const day = days[Math.min(dayIndex, days.length - 1)]
   const usageByDate = useMemo(() => new Map(usage.days.map(d => [d.date, d])), [usage.days])
   const dayUsage = usageByDate.get(day.date)
-  const rows = slotRows.filter(row => (day.meals[row.key] || []).length > 0)
-  const dayCalories = rows.reduce((sum, row) => sum + (day.meals[row.key] || []).reduce((s, m) => s + Number(m.calories_per_serving || 0), 0), 0)
 
+  // 2026-11-23 사용자 시안(휴대폰): 이번 주 식단가 카드(주차 ‹ › · 식단가 총액 · 남은 금액) → 주간식단표 카드(요일 고르기 → 그날 식사별 메뉴,
+  // 예정 식수 · 다운로드) → 주간 칼로리 한 줄(원산지). 예정 식수 = 식사별 계획 식수 · 사용 확정 창, 메뉴를 누르면 이 업장 레시피 수정(예전 그대로).
+  const [sheet, setSheet] = useState<'' | 'usage' | 'download' | 'origin' | 'weeks'>('')
+  const [budget, setBudget] = useState<{ key: string; data?: BudgetSummary; error?: string } | null>(null)
+  const budgetKey = `${accountId}:${table.table_id}`
   useEffect(() => {
-    daysRef.current?.querySelector('.is-active')?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' })
-  }, [dayIndex])
+    if (!accountId) return
+    let alive = true
+    getBudgetSummary(accountId, table.table_id)
+      .then(data => { if (alive) setBudget({ key: budgetKey, data }) })
+      .catch(e => { if (alive) setBudget({ key: budgetKey, error: e instanceof Error ? e.message : '식단가를 불러오지 못했습니다.' }) })
+    return () => { alive = false }
+  }, [accountId, table.table_id, budgetKey])
+  const summary = budget?.key === budgetKey ? budget.data : undefined
+  const tableIndex = tables.findIndex(item => item.table_id === table.table_id)
+  const stepTable = (delta: number) => { const next = tables[tableIndex + delta]; if (next) onSelectTable(next); else onShiftMonth(delta) }
+  const won = (v: number) => `${Math.round(v).toLocaleString('ko-KR')}원`
+  const mainRows = slotRows.filter(row => { const full = row as MealSlotRow; return full.code != null ? isMainSlot(full.code, full.kind) : !row.label.includes('간식') })
+  const kcalOf = (menus: { calories_per_serving?: number }[]) => menus.reduce((sum, m) => sum + (Number(m.calories_per_serving) > 0 ? Number(m.calories_per_serving) : 0), 0)
+  const label = Number.isFinite(table.table_week) ? `${table.table_month ?? ''}월 ${table.table_week}주차` : table.table_name
+  const range = days.length ? `${days[0].date.replace(/-/g, '.')} ~ ${days[days.length - 1].date.slice(5).replace('-', '.')}` : ''
+  const menuIds = [...new Set(days.flatMap(d => slotRows.flatMap(row => (d.meals[row.key] || []).map(m => m.menu_id)).filter(Boolean)))] as string[]
 
-  const move = (delta: number) => setDayIndex(index => Math.min(days.length - 1, Math.max(0, index + delta)))
-  const onTouchEnd = (event: TouchEvent) => {
-    const start = touchStart.current
-    touchStart.current = null
-    if (!start) return
-    const dx = event.changedTouches[0].clientX - start.x
-    const dy = event.changedTouches[0].clientY - start.y
-    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) move(dx < 0 ? 1 : -1)
-  }
-
-  /** 식사 카드의 상태: 사용 확정 목록에서 같은 이름의 식사를 찾는다(이름이 다르면 표시 안 함) */
-  const slotMeal = (label: string) => dayUsage?.meals.find(meal => meal.meal_slot === label)
-
-  return <TouchLayout title="식단표" subtitle={table.table_name} toolbar={toolbar} asideNarrow aside={<UsagePanel day={day} dayUsage={dayUsage} usage={usage} />} onAccountChange={onAccountChange}>
-    <WeekSwitch tables={tables} selected={table} onSelect={onSelectTable} />
-    {/* 2026-10-28: 식단표 서류 받기(조리계획표·급식운영일지 엑셀, 보존식 라벨 PDF) */}
-    <MealDocumentButtons accountId={accountId} tableId={table.table_id} buttonClassName="t-btn" className="tm-docs" />
-
-    <div className="t-tabs tm-days" ref={daysRef} role="tablist" aria-label="요일">
-      {days.map((d, index) => {
-        const u = usageByDate.get(d.date)
-        const done = u && u.total > 0 && u.completed === u.total
-        const isToday = d.date === today()
-        return <button key={d.key} type="button" role="tab" aria-selected={index === dayIndex}
-          className={`t-tab tm-day${index === dayIndex ? ' is-active' : ''}`} onClick={() => setDayIndex(index)}>
-          <TouchIcon name={done ? 'check' : 'calendar'} />
-          <strong>{d.weekday || dayLabel(d.date).split(' ')[0]}요일</strong>
-          <small>{d.date.slice(5).replace('-', '.')}{u ? ` · ${u.completed}/${u.total}식` : ''}</small>
-          {isToday && <span className="t-badge is-yellow tm-day__today">오늘</span>}
-        </button>
-      })}
-    </div>
-
-    <div className="tm-daybody" onTouchStart={e => { touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY } }} onTouchEnd={onTouchEnd}>
-      <div className="tm-dayhead">
-        <h2>{dayLabel(day.date)} 메뉴</h2>
-        <span className="t-badge is-accent"><TouchIcon name="flame" size={14} />{Math.round(dayCalories).toLocaleString('ko-KR')} kcal</span>
-        <div className="tm-dayhead__nav">
-          <button type="button" className="t-btn is-icon" aria-label="전날" disabled={dayIndex === 0} onClick={() => move(-1)}><TouchIcon name="chevronLeft" /></button>
-          <button type="button" className="t-btn is-icon" aria-label="다음날" disabled={dayIndex >= days.length - 1} onClick={() => move(1)}><TouchIcon name="chevronRight" /></button>
-        </div>
+  return <TouchLayout title="식단표 관리" subtitle={table.table_name} toolbar={toolbar} onAccountChange={onAccountChange}>
+    <section className="t-card mm-budget" aria-label="이번 주 식단가">
+      <h2>이번 주 식단가</h2>
+      <div className="mm-week">
+        <button type="button" className="mm-week__arrow" aria-label="이전 식단표" onClick={() => stepTable(-1)}><TouchIcon name="chevronLeft" size={14} /></button>
+        <button type="button" className="mm-week__label" aria-label="주 고르기" onClick={() => setSheet('weeks')}><strong>{label}</strong><small>{range}</small></button>
+        <button type="button" className="mm-week__arrow" aria-label="다음 식단표" onClick={() => stepTable(1)}><TouchIcon name="chevronRight" size={14} /></button>
       </div>
+      {summary ? <>
+        <dl className="mm-budget__nums">
+          <div><dt>식단가 총액</dt><dd>{won(summary.budget_total)}</dd></div>
+          <div><dt>{summary.balance < 0 ? '초과 금액' : '남은 금액'}</dt><dd className={summary.balance < 0 ? 'is-over' : 'is-ok'}>{won(Math.abs(summary.balance))}</dd></div>
+        </dl>
+        <p className="mm-budget__msg">{summary.message}</p>
+      </> : <p className="mm-budget__msg">{budget?.error || '식단가를 계산하고 있어요.'}</p>}
+    </section>
 
-      {rows.length === 0 && <p className="t-msg">이 날은 등록된 식사가 없습니다.</p>}
-      <div className="tm-slots">
-        {rows.map(row => {
+    <section className="t-card mm-plan" aria-label="주간식단표">
+      <header><h2>주간식단표</h2><span className="mm-pill">{table.account_name || '내 거래처'}</span></header>
+      <div className="mm-days" role="tablist" aria-label="요일">
+        {days.map((d, index) => <button key={d.key} type="button" role="tab" aria-selected={index === dayIndex} className={`mm-day${index === dayIndex ? ' is-active' : ''}${d.date === today() ? ' is-today' : ''}`} onClick={() => setDayIndex(index)}>
+          <small>{d.weekday || dayLabel(d.date).split(' ')[0]}</small><b>{Number(d.date.slice(8, 10))}</b>
+        </button>)}
+      </div>
+      <ul className="mm-slots">
+        {slotRows.map(row => {
           const menus = day.meals[row.key] || []
-          const calories = menus.reduce((sum, menu) => sum + Number(menu.calories_per_serving || 0), 0)
-          const meal = slotMeal(row.label)
-          return <article key={row.id} className={`t-card tm-slot${meal?.confirmable ? ' is-selected' : ''}`}>
-            <header className="tm-slot__cover">
-              <span className="tm-slot__icon"><TouchIcon name="meals" size={26} /></span>
-              <div>
-                <h3>{row.label}</h3>
-                <small>{menus.length}가지{calories > 0 ? ` · ${Math.round(calories).toLocaleString('ko-KR')} kcal` : ''}</small>
-              </div>
-              {meal && <span className={`t-badge ${mealTone(meal)}`}>{statusLabel(meal)}</span>}
-            </header>
-            <ul>
-              {menus.map(menu => <li key={`${menu.sort_order}-${menu.menu_id || menu.menu_name}`} className={menu.special_yn === 'Y' ? 'is-special' : undefined}>{menu.menu_id
-                ? <button type="button" className="tm-menu-link" title="눌러서 이 업장 레시피 수정" onClick={() => setRecipeMenu({ menu_id: menu.menu_id, menu_name: menu.menu_name || menu.menu_id })}>{menu.menu_name || '-'}</button>
-                : menu.menu_name || '-'}</li>)}
-            </ul>
-            {meal && <footer>
-              <span><TouchIcon name="users" size={16} />계획 {qty(meal.planned_servings)}명</span>
-              {meal.status === 'COMPLETED' && <strong>실제 {qty(meal.actual_servings || 0)}명</strong>}
-            </footer>}
-          </article>
+          const main = mainRows.some(m => m.id === row.id)
+          const meal = dayUsage?.meals.find(m => m.meal_slot === row.label)
+          return <li key={row.id} className={main ? 'is-main' : 'is-snack'}>
+            <span className="mm-slots__label">{row.label}</span>
+            <span className="mm-slots__menus">{menus.length ? menus.map((menu, i) => <span key={`${menu.sort_order}-${menu.menu_id || menu.menu_name}`}>
+              {i > 0 ? ' · ' : ''}{menu.menu_id
+                ? <button type="button" className={`mm-menu${menu.special_yn === 'Y' ? ' is-special' : ''}`} title="눌러서 이 업장 레시피 수정" onClick={() => setRecipeMenu({ menu_id: menu.menu_id, menu_name: menu.menu_name || menu.menu_id })}>{menu.special_yn === 'Y' ? '★ ' : ''}{menu.menu_name || '-'}</button>
+                : menu.menu_name || '-'}
+            </span>) : '—'}
+              {meal ? <span className={`t-badge ${mealTone(meal)} mm-slots__state`}>{statusLabel(meal)}</span> : null}</span>
+          </li>
         })}
-      </div>
+      </ul>
       {recipeNotice && <p className="t-msg" role="status">{recipeNotice}</p>}
-      <p className="tm-swipe-hint">좌우로 밀면 다른 요일로 넘어갑니다. 메뉴를 누르면 이 업장 레시피를 고칠 수 있습니다.</p>
-    </div>
+      <div className="mm-plan__actions">
+        <button type="button" className="mm-btn is-orange" onClick={() => setSheet('usage')}>예정 식수</button>
+        <button type="button" className="mm-btn is-green" onClick={() => setSheet('download')}>다운로드</button>
+      </div>
+    </section>
 
+    <section className="t-card mm-kcal" aria-label="주간 칼로리">
+      <header><h2>주간 칼로리</h2><button type="button" className="mm-link" onClick={() => setSheet('origin')}>원산지</button></header>
+      <p>{mainRows.map(row => `${row.label} ${Math.round(kcalOf(day.meals[row.key] || [])).toLocaleString('ko-KR')} kcal`).join(' · ') || '등록된 열량이 없어요.'}</p>
+      <small>{dayLabel(day.date)} · 1인분 기준</small>
+    </section>
+
+    {sheet === 'usage' && <div className="t-sheet-backdrop" role="presentation" onClick={() => setSheet('')}>
+      <section className="t-sheet mm-sheet" role="dialog" aria-modal="true" aria-label="예정 식수 · 사용 확정" onClick={e => e.stopPropagation()}>
+        <UsagePanel day={day} dayUsage={dayUsage} usage={usage} />
+        <footer className="t-sheet__actions"><button type="button" className="t-btn is-large" onClick={() => setSheet('')}>닫기</button></footer>
+      </section>
+    </div>}
+    {sheet === 'download' && <div className="t-sheet-backdrop" role="presentation" onClick={() => setSheet('')}>
+      <section className="t-sheet mm-sheet" role="dialog" aria-modal="true" aria-labelledby="mm-dl-title" onClick={e => e.stopPropagation()}>
+        <header className="t-sheet__head"><h2 id="mm-dl-title">다운로드</h2><p>조리계획표 · 급식운영일지(엑셀), 보존식 라벨(PDF)</p></header>
+        <div className="t-sheet__body"><MealDocumentButtons accountId={accountId} tableId={table.table_id} buttonClassName="t-btn is-block" className="tm-docs mm-docs" /></div>
+        <footer className="t-sheet__actions"><button type="button" className="t-btn is-large" onClick={() => setSheet('')}>닫기</button></footer>
+      </section>
+    </div>}
+    {sheet === 'origin' && <div className="t-sheet-backdrop" role="presentation" onClick={() => setSheet('')}>
+      <section className="t-sheet mm-sheet" role="dialog" aria-modal="true" aria-labelledby="mm-origin-title" onClick={e => e.stopPropagation()}>
+        <header className="t-sheet__head"><h2 id="mm-origin-title">원산지</h2></header>
+        <div className="t-sheet__body"><MenuOrigins key={table.table_id} tableId={table.table_id} accountId={accountId} menuIds={menuIds} /></div>
+        <footer className="t-sheet__actions"><button type="button" className="t-btn is-large" onClick={() => setSheet('')}>닫기</button></footer>
+      </section>
+    </div>}
+    {sheet === 'weeks' && <div className="t-sheet-backdrop" role="presentation" onClick={() => setSheet('')}>
+      <section className="t-sheet mm-sheet" role="dialog" aria-modal="true" aria-labelledby="mm-weeks-title" onClick={e => e.stopPropagation()}>
+        <header className="t-sheet__head"><h2 id="mm-weeks-title">주 고르기</h2></header>
+        <div className="t-sheet__body">
+          <div className="mm-week mm-week--month">
+            <button type="button" className="mm-week__arrow" aria-label="이전 달" onClick={() => onShiftMonth(-1)}><TouchIcon name="chevronLeft" size={14} /></button>
+            <strong>{monthLabel}</strong>
+            <button type="button" className="mm-week__arrow" aria-label="다음 달" onClick={() => onShiftMonth(1)}><TouchIcon name="chevronRight" size={14} /></button>
+          </div>
+          <WeekSwitch tables={tables} selected={table} onSelect={next => { onSelectTable(next); setSheet('') }} />
+        </div>
+        <footer className="t-sheet__actions"><button type="button" className="t-btn is-large" onClick={() => setSheet('')}>닫기</button></footer>
+      </section>
+    </div>}
     {usage.open && <UsageSheet usage={usage} accountId={accountId} />}
     {recipeMenu && accountId ? <AccountRecipeEditModal accountId={accountId} menuId={recipeMenu.menu_id} menuName={recipeMenu.menu_name}
       onClose={() => setRecipeMenu(null)} onSaved={setRecipeNotice} /> : null}
   </TouchLayout>
 }
+
 
 /** 오른쪽 패널(레퍼런스의 주문 패널): 제목 → 이 날/이번 주 → 식사 카드 목록 → 합계 상자 → 큰 확정 버튼 */
 function UsagePanel({ day, dayUsage, usage }: { day: TableMealsDetailDay; dayUsage: Usage['days'][number] | undefined; usage: Usage }) {

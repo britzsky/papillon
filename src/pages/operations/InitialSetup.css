@@ -1,0 +1,43 @@
+/* 고객사 초기 세팅(본사). 틀은 Redesign .rd-page */
+.initial-setup-page { min-height: 100vh; }
+.rd-setup { display: flex; flex-direction: column; gap: 12px; }
+.rd-setup .setup__msg { margin: 0; padding: 10px 14px; border: 1px solid #b7dcc4; border-radius: 12px; background: #eef8f1; color: #14532d; }
+.rd-setup .setup__msg.is-error { border-color: var(--rd-red-line); background: var(--rd-red-soft); color: var(--rd-red-ink); }
+.rd-setup .setup__top { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(420px, 2fr); gap: 12px; }
+.rd-setup .setup__card { display: flex; flex-direction: column; gap: 8px; }
+.rd-setup .setup__card p { margin: 0; }
+.rd-setup .setup__row, .rd-setup .setup__period, .rd-setup .setup__filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.rd-setup .setup__row .rd-input, .rd-setup .setup__period .rd-input { min-height: 36px; }
+.rd-setup .setup__job { display: flex; flex-direction: column; gap: 6px; padding-top: 4px; }
+.rd-setup .setup__job p { margin: 0; }
+.rd-setup .setup__job-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.rd-setup .setup__bar { height: 8px; border-radius: 999px; background: #EEF1EE; overflow: hidden; }
+.rd-setup .setup__bar > span { display: block; height: 100%; background: var(--rd-green); transition: width .4s; }
+.rd-setup .setup__failures summary { cursor: pointer; color: var(--rd-red-ink); }
+.rd-setup .setup__failures ul { margin: 6px 0 0; padding-left: 18px; max-height: 160px; overflow: auto; font-size: 12px; }
+.rd-setup .setup__main { gap: 10px; padding: 14px 16px; overflow: visible; }
+.rd-setup .setup__filters { justify-content: space-between; }
+.rd-setup .setup__search { flex: 1 1 200px; max-width: 280px; min-height: 36px; }
+.rd-setup .setup__check { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.rd-setup .setup__scroll { max-height: 62vh; overflow: auto; }
+.rd-setup .setup__table td.is-num, .rd-setup .setup__table th.is-num { text-align: right; white-space: nowrap; }
+.rd-setup .setup__table td small { white-space: nowrap; }
+.rd-setup .setup__table tr.is-unlinked td:first-child { box-shadow: inset 3px 0 0 var(--rd-orange); }
+.rd-setup .setup__table tr.is-clickable { cursor: pointer; }
+.rd-setup .setup__table tr.is-clickable:hover td { background: #F7F9F7; }
+.rd-setup .setup__table tr.is-selected td { background: var(--rd-green-soft); }
+.rd-setup .setup__abc { display: inline-flex; width: 24px; height: 24px; align-items: center; justify-content: center; border-radius: 6px; font-weight: 800; font-size: 12px; }
+.rd-setup .setup__abc.is-a { background: var(--rd-green-soft); color: var(--rd-green-dark); }
+.rd-setup .setup__abc.is-b { background: var(--rd-blue-soft); color: var(--rd-blue-ink); }
+.rd-setup .setup__abc.is-c { background: #F0F3F0; color: var(--rd-soft-ink); }
+.rd-setup .setup__link { min-width: 200px; }
+.rd-setup .setup__link-edit { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+/* 공통 표 입력(ControlSizing.css)은 글자 수만큼만 넓어진다 — 식재료 칸은 고정 폭 */
+body.workspace-ui > :is(#root, :not(#root)) .rd-setup .setup__link-edit input.rd-input { field-sizing: fixed; width: 240px !important; min-height: 34px; }
+body.workspace-ui > :is(#root, :not(#root)) .rd-setup .setup__link-edit input.rd-input.setup__per { width: 110px !important; }
+.rd-setup .setup__lines { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.rd-setup .setup__lines h3 { margin: 0; }
+/* 좁은 화면: 카드·표가 화면보다 넓어지지 않게(표는 안에서 가로 스크롤) */
+.rd-setup, .rd-setup .setup__top > *, .rd-setup .setup__main { min-width: 0; max-width: 100%; }
+.rd-setup .rd-page__head p, .rd-setup .setup__card p { white-space: normal; overflow-wrap: anywhere; }
+@media (max-width: 900px) { .rd-setup .setup__top { grid-template-columns: minmax(0, 1fr); } .rd-setup .rd-page__tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

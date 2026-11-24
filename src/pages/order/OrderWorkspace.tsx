@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import TopMenuLayout from '../../components/TopMenuLayout'
 import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
-import QuickOrder from './QuickOrder'
 import FoodOrder from './FoodOrder'
 import ProductOrder from './ProductOrder'
 import { ORDER_TABS as TABS, ORDER_TAB_SOURCE as SOURCE, resolveOrderTab, type LegacyOrderTab as LegacyTab, type OrderTab } from '../../features/order/orderTabs'
@@ -16,6 +15,11 @@ export type { OrderTab } from '../../features/order/orderTabs'
  * 예전 주소(/order_manager/recommended, /food_order, /product-order)는 initialTab으로 들어와 쿼리를 유지한 채 이 주소로 바뀐다.
  */
 export default function OrderWorkspace({ initialTab }: { initialTab?: OrderTab | LegacyTab }) {
+  return <div className="order-workspace"><TopMenuLayout title="발주하기"><OrderWorkspaceBody initialTab={initialTab} /></TopMenuLayout></div>
+}
+
+/** 발주하기 본문(기준 탭 + 탭 화면). PC는 TopMenuLayout, 태블릿은 TouchLayout 안에 같은 본문을 넣는다(2026-11-23 사용자 결정: 태블릿 = 브라우저 디자인) */
+export function OrderWorkspaceBody({ initialTab }: { initialTab?: OrderTab | LegacyTab }) {
   const [params] = useSearchParams()
   const location = useLocation()
   const navigate = useNavigate()
@@ -51,7 +55,7 @@ export default function OrderWorkspace({ initialTab }: { initialTab?: OrderTab |
   // 무엇을 기준으로 시킬지 = 이 화면에서 가장 먼저 고르는 것. 추천 발주안도 같은 줄의 한 칸(2026-10-16 정리)
   const BASIS: { key: OrderTab; label: string }[] = [{ key: 'plan', label: '식단표 기준' }, { key: 'stock', label: '지금 부족한 재고' }, { key: 'usage', label: '최근 사용량' }, { key: 'recommended', label: '추천 발주안' }, { key: 'myProducts', label: '♥ 나만의 식재료' }]
 
-  return <div className="order-workspace"><TopMenuLayout title="발주하기">
+  return <>
     {/* 2026-10-16 정리: 한 줄에 ① 기준(식단표·재고·사용량·추천 발주안) ② 마감 알림 ③ 상품 직접 검색. 화면 이름은 위 경로 줄 */}
     <header className="rd rd-order__head">
       <h1 className="rd-sr-only">발주하기</h1>
@@ -69,7 +73,7 @@ export default function OrderWorkspace({ initialTab }: { initialTab?: OrderTab |
       </div>}
     </header>
     <div role="tabpanel" aria-label={TABS.find(item => item.key === tab)?.label}>
-      {tab === 'recommended' ? <QuickOrder embedded /> : tab === 'products' ? <ProductOrder embedded headSlot={headSlot} /> : tab === 'myProducts' ? <ProductOrder key="my" embedded favorites headSlot={headSlot} /> : <FoodOrder key={tab} embedded fixedSource={SOURCE[tab]} />}
+      {tab === 'recommended' ? <FoodOrder key="recommended" embedded fixedSource="PLAN" recommended /> : tab === 'products' ? <ProductOrder embedded headSlot={headSlot} /> : tab === 'myProducts' ? <ProductOrder key="my" embedded favorites headSlot={headSlot} /> : <FoodOrder key={tab} embedded fixedSource={SOURCE[tab]} />}
     </div>
-  </TopMenuLayout></div>
+  </>
 }

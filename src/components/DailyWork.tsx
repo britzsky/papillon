@@ -10,6 +10,7 @@ import MallBanner from './MallBanner'
 import WeekMealBoard from './WeekMealBoard'
 import { isSiteUser } from '../features/workspace/roleScreens'
 import { useHqOverview } from '../features/workspace/useHqOverview'
+import { SHOW_MALL } from '../features/mall/mallVisibility'
 
 /**
  * PC 홈 본문(2026-10-15 개편, 시안 ① 홈). 조회·계산은 features/workspace/useDailyWork(터치 홈과 공용).
@@ -130,7 +131,7 @@ export default function DailyWork({ search }: { search: ReactNode }) {
       <DeadlineAlertSlot />
       {search}
     </header>
-    <MallBanner />
+    {SHOW_MALL && <MallBanner />}
 
     {error && <p role="alert">{error}</p>}
     {!data && !error && <p role="status" className="rd-muted">업무 현황을 확인하고 있습니다.</p>}

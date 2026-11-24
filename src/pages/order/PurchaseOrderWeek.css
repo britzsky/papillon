@@ -1,0 +1,86 @@
+/*
+ * 발주서·입고(PC) 2026-11-23 사용자 시안. RedesignOrder.css '발주서·입고(시안 ③)' 위에 덮는다.
+ * 위 흰 알약 버튼 → 이번 주 한 장 판(7칸, 세로 구분선, 고른 날은 떠오른 칸, 알약은 흰 바탕 + 글자색) → 조회 판(알약 칸 + 초록 조회)
+ * → 왼쪽 발주서 카드(공급사 색 알약 · 상태 알약) / 오른쪽 상세 판.
+ * 버튼 색은 개편 공용 규칙(body.workspace-ui .rd.rd button)이 쓰는 --rd-btn-* 변수로, 높이는 index.css --button-height로.
+ * 공급사 색은 앱 공통(Redesign.css --sup-welstory 주황 · --sup-ourhome 파랑).
+ */
+@media screen {
+  .rd.rd-recv { --recv-welstory: var(--sup-welstory); --recv-ourhome: var(--sup-ourhome); --recv-blue: #1E98CF; --recv-orange: #E38A2A; --recv-green: #5E9A3A; --recv-red: #F0353D; --recv-shadow: 0 4px 14px rgba(30, 42, 34, .10); --recv-shadow-up: 0 10px 26px rgba(30, 42, 34, .18); gap: 18px; }
+
+  /* 위 버튼: 흰 알약 */
+  .rd.rd-recv .rd-recv__head-actions { gap: 14px; }
+  .rd.rd-recv .rd-recv__head-actions .rd-btn { min-height: 40px; padding: 0 22px; border-color: transparent; border-radius: 14px; background: var(--rd-card); box-shadow: var(--recv-shadow); --button-height: 40px; --button-width: 0;
+    --rd-btn-radius: 14px; --rd-btn-line: transparent; --rd-btn-bg: var(--rd-card); --rd-btn-hover-bg: var(--rd-card); --rd-btn-hover-line: var(--rd-green); }
+
+  /* 이번 주: 화살표는 판 바깥, 판 안 7칸 */
+  .rd.rd-recv .rd-week { grid-template-columns: 28px minmax(0, 1fr) 28px; gap: 6px; align-items: center; }
+  .rd.rd-recv .rd-week > .rd-icon-btn { --rd-btn-line: transparent; --rd-btn-bg: transparent; --rd-btn-hover-bg: var(--rd-green-soft); --rd-fs: 22px; font-weight: 800; }
+  .rd.rd-recv .rd-week__strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); align-items: stretch; min-height: 104px; padding: 10px 0; border-radius: 14px; background: var(--rd-card); box-shadow: var(--recv-shadow); }
+  .rd.rd-recv .rd-week__day { position: relative; min-height: 100px; padding: 8px 14px 10px; gap: 4px; border: 0; border-radius: 0;
+    --rd-btn-radius: 0; --rd-btn-line: transparent; --rd-btn-bg: transparent; --rd-btn-hover-bg: var(--rd-green-soft); --rd-btn-hover-line: transparent; --rd-btn-fg: var(--rd-ink); --rd-btn-hover-fg: var(--rd-ink); }
+  /* 세로 구분선(위아래 조금 띄움) */
+  .rd.rd-recv .rd-week__day + .rd-week__day::before { content: ''; position: absolute; left: 0; top: 14px; bottom: 6px; width: 1px; background: var(--rd-ink); opacity: .55; }
+  .rd.rd-recv .rd-week__day.is-active + .rd-week__day::before, .rd.rd-recv .rd-week__day.is-active::before { opacity: 0; }
+  .rd.rd-recv .rd-week__wd { display: inline-flex; align-items: center; gap: 6px; --rd-fs: 12px; font-weight: 700; color: var(--rd-ink); }
+  .rd.rd-recv .rd-week__wd em { padding: 1px 7px; border-radius: 999px; background: var(--rd-green-soft); color: var(--rd-green-dark); font-style: normal; --rd-fs: 11px; font-weight: 800; }
+  .rd.rd-recv .rd-week__day strong { --rd-fs: 17px; font-weight: 800; color: var(--rd-ink); }
+  /* 고른 날: 판 위로 떠오른 칸 */
+  .rd.rd-recv .rd-week__day.is-active { z-index: 1; margin: -16px 0; padding-top: 24px; padding-bottom: 26px; border-radius: 12px;
+    --rd-btn-radius: 12px; --rd-btn-bg: var(--rd-card); --rd-btn-fg: var(--rd-ink); --rd-btn-line: transparent; --rd-btn-hover-bg: var(--rd-card); --rd-btn-hover-fg: var(--rd-ink); box-shadow: var(--recv-shadow-up); }
+  .rd.rd-recv .rd-week__day.is-today:not(.is-active) { --rd-btn-line: transparent; }
+  .rd.rd-recv .rd-week__pills { flex-direction: column; align-items: center; align-self: stretch; gap: 6px; margin-top: 8px; }
+  .rd.rd-recv .rd-week__pill { display: inline-flex; justify-content: center; min-width: 86px; padding: 3px 12px; border-radius: 999px; background: var(--rd-card); box-shadow: 0 2px 6px rgba(30, 42, 34, .16); --rd-fs: 11px; font-weight: 800; white-space: nowrap; }
+  .rd.rd-recv .rd-week__pill.is-done { color: var(--recv-green); }
+  .rd.rd-recv .rd-week__pill.is-info { color: var(--recv-blue); }
+  .rd.rd-recv .rd-week__pill.is-urgent { color: var(--recv-orange); }
+  .rd.rd-recv .rd-week__pill.is-warn { color: var(--recv-red); }
+
+  /* 조회 판: 알약 칸 + 오른쪽 초록 조회 */
+  .rd.rd-recv .rd-recv__filterbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; padding: 14px 22px; border: 0; border-radius: 14px; box-shadow: var(--recv-shadow); }
+  .rd.rd-recv .rd-recv__field { display: inline-flex; flex-direction: row; align-items: center; gap: 8px; height: 38px; padding: 0 8px 0 16px; border-radius: 12px; background: var(--rd-card); box-shadow: 0 2px 8px rgba(30, 42, 34, .16); --rd-fs: 12px; font-weight: 700; color: var(--rd-ink); }
+  .rd.rd-recv .rd-recv__field.is-select { padding: 0 4px 0 8px; }
+  .rd.rd-recv .rd-recv__field > span:not(.rd-sr-only) { white-space: nowrap; }
+  body.workspace-ui .rd.rd-recv .rd-recv__field :is(input, select):not(#_):not(#__) { height: 30px !important; min-height: 30px !important; padding: 0 6px; border: 0 !important; background: transparent !important; box-shadow: none !important; color: var(--rd-ink); --rd-fs: 12px; font-weight: 700; }
+  .rd.rd-recv .rd-recv__field select { min-width: 120px; cursor: pointer; }
+  .rd.rd-recv .rd-recv__field input[type=date] { width: 132px; cursor: pointer; }
+  .rd.rd-recv .rd-recv__search { margin-left: auto; min-height: 36px; padding: 0 22px; border-radius: 999px; --button-height: 36px; --button-width: 0; --rd-btn-radius: 999px; --rd-btn-bg: var(--recv-green); --rd-btn-line: var(--recv-green); --rd-btn-fg: #fff; --rd-btn-hover-bg: #4C8230; --rd-btn-hover-fg: #fff; --rd-btn-hover-line: #4C8230; }
+
+  /* 발주서 카드 */
+  .rd.rd-recv .rd-recv__grid { gap: 14px; }
+  .rd.rd-recv .rd-recv__list { flex: 0 1 330px; gap: 10px; }
+  .rd.rd-recv .rd-recv__card { min-height: 112px; padding: 10px 12px 14px; border: 0; gap: 8px; --rd-btn-radius: 12px; --rd-btn-line: transparent; --rd-btn-bg: var(--rd-card); --rd-btn-hover-bg: var(--rd-card); --rd-btn-hover-line: var(--rd-green); box-shadow: var(--recv-shadow); }
+  .rd.rd-recv .rd-recv__card.is-selected { --rd-btn-line: var(--recv-green); --rd-btn-bg: var(--rd-card); --rd-btn-hover-bg: var(--rd-card); box-shadow: 0 0 0 2px var(--recv-green), var(--recv-shadow-up); }
+  .rd.rd-recv .rd-recv__card > strong { padding: 0 4px; }
+  .rd.rd-recv .rd-recv__card > .rd-muted { padding: 0 4px; }
+  .rd.rd-recv .rd-recv__supplier, .rd.rd-recv .rd-recv__state { display: inline-flex; justify-content: center; min-width: 80px; padding: 3px 12px; border-radius: 999px; color: #fff; --rd-fs: 11px; font-weight: 800; white-space: nowrap; }
+  .rd.rd-recv .rd-recv__supplier { background: var(--rd-muted); }
+  .rd.rd-recv .rd-recv__supplier.is-WELSTORY { background: var(--recv-welstory); }
+  .rd.rd-recv .rd-recv__supplier.is-OURHOME { background: var(--recv-ourhome); }
+  .rd.rd-recv .rd-recv__state.is-wait { background: var(--recv-green); }
+  .rd.rd-recv .rd-recv__state.is-urgent { background: var(--recv-red); }
+  .rd.rd-recv .rd-recv__state.is-done { background: #BDBDBD; }
+
+  /* 오른쪽 상세 판 */
+  .rd.rd-recv .rd-recv__detail { border: 0; border-radius: 14px; box-shadow: var(--recv-shadow); min-height: 380px; }
+
+  @media (max-width: 1100px) {
+    .rd.rd-recv .rd-week { grid-template-columns: minmax(0, 1fr); }
+    .rd.rd-recv .rd-week__strip { overflow-x: auto; grid-template-columns: repeat(7, minmax(96px, 1fr)); }
+    .rd.rd-recv .rd-week__day.is-active { margin: -10px 0; }
+  }
+}
+
+/* 전역 버튼 규칙이 그림자를 지우므로(!important) 이 화면 버튼만 더 세게 */
+@media screen {
+  body.workspace-ui > :is(#root, :not(#root)) .rd.rd.rd-recv .rd-recv__head-actions button.rd-btn:not(#_),
+  body.workspace-ui > :is(#root, :not(#root)) .rd.rd.rd-recv button.rd-recv__card:not(#_):not(.is-selected) { box-shadow: var(--recv-shadow) !important; }
+  body.workspace-ui > :is(#root, :not(#root)) .rd.rd.rd-recv button.rd-recv__card.is-selected:not(#_) { box-shadow: 0 0 0 2px var(--recv-green), var(--recv-shadow-up) !important; }
+  body.workspace-ui > :is(#root, :not(#root)) .rd.rd.rd-recv button.rd-week__day.is-active:not(#_) { box-shadow: var(--recv-shadow-up) !important; }
+}
+
+/* 좁은 화면(태블릿 세로·아이패드 미니): 요일 칸이 좁아 알약이 구분선을 넘지 않게 */
+@media screen and (max-width: 900px) {
+  .rd.rd-recv .rd-week__day { padding-left: 6px; padding-right: 6px; }
+  .rd.rd-recv .rd-week__pill { min-width: 0; max-width: 100%; padding: 3px 7px; --rd-fs: 10px; }
+}

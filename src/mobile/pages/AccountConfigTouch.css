@@ -38,7 +38,7 @@ body.t-ui .ac-chips button.is-active { --button-bg: var(--t-accent); --button-bg
 .ac-budgets small { grid-column: 1 / -1; color: var(--t-muted); font-size: 12px; }
 .ac-ok { padding: 14px 16px; background: var(--t-accent-soft); color: var(--t-accent-strong); text-align: left; }
 
-@media (max-width: 767px) {
+@media (max-width: 699px) {
   .ac-slots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ac-config { grid-template-columns: minmax(0, 1fr); }
   .ac-panel__body { overflow: visible; }

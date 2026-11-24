@@ -1,0 +1,303 @@
+/*
+ * 식단표 관리(PC) 2026-11-23 사용자 시안: 가운데 판(왼쪽 위 장식 · 몇월 몇주차 · 주간식단표) + 원산지 카드 + 오른쪽 요약 카드.
+ * 화면에서만 적용(@media screen) — 인쇄는 예전 한 장짜리 식단표 규칙(TableMealsManager.css @media print) 그대로.
+ * 색은 .rd 변수(--rd-*)로 써서 어두운 테마(TopMenuTheme.css)를 따라간다. 주황·파랑·초록 강조색은 홈 바로가기와 같은 값.
+ */
+.tmw { --tmw-orange: #E38A2A; --tmw-blue: #1E98CF; --tmw-leaf: #6E9F3B; --tmw-shadow: 0 6px 20px rgba(30, 42, 34, .10); }
+
+@media screen {
+  .rd .tmw__grid { display: grid; grid-template-columns: minmax(0, 1fr) 264px; gap: 18px; align-items: start; }
+  .rd .tmw__left, .rd .tmw__stack { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+  .rd .tmw__side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  .rd .tmw .table-meals-hangyeol.tmw__stack { width: auto; margin: 0; padding: 0; background: transparent; color: var(--rd-ink); }
+
+  /* 카드 */
+  .rd .tmw-card { position: relative; background: var(--rd-card); border: 1px solid var(--rd-line); border-radius: 14px; box-shadow: var(--tmw-shadow); }
+  .rd .tmw-sheet { padding: 18px 26px 22px; }
+
+  /* 판 위쪽: 가운데 주 이동, 오른쪽 도구 */
+  .rd .tmw-sheet__top { position: relative; display: grid; grid-template-columns: 1fr auto 1fr; align-items: start; gap: 12px; min-height: 96px; }
+  .rd .tmw-sheet__top > .tmw-weeknav { grid-column: 2; }
+  .rd .tmw-sheet__tools { grid-column: 3; justify-self: end; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+  .rd .tmw-sheet__view { grid-column: 1 / -1; justify-self: center; margin-top: 4px; }
+
+  /* 왼쪽 위 장식(초록·주황·파랑 잎) */
+  .rd .tmw-sheet__deco { position: absolute; top: -18px; left: -26px; width: 220px; height: 189px; border-top-left-radius: 13px; pointer-events: none; filter: drop-shadow(0 3px 4px rgba(20, 32, 24, .18)); }
+
+  /* 몇월 몇주차 */
+  .rd .tmw-weeknav { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  /* 버튼 색은 개편 공용 규칙(RedesignOrder.css body.workspace-ui .rd.rd button)이 쓰는 변수로만 바꾼다. 높이는 index.css --button-height */
+  .rd .tmw :is(.tmw-weeknav__dots, .tmw-weeknav__arrow, .tmw-cal__nav, .tmw-cal__day, .tmw-cal__today, .tmw-download__trigger, .tmw-download__item, .tmw-action__trigger, .tmw-action__item, .tmw-quick__item, .tmw-kcal__arrow) {
+    --button-height: auto; --button-width: 0; --rd-btn-line: transparent; --rd-btn-hover-line: transparent; --rd-btn-disabled-line: transparent; }
+  .rd .tmw :is(.tmw-weeknav__dots, .tmw-weeknav__arrow) { display: inline-flex; align-items: center; justify-content: center; min-height: 0; padding: 4px; cursor: pointer;
+    --rd-btn-bg: transparent; --rd-btn-fg: var(--tmw-orange); --rd-btn-hover-bg: var(--rd-orange-soft); --rd-btn-hover-fg: var(--tmw-orange); --rd-btn-radius: 10px; }
+  .rd .tmw .tmw-weeknav__dots[aria-expanded="true"] { --rd-btn-bg: var(--rd-orange-soft); }
+  .rd .tmw .tmw-weeknav__arrow { --rd-fs: 30px; width: 40px; height: 40px; font-weight: 700; line-height: 1; }
+  .rd .tmw-weeknav__row { display: flex; align-items: center; gap: 18px; }
+  .rd .tmw .tmw-weeknav__label { --rd-fs: 28px; margin: 0; color: var(--tmw-orange) !important; font-weight: 800; letter-spacing: -.5px; white-space: nowrap; }
+  .rd .tmw-weeknav__range { --rd-fs: 12px; color: var(--rd-muted); }
+
+  /* 주 고르기 달력 */
+  .rd .tmw-cal { position: absolute; z-index: 40; top: 38px; left: 50%; width: 340px; padding: 14px 14px 12px; border-radius: 18px; background: var(--rd-card);
+    border: 1px solid var(--rd-line); box-shadow: 0 18px 44px rgba(20, 32, 24, .22); transform: translateX(-50%); animation: tmw-pop .16s ease-out both; }
+  .rd .tmw-cal__head { display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 10px; }
+  .rd .tmw-cal__head strong { --rd-fs: 16px; font-weight: 800; }
+  .rd .tmw .tmw-cal__nav { width: 32px; height: 32px; min-height: 0; padding: 0; --rd-fs: 18px; font-weight: 700;
+    --rd-btn-radius: 999px; --rd-btn-bg: var(--rd-bg); --rd-btn-fg: var(--rd-ink); --rd-btn-hover-bg: var(--rd-green-soft); --rd-btn-hover-fg: var(--rd-green); }
+  .rd .tmw-cal__grid { display: flex; flex-direction: column; gap: 2px; }
+  .rd .tmw-cal__row { display: grid; grid-template-columns: 50px repeat(7, minmax(0, 1fr)); align-items: center; border-radius: 12px; padding: 1px 2px; transition: background .12s; }
+  .rd .tmw-cal__row:not(.tmw-cal__row--head):hover { background: var(--rd-orange-soft); }
+  .rd .tmw-cal__row.is-selected { background: var(--rd-green-soft); box-shadow: inset 0 0 0 1.5px var(--rd-green); }
+  .rd .tmw-cal__wd { --rd-fs: 11px; text-align: center; color: var(--rd-muted); font-weight: 700; padding-bottom: 4px; }
+  .rd .tmw-cal__week { --rd-fs: 10px; display: inline-flex; align-items: center; gap: 3px; padding-left: 4px; color: var(--rd-muted); font-weight: 700; white-space: nowrap; }
+  .rd .tmw-cal__saved { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--rd-green); }
+  .rd .tmw .tmw-cal__day { justify-self: center; width: 34px; height: 34px; min-height: 0; padding: 0; --rd-fs: 13px; font-weight: 600;
+    --rd-btn-radius: 999px; --rd-btn-bg: transparent; --rd-btn-fg: var(--rd-ink); --rd-btn-hover-bg: var(--tmw-orange); --rd-btn-hover-fg: #fff; }
+  .rd .tmw .tmw-cal__day.is-sat { --rd-btn-fg: var(--rd-blue); }
+  .rd .tmw .tmw-cal__day.is-sun { --rd-btn-fg: var(--rd-red); }
+  .rd .tmw .tmw-cal__day.is-out { opacity: .38; }
+  .rd .tmw .tmw-cal__day.is-today { box-shadow: inset 0 0 0 2px var(--tmw-orange); font-weight: 800; }
+  .rd .tmw-cal__wd.is-sat { color: var(--rd-blue); }
+  .rd .tmw-cal__wd.is-sun { color: var(--rd-red); }
+  .rd .tmw-cal__foot { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding: 8px 4px 0; border-top: 1px solid var(--rd-line); }
+  .rd .tmw-cal__foot span { --rd-fs: 11px; display: inline-flex; align-items: center; gap: 5px; color: var(--rd-muted); }
+  .rd .tmw .tmw-cal__today { min-height: 0; padding: 5px 12px; --rd-fs: 12px; font-weight: 800;
+    --rd-btn-radius: 999px; --rd-btn-line: var(--rd-green); --rd-btn-hover-line: var(--rd-green); --rd-btn-bg: var(--rd-green-soft); --rd-btn-fg: var(--rd-green); --rd-btn-hover-bg: var(--rd-green); --rd-btn-hover-fg: #fff; }
+
+  /* 예정 식수 · 다운로드 */
+  .rd .tmw-servings { display: inline-flex; align-items: center; gap: 6px; --rd-fs: 12px; font-weight: 700; color: var(--rd-soft-ink); white-space: nowrap; }
+  body.workspace-ui .rd .tmw-servings input { width: 78px; height: 30px; padding: 0 8px; border-radius: 999px !important; }
+  .rd .tmw-download { position: relative; }
+  .rd .tmw .tmw-download__trigger { min-height: 0; height: 30px; padding: 0 14px; --rd-fs: 12px; font-weight: 800; box-shadow: 0 3px 8px rgba(110, 159, 59, .3);
+    --rd-btn-radius: 8px; --rd-btn-bg: var(--tmw-leaf); --rd-btn-fg: #fff; --rd-btn-hover-bg: #5C8A2F; --rd-btn-hover-fg: #fff; }
+  .rd .tmw .tmw-download__trigger:disabled { box-shadow: none; }
+  .rd .tmw-download__panel, .rd .tmw-action__panel { position: absolute; z-index: 40; top: calc(100% + 3px); right: 0; display: flex; flex-direction: column; gap: 6px; }
+  .rd .tmw-download__panel { min-width: 170px; padding: 8px; border-radius: 14px; background: var(--rd-card); border: 1px solid var(--rd-line); box-shadow: 0 14px 34px rgba(20, 32, 24, .2); animation: tmw-pop .14s ease-out both; }
+  .rd .tmw-download__docs { display: flex; flex-direction: column; gap: 4px; }
+  .rd .tmw .tmw-download__item { width: 100%; min-height: 0; padding: 8px 12px; justify-content: flex-start; text-align: left; --rd-fs: 13px; font-weight: 700;
+    --rd-btn-radius: 10px; --rd-btn-bg: transparent; --rd-btn-fg: var(--rd-ink); --rd-btn-hover-bg: var(--rd-green-soft); --rd-btn-hover-fg: var(--rd-green); --rd-btn-disabled-bg: transparent; }
+
+  /* 본사 '동작' — 동그란 버튼, 누르면 아래로 차례로 펼침 */
+  .rd .tmw-action { position: relative; }
+  .rd .tmw .tmw-action__trigger { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; width: 50px; height: 50px; min-height: 0; padding: 0;
+    --rd-fs: 11px; font-weight: 800; box-shadow: 0 6px 14px rgba(46, 107, 58, .32); transition: transform .15s ease, box-shadow .15s ease;
+    --rd-btn-radius: 999px; --rd-btn-bg: var(--rd-green); --rd-btn-fg: #fff; --rd-btn-hover-bg: var(--rd-green-dark); --rd-btn-hover-fg: #fff; }
+  .rd .tmw .tmw-action__trigger:hover { transform: translateY(-1px); }
+  .rd .tmw .tmw-action.is-open .tmw-action__trigger { --rd-btn-bg: var(--tmw-orange); --rd-btn-hover-bg: #C97518; box-shadow: 0 6px 14px rgba(227, 138, 42, .35); }
+  .rd .tmw-action__trigger svg { transition: transform .2s ease; }
+  .rd .tmw-action.is-open .tmw-action__trigger svg { transform: rotate(90deg); }
+  .rd .tmw-action__panel { width: 232px; }
+  .rd .tmw-action__extra, .rd .tmw .tmw-action__item { animation: tmw-drop .22s cubic-bezier(.2, .8, .3, 1.2) both; animation-delay: calc(var(--i, 0) * 38ms); }
+  .rd .tmw-action__extra { padding: 8px 12px; border-radius: 14px; background: var(--rd-card); border: 1px solid var(--rd-line); box-shadow: 0 8px 20px rgba(20, 32, 24, .14); }
+  .rd .tmw-action__type { display: flex; align-items: center; justify-content: space-between; gap: 8px; --rd-fs: 12px; font-weight: 700; color: var(--rd-soft-ink); }
+  body.workspace-ui .rd .tmw-action__type select { height: 30px; padding: 0 8px; min-width: 120px; }
+  .rd .tmw .tmw-action__item { width: 100%; min-height: 0; padding: 11px 16px; justify-content: flex-start; text-align: left; --rd-fs: 13px; font-weight: 800; box-shadow: 0 8px 20px rgba(20, 32, 24, .14);
+    --rd-btn-radius: 999px; --rd-btn-line: var(--rd-line); --rd-btn-bg: var(--rd-card); --rd-btn-fg: var(--rd-ink); --rd-btn-hover-bg: var(--rd-green-soft); --rd-btn-hover-fg: var(--rd-green); --rd-btn-hover-line: var(--rd-green); }
+  .rd .tmw .tmw-action__item:disabled { opacity: .55; }
+
+  /* 제목 */
+  .rd .tmw-sheet__title { position: static; margin: 6px 0 14px; text-align: center; }
+  .rd .tmw-sheet__title .table-meals-hangyeol__logo { display: none; }
+  .rd .tmw .tmw-sheet__title h3 { --rd-fs: 22px; margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.3px; color: var(--rd-ink); }
+  .rd .tmw .tmw-sheet__title p { --rd-fs: 12px; margin: 6px 0 0; font-size: 12px; color: var(--rd-muted); }
+  .rd .tmw .tmw-sheet__title .table-meals-hangyeol__account { font-size: inherit; color: var(--rd-soft-ink); }
+  .rd .tmw-sheet__tables { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .rd .tmw .tmw-sheet__tables button { min-height: 0; padding: 4px 12px; --rd-fs: 12px; font-weight: 700; --rd-btn-radius: 999px; }
+  .rd .tmw .tmw-sheet__tables button.is-on { --rd-btn-bg: var(--rd-green-soft); --rd-btn-line: var(--rd-green); --rd-btn-fg: var(--rd-green); }
+  .rd .tmw-sheet__usage .meal-usage-panel { margin: 0 0 12px; }
+
+  /* 주간식단표 표(화면용: 굵은 검은 칸 대신 가는 가로줄) */
+  .rd .tmw .table-meals-sheet.tmw-sheet__body { padding: 0; border: 0; background: transparent; box-shadow: none; overflow: visible; }
+  .rd .tmw-sheet__scroll { overflow-x: auto; }
+  .rd .tmw .tmw-table { min-width: 760px; border: 0; background: transparent; border-collapse: collapse; }
+  .rd .tmw .tmw-table :is(th, td) { border: 0; }
+  .rd .tmw .tmw-table thead th { height: auto; padding: 6px 4px 12px; background: transparent; color: var(--rd-ink); }
+  .rd .tmw .tmw-table thead strong { margin-bottom: 4px; font-size: 14px; font-weight: 800; }
+  .rd .tmw .tmw-table thead span { font-size: 12px; color: var(--rd-soft-ink); }
+  .rd .tmw .tmw-table thead th.is-today strong { color: var(--rd-green); }
+  .rd .tmw .tmw-table thead th.is-today span { display: inline-block; padding: 1px 8px; border-radius: 999px; background: var(--rd-green-soft); color: var(--rd-green); font-weight: 700; }
+  .rd .tmw .tmw-table tbody tr { border-top: 1px solid var(--rd-line-strong); }
+  .rd .tmw .tmw-table tbody tr:last-child { border-bottom: 1px solid var(--rd-line-strong); }
+  .rd .tmw .tmw-table tbody th { width: 70px; padding: 10px 4px; font-size: 13px; font-weight: 800; color: var(--tmw-orange); background: transparent; }
+  .rd .tmw .tmw-table tbody tr.is-snack th { color: var(--tmw-leaf); }
+  .rd .tmw .tmw-table td { height: auto; padding: 12px 6px; color: var(--rd-ink); background: transparent; transition: background .12s; }
+  .rd .tmw .tmw-table td.is-today { background: var(--rd-green-soft); }
+  .rd .tmw .tmw-table tbody tr:hover td { background: color-mix(in srgb, var(--rd-orange-soft) 60%, transparent); }
+  .rd .tmw .tmw-table tbody tr:hover td.is-today { background: var(--rd-green-soft); }
+  .rd .tmw .tmw-table ul { gap: 3px; }
+  .rd .tmw .tmw-table :is(li, td > span) { font-size: 12.5px; line-height: 1.45; }
+  .rd .tmw .tmw-table li { color: var(--rd-ink); }
+  .rd .tmw .tmw-table thead strong { color: var(--rd-ink); }
+  .rd .tmw .tmw-table td > span { color: var(--rd-muted); }
+  .rd .tmw .tmw-table li[title]:hover { color: var(--rd-green); }
+  .rd .tmw .tmw-table li.is-special { color: var(--tmw-orange); font-weight: 800; }
+  .rd .tmw .tmw-table li.is-special::before { color: var(--tmw-orange); }
+  .rd .tmw .tmw-table li.is-shortage { color: var(--rd-red); }
+  .rd .tmw .tmw-table .table-meals-calories { display: none; }
+  .rd .tmw .table-meals-hangyeol__notice { margin: 10px 0 0; font-size: 11px; color: var(--rd-muted); }
+  .rd .tmw-sheet__empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 56px 16px 64px; text-align: center; color: var(--rd-muted); }
+  .rd .tmw-sheet__empty strong { --rd-fs: 16px; color: var(--rd-ink); }
+  .rd .tmw-sheet__empty p { margin: 0; }
+
+  /* 원산지 카드 */
+  .rd .tmw .tmw-origin { display: block; padding: 20px 26px 24px; border: 1px solid var(--rd-line); }
+  .rd .tmw .tmw-origin > strong { display: block; margin-bottom: 12px; padding: 0; border: 0; text-align: center; font-size: 14px; font-weight: 800; color: var(--rd-ink); }
+  .rd .tmw .tmw-origin > div { padding: 0; }
+  .rd .tmw .tmw-origin .table-meals-origin-card { border: 0; padding: 0; margin: 0; box-shadow: none; background: transparent; color: var(--rd-ink); }
+  .rd.top-layout[data-theme="dark"] .tmw .tmw-origin .table-meals-origin-card :is(strong, p, span, li, dt, dd, th, td) { color: inherit; }
+
+  /* 오른쪽 카드 */
+  .rd .tmw-side-card { padding: 16px 16px 18px; text-align: center; }
+  .rd .tmw .tmw-side-card__title { --rd-fs: 14px; margin: 0 0 12px; font-weight: 800; color: var(--rd-ink); }
+  .rd .tmw-side-card__note { --rd-fs: 11px; margin: 10px 0 0; color: var(--rd-muted); }
+  .rd .tmw-side-card__empty { --rd-fs: 12px; margin: 4px 0; color: var(--rd-muted); }
+  .rd .tmw-shortage .rd-btn { width: 100%; margin-top: 10px; }
+  .rd .tmw-shortage .tmw-side-card__title { color: var(--rd-red); }
+
+  /* 이번 주 식단가(SavedBudgetCard) — 시안: 가운데 정렬, 세 줄 */
+  .rd .tmw .rd-meals__box.tmx-saved, .rd .tmw__side > .rd-meals__box { padding: 16px; border-radius: 14px; border: 1px solid var(--rd-line); box-shadow: var(--tmw-shadow); text-align: center; }
+  .rd .tmw__side > .rd-meals__box .rd-h2 { --rd-fs: 14px; margin-bottom: 10px; }
+  .rd .tmw .tmx-saved__nums { grid-template-columns: 1fr; gap: 0; margin: 0; }
+  .rd .tmw .tmx-saved__nums div { align-items: center; gap: 2px; padding: 8px 0; }
+  .rd .tmw .tmx-saved__nums div + div { border-top: 1px solid var(--rd-line); }
+  .rd .tmw .tmx-saved__nums dt { --rd-fs: 11px; font-size: 11px; font-weight: 700; color: var(--rd-soft-ink); }
+  .rd .tmw .tmx-saved__nums dd { --rd-fs: 13px; color: var(--rd-ink); }
+  .rd .tmw .tmx-saved__nums div:last-child dt { color: var(--rd-green); }
+  .rd .tmw .tmx-saved > p.rd-fs-sm { --rd-fs: 11px; margin: 8px 0 0; color: var(--tmw-orange); }
+
+  /* 빠른메뉴 — 홈 바로가기 물방울 */
+  .rd .tmw-quick__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 8px; }
+  .rd .tmw .tmw-quick__item { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 6px; height: auto; min-height: 0; padding: 2px; border: 0; background: transparent; color: var(--rd-ink); text-decoration: none; cursor: pointer;
+    --rd-btn-radius: 12px; --rd-btn-bg: transparent; --rd-btn-fg: var(--rd-ink); --rd-btn-hover-bg: transparent; --rd-btn-hover-fg: var(--rd-ink); --rd-btn-disabled-bg: transparent; }
+  .rd .tmw-quick__drop { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50% 50% 50% 14%; color: #fff; background: var(--tmw-blue);
+    box-shadow: 0 6px 12px rgba(30, 152, 207, .28); transition: transform .15s ease, box-shadow .15s ease; }
+  .rd .tmw-quick__item.is-orange .tmw-quick__drop { background: var(--tmw-orange); box-shadow: 0 6px 12px rgba(227, 138, 42, .3); }
+  .rd .tmw-quick__item:hover .tmw-quick__drop { transform: translateY(-3px); }
+  .rd .tmw-quick__item.is-locked { cursor: not-allowed; opacity: .4; filter: grayscale(.3); }
+  .rd .tmw-quick__item.is-locked:hover .tmw-quick__drop { transform: none; }
+  .rd .tmw-quick__label { --rd-fs: 11px; font-weight: 700; white-space: nowrap; }
+
+  /* 주간 식사 칼로리 */
+  .rd .tmw-kcal__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .rd .tmw-kcal__head .tmw-side-card__title { flex: 1; margin: 0; white-space: nowrap; }
+  .rd .tmw .tmw-kcal__arrow { width: 26px; height: 26px; min-height: 0; padding: 0; --rd-fs: 18px; font-weight: 700;
+    --rd-btn-radius: 999px; --rd-btn-bg: transparent; --rd-btn-fg: var(--rd-ink); --rd-btn-hover-bg: var(--rd-bg); --rd-btn-hover-fg: var(--tmw-orange); }
+  .rd .tmw-kcal__table { width: 100%; border-collapse: collapse; }
+  .rd .tmw-kcal__table th, .rd .tmw-kcal__table td { padding: 7px 2px; --rd-fs: 12px; text-align: center; }
+  .rd .tmw-kcal__table thead th { color: var(--rd-ink); font-weight: 800; }
+  .rd .tmw-kcal__table tbody th { font-weight: 800; color: var(--rd-ink); }
+  .rd .tmw-kcal__table tbody tr { border-top: 1px solid var(--rd-line); }
+  .rd .tmw-kcal__table td { color: var(--rd-soft-ink); font-variant-numeric: tabular-nums; }
+  .rd .tmw-kcal__table td.is-high, .rd .tmw-side-card__note b.is-high { color: var(--tmw-orange); font-weight: 800; }
+  .rd .tmw-kcal__table td.is-low, .rd .tmw-side-card__note b.is-low { color: var(--tmw-blue); font-weight: 800; }
+  .rd .tmw-kcal__tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+  .rd .tmw-kcal__tiles > div { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 4px; border-radius: 12px; background: var(--rd-card); border: 1px solid var(--rd-line); box-shadow: 0 4px 12px rgba(30, 42, 34, .1); }
+  .rd .tmw-kcal__tiles span { --rd-fs: 10px; color: var(--tmw-orange); font-weight: 800; line-height: 1.25; }
+  .rd .tmw-kcal__tiles strong { --rd-fs: 19px; font-weight: 900; color: var(--rd-ink); font-variant-numeric: tabular-nums; }
+  .rd .tmw-kcal__tiles small { --rd-fs: 10px; margin-left: 2px; font-weight: 700; color: var(--rd-muted); }
+
+  /* 좁은 화면: 오른쪽 카드를 아래로 */
+  @media (max-width: 1180px) {
+    .rd .tmw__grid { grid-template-columns: minmax(0, 1fr); }
+    .rd .tmw__side { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); align-items: start; }
+  }
+  @media (max-width: 860px) {
+    .rd .tmw-sheet { padding: 16px 16px 18px; }
+    .rd .tmw-sheet__top { grid-template-columns: minmax(0, 1fr); justify-items: center; padding-top: 34px; }
+    .rd .tmw-sheet__top > .tmw-weeknav, .rd .tmw-sheet__tools { grid-column: 1; justify-self: center; }
+    .rd .tmw .tmw-weeknav__label { --rd-fs: 22px; }
+    .rd .tmw-cal { width: min(320px, calc(100vw - 48px)); }
+  }
+}
+
+@keyframes tmw-pop { from { opacity: 0; transform: translateX(var(--tmw-pop-x, 0)) translateY(-6px) scale(.97); } to { opacity: 1; transform: translateX(var(--tmw-pop-x, 0)) translateY(0) scale(1); } }
+.rd .tmw-cal { --tmw-pop-x: -50%; }
+@keyframes tmw-drop { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .rd .tmw-cal, .rd .tmw-download__panel, .rd .tmw-action__extra, .rd .tmw .tmw-action__item { animation: none; }
+}
+
+/* 인쇄: 카드 꾸밈을 빼고 예전 한 장 식단표 규칙을 그대로 쓴다 */
+@media print {
+  .tmw .tmw-card { border: 0; box-shadow: none; padding: 0; background: #fff; }
+  .tmw .tmw__stack { display: block; }
+  .tmw .tmw-sheet__title h3 { letter-spacing: 6px; }
+}
+
+/* 어두운 테마: TopMenuTheme.css가 .table-meals-sheet를 종이처럼 밝은 변수로 되돌리는데, 새 판에서는 표가 카드 위에 바로 있으므로 화면에서만 어두운 값으로 다시 맞춘다(인쇄는 밝게) */
+@media screen {
+  .rd.top-layout[data-theme="dark"] .tmw .table-meals-sheet {
+    --rd-ink: #E5EBE7; --rd-muted: #9CA8A1; --rd-soft-ink: #C3CCC6; --rd-card: var(--dk-surface); --rd-line: var(--dk-line); --rd-line-strong: #46525A;
+    color: var(--rd-ink);
+  }
+}
+
+/* 2026-11-23 사용자 요청: 다운로드 = 예정 식수 칸과 같은 크기, 동작 = 완전한 원, 펼친 메뉴 배경 파랑·주황 번갈아 */
+@media screen {
+  body.workspace-ui .rd .tmw .tmw-servings input,
+  .rd .tmw .tmw-download__trigger { box-sizing: border-box; width: 88px; min-width: 88px; height: 34px; min-height: 34px; }
+  body.workspace-ui .rd .tmw .tmw-servings input { padding: 0 10px; --rd-fs: 13px; }
+  .rd .tmw .tmw-download__trigger { --button-height: 34px; --button-width: 88px; justify-content: center; padding: 0; --rd-btn-radius: 999px; --rd-fs: 13px; }
+  .rd .tmw .tmw-action__trigger { --button-height: 54px; --button-width: 54px; box-sizing: border-box; width: 54px; min-width: 54px; max-width: 54px; height: 54px; min-height: 54px; max-height: 54px;
+    aspect-ratio: 1; flex: 0 0 54px; padding: 0; border-radius: 50%; --rd-btn-radius: 50%; }
+  .rd .tmw .tmw-action__item { --rd-btn-line: transparent; --rd-btn-hover-line: transparent; --rd-btn-fg: #fff; --rd-btn-hover-fg: #fff; box-shadow: 0 8px 18px rgba(20, 32, 24, .18); }
+  .rd .tmw .tmw-action__item:nth-of-type(odd) { --rd-btn-bg: var(--tmw-blue); --rd-btn-hover-bg: #187FAF; }
+  .rd .tmw .tmw-action__item:nth-of-type(even) { --rd-btn-bg: var(--tmw-orange); --rd-btn-hover-bg: #C97518; }
+  .rd .tmw .tmw-action__item:hover:not(:disabled) { transform: translateX(-3px); }
+  .rd .tmw .tmw-action__item:disabled { --rd-btn-disabled-bg: var(--rd-line); }
+}
+@media screen {
+  body.workspace-ui > :is(#root, :not(#root)) .rd.rd .tmw .tmw-servings input { box-sizing: border-box; width: 88px !important; height: 34px !important; min-height: 34px !important; border-radius: 999px !important; }
+}
+/* 전역 입력칸 높이 규칙(:not 여러 개로 30px 고정)보다 세게 — :not(#_)는 아무 요소에나 맞고 우선순위만 올린다 */
+@media screen {
+  body.workspace-ui .rd .tmw .tmw-servings input:not(#_):not(#__) { height: 34px !important; min-height: 34px !important; }
+}
+
+/* 저장 전 재고 확인: 레시피 없는 메뉴(2026-11-23) */
+.draft-stock-check__missing { display: grid; gap: 6px; margin: 6px 0 14px; padding: 12px 14px; border-radius: 10px; background: #FFF4E8; color: #8A3E0B; font-size: 13px; }
+.draft-stock-check__missing ul { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 0; padding: 0; list-style: none; }
+
+/* ── 태블릿 식단표(2026-11-23 사용자 시안): PC 본문을 태블릿 틀 안에 — 판 · 주간 칼로리(가로) · 원산지 순서, 식단가는 위 오른쪽 말풍선 ── */
+@media screen {
+  .rd .tmw.tmw--tablet .tmw__grid { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 18px; }
+  .rd .tmw.tmw--tablet .tmw__grid > *, .rd .tmw.tmw--tablet :is(.tmw-kcal-wide, .tmw-origin, .tmw-shortage) { width: auto; max-width: none; align-self: stretch; }
+  .rd .tmw.tmw--tablet :is(.tmw__left, .tmw__side, .tmw__print, .tmw__stack) { display: contents; }
+  .rd .tmw.tmw--tablet .tmw-sheet { order: 1; }
+  .rd .tmw.tmw--tablet .tmw-shortage { order: 2; }
+  .rd .tmw.tmw--tablet .tmw-kcal-wide { order: 3; }
+  .rd .tmw.tmw--tablet .tmw-origin { order: 4; }
+  .rd .tmw.tmw--tablet .tmw-budget { position: absolute; top: -10px; right: 10px; z-index: 6; width: 220px; }
+  .rd .tmw.tmw--tablet .tmw-budget .rd-card { box-shadow: 0 12px 30px rgba(30, 42, 34, .22); }
+  .rd .tmw.tmw--tablet .tmw-budget__open { position: absolute; top: 0; right: 10px; z-index: 6; min-height: 34px; --button-height: 34px; --rd-btn-radius: 999px; }
+  .rd .tmw.tmw--tablet .tmw-budget__close { position: absolute; top: 6px; right: 8px; z-index: 1; --button-height: 26px; --button-width: 26px; width: 26px; padding: 0; --rd-btn-radius: 50%; --rd-btn-bg: transparent; --rd-btn-line: transparent; --rd-btn-fg: #5E9A3A; --rd-btn-hover-bg: var(--rd-green-soft); }
+  /* 말풍선이 판 위 오른쪽 도구(예정 식수·다운로드·동작)를 가리지 않게 */
+  /* 태블릿: 예정 식수 · 다운로드 · 동작을 한 줄로(동작은 다운로드 바로 오른쪽, 2026-11-23 사용자 요청). 판 위쪽은 한 칸(주차 아래 도구 줄) */
+  .rd .tmw.tmw--tablet .tmw-sheet__top { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+  .rd .tmw.tmw--tablet .tmw-sheet__top > .tmw-weeknav, .rd .tmw.tmw--tablet .tmw-sheet__tools { grid-column: 1; justify-self: center; }
+  .rd .tmw.tmw--tablet .tmw-sheet__tools { flex-wrap: nowrap; justify-content: center; }
+  .rd .tmw.tmw--tablet .tmw-sheet__tools > * { flex: none; }
+  .rd .tmw.tmw--tablet .tmw-sheet__top { min-height: 190px; }
+  /* 주간 칼로리(가로) */
+  .rd .tmw-kcal-wide { position: relative; padding: 28px 18px 16px; }
+  .rd .tmw-kcal-wide__title { position: absolute; top: -10px; left: 14px; padding: 4px 14px; border-radius: 999px; background: #1E98CF; color: #fff; --rd-fs: 13px; font-weight: 800; }
+  .rd .tmw-kcal-wide__body { display: grid; grid-template-columns: minmax(0, 1fr) 120px; gap: 16px; align-items: center; }
+  .rd .tmw-kcal-wide__table { width: 100%; border-collapse: collapse; table-layout: fixed; --rd-fs: 13px; }
+  .rd .tmw-kcal-wide__table th { padding: 6px 2px; font-weight: 800; background: transparent; border: 0; }
+  .rd .tmw-kcal-wide__table tbody th { text-align: left; width: 56px; }
+  .rd .tmw-kcal-wide__table td { padding: 10px 2px; text-align: center; border: 0; }
+  .rd .tmw-kcal-wide__table td + td { border-left: 1px solid #888; }
+  .rd .tmw-kcal-wide__table td.is-high { color: var(--tmw-orange); font-weight: 800; }
+  .rd .tmw-kcal-wide__table td.is-low { color: var(--tmw-blue); font-weight: 800; }
+  .rd .tmw-kcal-wide__tiles { display: grid; gap: 12px; }
+  .rd .tmw-kcal-wide__tiles > div { display: grid; justify-items: center; gap: 4px; padding: 10px 6px; border-radius: 12px; background: var(--rd-card); box-shadow: 0 4px 12px rgba(30, 42, 34, .16); text-align: center; }
+  .rd .tmw-kcal-wide__tiles span { color: var(--tmw-orange); --rd-fs: 11px; font-weight: 800; line-height: 1.3; }
+  .rd .tmw-kcal-wide__tiles > div + div span { color: #5E9A3A; }
+  .rd .tmw-kcal-wide__tiles strong { --rd-fs: 20px; font-weight: 800; }
+  .rd .tmw-kcal-wide__tiles small { margin-left: 2px; --rd-fs: 10px; }
+  .t-app.is-pc-content .rd .tmw.tmw--tablet { padding-top: 8px; }
+}
+@media screen and (max-width: 1099px) {
+  /* 세로 태블릿: 식단가 말풍선이 도구 줄 오른쪽과 겹치지 않게 도구 줄을 왼쪽으로 조금 */
+  .rd .tmw.tmw--tablet .tmw-sheet__tools { padding-right: 200px; }
+}

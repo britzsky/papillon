@@ -6,6 +6,7 @@
 export const HQ_ONLY_PATHS = [
   '/order_manager/suppliers', '/order_manager/supplier-sites', '/order_manager/welstory', '/inventory/ingredients',
   '/operations/menu', '/operations/account', '/operations/search-analytics', '/operations/ai-usage', '/operations/meal-plan-templates', '/operations/meal-slots',
+  '/operations/initial-setup', '/operations/purchase-ledger',
   '/distribution/products', '/distribution/partners', '/distribution/orders', '/distribution/accounts',
 ]
 

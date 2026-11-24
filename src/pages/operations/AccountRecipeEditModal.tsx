@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { IngredientOption } from '../../api/operations'
-import { getAccountIngredients, importStandardMenu, registerAccountIngredient, resetAccountRecipeToStandard, type AccountIngredient } from '../../api/accountMenuRegistration'
+import { getAccountIngredients, getAccountMenuNoRecipe, importStandardMenu, registerAccountIngredient, resetAccountRecipeToStandard, setAccountMenuNoRecipe, type AccountIngredient } from '../../api/accountMenuRegistration'
 import { deleteAccountRecipeRow, getAccountRecipe, saveAccountRecipeRow, type AccountRecipeRow } from '../../api/accountRecipes'
 import IngredientSearchSelect from './IngredientSearchSelect'
 import './AccountRecipeEditModal.css'
@@ -41,6 +41,8 @@ const isAccountOnlyMenu = (menuId: string) => menuId.startsWith('AM-')
  * 이 업장 레시피 수정(2026-10-26 사용자 결정: 거래처 메뉴 관리 화면 대신 식단표에서 바로).
  * 식재료 바꾸기·1인 사용량(식재료 기준단위)·줄 추가·빼기. 이 거래처에만 적용되고 본사 레시피는 그대로다.
  * 부족량·발주 수량과 1인 원가가 이 레시피로 계산된다.
+ * 2026-11-23: 식재료가 없는 메뉴도 열린다. '완제품'(요구르트·바나나 등) = 메뉴와 같은 이름의 식재료 1개/1인 한 줄,
+ * 발주·재고와 무관한 메뉴는 '레시피 없는 메뉴' 체크(식단 저장·부족량 계산에서 건너뜀, 원가 0).
  */
 export default function AccountRecipeEditModal({ accountId, accountName, menuId, menuName, onClose, onSaved, onChanged }: Props) {
   const [original, setOriginal] = useState<AccountRecipeRow[]>([])
@@ -50,6 +52,9 @@ export default function AccountRecipeEditModal({ accountId, accountName, menuId,
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
+  /** '레시피 없는 메뉴' 표시: 서버 값과 화면 값 */
+  const [noRecipeSaved, setNoRecipeSaved] = useState(false)
+  const [noRecipe, setNoRecipe] = useState(false)
   // 창을 연 뒤 부모가 다시 그려져도 레시피를 다시 읽지 않도록 최신 onChanged만 기억
   const onChangedRef = useRef(onChanged)
   useEffect(() => { onChangedRef.current = onChanged }, [onChanged])
@@ -67,9 +72,10 @@ export default function AccountRecipeEditModal({ accountId, accountName, menuId,
     }
     // 식재료 목록은 가져오기(본사 식재료를 거래처 식재료로 복사)가 끝난 뒤 읽어야 레시피 줄의 식재료가 목록에 있다
     loadRecipe()
-      .then(async recipe => [recipe, await getAccountIngredients(accountId)] as const)
-      .then(([recipe, accountIngredients]) => {
+      .then(async recipe => [recipe, await getAccountIngredients(accountId), await getAccountMenuNoRecipe(accountId, menuId).catch(() => false)] as const)
+      .then(([recipe, accountIngredients, flagged]) => {
         if (!alive) return
+        setNoRecipeSaved(flagged); setNoRecipe(flagged)
         setOriginal(recipe)
         setIngredients(accountIngredients.map(toOption))
         setRows(toRows(recipe))
@@ -81,14 +87,14 @@ export default function AccountRecipeEditModal({ accountId, accountName, menuId,
 
   const optionById = useMemo(() => new Map(ingredients.map(option => [option.ingredient_id, option])), [ingredients])
   const recipeId = original[0]?.recipe_id
-  // 본사 메뉴를 가져왔는데도 레시피가 없으면(본사 메뉴에 식재료가 없음 등) 고칠 레시피가 없다
-  const notAccountMenu = !loading && !error && original.length === 0
+  // 식재료가 하나도 없는 메뉴(완제품·소스 등) — 줄을 넣거나 '완제품'·'레시피 없는 메뉴'로 정한다(2026-11-23)
+  const emptyRecipe = !loading && original.length === 0
 
   const updateRow = (key: string, patch: Partial<Row>) => setRows(current => current.map(row => (row.key === key ? { ...row, ...patch, hint: patch.qty !== undefined ? undefined : row.hint } : row)))
   const filled = rows.filter(row => row.ingredient_id || row.newName?.trim())
 
   const validate = () => {
-    if (filled.length === 0) return '식재료를 1개 이상 남겨주세요. 재고·발주 계산에 쓰입니다.'
+    if (filled.length === 0 && !noRecipe) return `식재료를 1개 이상 넣어주세요(재고·발주 계산에 쓰입니다). 완제품이면 '완제품', 발주·재고와 무관한 메뉴면 '레시피 없는 메뉴'를 체크하세요.`
     if (filled.some(row => !(Number(row.qty) > 0))) return '식재료마다 1인 사용량을 입력해주세요.'
     const keys = filled.map(row => row.ingredient_id || `new:${nameKey(row.newName ?? '')}`)
     if (new Set(keys).size !== keys.length) return '같은 식재료가 두 번 들어 있습니다.'
@@ -98,7 +104,6 @@ export default function AccountRecipeEditModal({ accountId, accountName, menuId,
   const save = async () => {
     const problem = validate()
     if (problem) { setError(problem); return }
-    if (recipeId == null) return
     setBusy(true); setError('')
     try {
       // 이름만 입력한 새 식재료 → 거래처 식재료로 만든다(같은 이름이 있으면 그것을 쓴다)
@@ -130,14 +135,17 @@ export default function AccountRecipeEditModal({ accountId, accountName, menuId,
         const qty = Number(row.qty)
         if (before && before.ingredient_id === option.ingredient_id && !before.review_flag && Math.abs(before.qty_per_person - qty) < 0.0005) continue
         await saveAccountRecipeRow({
-          account_id: accountId, recipe_id: before?.recipe_id ?? recipeId, menu_id: menuId, ingredient_id: option.ingredient_id,
+          account_id: accountId, recipe_id: before?.recipe_id ?? recipeId ?? undefined, menu_id: menuId, ingredient_id: option.ingredient_id,
           ingredient_seq: before?.ingredient_seq ?? nextSeq++, ingredient_name_raw: option.ingredient_name,
           qty_num: qty, qty_unit: option.base_unit || before?.base_unit || 'g',
         })
         changed++
       }
-      if (!changed && !removed.length) { onClose(); return }
-      onSaved?.(`'${menuName}' 레시피를 ${accountName || '이 업장'}에 저장했습니다${changed ? ` · 바꾼 줄 ${changed}` : ''}${removed.length ? ` · 뺀 줄 ${removed.length}` : ''}. 오늘 이후 사용 확정 전 식단의 필요량·부족량·원가에 바로 반영됩니다(지난·사용 확정한 식사는 그때 양 그대로).`)
+      const flagChanged = noRecipe !== noRecipeSaved
+      if (flagChanged) { await setAccountMenuNoRecipe(accountId, menuId, noRecipe); setNoRecipeSaved(noRecipe) }
+      if (!changed && !removed.length && !flagChanged) { onClose(); return }
+      const flagText = flagChanged ? (noRecipe ? ' · 레시피 없는 메뉴로 표시(식재료 없이 식단 저장 가능, 원가·발주 0)' : ' · 레시피 없는 메뉴 표시 해제') : ''
+      onSaved?.(`'${menuName}' 레시피를 ${accountName || '이 업장'}에 저장했습니다${changed ? ` · 바꾼 줄 ${changed}` : ''}${removed.length ? ` · 뺀 줄 ${removed.length}` : ''}${flagText}. 오늘 이후 사용 확정 전 식단의 필요량·부족량·원가에 바로 반영됩니다(지난·사용 확정한 식사는 그때 양 그대로).`)
       onClose()
     } catch (e) {
       setError(e instanceof Error ? e.message : '레시피를 저장하지 못했습니다.')
@@ -146,6 +154,17 @@ export default function AccountRecipeEditModal({ accountId, accountName, menuId,
     } finally {
       setBusy(false)
     }
+  }
+
+  /** 완제품: 메뉴와 같은 이름의 식재료 1개(없으면 새 식재료, 단위 EA) × 1인 1줄로 바꾼다(기존 줄은 저장 때 빠짐) */
+  const applyFinishedProduct = () => {
+    const same = ingredients.find(item => nameKey(item.ingredient_name) === nameKey(menuName))
+    setNoRecipe(false); setError('')
+    setRows([same
+      ? { key: nextKey(), ingredient_id: same.ingredient_id, qty: '1', newName: null, newUnit: 'EA' }
+      : { key: nextKey(), ingredient_id: '', qty: '1', newName: menuName, newUnit: 'EA' }])
+    setNotice(same ? `'${same.ingredient_name}' 식재료 1${same.base_unit}/1인으로 넣었습니다. 사용량·단위를 확인하고 저장하세요.`
+      : `'${menuName}' 식재료(단위 EA)를 새로 만들어 1개/1인으로 넣습니다. 저장하면 만들어집니다.`)
   }
 
   // body에 붙인다: 식단표 화면 안쪽 규칙(여백·버튼)에 덮이지 않게. 버튼은 PC·터치 공통 버튼 모양(t-btn·is-primary)을 그대로 쓴다
@@ -183,8 +202,8 @@ export default function AccountRecipeEditModal({ accountId, accountName, menuId,
 
         <div className="are__body">
           {loading && <p className="are__note" role="status">레시피를 불러오는 중…</p>}
-          {notAccountMenu && <p className="are__note">이 메뉴에는 식재료가 없어 고칠 레시피가 없습니다. 메뉴 관리에서 식재료를 먼저 등록해주세요.</p>}
-          {!loading && !notAccountMenu && <>
+          {emptyRecipe && !noRecipe && filled.length === 0 && <p className="are__note is-warn">이 메뉴에는 1인분 식재료가 없어 식단표 저장·부족량 계산이 안 됩니다. 식재료를 넣거나, 사서 그대로 내는 완제품이면 '완제품', 발주·재고와 무관하면 '레시피 없는 메뉴'를 체크하세요.</p>}
+          {!loading && <>
             <p className="are__note">이 업장에만 적용됩니다(본사 레시피는 그대로). 1인 사용량으로 부족량·발주 수량과 1인 원가를 계산합니다. 저장하면 이미 저장된 식단표 중 오늘 이후·사용 확정 전 식사도 새 양으로 다시 계산하고, 지난·사용 확정한 식사는 그때 쓴 양 그대로 둡니다.</p>
             <div className="are__rows">
               <div className="are__row are__row--head" aria-hidden="true"><span>식재료</span><span>1인 사용량</span><span /></div>
@@ -213,17 +232,24 @@ export default function AccountRecipeEditModal({ accountId, accountName, menuId,
                   {row.hint && <small className="are__hint">{row.hint}</small>}
                 </div>
               })}
-              <button type="button" className="are__btn are__add t-btn is-soft is-small" onClick={() => setRows(current => [...current, { key: nextKey(), ingredient_id: '', qty: '', newName: ingredients.length ? null : '', newUnit: 'g' }])}>＋ 식재료 추가</button>
+              <div className="are__tools">
+                <button type="button" className="are__btn are__add t-btn is-soft is-small" onClick={() => setRows(current => [...current, { key: nextKey(), ingredient_id: '', qty: '', newName: ingredients.length ? null : '', newUnit: 'g' }])}>＋ 식재료 추가</button>
+                <button type="button" className="are__btn t-btn is-soft is-small" title="메뉴와 같은 이름의 식재료 1개를 1인분으로(요구르트·바나나처럼 사서 그대로 내는 메뉴)" onClick={applyFinishedProduct}>완제품</button>
+              </div>
             </div>
+            <label className="are__flag">
+              <input type="checkbox" checked={noRecipe} onChange={e => setNoRecipe(e.target.checked)} />
+              <span><b>레시피 없는 메뉴</b> — 발주·재고와 무관(물 등). 식재료 없이 식단표를 저장하고 필요량·원가는 0으로 계산합니다. 사서 쓰는 완제품은 체크 대신 '완제품'을 쓰세요.</span>
+            </label>
           </>}
           {notice && <p className="are__notice" role="status">{notice}</p>}
           {error && <p className="are__error" role="alert">{error}</p>}
         </div>
 
         <footer className="are__actions">
-          {!loading && !notAccountMenu && !isAccountOnlyMenu(menuId) ? <button type="button" className="are__btn are__reset t-btn is-ghost" disabled={busy} onClick={() => void resetToStandard()}>본사 레시피로 되돌리기</button> : null}
+          {!loading && !emptyRecipe && !isAccountOnlyMenu(menuId) ? <button type="button" className="are__btn are__reset t-btn is-ghost" disabled={busy} onClick={() => void resetToStandard()}>본사 레시피로 되돌리기</button> : null}
           <button type="button" className="are__btn t-btn" disabled={busy} onClick={onClose}>{notice ? '닫기' : '취소'}</button>
-          <button type="button" className="are__btn t-btn is-primary" disabled={busy || loading || notAccountMenu || recipeId == null} onClick={() => void save()}>{busy ? '저장 중…' : '이 업장 레시피 저장'}</button>
+          <button type="button" className="are__btn t-btn is-primary" disabled={busy || loading} onClick={() => void save()}>{busy ? '저장 중…' : '이 업장 레시피 저장'}</button>
         </footer>
       </section>
     </div>,

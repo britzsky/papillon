@@ -23,14 +23,15 @@ function Tile({ post }: { post: InstagramPost }) {
  * 시안처럼 1·3번째는 짧게, 2·4번째는 길게 엇갈린 사진. 누르면 그 게시물을 새 창으로.
  * 불러오는 중·실패·게시물 부족이면 빈 칸은 회색, 실패하면 인스타그램 계정 링크를 보여 준다.
  */
-export default function InstagramGrid() {
-  const state = useInstagram(COUNT)
+export default function InstagramGrid({ count = COUNT }: { count?: number }) {
+  // count: 태블릿 홈은 2개(2026-11-23 사용자 요청), PC는 4개
+  const state = useInstagram(count)
   useReportReady('instagram', state.status !== 'loading')
-  const posts = state.status === 'ok' ? state.posts.slice(0, COUNT) : []
+  const posts = state.status === 'ok' ? state.posts.slice(0, count) : []
   return (
     <section className="home-insta" aria-label="더채움 인스타그램" aria-busy={state.status === 'loading'}>
       <div className="home-insta__grid">
-        {Array.from({ length: COUNT }, (_, i) => posts[i]
+        {Array.from({ length: count }, (_, i) => posts[i]
           ? <Tile key={posts[i].permalink} post={posts[i]} />
           : <span key={`empty-${i}`} className="home-insta__tile is-empty" aria-hidden="true" />)}
       </div>

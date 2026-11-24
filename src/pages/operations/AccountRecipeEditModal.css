@@ -37,3 +37,9 @@
   .are-backdrop .are__actions .are__btn { flex: 1 1 0; }
   .are-backdrop .are__actions .are__reset { flex: 1 1 100%; margin-right: 0; }
 }
+
+/* 2026-11-23: 완제품 버튼 · 레시피 없는 메뉴 표시 */
+.are__tools { display: flex; flex-wrap: wrap; gap: 8px; }
+.are__flag { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: #F6F7F6; font-size: 13px; line-height: 1.5; cursor: pointer; }
+.are__flag input { flex: none; width: 18px; height: 18px; margin-top: 2px; }
+.are__note.is-warn { color: #A35A0A; background: #FFF4E8; }

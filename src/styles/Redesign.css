@@ -43,6 +43,9 @@ body.workspace-ui.workspace-ui > :is(.rd.rd, #__rd) .rd-icon-btn { width: 36px !
   --rd-orange: #B5530F; --rd-orange-ink: #8A3E0B; --rd-orange-soft: #FFF4E8; --rd-orange-line: #F2C79B;
   --rd-red: #B42318; --rd-red-ink: #9B1C14; --rd-red-soft: #FDECEA; --rd-red-line: #F1B7B0;
   --rd-yellow-ink: #7A5A00; --rd-yellow-soft: #FFF7DB;
+  /* 공급사 색(2026-11-23 사용자 결정: 웰스토리 주황 · 아워홈 파랑) — 공급사 표시는 이 변수만 쓴다 */
+  --sup-welstory: #F2921F; --sup-welstory-ink: #A35A0A; --sup-welstory-soft: #FFF1E2; --sup-welstory-line: #F2C79B;
+  --sup-ourhome: #1E98CF; --sup-ourhome-ink: #17668C; --sup-ourhome-soft: #E6F4FB; --sup-ourhome-line: #A9D6EC;
   color: var(--rd-ink);
 }
 .rd .rd-fs-xs { --rd-fs: 11px; }
@@ -61,11 +64,11 @@ body.workspace-ui.workspace-ui > :is(.rd.rd, #__rd) .rd-icon-btn { width: 36px !
 .rd .rd-chip.is-done, .rd .rd-tone-done { background: #F0F3F0; color: var(--rd-soft-ink); }
 .rd .rd-chip.is-ok { background: var(--rd-green-soft); color: var(--rd-green-dark); }
 .rd .rd-supplier { display: inline-flex; padding: 2px 8px; border-radius: 6px; --rd-fs: 11px; font-weight: 700; white-space: nowrap; }
-.rd .rd-supplier.is-OURHOME { background: #FFF1E2; color: var(--rd-orange-ink); }
-.rd .rd-supplier.is-WELSTORY { background: var(--rd-blue-soft); color: var(--rd-blue-ink); }
+.rd .rd-supplier.is-OURHOME { background: var(--sup-ourhome-soft); color: var(--sup-ourhome-ink); }
+.rd .rd-supplier.is-WELSTORY { background: var(--sup-welstory-soft); color: var(--sup-welstory-ink); }
 .rd .rd-supplier.is-DIRECT { background: #F0F3F0; color: var(--rd-soft-ink); }
 
-.rd .rd-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 16px; border: 1px solid var(--rd-line-strong); border-radius: 10px; background: #fff; color: var(--rd-ink); text-decoration: none; cursor: pointer; white-space: nowrap; font-weight: 700; }
+.rd .rd-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 16px; border: 1px solid var(--rd-line-strong); border-radius: 20px; background: #fff; color: var(--rd-ink); text-decoration: none; cursor: pointer; white-space: nowrap; font-weight: 700; }
 .rd .rd-btn:hover { border-color: var(--rd-green); color: var(--rd-green-dark); }
 .rd .rd-btn.is-primary { border-color: var(--rd-green); background: var(--rd-green); color: #fff; }
 .rd .rd-btn.is-primary:hover { background: var(--rd-green-dark); color: #fff; }

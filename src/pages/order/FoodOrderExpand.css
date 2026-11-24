@@ -1,0 +1,113 @@
+/*
+ * 발주하기(식단표 기준·현재 부족·사용량·나만의 메뉴 탭) 2026-11-23 사용자 시안.
+ * 식재료 줄 = 카드, 누르면 바로 아래에 웰스토리(파랑)·아워홈(주황) 상품 목록이 좌우로 펼쳐짐.
+ * 오른쪽 = 발주서 미리보기(전체) + 공급사별 미리보기 카드. 색은 앱 공통 공급사 색(Redesign.css --sup-welstory 주황 · --sup-ourhome 파랑).
+ */
+.rd.rd-order { --ord-welstory: var(--sup-welstory); --ord-ourhome: var(--sup-ourhome); --ord-cheap: #E38A2A; --ord-shadow: 0 3px 10px rgba(30, 42, 34, .09); }
+
+/* 표: 줄마다 카드 */
+.rd .rd-order__split { display: block; padding: 10px 16px 18px; }
+.rd .rd-order__split > .rd-order__scroll { border: 0; background: transparent; overflow-x: auto; }
+.rd .rd-order__split .rd-order__table { display: flex; flex-direction: column; gap: 10px; min-width: 700px; padding: 2px 2px 4px; }
+.rd .rd-order__split .rd-order__row { border: 1px solid var(--rd-line); border-radius: 12px; background: var(--rd-card); box-shadow: var(--ord-shadow); transition: border-color .15s, box-shadow .15s; }
+.rd .rd-order__split .rd-order__row.is-head { border: 0; background: transparent; box-shadow: none; padding: 0 0 0 14px; gap: 8px; }
+.rd .rd-order__split .rd-order__row.is-head > :not(input):not(:first-child) { justify-content: center; align-items: center; padding: 8px 6px; border: 1px solid var(--rd-line); border-left: 1px solid var(--rd-line); border-radius: 10px; background: var(--rd-card); box-shadow: var(--ord-shadow); color: var(--rd-ink); }
+.rd .rd-order__split .rd-order__row.is-pickable:hover { background: var(--rd-card); border-color: var(--rd-green); box-shadow: 0 6px 16px rgba(30, 42, 34, .13); }
+.rd .rd-order__split .rd-order__row.is-open { border-color: var(--rd-green); box-shadow: 0 0 0 2px var(--rd-green-soft), var(--ord-shadow); background: var(--rd-card); }
+.rd .rd-order__split .rd-order__row.is-focused:not(.is-open) { background: var(--rd-green-soft); }
+.rd .rd-order__split .rd-order__row.is-blocked { background: var(--rd-orange-soft); }
+.rd .rd-order__stock strong.rd-text-red { color: #E38A2A; }
+
+/* 포함메뉴 '!' 표시를 고른 상품의 공급사 색으로(시안: 이름 위 파랑·주황 표시) */
+.rd .rd-order__row.is-by-WELSTORY .rd-order__menus-btn b { background: var(--ord-welstory); }
+.rd .rd-order__row.is-by-OURHOME .rd-order__menus-btn b { background: var(--ord-ourhome); }
+
+/* 펼친 줄 아래: 웰스토리 | 아워홈 */
+.rd .rd-order__expand { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: -2px 10px 6px; animation: ord-open .18s ease-out both; }
+@keyframes ord-open { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .rd .rd-order__expand { animation: none; } }
+.rd .rd-order__expand .rd-order__supplier { position: static; flex: none; max-width: none; max-height: 340px; border: 1px solid var(--rd-line); border-radius: 12px; background: var(--rd-card); box-shadow: 0 8px 22px rgba(30, 42, 34, .14); }
+.rd .rd-order__expand .rd-order__supplier.is-WELSTORY { border-top: 5px solid var(--ord-welstory); }
+.rd .rd-order__expand .rd-order__supplier.is-OURHOME { border-top: 5px solid var(--ord-ourhome); }
+.rd .rd-order__expand .rd-order__supplier-head { flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; background: transparent; }
+.rd .rd-order__expand .rd-order__supplier-list { gap: 0; padding: 4px 10px 10px; }
+.rd .rd-order__expand .rd-order__supplier.is-WELSTORY .rd-order__supplier-list::-webkit-scrollbar-thumb { background: var(--ord-welstory); }
+.rd .rd-order__expand .rd-order__supplier.is-OURHOME .rd-order__supplier-list::-webkit-scrollbar-thumb { background: var(--ord-ourhome); }
+.rd .rd-order__expand .rd-pick { border: 0; border-bottom: 1px solid var(--rd-line); border-radius: 10px; padding: 10px 8px; background: transparent; }
+.rd .rd-order__expand .rd-pick:last-child { border-bottom: 0; }
+.rd .rd-order__expand .rd-pick:hover:not(.is-disabled) { background: var(--rd-green-soft); }
+.rd .rd-order__expand .rd-pick.is-on { padding: 9px 7px; border: 2px solid var(--rd-green); background: var(--rd-green-soft); }
+.rd .rd-order__expand .rd-pick.is-disabled { background: transparent; }
+.rd .rd-pick__price { --rd-fs: 12px; color: var(--rd-soft-ink); }
+.rd .rd-pick__price b { --rd-fs: 13px; font-weight: 800; color: var(--rd-ink); }
+.rd .rd-order__expand .rd-pick__name { --rd-fs: 12px; font-weight: 600; color: var(--rd-soft-ink); }
+.rd .rd-pick__tag { --rd-fs: 11px; font-weight: 800; }
+.rd .rd-pick__tag.is-cheap { color: var(--ord-cheap) !important; }
+.rd .rd-pick__tag.is-on { color: var(--rd-green) !important; }
+@media (max-width: 900px) { .rd .rd-order__expand { grid-template-columns: minmax(0, 1fr); } }
+
+/* 오른쪽: 발주서 미리보기 */
+.rd .rd-order__summary, .rd .rd-order__side > .rd-order__sheet { border-radius: 14px; box-shadow: 0 6px 20px rgba(30, 42, 34, .1); }
+.rd .rd-order__summary-title { margin: 0; text-align: center; --rd-fs: 15px; font-weight: 800; color: var(--rd-ink); }
+.rd .rd-order__legend { display: flex; justify-content: center; gap: 12px; margin: 0; color: var(--rd-muted); }
+.rd .rd-order__legend span::before { content: ''; display: inline-block; width: 7px; height: 7px; margin-right: 4px; border-radius: 50%; vertical-align: middle; background: currentColor; }
+.rd .rd-order__legend .is-WELSTORY::before { background: var(--ord-welstory); }
+.rd .rd-order__legend .is-OURHOME::before { background: var(--ord-ourhome); }
+.rd .rd-order__picked { display: flex; flex-direction: column; gap: 0; margin: 4px 0 0; padding: 0; list-style: none; max-height: 320px; overflow-y: auto; }
+.rd .rd-order__picked li { display: grid; grid-template-columns: minmax(0, 1fr) 12px auto; align-items: center; gap: 10px; padding: 7px 2px; --rd-fs: 12px; }
+.rd .rd-order__picked li + li { border-top: 1px dashed var(--rd-line); }
+.rd .rd-order__picked li > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--rd-soft-ink); }
+.rd .rd-order__picked li > b { font-weight: 800; color: var(--rd-ink); font-variant-numeric: tabular-nums; }
+.rd .rd-order__dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--rd-muted); }
+.rd .rd-order__dot.is-WELSTORY { background: var(--ord-welstory); }
+.rd .rd-order__dot.is-OURHOME { background: var(--ord-ourhome); }
+.rd .rd-order__summary .rd-order__total, .rd .rd-order__side > .rd-order__sheet .rd-order__total { margin-top: 4px; }
+.rd .rd-order__total > span { font-weight: 800; color: var(--rd-ink); }
+.rd .rd-order__side > .rd-order__sheet .rd-order__total strong { --rd-fs: 16px; }
+.rd .rd-order__confirm { border-radius: 999px; }
+.rd .rd-order__side > .rd-order__sheet { display: flex; flex-direction: column; gap: 6px; padding: 14px 18px 16px; background: var(--rd-card); border: 1px solid var(--rd-line); }
+.rd .rd-order__side > .rd-order__sheet.is-WELSTORY { border-top: 5px solid var(--ord-welstory); }
+.rd .rd-order__side > .rd-order__sheet.is-OURHOME { border-top: 5px solid var(--ord-ourhome); background: var(--rd-card); }
+.rd .rd-order__sheet-site { text-align: center; }
+.rd .rd-order__split .rd-order__name > strong { color: var(--rd-ink); }
+
+/* 최종 검토(2026-11-23 사용자 시안, 태블릿과 같은 모양): 아워홈 · 전체 · 웰스토리 3장 + 장바구니(주황) · 발주하기(초록) */
+.rd .rd-preview.shortage-order-sheet { border: 3px solid transparent; background: linear-gradient(var(--rd-card), var(--rd-card)) padding-box, linear-gradient(120deg, #F59A23, #8DBA5A, #5E9A3A) border-box; }
+.rd .rd-review__head { text-align: center; justify-content: center; position: relative; }
+.rd .rd-review__head h2 { --rd-fs: 26px; font-weight: 800; }
+.rd .rd-review__head .rd-icon-btn { position: absolute; right: 16px; top: 14px; }
+.rd .rd-review__cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; align-items: stretch; }
+.rd .rd-review__card { display: flex; flex-direction: column; min-height: 300px; padding: 14px 16px 16px; border-radius: 10px; background: var(--rd-card); box-shadow: 0 8px 22px rgba(30, 42, 34, .16); }
+.rd .rd-review__card.is-OURHOME { border-top: 9px solid var(--sup-ourhome); }
+.rd .rd-review__card.is-WELSTORY { border-top: 9px solid var(--sup-welstory); }
+.rd .rd-review__card.is-all { padding-top: 22px; }
+.rd .rd-review__card h3 { margin: 6px 0 8px; text-align: center; --rd-fs: 16px; font-weight: 800; }
+.rd .rd-review__legend { display: flex; justify-content: center; gap: 12px; margin: 0; color: var(--rd-muted); --rd-fs: 11px; }
+.rd .rd-review__legend span::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 5px; border-radius: 50%; vertical-align: middle; background: var(--rd-muted); }
+.rd .rd-review__legend .is-OURHOME::before { background: var(--sup-ourhome); }
+.rd .rd-review__legend .is-WELSTORY::before { background: var(--sup-welstory); }
+.rd .rd-review__card ul { display: grid; margin: 10px 0 0; padding: 10px 0 0; border-top: 1px solid var(--rd-line); list-style: none; }
+.rd .rd-review__card li { display: grid; grid-template-columns: minmax(0, 1fr) 12px auto; align-items: center; gap: 10px; padding: 7px 2px; --rd-fs: 13px; }
+.rd .rd-review__card li > span { display: grid; min-width: 0; }
+.rd .rd-review__card li small { overflow: hidden; color: var(--rd-muted); --rd-fs: 11px; white-space: nowrap; text-overflow: ellipsis; }
+.rd .rd-review__card li b { font-variant-numeric: tabular-nums; }
+.rd .rd-review__empty { padding: 20px 0; color: var(--rd-muted); text-align: center; --rd-fs: 13px; }
+.rd .rd-review__total { display: flex; justify-content: space-between; align-items: baseline; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--rd-line); }
+.rd .rd-review__total span { --rd-fs: 16px; font-weight: 800; letter-spacing: 4px; }
+.rd .rd-review__detail { margin-top: 4px; }
+.rd .rd-review__detail > summary { cursor: pointer; color: var(--rd-soft-ink); padding: 6px 0; }
+.rd .rd-review__detail[open] { display: flex; flex-direction: column; gap: 12px; }
+.rd .rd-review__cart { --rd-btn-radius: 999px; --rd-btn-bg: #F59A23; --rd-btn-fg: #fff; --rd-btn-line: #F59A23; --rd-btn-hover-bg: #E58A13; --rd-btn-hover-fg: #fff; }
+.rd .rd-review__order { --rd-btn-radius: 999px; --rd-btn-bg: #5E9A3A; --rd-btn-line: #5E9A3A; --rd-btn-hover-bg: #4C8230; }
+.rd .rd-order__cart { --rd-btn-radius: 999px; --rd-btn-bg: #FFE3BF; --rd-btn-fg: #A35A0A; --rd-btn-line: transparent; --rd-btn-hover-bg: #FFD7A3; --rd-btn-hover-fg: #A35A0A; }
+@media (max-width: 900px) { .rd .rd-review__cards { grid-template-columns: minmax(0, 1fr); } .rd .rd-review__card { min-height: 0; } }
+@media print { .rd .rd-review__cards, .rd .rd-review__detail > summary { display: none; } }
+.rd .rd-review__dot { display: block; width: 12px; height: 12px; border-radius: 50%; background: var(--rd-muted); }
+.rd .rd-review__dot.is-OURHOME { background: var(--sup-ourhome); }
+.rd .rd-review__dot.is-WELSTORY { background: var(--sup-welstory); }
+.rd .rd-review__head > div { flex: 1; text-align: center; }
+
+/* 나만의 식재료(ProductOrder 즐겨찾기) — 식단표 기준과 같은 표 · 오른쪽 미리보기(2026-11-23) */
+.rd .rd-fav__heart { --button-height: auto; --button-width: 0; --rd-btn-bg: transparent; --rd-btn-line: transparent; --rd-btn-fg: #D94A4A; --rd-btn-hover-bg: transparent; padding: 0 4px; font-size: 16px; }
+.rd .rd-fav__offer { display: grid; gap: 2px; min-width: 0; }
+.rd .rd-fav .rd-fav__source { width: 100%; min-width: 0; padding: 0 6px; --rd-fs: 12px; }

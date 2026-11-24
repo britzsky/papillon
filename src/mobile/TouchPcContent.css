@@ -1,0 +1,15 @@
+/* 태블릿 틀 안에 PC 화면 본문(발주하기·식단표 등, TouchLayout pcContent)을 넣을 때의 틀 쪽 보정(2026-11-23) */
+.t-app.is-pc-content .t-main { padding-top: 0; }
+.t-app.is-pc-content .t-main > .workflow-bar { margin: 0 0 12px; }
+.t-order-pc { min-width: 0; }
+/* PC 전역 버튼 규칙(body.workspace-ui … button, !important)이 태블릿 위 메뉴에 걸리지 않게 */
+body.workspace-ui.t-ui .t-topnav button:is(.t-topnav__item, .t-topnav__brand) { width: auto !important; min-width: 64px !important; height: auto !important; min-height: 0 !important; padding: 4px 2px !important;
+  border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; color: var(--t-text) !important; font-size: 12px !important; font-weight: 800 !important; }
+body.workspace-ui.t-ui .t-topnav button.t-topnav__brand { padding: 4px 8px !important; }
+body.workspace-ui.t-ui .t-topnav button.t-topnav__item.is-active > span { color: #fff !important; }
+body.workspace-ui.t-ui .t-topnav button.t-topnav__logout { width: 40px !important; height: 40px !important; min-height: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 50% !important; background: var(--t-surface-2) !important; box-shadow: none !important; }
+/* PC 틀 칸(.top-layout)이 태블릿 안에서 화면 높이·배경을 잡지 않게 */
+.t-app.is-pc-content .t-pc-frame { min-height: 0; height: auto; background: transparent; }
+.t-app.is-pc-content .t-pc-frame > .top-page { padding: 0; max-width: none; margin: 0; }
+/* 거래처 고르기(태블릿 제목 줄)도 PC 버튼 규칙에서 빼기 */
+body.workspace-ui.t-ui .t-top__account button { width: auto !important; min-width: 0 !important; height: auto !important; min-height: 48px !important; padding: 0 42px 0 16px !important; border-radius: 14px !important; white-space: nowrap; }

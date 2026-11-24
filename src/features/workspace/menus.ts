@@ -1,5 +1,6 @@
 import { matchesBase } from './workflow'
 import { HQ_ONLY_PATHS, visibleForRole } from './roleScreens'
+import { SHOW_MALL } from '../mall/mallVisibility'
 
 /** PC 메뉴 정의 — 사이드 메뉴(SideMenuLayout)와 상단 메뉴(TopMenuLayout, 2026-11-09 홈)가 같이 쓴다 */
 export type SubMenuItem = {
@@ -84,9 +85,13 @@ export const majorMenus: MajorMenu[] = [
   {
     key: 'headquarters',
     label: '본사관리',
-    basePaths: ['/operations/account', '/operations/meal-slots', '/operations/search-analytics', '/operations/ai-usage'],
+    basePaths: ['/operations/account', '/operations/initial-setup', '/operations/purchase-ledger', '/operations/meal-slots', '/operations/search-analytics', '/operations/ai-usage'],
     items: [
       { label: '고객사 관리', to: '/operations/account', exact: true },
+      // 2026-11-19: 공급사 구매 이력 가져오기·식재료 연결·단가 이력(재고에는 안 넣음)
+      { label: '고객사 초기 세팅', to: '/operations/initial-setup', exact: true },
+      // 2026-11-23 ASP: 매입 관리(우선 본사만)
+      { label: '매입 관리', to: '/operations/purchase-ledger', exact: true },
       { label: '끼니 종류 관리', to: '/operations/meal-slots', exact: true },
       { label: '검색어 관리', to: '/operations/search-analytics', exact: true },
       { label: 'AI 사용 이력', to: '/operations/ai-usage', exact: true },
@@ -107,6 +112,7 @@ export function findActiveMenuKey(pathname: string) {
 export function menusForRole({ guest = false }: { guest?: boolean } = {}): MajorMenu[] {
   const site = guest || localStorage.getItem('user_type') === '3'
   return majorMenus
+    .filter(menu => SHOW_MALL || menu.key !== 'mall')
     .filter(menu => !site || (menu.key !== 'headquarters' && menu.key !== 'distribution'))
     .map(menu => ({ ...menu, items: menu.items.filter(item => guest ? !HQ_ONLY_PATHS.includes(item.to?.split('?')[0] ?? '') : visibleForRole(item.to)) }))
     .filter(menu => menu.items.length > 0)

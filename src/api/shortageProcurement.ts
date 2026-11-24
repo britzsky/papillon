@@ -13,6 +13,8 @@ export type ShortageCriteria = {
   supplier_code?: string
   average_days: number
   coverage_days: number
+  /** Y: 식단 수요를 식단표 구분 없이 날짜로만 센다(납품일 기준 기간이 이번 주·다음 주 식단표에 걸칠 때) */
+  all_tables?: 'Y'
 }
 export type ShortageOffer = {
   external_site_code: string
@@ -67,6 +69,10 @@ export type ShortageRow = {
   quantity_basis?: 'MANUAL' | 'CALCULATED'
   menu_names: string[]
   issues: string[]
+  /** 조회 시작일 전(오늘~전날)에 남은 식단이 먼저 쓸 양 — 부족량 계산에서 재고에서 먼저 뺀다 */
+  prior_usage_qty?: number
+  /** 발주를 막지 않는 안내(앞 날짜 식단 부족 등) */
+  notices?: string[]
   offers: ShortageOffer[]
 }
 /** 수량 직접 입력 행의 서버 상한(ShortageProcurementService.MANUAL_MAX_ORDER_QTY) */
@@ -97,7 +103,8 @@ export function matchesStockFilter(row: ShortageRow, filter: ShortageStockFilter
 export const SHORTAGE_STOCK_LABELS = { RED: '필요량 부족', YELLOW: '안전재고 미달', GREEN: '충분' } as const
 
 export type OrderSelection = { delivery_terms_confirmed?: boolean; ingredient_id: string; supplier_offer_id: number; order_qty: number }
-export type ShortageResult = { criteria: ShortageCriteria; ingredients: ShortageRow[]; unconfigured_count: number; checked_at: string }
+/** missing_recipe_menus: 1인분 식재료(레시피)가 없어 계산에서 뺀 메뉴(2026-11-23, '레시피 없는 메뉴' 표시한 것은 제외) */
+export type ShortageResult = { criteria: ShortageCriteria; ingredients: ShortageRow[]; unconfigured_count: number; checked_at: string; missing_recipe_menus?: { menu_id: string; menu_name: string }[] }
 export type PreviewRow = Omit<ShortageRow, 'offers'> & {
   delivery_terms_confirmed?: boolean; offer: ShortageOffer; order_qty: number; ordered_base_qty: number; item_amount: number
   supply_amount: number | null; vat_amount: number | null; tax_type: string

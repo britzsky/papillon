@@ -128,7 +128,8 @@ body.workspace-ui > #root .rd.top-layout[data-theme="dark"] .rd.rd .rd-daystrip_
 /* 글자색이 직접 적힌 곳 */
 .rd.top-layout[data-theme="dark"] .top-page .rd-page__tile.is-info strong { color: var(--rd-blue-ink); }
 .rd.top-layout[data-theme="dark"] .top-page .rd-page__notice.is-warn { color: var(--rd-orange-ink); }
-.rd.top-layout[data-theme="dark"] .top-page .rd-supplier.is-OURHOME { background: var(--rd-orange-soft); }
+.rd.top-layout[data-theme="dark"] .top-page .rd-supplier.is-OURHOME { background: rgba(30, 152, 207, .18); color: #7CC8EA; }
+.rd.top-layout[data-theme="dark"] .top-page .rd-supplier.is-WELSTORY { background: rgba(242, 146, 31, .18); color: #F5B466; }
 .rd.top-layout[data-theme="dark"] .top-page .hg-empty { color: var(--rd-muted); border-color: var(--dk-line); }
 /* 전역 흰 패널 규칙(WorkspaceTheme .workspace-ui :is(...) — 고객사·공급사·검색어·위생·웰스토리·발주 관리 카드 등) */
 .workspace-ui .rd.top-layout[data-theme="dark"] .top-page :is(.account-manager-panel, .account-manager-config, .supplier-integration-grid section, .supplier-integration-summary article, .search-admin-kpis article, .search-admin-charts article, .search-admin-grid article, .vendor-sanitation-card, .welstory-panel, .food-order-panel) { background: var(--dk-surface-2); border-color: var(--dk-line); color: var(--rd-ink); }

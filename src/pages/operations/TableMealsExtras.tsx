@@ -232,9 +232,9 @@ export function SavedBudgetCard({ accountId, tableId, revision }: { accountId: s
   return <div className={`rd-card rd-meals__box tmx-saved${s.over_budget ? ' is-over' : ''}`}>
     <h2 className="rd-h2">이번 주 식단가</h2>
     <dl className="tmx-saved__nums">
-      <div><dt>식단가 합계</dt><dd>{won(s.budget_total)}</dd></div>
-      <div><dt>원가 합계</dt><dd>{won(s.cost_total)}</dd></div>
-      <div><dt>{s.balance < 0 ? '초과' : '남음'}</dt><dd className={s.balance < 0 ? 'tmx-text-over' : 'tmx-text-ok'}>{won(Math.abs(s.balance))}</dd></div>
+      <div><dt>식단가 총액</dt><dd>{won(s.budget_total)}</dd></div>
+      <div><dt>원가 총액</dt><dd>{won(s.cost_total)}</dd></div>
+      <div><dt>{s.balance < 0 ? '초과 금액' : '남은 금액'}</dt><dd className={s.balance < 0 ? 'tmx-text-over' : 'tmx-text-ok'}>{won(Math.abs(s.balance))}</dd></div>
     </dl>
     <p className="rd-fs-sm">{s.message}</p>
     {specials.length ? <p className="rd-muted rd-fs-xs">특식: {specials.map(meal => `${meal.meal_date.slice(5)} ${meal.meal_slot_name}${meal.special_note ? `(${meal.special_note})` : ''}`).join(', ')}</p> : null}

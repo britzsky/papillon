@@ -58,7 +58,7 @@ body.t-ui .ot-partial.is-on { --button-bg: var(--t-accent-soft); --button-bg-hov
 .ot-results small { color: var(--t-muted); font-size: 13px; }
 .ot-results__link { grid-column: 2 / -1; justify-self: start; }
 
-@media (max-width: 767px) {
+@media (max-width: 699px) {
   .ot-grid { grid-template-columns: minmax(0, 1fr); }
   .ot-panel__body { overflow: visible; }
 }

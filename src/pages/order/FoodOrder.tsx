@@ -1,4 +1,6 @@
 import CatalogPreparation from '../../components/CatalogPreparation'
+import { clearOrderCart, loadOrderCart, saveOrderCart } from '../../features/order/orderCart'
+import { flushSync } from 'react-dom'
 import LoadingScreen from '../../components/LoadingScreen'
 import BatchOrderResults from '../../components/BatchOrderResults'
 import ProductImage from '../../components/ProductImage'
@@ -8,11 +10,12 @@ import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import TopMenuLayout from '../../components/TopMenuLayout'
 import { blockedReasons, MANUAL_MAX_ORDER_QTY, shortageStockStatus, SHORTAGE_STOCK_LABELS, type ShortageOffer, type ShortageRow } from '../../api/shortageProcurement'
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState, useMemo } from 'react'
 import { getDeadlineAlertsCached } from '../../api/deadlineAlerts'
 import { availableSelection, day, deliveryTerms, deliveryWarning, money, number, offerOptions, per100, taxLabel, unitCost, useShortageOrder } from '../../features/order/useShortageOrder'
 import { PrintIcon } from '../../components/ActionIcons'
 import './ShortageFoodOrder.css'
+import './FoodOrderExpand.css'
 import { confirmDialog } from '../../utils/dialog'
 
 /**
@@ -34,8 +37,10 @@ function cheapestOther(row: ShortageRow, current: ShortageOffer) {
   return best ? { offer: best.offer, label: `${mine.per}당 ${money(Math.round(best.value))}원` } : null
 }
 
-function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY' | 'FAVORITE_MENU' }) {
-  const { accountId, focusIngredient, criteria, guidanceNow, plans, sites, result, selected, setSelected, keyword, setKeyword, stockFilter, setStockFilter, autoRefresh, setAutoRefresh, setRevision, loading, error, setError, message, batchResult, setBatchResult, preview, setPreview, previewing, submitting, setSubmitting, completed, setCompleted, update, stockCounts, rows, selectionCount, selectedAmount, makePreview, submit, closePreview } = useShortageOrder(fixedSource)
+/** recommended: 추천 발주안 탭(2026-11-23 사용자 결정으로 식단표 기준과 같은 화면) — 식단표 기준 + 늘 쓰는 상품을 미리 골라 둔 상태로 연다 */
+const RECOMMENDED_OVERRIDE = { autoselect: '1', autoselect_mode: 'recommended' }
+function FoodOrder({ embedded = false, fixedSource, recommended = false }: { embedded?: boolean; fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY' | 'FAVORITE_MENU'; recommended?: boolean }) {
+  const { accountId, focusIngredient, criteria, chooseDelivery, chooseLastMealDay, guidanceNow, plans, sites, result, selected, setSelected, keyword, setKeyword, stockFilter, setStockFilter, autoRefresh, setAutoRefresh, setRevision, loading, error, setError, message, batchResult, setBatchResult, preview, setPreview, previewing, submitting, setSubmitting, completed, setCompleted, update, stockCounts, rows, selectionCount, selectedAmount, makePreview, submit, closePreview } = useShortageOrder(fixedSource, recommended ? RECOMMENDED_OVERRIDE : undefined)
   // 납품일 카드: 72시간 안 발주 마감 알림(식단 기준 부족)을 납품일별로 묶어 품목 수·가장 빠른 마감을 보여준다
   const [dueByDate, setDueByDate] = useState<Record<string, { items: number; text: string; at: string }>>({})
   useEffect(() => {
@@ -68,9 +73,9 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
   const allRows = result?.ingredients || []
   const offerOf = (row: ShortageRow) => row.offers.find(o => o.supplier_offer_id === selected[row.ingredient_id]?.supplier_offer_id) || row.offers.find(o => o.orderable)
   const choose = async (row: ShortageRow, id: number) => { const next = row.offers.find(o => o.supplier_offer_id === id && o.orderable); if (next && (next.orderability_status === 'AVAILABLE' || (await confirmDialog(next.product_name + ' · ' + criteria.delivery_date + '\n공급사에 납품 가능일과 마감 조건을 직접 확인하셨습니까? 확인한 경우에만 선택하세요.')))) setSelected(current => ({ ...current, [row.ingredient_id]: { ingredient_id: row.ingredient_id, supplier_offer_id: next.supplier_offer_id, order_qty: next.recommended_qty, delivery_terms_confirmed: next.orderability_status !== 'AVAILABLE' } })) }
-  // 2026-10-29(사용자 요청): 상품 고르기는 select 대신, 식재료 표에서 줄을 누르면 오른쪽 웰스토리·아워홈 표에
-  // 그 식재료의 상품이 사진과 함께 위에서 아래로 나열되고 눌러서 고른다. 처음엔 첫 줄(또는 넘어온 식재료)을 보여준다
-  const [activeId, setActiveId] = useState('')
+  // 2026-11-23(사용자 시안): 식재료 줄을 누르면 그 줄 바로 아래에 웰스토리·아워홈 상품 목록이 펼쳐진다(다시 누르면 접힘).
+  // 처음엔 넘어온 식재료(?ingredient_id)만 펼친다. 예전(10-29)엔 표 오른쪽 고정 칸에 보였다
+  const [activeId, setActiveId] = useState(focusIngredient)
   // 포함메뉴는 '포함메뉴 !'를 눌렀을 때만 말풍선으로(바깥을 누르면 닫힘)
   const [menuTip, setMenuTip] = useState('')
   useEffect(() => {
@@ -79,38 +84,44 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
     document.addEventListener('click', close)
     return () => document.removeEventListener('click', close)
   }, [menuTip])
-  const active = rows.find(r => r.ingredient_id === activeId) || rows.find(r => r.ingredient_id === focusIngredient) || rows[0]
-  const activeOffer = active ? offerOf(active) : undefined
-  const supplierPanel = (code: string, label: string) => {
-    const list = active ? offerOptions(active).filter(o => o.supplier_code === code) : []
+  /** 펼친 줄 아래 공급사 상품 목록(사진 · 단가/100g당 · 이게 더 싸요). 사진은 누르면 확대, 나머지를 누르면 그 상품으로 고른다 */
+  const supplierPanel = (row: ShortageRow, code: string, label: string) => {
+    const list = offerOptions(row).filter(o => o.supplier_code === code)
     const ok = list.filter(o => o.orderable).length
-    return <section className={`rd-order__supplier is-${code}`} aria-label={`${label} 상품`}>
+    const current = offerOf(row)
+    // 두 공급사를 통틀어 기준단위당 가장 싼 발주 가능 상품(지금 고른 상품이 아닐 때만 '이게 더 싸요')
+    const cheapest = row.offers.filter(o => o.orderable).map(o => ({ o, cost: unitCost(o, row.base_unit)?.value ?? Infinity })).sort((a, b) => a.cost - b.cost)[0]
+    return <section className={`rd-order__supplier is-${code}`} aria-label={`${row.ingredient_name} ${label} 상품`}>
       <div className="rd-order__supplier-head">
-        <span><span className={`rd-supplier is-${code}`}>{label}</span>{active ? <strong> {active.ingredient_name}</strong> : null}</span>
-        {active ? <small className={ok ? 'rd-muted' : 'rd-text-warn'}>{ok ? `발주 가능 ${ok}개` : '발주 가능한 상품 없음'}{list.length > ok ? ` · 불가 ${list.length - ok}개` : ''}</small> : null}
+        <span className={`rd-supplier is-${code}`}>{label}</span>
+        <small className={ok ? 'rd-muted' : 'rd-text-warn'}>{ok ? `발주 가능 ${ok}개` : '발주 가능한 상품 없음'}{list.length > ok ? ` · 불가 ${list.length - ok}개` : ''}</small>
       </div>
       <div className="rd-order__supplier-list">
-        {/* 카드: 사진은 누르면 확대(고르지 않음), 나머지를 누르면 그 상품으로 고른다 */}
-        {active ? list.map(o => <div key={o.supplier_offer_id} className={`rd-pick${o.supplier_offer_id === activeOffer?.supplier_offer_id ? ' is-on' : ''}${!o.orderable || loading ? ' is-disabled' : ''}`} title={o.product_name}
-          onClick={e => { if (o.orderable && !loading && !(e.target as HTMLElement).closest('.rd-pick__img')) choose(active, o.supplier_offer_id) }}>
-          <span className="rd-pick__img"><ProductImage zoomable src={o.thumbnail_url || o.image_url || undefined} fullSrc={o.image_url || undefined} name={o.product_name} /></span>
-          <button type="button" className="rd-pick__body" disabled={!o.orderable || loading} aria-pressed={o.supplier_offer_id === activeOffer?.supplier_offer_id}>
-            <span className="rd-pick__name">{o.supplier_offer_id === active.recommended_offer_id ? <em>★ 늘 쓰는</em> : null}{o.product_name}</span>
-            <small>{o.orderable ? `${money(o.purchase_price)}원/${o.order_unit}` : o.availability_reason || '발주 불가'}</small>
-            {o.orderable && per100(o, active.base_unit) ? <small>{per100(o, active.base_unit)}</small> : null}
-          </button>
-        </div>) : null}
-        {!active ? <p className="rd-order__empty">왼쪽에서 식재료를 누르면 상품이 나와요.</p> : !list.length ? <p className="rd-order__empty">연결된 상품이 없어요.</p> : null}
+        {list.map(o => { const on = o.supplier_offer_id === current?.supplier_offer_id
+          return <div key={o.supplier_offer_id} className={`rd-pick${on ? ' is-on' : ''}${!o.orderable || loading ? ' is-disabled' : ''}`} title={o.product_name}
+            onClick={e => { if (o.orderable && !loading && !(e.target as HTMLElement).closest('.rd-pick__img')) choose(row, o.supplier_offer_id) }}>
+            <span className="rd-pick__img"><ProductImage zoomable src={o.thumbnail_url || o.image_url || undefined} fullSrc={o.image_url || undefined} name={o.product_name} /></span>
+            <button type="button" className="rd-pick__body" disabled={!o.orderable || loading} aria-pressed={on}>
+              <span className="rd-pick__price">{o.orderable ? <><b>{money(o.purchase_price)}원</b>({o.order_unit}){per100(o, row.base_unit) ? <> / {per100(o, row.base_unit)}</> : null}</> : <span className="rd-text-warn">{o.availability_reason || '발주 불가'}</span>}</span>
+              <span className="rd-pick__name">{o.supplier_offer_id === row.recommended_offer_id ? <em>★ 늘 쓰는</em> : null}{o.product_name}</span>
+              {on ? <small className="rd-pick__tag is-on">✓ 선택한 상품</small> : o.orderable && cheapest && cheapest.o.supplier_offer_id === o.supplier_offer_id && row.offers.filter(x => x.orderable).length > 1 ? <small className="rd-pick__tag is-cheap">이게 더 싸요 ↓</small> : null}
+            </button>
+          </div> })}
+        {!list.length ? <p className="rd-order__empty">연결된 상품이 없어요.</p> : null}
       </div>
     </section>
   }
   const setQty = (row: ShortageRow, offer: ShortageOffer, value: number) => setSelected(current => ({ ...current, [row.ingredient_id]: { ingredient_id: row.ingredient_id, supplier_offer_id: offer.supplier_offer_id, delivery_terms_confirmed: current[row.ingredient_id]?.delivery_terms_confirmed, order_qty: value } }))
-  const groups = Object.values(selected).reduce<Record<string, { name: string; code: string; site: string; terms: string; names: string[]; amount: number }>>((acc, sel) => {
+  // 고른 품목(발주서 미리보기 줄): 식재료 · 공급사 · 금액
+  const picked = Object.values(selected).flatMap(sel => {
     const row = allRows.find(r => r.ingredient_id === sel.ingredient_id); const offer = row?.offers.find(o => o.supplier_offer_id === sel.supplier_offer_id)
-    if (!row || !offer) return acc
+    return row && offer ? [{ id: row.ingredient_id, name: row.ingredient_name, offer, amount: (sel.order_qty || 0) * offer.purchase_price }] : []
+  })
+  const groups = picked.reduce<Record<string, { name: string; code: string; site: string; terms: string; items: typeof picked; amount: number }>>((acc, item) => {
+    const offer = item.offer
     const key = offer.supplier_code + ':' + offer.external_site_code
-    const group = acc[key] ||= { name: offer.supplier_name, code: offer.supplier_code, site: offer.external_site_name || offer.external_site_code, terms: deliveryTerms(offer), names: [], amount: 0 }
-    group.names.push(row.ingredient_name); group.amount += (sel.order_qty || 0) * offer.purchase_price
+    const group = acc[key] ||= { name: offer.supplier_name, code: offer.supplier_code, site: offer.external_site_name || offer.external_site_code, terms: deliveryTerms(offer), items: [], amount: 0 }
+    group.items.push(item); group.amount += item.amount
     return acc
   }, {})
   const deliveryDays = Array.from(new Set([day(1), day(2), day(3), day(4), day(5), day(6), day(7), criteria.delivery_date].filter(Boolean))).sort().slice(0, 8)
@@ -118,7 +129,10 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
   const dayHint = (value: string) => value === day() ? '오늘' : value === day(1) ? '내일' : value === day(2) ? '모레' : ''
   // 조회 조건(식단표·기간·사업장·자동 계산)은 자주 바꾸지 않아 접어 둔다. 납품일은 위 납품일 줄에서 고른다
   const [showFilters, setShowFilters] = useState(false)
-  const pickDay = (value: string) => update(value > criteria.date_to ? { delivery_date: value, date_to: value } : { delivery_date: value })
+  // 납품일을 고르면 식단 기준은 그 납품이 맡는 기간(다음 날 ~ 다음 납품일)으로 바뀐다(useShortageOrder.chooseDelivery)
+  const pickDay = chooseDelivery
+  const shift = (value: string, days: number) => { const d = new Date(`${value}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + days); return d.toISOString().slice(0, 10) }
+  const lastMealOptions = Array.from(new Set([...Array.from({ length: 7 }, (_, i) => shift(criteria.date_from, i)), criteria.date_to])).sort()
 
   // 발주서 확인 창: 공급사·사업장별 발주서 묶음과 납품일·마감 경고 품목 수
   const previewSheets = Object.values((preview?.items || []).reduce<Record<string, { key: string; code: string; name: string; site: string; terms: string; amount: number; rows: NonNullable<typeof preview>['items'] }>>((acc, row) => {
@@ -127,6 +141,45 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
     sheet.rows.push(row); sheet.amount += Number(row.item_amount) || 0
     return acc
   }, {}))
+  // 장바구니(2026-11-23, 태블릿과 같은 규칙): 고른 품목을 이 기기에 임시 저장 → '장바구니 불러오기'. 발주를 마치면 비운다
+  const cartSource = recommended ? 'RECOMMENDED' : fixedSource || criteria.source || 'PLAN'
+  const [cartVersion, setCartVersion] = useState(0)
+  const [cartNotice, setCartNotice] = useState('')
+  const [showDetail, setShowDetail] = useState(false)
+  useEffect(() => { if (completed) clearOrderCart(accountId, cartSource) }, [completed, accountId, cartSource])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- cartVersion: 담은 뒤 다시 읽기
+  const storedCart = useMemo(() => loadOrderCart(accountId, cartSource), [accountId, cartSource, cartVersion])
+  const cart = completed ? null : storedCart
+  const putInCart = () => {
+    const saved = saveOrderCart(accountId, cartSource, criteria.delivery_date, selected)
+    setCartVersion(v => v + 1)
+    setCartNotice(saved ? `장바구니에 ${saved.items.length}품목을 담아 두었어요. 이 기기에서 '장바구니 불러오기'로 다시 담을 수 있어요.` : '담은 품목이 없어 장바구니를 비웠어요.')
+  }
+  const restoreCart = () => {
+    if (!cart) return
+    const byId = new Map((result?.ingredients || []).map(row => [row.ingredient_id, row]))
+    const next: typeof selected = {}
+    let skipped = 0
+    for (const item of cart.items) {
+      const offer = byId.get(item.ingredient_id)?.offers.find(x => x.supplier_offer_id === item.supplier_offer_id && x.orderable)
+      if (offer) next[item.ingredient_id] = { ...item }; else skipped += 1
+    }
+    setSelected(current => ({ ...current, ...next }))
+    setCartNotice(`장바구니에서 ${Object.keys(next).length}품목을 다시 담았어요.${skipped ? ` ${skipped}품목은 지금 목록에 없거나 발주할 수 없어 빠졌어요.` : ''}${cart.delivery_date && cart.delivery_date !== criteria.delivery_date ? ` 담을 때 납품일은 ${cart.delivery_date}였어요.` : ''}`)
+  }
+  const reviewCard = (code: 'OURHOME' | 'WELSTORY' | '', label: string) => {
+    const list = (preview?.items || []).filter(row => !code || row.offer.supplier_code === code)
+    const total = list.reduce((sum, row) => sum + Number(row.item_amount || 0), 0)
+    return <article className={`rd-review__card${code ? ` is-${code}` : ' is-all'}`} aria-label={`${label} 발주서 미리보기`}>
+      {code ? <p className="rd-review__legend"><span className={`is-${code}`}>{label}</span></p> : null}
+      <h3>발주서 미리보기</h3>
+      {!code ? <p className="rd-review__legend"><span className="is-OURHOME">아워홈</span><span className="is-WELSTORY">삼성웰스토리</span></p> : null}
+      <ul>{list.map(row => <li key={row.ingredient_id}><span>{row.ingredient_name}<small>{row.offer.product_name} · {number(row.order_qty)}{row.offer.order_unit}</small></span><span className={`rd-review__dot is-${row.offer.supplier_code}`} aria-hidden="true" /><b>{money(row.item_amount)}원</b></li>)}</ul>
+      {!list.length ? <p className="rd-review__empty">담은 품목이 없어요.</p> : null}
+      <div className="rd-review__total"><span>총 계</span><b>{money(total)}원</b></div>
+    </article>
+  }
+  const printPreview = () => { flushSync(() => setShowDetail(true)); window.print() }
   const previewWarnings = preview ? preview.items.filter(row => deliveryWarning(row.offer, preview.criteria.delivery_date, guidanceNow)).length : 0
 
   const body = <div className="rd rd-order">
@@ -147,13 +200,20 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
       </div>
     </div>
     {criteria.delivery_date === guidanceNow.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }) ? <p className="rd-text-warn rd-fs-sm rd-order__today" role="status">당일 납품 선택 · D-1 이상 품목은 납품일자 변경 요망</p> : null}
+    {criteria.source === 'PLAN' && criteria.date_from ? <p className="rd-order__cover rd-fs-sm" aria-label="이 납품으로 쓸 식단">
+      <b>{dayLabel(criteria.delivery_date)} 납품</b>으로 쓸 식단 <b>{dayLabel(criteria.date_from)}</b> ~
+      <select className="rd-input" aria-label="마지막 식단일" value={criteria.date_to} onChange={e => chooseLastMealDay(e.target.value)}>
+        {lastMealOptions.map(value => <option key={value} value={value}>{dayLabel(value)}</option>)}
+      </select>
+      <span className="rd-muted rd-fs-xs">기본은 다음 납품일까지(일요일 납품 없음) · 더 길게 받으려면 마지막 식단일을 늘리세요 · 그 전 식단이 쓸 양은 먼저 빼고 계산해요</span>
+    </p> : null}
 
     {showFilters ? <section id="order-filters" className="rd-card rd-order__filters" aria-label="조회 조건">
       <section className="shortage-order-filters" aria-label="부족재고 조회 기준">
         {criteria.source === 'DRAFT' ? <span className="shortage-order-basis"><em>조회 기준</em><b>저장 전 식단의 메뉴·식수 기준</b></span> : criteria.source === 'STOCK' ? <span className="shortage-order-basis"><em>조회 기준</em><b>현재고·입고예정·안전재고 기준</b></span> : criteria.source === 'PLAN' ? <label>식단표<select value={criteria.table_id} onChange={e => update({ table_id: e.target.value })}><option value="">기간 내 모든 식단표</option>{plans.map(plan => <option key={plan.table_id} value={plan.table_id}>{plan.table_name}</option>)}</select></label> : <><label>사용량 조회일수<input type="number" min="1" max="365" value={criteria.average_days} onChange={e => update({ average_days: Number(e.target.value) })} /></label><label>확보일수<input type="number" min="1" max="30" value={criteria.coverage_days} onChange={e => update({ coverage_days: Number(e.target.value) })} /></label></>}
         <label>조회 시작일<input type="date" value={criteria.date_from} onChange={e => update({ date_from: e.target.value })} /></label>
         <label>조회 종료일<input type="date" value={criteria.date_to} onChange={e => update({ date_to: e.target.value })} /></label>
-        <label>납품일<input type="date" min={day()} max={criteria.date_to} value={criteria.delivery_date} onChange={e => update({ delivery_date: e.target.value })} /></label>
+        <label>납품일<input type="date" min={day()} max={criteria.source === 'PLAN' ? undefined : criteria.date_to} value={criteria.delivery_date} onChange={e => chooseDelivery(e.target.value)} /></label>
         <label>공급사 사업장<select className="workplace-select" value={criteria.sold_to ? (criteria.supplier_code || 'WELSTORY') + ':' + criteria.sold_to : ''} onChange={e => { const [supplier_code = '', sold_to = ''] = e.target.value.split(':'); update({ sold_to, supplier_code }) }}><option value="">전체 공급사·사업장</option>{sites.map(site => <option key={site.supplier_account_site_id} value={site.supplier_code + ':' + site.external_site_code}>{site.supplier_name} · {site.external_site_name} ({site.external_site_code})</option>)}</select></label>
         <button type="button" className="rd-btn is-primary" disabled={loading || previewing} onClick={() => setRevision(value => value + 1)}>{loading ? '조회 중…' : '다시 계산'}</button>
         <label className="shortage-order-check"><input type="checkbox" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} />60초마다 다시 계산</label>
@@ -161,13 +221,15 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
     </section> : null}
 
     {error ? <p className="rd-alert" role="alert">{error}</p> : null}
+    {result?.missing_recipe_menus?.length ? <p className="rd-alert" role="status">1인분 식재료(레시피)가 없어 필요량 계산에서 뺀 메뉴: {result.missing_recipe_menus.map(m => m.menu_name || m.menu_id).join(', ')} · 식단표에서 메뉴를 눌러 식재료를 넣거나 '완제품'·'레시피 없는 메뉴'로 정해 주세요.</p> : null}
 
     <div className="rd-order__grid">
       <section className="rd-card rd-order__list" aria-label="시켜야 할 식재료">
         <div className="rd-order__list-head">
           <div>
-            <h2 className="rd-h2">{dayLabel(criteria.delivery_date || day(1))} {criteria.source === 'FAVORITE_MENU' ? '나만의 메뉴 식재료' : criteria.source === 'STOCK' ? '지금 부족한 식재료' : criteria.source === 'INVENTORY' ? '사용량 기준 부족 예상' : criteria.source === 'DRAFT' ? '구성 중인 식단에 모자란 식재료' : '식단에 모자란 식재료'} {allRows.length}개</h2>
+            <h2 className="rd-h2">{dayLabel(criteria.delivery_date || day(1))}{criteria.source === 'PLAN' ? ` 납품 · ${dayLabel(criteria.date_from)}${criteria.date_to !== criteria.date_from ? `~${dayLabel(criteria.date_to)}` : ''}` : ''} {criteria.source === 'FAVORITE_MENU' ? '나만의 메뉴 식재료' : criteria.source === 'STOCK' ? '지금 부족한 식재료' : criteria.source === 'INVENTORY' ? '사용량 기준 부족 예상' : criteria.source === 'DRAFT' ? '구성 중인 식단에 모자란 식재료' : '식단에 모자란 식재료'} {allRows.length}개</h2>
             {/* 식단 기준(기본) 안내 문구는 뺌(2026-11-17 사용자 요청) */}
+            {recommended ? <p className="rd-muted rd-fs-sm">추천 발주안 · 늘 쓰는 상품으로 바로 시킬 수 있는 품목을 미리 골라 뒀어요. 확인하고 발주하세요.</p> : null}
             {criteria.source === 'FAVORITE_MENU' || criteria.source === 'STOCK' || criteria.source === 'INVENTORY' ? <p className="rd-muted rd-fs-sm">{criteria.source === 'FAVORITE_MENU' ? '나만의 메뉴(♥)에 쓰이는 식재료예요. 필요한 수량을 직접 넣어 주문하세요.' : criteria.source === 'STOCK' ? '현재고가 없거나 안전재고보다 적어요. 사용 이력이 없으면 수량을 직접 정해 주세요.' : '최근 평균 사용량 × 확보일수 + 안전재고 기준이에요. 사용 확정 이력이 없으면 0으로 계산돼요.'}</p> : null}
             <span className="rd-order__tools-end">
               <select className="rd-input" aria-label="줄 순서" value={rowSort} onChange={e => setRowSort(e.target.value as RowSort)}>
@@ -196,9 +258,10 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
             const warning = offer ? deliveryWarning(offer, criteria.delivery_date, guidanceNow) : ''
             const step = offer?.order_increment_qty || 1
             const max = offer ? (offer.quantity_basis === 'MANUAL' ? MANUAL_MAX_ORDER_QTY : Math.max(offer.recommended_qty, offer.minimum_order_qty)) : 0
-            const open = active?.ingredient_id === row.ingredient_id
-            return <div key={row.ingredient_id} className={`rd-order__row is-pickable${row.ingredient_id === focusIngredient ? ' is-focused' : ''}${!offer ? ' is-blocked' : ''}${open ? ' is-open' : ''}`}
-              onClick={e => { if (!(e.target as HTMLElement).closest('input, button, a, select, label')) setActiveId(row.ingredient_id) }}>
+            const open = activeId === row.ingredient_id
+            return <Fragment key={row.ingredient_id}><div className={`rd-order__row is-pickable${row.ingredient_id === focusIngredient ? ' is-focused' : ''}${!offer ? ' is-blocked' : ''}${open ? ' is-open' : ''}${offer ? ` is-by-${offer.supplier_code}` : ''}`}
+              aria-expanded={open} title={open ? '누르면 상품 목록 접기' : '누르면 웰스토리·아워홈 상품 보기'}
+              onClick={e => { if (!(e.target as HTMLElement).closest('input, button, a, select, label, .image-zoom-trigger')) setActiveId(current => current === row.ingredient_id ? '' : row.ingredient_id) }}>
               <input aria-label={`${row.ingredient_name} 선택`} type="checkbox" checked={Boolean(selection)} disabled={!offer || loading} onChange={e => { if (e.target.checked && offer) choose(row, offer.supplier_offer_id); else setSelected(current => { const next = { ...current }; delete next[row.ingredient_id]; return next }) }} />
               <div className="rd-order__name">
                 <strong className="rd-fs-md">{row.ingredient_name}</strong>
@@ -210,10 +273,11 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
                 </span> : null}
                 </span>
                 {row.issues.map(issue => <small className="rd-text-warn rd-fs-xs" key={issue}>{issue}</small>)}
+                {(row.notices || []).map(notice => <small className="rd-muted rd-fs-xs" key={notice}>{notice}</small>)}
               </div>
               <div className="rd-order__stock">
                 <span className="rd-bar" aria-hidden="true"><span style={{ width: `${Math.min(100, row.current_qty / total * 100)}%` }} /><span className="is-incoming" style={{ width: `${Math.min(100, row.incoming_qty / total * 100)}%` }} /></span>
-                <small className="rd-fs-xs" title={`재고 ${number(row.current_qty)}${row.base_unit}${row.incoming_qty ? ` + 입고예정 ${number(row.incoming_qty)}${row.base_unit}` : ''} · 필요 ${number(row.required_qty)}${row.base_unit}${row.safe_stock_qty ? ` (+안전재고 ${number(row.safe_stock_qty)}${row.base_unit})` : ''}`}>{number(row.current_qty + row.incoming_qty)} → {number(row.required_qty + row.safe_stock_qty)}{row.base_unit}</small>
+                <small className="rd-fs-xs" title={`재고 ${number(row.current_qty)}${row.base_unit}${row.incoming_qty ? ` + 입고예정 ${number(row.incoming_qty)}${row.base_unit}` : ''} · 필요 ${number(row.required_qty)}${row.base_unit}${row.safe_stock_qty ? ` (+안전재고 ${number(row.safe_stock_qty)}${row.base_unit})` : ''}${row.prior_usage_qty ? ` (+그 전 식단 사용 예정 ${number(row.prior_usage_qty)}${row.base_unit})` : ''}`}>{number(row.current_qty + row.incoming_qty)} → {number(row.required_qty + row.safe_stock_qty + Number(row.prior_usage_qty || 0))}{row.base_unit}</small>
                 <strong className={`rd-fs-sm ${status === 'RED' ? 'rd-text-red' : 'rd-text-yellow'}`}>{number(row.shortage_qty)}{row.base_unit} 모자람</strong>
               </div>
               <div className="rd-order__offer">
@@ -228,7 +292,7 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
                   {warning ? <small className="rd-text-warn rd-fs-xs" role="status">{warning}</small> : null}
                   {cheaper ? <button type="button" className="rd-link" onClick={() => choose(row, cheaper.offer.supplier_offer_id)}>{cheaper.offer.supplier_name} {cheaper.offer.product_name} {cheaper.label}으로 바꾸기</button>
                     : offer && row.offers.filter(o => o.orderable).length > 1 ? <small className="rd-text-ok rd-fs-xs">지금 상품이 기준단위당 가장 저렴해요</small> : null}
-                  {offer && !selection ? <small className="rd-muted rd-fs-xs">추천 상품 · 체크하거나 오른쪽 상품을 누르면 담겨요</small> : null}
+                  {offer && !selection ? <small className="rd-muted rd-fs-xs">추천 상품 · 체크하거나 줄을 눌러 아래 상품을 고르면 담겨요</small> : null}
                 </div>
               </div>
               <div className="rd-order__qty">
@@ -242,25 +306,29 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
                 </> : <small className="rd-muted">—</small>}
               </div>
             </div>
+            {open ? <div className="rd-order__expand" role="region" aria-label={`${row.ingredient_name} 공급사 상품`}>
+              {supplierPanel(row, 'WELSTORY', '웰스토리')}
+              {supplierPanel(row, 'OURHOME', '아워홈')}
+            </div> : null}
+            </Fragment>
           })}
           {!rows.length ? <div className="rd-order__empty">{loading ? '모자란 식재료를 계산하고 있어요.' : stockFilter && allRows.length ? '선택한 상태에 해당하는 식재료가 없어요.' : '이 기준으로 모자란 식재료가 없어요.'}</div> : null}
         </div></div>
-        {supplierPanel('WELSTORY', '웰스토리')}
-        {supplierPanel('OURHOME', '아워홈')}
         </div>
       </section>
 
       <aside className="rd-order__side" aria-label="발주서 미리보기">
+        {/* 2026-11-23(사용자 시안): 전체 발주서 미리보기(품목·공급사 점·금액, 총계, 발주하기) 아래에 공급사별 미리보기 카드 */}
         <div className="rd-card rd-order__summary">
-          <h2 className="rd-h2">{Object.keys(groups).length ? `발주서 ${Object.keys(groups).length}장으로 나눠 보내요` : '발주서 미리보기'}</h2>
-          {Object.entries(groups).map(([key, group]) => <div key={key} className={`rd-order__sheet is-${group.code}`}>
-            <div className="rd-order__sheet-top"><span className={`rd-supplier is-${group.code}`}>{group.name} · {group.site}</span><span className="rd-fs-xs rd-muted">{group.terms}</span></div>
-            <div className="rd-fs-md">{dayLabel(criteria.delivery_date)} 납품 · {group.names.slice(0, 3).join(', ')}{group.names.length > 3 ? ` 외 ${group.names.length - 3}` : ''}</div>
-            <div className="rd-order__sheet-sum"><span className="rd-muted">{group.names.length}품목</span><strong>{money(group.amount)}원</strong></div>
-          </div>)}
-          {!Object.keys(groups).length ? <p className="rd-order__empty">왼쪽에서 식재료를 고르면 여기에 공급사별로 정리돼요.</p> : null}
-          <div className="rd-order__total"><span className="rd-muted">상품금액 합계</span><strong>{loading ? '계산 중…' : `${money(selectedAmount)}원`}</strong></div>
-          <button type="button" className="rd-btn is-primary rd-order__confirm" disabled={!selectionCount || loading || previewing} onClick={() => void makePreview()}>{previewing ? '서버 검증 중…' : `${selectionCount}품목 발주서 확인`}</button>
+          <h2 className="rd-h2 rd-order__summary-title">발주서 미리보기</h2>
+          <p className="rd-order__legend rd-fs-xs"><span className="is-WELSTORY">웰스토리</span><span className="is-OURHOME">아워홈</span></p>
+          {picked.length ? <ul className="rd-order__picked">
+            {picked.map(item => <li key={item.id}><span>{item.name}</span><i className={`rd-order__dot is-${item.offer.supplier_code}`} title={item.offer.supplier_name} /><b>{money(item.amount)}원</b></li>)}
+          </ul> : <p className="rd-order__empty">식재료를 체크하거나 줄을 눌러 상품을 고르면 여기에 담겨요.</p>}
+          <div className="rd-order__total"><span>총 계</span><strong>{loading ? '계산 중…' : `${money(selectedAmount)}원`}</strong></div>
+          <button type="button" className="rd-btn is-primary rd-order__confirm" disabled={!selectionCount || loading || previewing} onClick={() => void makePreview()}>{previewing ? '서버 검증 중…' : selectionCount ? `발주하기 · ${selectionCount}품목` : '발주하기'}</button>
+          {cart ? <button type="button" className="rd-btn rd-order__cart" disabled={loading || !result} onClick={restoreCart}>장바구니 불러오기 ({cart.items.length})</button> : null}
+          {cartNotice && !preview ? <p className="rd-fs-xs rd-muted" role="status">{cartNotice}</p> : null}
           <div className="rd-order__side-actions">
             <button type="button" className="rd-btn is-ghost" disabled={submitting || previewing} onClick={() => { try { startNewMixedProcurement(accountId); setBatchResult(null); setCompleted(false); setSelected({}); setPreview(null); setRevision(value => value + 1); setError('') } catch (e) { setError(e instanceof Error ? e.message : '기존 발주 확인 필요') } }}>새 발주 작성</button>
             <button type="button" className="rd-btn is-ghost" disabled={submitting} onClick={() => { setSubmitting(true); void recoverMixedProcurement(accountId).then(setBatchResult).catch(e => setError(e.message)).finally(() => setSubmitting(false)) }}>이전 요청 결과 확인</button>
@@ -268,14 +336,23 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
           <BatchOrderResults result={preview ? null : batchResult} accountId={accountId} />
           {completed && !preview ? <Link className="rd-btn is-primary rd-order__confirm" to={`/order_manager/orders?${new URLSearchParams({ account_id: accountId })}`}>다음: 발주서·입고에서 확인 →</Link> : null}
         </div>
+        {Object.entries(groups).map(([key, group]) => <section key={key} className={`rd-card rd-order__sheet is-${group.code}`} aria-label={`${group.name} 발주서 미리보기`}>
+          <p className="rd-order__legend rd-fs-xs"><span className={`is-${group.code}`}>{group.name}</span></p>
+          <h3 className="rd-order__summary-title">발주서 미리보기</h3>
+          <span className="rd-fs-xs rd-muted rd-order__sheet-site">{group.site} · {dayLabel(criteria.delivery_date)} 납품</span>
+          <ul className="rd-order__picked">{group.items.map(item => <li key={item.id}><span>{item.name}</span><i className={`rd-order__dot is-${group.code}`} /><b>{money(item.amount)}원</b></li>)}</ul>
+          <div className="rd-order__total"><span>총 계</span><strong>{money(group.amount)}원</strong></div>
+          <small className="rd-fs-xs rd-muted">{group.terms}</small>
+        </section>)}
         {blocked.length ? <div className="rd-order__blocked rd-fs-sm"><strong className="rd-fs-md">바로 시킬 수 없는 식재료 {blocked.length}개</strong>{blocked.slice(0, 4).map(row => <span key={row.ingredient_id}>{row.ingredient_name} · {row.issues[0] || row.offers.map(o => o.availability_reason).find(Boolean) || '발주 가능한 상품 없음'}</span>)}</div> : null}
       </aside>
     </div>
     {preview ? createPortal(<div className="shortage-order-page shortage-order-overlay rd rd-preview-overlay"><section className="shortage-order-sheet rd-preview" role="dialog" aria-modal="true" aria-labelledby="shortage-sheet-title">
       {/* 2026-10-15 개편(시안 ⑥): 공급사별 발주서 카드 + 상태 칩 + 합계·보내기. 인쇄 규칙은 shortage-order-sheet/actions 클래스 그대로 */}
-      <header className="rd-preview__head">
-        <div><span className="rd-muted rd-fs-sm">보내기 전 마지막 확인</span>
-          <h2 id="shortage-sheet-title" className="rd-h1">{dayLabel(preview.criteria.delivery_date)} 납품 · 발주서 {previewSheets.length}장 · {preview.items.length}품목</h2></div>
+      {/* 2026-11-23 사용자 시안(태블릿 '최종 검토'와 같은 모양): 아워홈 · 전체 · 웰스토리 발주서 미리보기 3장 → 장바구니 · 발주하기. 상품·수량·단가 상세는 '자세히' */}
+      <header className="rd-preview__head rd-review__head">
+        <div><h2 id="shortage-sheet-title" className="rd-h1">최종 검토</h2>
+          <span className="rd-muted rd-fs-sm">{dayLabel(preview.criteria.delivery_date)} 납품 · 발주서 {previewSheets.length}장(공급사·사업장별) · {preview.items.length}품목</span></div>
         <button type="button" className="rd-btn rd-icon-btn shortage-order-actions" aria-label="닫기" disabled={submitting} onClick={closePreview}>×</button>
       </header>
       <div className="rd-preview__body">
@@ -284,6 +361,9 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
           {previewWarnings ? <span className="rd-chip is-warn">! 납품일·마감 확인 {previewWarnings}품목</span> : null}
           <span className="rd-chip is-done">과세 품목 세액은 공급사 정산 기준</span>
         </div>
+        <div className="rd-review__cards">{reviewCard('OURHOME', '아워홈')}{reviewCard('', '전체')}{reviewCard('WELSTORY', '삼성웰스토리')}</div>
+        <details className="rd-review__detail" open={showDetail} onToggle={e => setShowDetail((e.target as HTMLDetailsElement).open)}>
+        <summary className="rd-fs-sm">자세히 보기 · 상품·수량·단가·사업장{previewWarnings ? ` · 납품일·마감 확인 ${previewWarnings}품목` : ''}</summary>
         {previewSheets.map(sheet => <article key={sheet.key} className={`rd-preview__sheet is-${sheet.code}`}>
           <div className="rd-preview__sheet-head"><span><span className={`rd-supplier is-${sheet.code}`}>{sheet.name}</span> <strong>{sheet.site}</strong></span><span className="rd-fs-xs rd-muted">{sheet.terms}</span></div>
           <div className="rd-preview__row is-head rd-fs-xs"><span>식재료 → 상품</span><span className="is-num">수량</span><span className="is-num">단가</span><span className="is-num">금액</span></div>
@@ -299,17 +379,20 @@ function FoodOrder({ embedded = false, fixedSource }: { embedded?: boolean; fixe
             </div> })}
           <div className="rd-preview__subtotal"><span className="rd-muted">소계</span><b>{money(sheet.amount)}원</b></div>
         </article>)}
+        </details>
+        {cartNotice ? <p className="rd-fs-sm" role="status">{cartNotice}</p> : null}
         {message ? <p role="status">{message}</p> : null}
         <BatchOrderResults result={batchResult} accountId={accountId} />
       </div>
       <footer className="rd-preview__foot">
         <div><span className="rd-muted rd-fs-sm">상품금액 합계</span><strong className="shortage-order-total">{money(preview.item_amount)}원</strong></div>
         <div className="shortage-order-actions rd-preview__actions">
-          <button type="button" className="rd-btn print-button" disabled={submitting} onClick={() => window.print()}><PrintIcon />미리보기 인쇄</button>
+          <button type="button" className="rd-btn print-button" disabled={submitting} onClick={printPreview}><PrintIcon />미리보기 인쇄</button>
           <button type="button" className="rd-btn" disabled={submitting} onClick={closePreview}>돌아가서 고치기</button>
           {/* 업무 순서 ②→③: 보낸 뒤에는 같은 자리에서 발주서·입고로 */}
           {completed ? <Link className="rd-btn is-primary rd-preview__send" to={`/order_manager/orders?${new URLSearchParams({ account_id: accountId })}`}>다음: 발주서·입고에서 확인 →</Link>
-            : <button type="button" className="rd-btn is-primary rd-preview__send" disabled={submitting} onClick={() => void submit()}>{submitting ? '검증·발주 중…' : `공급사 ${previewSheets.length}곳에 발주 보내기`}</button>}
+            : <><button type="button" className="rd-btn rd-review__cart" disabled={submitting} onClick={putInCart}>장바구니</button>
+              <button type="button" className="rd-btn is-primary rd-preview__send rd-review__order" disabled={submitting} onClick={() => void submit()}>{submitting ? '검증·발주 중…' : `발주하기 · 공급사 ${previewSheets.length}곳`}</button></>}
         </div>
       </footer>
     </section>{submitting ? <LoadingScreen overlay message={'공급사에 발주를 보내고 있습니다.\n창을 닫거나 새로고침하지 마세요.'} /> : null}</div>, document.body) : null}

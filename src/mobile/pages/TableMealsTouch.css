@@ -124,7 +124,7 @@
   padding: 10px 14px 14px;
 }
 
-@media (max-width: 767px) {
+@media (max-width: 699px) {
   .tm-dayhead__nav { display: none; }
   .tm-panel__body { overflow: visible; }
   .tm-slots { grid-template-columns: minmax(0, 1fr); }
@@ -218,3 +218,158 @@ body.t-ui .tm-stepper__ten { --button-bg: var(--t-accent-soft); --button-bg-hove
 
 /* 2026-10-28 식단표 서류 받기 */
 .tm-docs { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+
+/* ── 2026-11-23 사용자 시안(태블릿): 한 장 주간식단표 + 주간 칼로리 + 원산지 + 사용 확정, 식단가 말풍선 ── */
+.tm2 { position: relative; display: grid; gap: 18px; }
+.tm2-sheet, .tm2-card, .tm2-kcal { position: relative; border-radius: 16px; background: var(--t-surface); box-shadow: 0 8px 22px rgba(16, 24, 20, .12); }
+.tm2-sheet { overflow: hidden; padding: 18px 18px 14px; }
+.tm2-sheet__deco { position: absolute; top: 0; left: 0; width: 170px; height: 146px; pointer-events: none; filter: drop-shadow(0 3px 4px rgba(20, 32, 24, .18)); }
+.tm2-sheet__tools { position: relative; z-index: 1; display: flex; justify-content: flex-end; gap: 8px; min-height: 34px; }
+body.t-ui .tm2-pill { min-height: 32px; padding: 0 16px; border: 0; border-radius: 8px; font-size: 13px; font-weight: 800; --button-bg: #5E9A3A; --button-bg-hover: #4C8230; --button-text: #fff; }
+body.t-ui .tm2-pill.is-ghost { --button-bg: var(--t-surface-2); --button-bg-hover: var(--t-line); --button-text: var(--t-text); }
+.tm2-download { position: relative; }
+.tm2-download__menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 20; min-width: 220px; padding: 10px; border-radius: 14px; background: var(--t-surface); box-shadow: 0 12px 30px rgba(16, 24, 20, .2); }
+.tm2-download__menu .tm-docs { display: grid; gap: 6px; margin: 0; }
+.tm2-nav { position: relative; z-index: 2; display: grid; justify-items: center; gap: 2px; margin-top: -10px; }
+body.t-ui .tm2-nav__dots { width: 36px; min-height: 30px; padding: 0; border: 0; border-radius: 10px; --button-bg: transparent; --button-bg-hover: #FFF1E2; --button-text: #F59A23; }
+.tm2-nav__row { display: flex; align-items: center; gap: 22px; }
+.tm2-nav__row h2 { color: #F59A23; font-size: 26px; font-weight: 800; letter-spacing: -.5px; }
+body.t-ui .tm2-nav__arrow { width: 36px; min-height: 36px; padding: 0; border: 0; border-radius: 10px; font-size: 26px; font-weight: 800; --button-bg: transparent; --button-bg-hover: #FFF1E2; --button-text: #F59A23; }
+.tm2-weeks { position: absolute; top: 34px; z-index: 30; width: min(360px, 90vw); padding: 12px; border-radius: 16px; background: var(--t-surface); box-shadow: 0 14px 34px rgba(16, 24, 20, .22); }
+.tm2-weeks__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 15px; }
+.tm2-weeks .tm-weeks { flex-wrap: wrap; margin: 0; }
+.tm2-sheet__title { margin-top: 10px; text-align: center; font-size: 20px; font-weight: 800; }
+.tm2-sheet__sub { margin: 2px 0 12px; color: var(--t-muted); font-size: 12px; text-align: center; }
+.tm2-table-wrap { overflow-x: auto; }
+.tm2-table { width: 100%; min-width: 640px; border-collapse: collapse; table-layout: fixed; }
+.tm2-table thead th { padding: 0 2px 8px; border-bottom: 1px solid #555; }
+.tm2-table th:first-child { width: 62px; }
+body.t-ui .tm2-day { display: grid; justify-items: center; gap: 2px; width: 100%; min-height: 0; padding: 4px 2px; border: 0; border-radius: 10px; --button-bg: transparent; --button-bg-hover: var(--t-surface-2); --button-text: var(--t-text); }
+.tm2-day b { font-size: 13px; font-weight: 800; }
+.tm2-day small { font-size: 11px; color: var(--t-text); }
+body.t-ui .tm2-day.is-today small { padding: 1px 8px; border-radius: 999px; background: #E6F0E7; color: #2E6B3A; font-weight: 800; }
+body.t-ui .tm2-day.is-active { --button-bg: #F4FAF0; box-shadow: inset 0 0 0 2px #5E9A3A; }
+.tm2-table tbody tr { border-bottom: 1px solid #888; }
+.tm2-table tbody th { padding: 10px 2px; color: #F59A23; font-size: 12px; font-weight: 800; text-align: left; }
+.tm2-table tbody tr.is-snack th { color: #5E9A3A; }
+.tm2-table td { position: relative; padding: 10px 2px; text-align: center; vertical-align: middle; font-size: 11.5px; line-height: 1.55; }
+.tm2-table tr.is-snack td { padding: 6px 2px; }
+.tm2-table td.is-active { background: #F4FAF0; }
+.tm2-table ul { margin: 0; padding: 0; list-style: none; }
+.tm2-table li.is-special, .tm2-table li.is-special .tm-menu-link { color: #F59A23; font-weight: 800; }
+.tm2-table .tm-menu-link { min-height: 0; padding: 0; font-size: inherit; line-height: inherit; }
+.tm2-empty { color: var(--t-muted); }
+.tm2-state { margin-top: 4px; font-size: 10px; }
+
+/* 이번 주 식단가 말풍선(위 오른쪽) */
+.tm2-budget { position: absolute; top: -4px; right: 8px; z-index: 25; width: 220px; }
+.tm2-budget .rd-card { padding: 16px 14px 12px; border: 0; border-radius: 14px; box-shadow: 0 12px 30px rgba(16, 24, 20, .22); text-align: center; }
+.tm2-budget .rd-h2 { font-size: 15px; font-weight: 800; }
+.tm2-budget dl { display: grid; gap: 8px; margin: 10px 0; }
+.tm2-budget dl > div + div { padding-top: 8px; border-top: 1px solid var(--t-line); }
+.tm2-budget dt { font-size: 12px; font-weight: 800; }
+.tm2-budget dd { margin: 0; font-size: 12px; }
+.tm2-budget p { color: #F59A23; font-size: 11px; }
+body.t-ui .tm2-budget__close { position: absolute; top: 4px; right: 6px; z-index: 1; width: 26px; min-height: 26px; padding: 0; border: 0; border-radius: 50%; font-size: 16px; --button-bg: transparent; --button-bg-hover: var(--t-surface-2); --button-text: #5E9A3A; }
+.tm2 .tm2-sheet { margin-top: 0; }
+@media (min-width: 700px) { .tm2-sheet__tools { padding-right: 236px; } .tm2 { padding-top: 6px; } }
+@media (max-width: 699px) { .tm2-budget { position: relative; top: 0; right: 0; justify-self: end; } }
+
+/* 주간 칼로리 */
+.tm2-kcal { padding: 26px 16px 16px; }
+.tm2-kcal__title { position: absolute; top: -10px; left: 12px; padding: 4px 14px; border-radius: 999px; background: #1E98CF; color: #fff; font-size: 13px; font-weight: 800; }
+.tm2-kcal__body { display: grid; grid-template-columns: minmax(0, 1fr) 120px; gap: 14px; align-items: center; }
+.tm2-kcal table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; }
+.tm2-kcal th { padding: 6px 2px; font-weight: 800; }
+.tm2-kcal tbody th { text-align: left; }
+.tm2-kcal td { padding: 10px 2px; text-align: center; }
+.tm2-kcal td + td { border-left: 1px solid #888; }
+.tm2-kcal__tiles { display: grid; gap: 12px; }
+.tm2-kcal__tiles > div { display: grid; justify-items: center; gap: 4px; padding: 10px 6px; border-radius: 12px; background: var(--t-surface); box-shadow: 0 4px 12px rgba(16, 24, 20, .16); text-align: center; }
+.tm2-kcal__tiles span { color: #F59A23; font-size: 11px; font-weight: 800; line-height: 1.3; }
+.tm2-kcal__tiles > div + div span { color: #5E9A3A; }
+.tm2-kcal__tiles strong { font-size: 20px; font-weight: 800; }
+.tm2-kcal__tiles small { margin-left: 2px; font-size: 10px; font-weight: 600; }
+
+.tm2-card { padding: 18px 20px; }
+.tm2-origin h3 { margin-bottom: 8px; text-align: center; font-size: 15px; font-weight: 800; }
+.tm2-origin .table-meals-origin-card { display: grid; gap: 6px; font-size: 13px; text-align: center; }
+.tm2-usage .tm-panel { height: auto; }
+.tm2-usage .tm-panel__body { overflow: visible; }
+@media (max-width: 699px) {
+  .tm2-kcal__body { grid-template-columns: minmax(0, 1fr); }
+  .tm2-kcal__tiles { grid-template-columns: 1fr 1fr; }
+  .tm2-kcal { overflow-x: auto; }
+}
+body.t-ui .tm2-table .tm-menu-link { display: inline; width: auto; height: auto; min-height: 0; padding: 0; border: 0; box-shadow: none; background: none; text-align: center; white-space: normal; font-weight: inherit; --button-height: auto; --button-bg: transparent; --button-bg-hover: transparent; --button-text: var(--t-text); }
+body.t-ui .tm2-day { height: auto; --button-height: auto; }
+.tm2-budget .tmx-saved__nums, .tm2-budget dl { grid-template-columns: minmax(0, 1fr) !important; }
+body.t-ui .tm2-table li.is-special .tm-menu-link { --button-text: #F59A23; }
+body.t-ui .tm2-table .tm2-day { height: auto !important; min-height: 0 !important; }
+.tm2-table thead th { cursor: pointer; border-radius: 10px 10px 0 0; }
+.tm2-table thead th small { display: block; font-size: 11px; font-weight: 600; }
+.tm2-table thead th.is-today small { color: #2E6B3A; font-weight: 800; }
+.tm2-table thead th.is-active { background: #F4FAF0; box-shadow: inset 0 3px 0 #5E9A3A; }
+body.t-ui .tm2-table .tm2-day { display: inline-block; width: auto; padding: 2px 8px; font-size: 13px; font-weight: 800; box-shadow: none; --button-bg: transparent; --button-bg-hover: transparent; }
+/* 식단가 말풍선은 한 줄씩(라벨 · 금액) 낮게 — 표 머리를 가리지 않게 */
+.tm2-budget { width: 210px; }
+.tm2-budget .rd-card { padding: 12px 14px 10px; }
+.tm2-budget dl { gap: 4px; margin: 8px 0 6px; }
+.tm2-budget dl > div { display: flex; justify-content: space-between; gap: 8px; }
+.tm2-budget dl > div + div { padding-top: 4px; }
+.tm2-budget p { margin: 0; line-height: 1.35; }
+.tm2-sheet__sub { margin-bottom: 18px; }
+.tm2-budget dl.tmx-saved__nums > div { flex-direction: row; align-items: baseline; }
+/* 좁은 태블릿(세로)에서는 말풍선 대신 위 띠(세 숫자 한 줄) — 표를 가리지 않게 */
+@media (max-width: 1099px) {
+  .tm2-budget { position: relative; top: 0; right: 0; width: auto; }
+  .tm2-budget .rd-card { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 4px 18px; text-align: left; padding: 12px 40px 12px 18px; }
+  .tm2-budget .rd-card > p { grid-column: 1 / -1; }
+  .tm2-budget dl.tmx-saved__nums { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; margin: 0; }
+  .tm2-budget dl.tmx-saved__nums > div + div { padding-top: 0; padding-left: 12px; border-top: 0; border-left: 1px solid var(--t-line); }
+  .tm2-sheet__tools { padding-right: 0 !important; }
+}
+@media (min-width: 1100px) { .tm2-sheet__sub { margin-bottom: 44px; } }
+
+/* ── 휴대폰 식단표(2026-11-23 사용자 시안): 식단가 카드 · 주간식단표(요일 → 그날 식사) · 주간 칼로리 ── */
+.mm-budget, .mm-plan, .mm-kcal { margin-bottom: 14px; padding: 16px; }
+.mm-budget { text-align: center; }
+.mm-budget h2, .mm-plan h2, .mm-kcal h2 { font-size: 15px; font-weight: 800; }
+.mm-week { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 10px 0 6px; }
+body.t-ui .mm-week__arrow { display: grid; place-items: center; width: 22px; min-height: 22px; padding: 0; border: 0; border-radius: 50%; --button-bg: #5E9A3A; --button-bg-hover: #4C8230; --button-text: #fff; }
+body.t-ui .mm-week__label { display: grid; justify-items: center; gap: 2px; min-height: 0; padding: 2px 6px; border: 0; --button-bg: transparent; --button-bg-hover: transparent; --button-text: var(--t-text); }
+.mm-week__label strong { font-size: 15px; font-weight: 800; }
+.mm-week__label small { color: var(--t-muted); font-size: 10px; }
+.mm-budget__nums { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0 4px; }
+.mm-budget__nums dt { color: var(--t-muted); font-size: 11px; }
+.mm-budget__nums dd { margin: 2px 0 0; font-size: 18px; font-weight: 800; }
+.mm-budget__nums dd.is-ok { color: #5E9A3A; }
+.mm-budget__nums dd.is-over { color: #D92D20; }
+.mm-budget__msg { color: #E38A2A; font-size: 11px; }
+.mm-plan header, .mm-kcal header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mm-pill { padding: 3px 10px; border-radius: 999px; background: #F59A23; color: #fff; font-size: 11px; font-weight: 800; }
+.mm-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; margin: 12px 0 8px; padding-bottom: 10px; border-bottom: 1px solid var(--t-line); }
+body.t-ui .mm-day { display: grid; justify-items: center; gap: 2px; min-height: 0; padding: 4px 0 6px; border: 0; border-radius: 10px; --button-bg: transparent; --button-bg-hover: var(--t-surface-2); --button-text: var(--t-text); }
+.mm-day small { color: var(--t-muted); font-size: 10px; }
+.mm-day b { font-size: 14px; font-weight: 800; }
+body.t-ui .mm-day.is-active { --button-bg: #1E98CF; --button-bg-hover: #1E98CF; --button-text: #fff; }
+.mm-day.is-active small { color: #fff; }
+.mm-day.is-today:not(.is-active) b { color: #1E98CF; }
+.mm-slots { display: grid; gap: 12px; margin: 6px 0 12px; padding: 0; list-style: none; }
+.mm-slots li { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 8px; align-items: start; }
+.mm-slots__label { font-size: 12px; font-weight: 800; color: #5E9A3A; }
+.mm-slots li.is-snack .mm-slots__label { color: #E38A2A; }
+.mm-slots__menus { color: var(--t-text); font-size: 12px; line-height: 1.6; text-align: center; }
+body.t-ui .mm-menu { display: inline; min-height: 0; padding: 0; border: 0; font-size: 12px; font-weight: 500; line-height: 1.6; --button-bg: transparent; --button-bg-hover: transparent; --button-text: var(--t-text); }
+body.t-ui .mm-menu.is-special { --button-text: #E38A2A; font-weight: 800; }
+.mm-slots__state { margin-left: 6px; font-size: 10px; vertical-align: middle; }
+.mm-plan__actions { display: flex; justify-content: space-between; gap: 10px; padding: 0 12px; }
+body.t-ui .mm-btn { min-height: 34px; padding: 0 20px; border: 0; border-radius: 999px 999px 999px 4px; font-size: 13px; font-weight: 800; box-shadow: 0 3px 8px rgba(16, 24, 20, .16); --button-text: #fff; }
+body.t-ui .mm-btn.is-orange { --button-bg: #F59A23; --button-bg-hover: #E58A13; }
+body.t-ui .mm-btn.is-green { --button-bg: #5E9A3A; --button-bg-hover: #4C8230; border-radius: 999px 999px 4px 999px; }
+.mm-kcal p { margin-top: 6px; color: var(--t-muted); font-size: 12px; }
+.mm-kcal small { color: var(--t-muted); font-size: 10px; }
+body.t-ui .mm-link { min-height: 0; padding: 0; border: 0; font-size: 12px; font-weight: 800; --button-bg: transparent; --button-bg-hover: transparent; --button-text: #5E9A3A; }
+.mm-sheet .tm-panel { height: auto; }
+.mm-docs { display: grid; gap: 8px; }
+.mm-week--month { margin: 0 0 12px; }

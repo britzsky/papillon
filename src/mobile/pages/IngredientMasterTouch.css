@@ -42,7 +42,7 @@ body.t-ui .im-cats button.is-active { --button-bg: var(--t-accent); --button-bg-
 body.t-ui .im-units button { --button-bg: var(--t-surface-2); --button-bg-hover: var(--t-surface-2); }
 body.t-ui .im-units button.is-active { --button-bg: var(--t-accent-soft); --button-bg-hover: var(--t-accent-soft); --button-text: var(--t-accent-strong); box-shadow: inset 0 0 0 1.5px var(--t-accent); }
 
-@media (max-width: 767px) {
+@media (max-width: 699px) {
   .im-search { flex: 1; min-width: 0; }
   .im-cats { margin: 0 -16px 6px; padding: 2px 16px 8px; }
   .im-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }

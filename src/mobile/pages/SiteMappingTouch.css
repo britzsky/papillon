@@ -52,7 +52,7 @@ body.t-ui .sm-candidates button.is-current { --button-bg: var(--t-accent-soft); 
 .sm-candidates .sm-candidates__shared { color: var(--t-warn); }
 .sm-candidates button > .t-badge { justify-self: start; }
 
-@media (max-width: 767px) {
+@media (max-width: 699px) {
   .sm-search { flex: 1 1 100%; }
   .sm-grid { grid-template-columns: minmax(0, 1fr); }
   .sm-panel__body { overflow: visible; }

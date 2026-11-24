@@ -12,6 +12,8 @@ import { useTouchBody } from './useTouchBody'
 import logo from '../assets/logo/thefull.png'
 import './TouchLayout.css'
 import './TouchPcSkin.css'
+import './TouchPcContent.css'
+import { SHOW_MALL } from '../features/mall/mallVisibility'
 
 type NavItem = { label: string; to: string; hint: string }
 type NavGroup = { key: string; label: string; icon: TouchIconName; items: NavItem[]; hqOnly?: boolean }
@@ -44,6 +46,7 @@ const NAV: NavGroup[] = [
   { key: 'hq', label: '본사', icon: 'hq', hqOnly: true, items: [
     { label: '고객사 관리', to: '/operations/account', hint: '고객사 · 식사 설정' },
     { label: '끼니 종류', to: '/operations/meal-slots', hint: '조식·중식·간식 등 끼니 추가' },
+    { label: '매입 관리', to: '/operations/purchase-ledger', hint: '공급사별 매입 · 부가세 · 청구 대조' },
     { label: '유통 주문 관리', to: '/distribution/orders', hint: '입금 확인 · 발주서 · 송장 · 취소' },
     { label: '유통 상품 관리', to: '/distribution/products', hint: '협력사 상품 · 가격 · 판매 상태' },
     { label: '거래처 결제 설정', to: '/distribution/accounts', hint: '후불 허용 · 한도 · 기본 배송지' },
@@ -53,6 +56,13 @@ const NAV: NavGroup[] = [
   ] },
 ]
 
+/**
+ * 태블릿(700px 이상 — 아이패드 미니 744px 포함) 위 메뉴(2026-11-23 사용자 시안): 가운데 로고(=홈) 양옆에 물방울 아이콘.
+ * 이름은 PC 위 메뉴와 같게, 묶음 안 화면은 누르면 아래로 펼침 창. 휴대폰은 예전처럼 아래 탭(.t-rail).
+ */
+const TOP_LABEL: Record<string, string> = { meals: '운영관리', order: '발주관리', inventory: '재고관리', sanitation: '위생관리', mall: '더채움몰', hq: '본사' }
+const TOP_LEFT = ['meals', 'order']
+
 /** 역할별로 숨기는 화면은 features/workspace/roleScreens(PC 메뉴·주소 직접 입력과 같은 목록) */
 const isAccountUser = () => localStorage.getItem('user_type') === '3'
 
@@ -60,10 +70,10 @@ const todayLabel = () => new Date().toLocaleDateString('ko-KR', { month: 'long',
 
 /**
  * 태블릿·휴대폰 공통 틀(POS 형태): 왼쪽 아이콘 메뉴 + 위 제목·거래처 + 본문 + 오른쪽 실행 패널(aside).
- * 휴대폰(768px 미만)은 메뉴가 아래 탭, 실행 패널은 본문 아래로 내려간다.
+ * 휴대폰(700px 미만)은 메뉴가 아래 탭, 실행 패널은 본문 아래로 내려간다.
  * PC 전용 전역 스타일(body.workspace-ui)은 이 틀이 있는 동안 끈다.
  */
-export default function TouchLayout({ title, subtitle, toolbar, aside, asideNarrow = false, children, onAccountChange, hideAccount = false }: {
+export default function TouchLayout({ title, subtitle, toolbar, aside, asideNarrow = false, children, onAccountChange, hideAccount = false, pcContent = false, eyebrow }: {
   title: string
   subtitle?: string
   /** 제목 옆 조회 조건(월 이동 등) */
@@ -77,6 +87,10 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, asideNarr
   onAccountChange?: (accountId: string) => void
   /** 거래처와 무관한 본사 화면(식자재 관리·고객사 관리 등)은 거래처 선택을 숨긴다 */
   hideAccount?: boolean
+  /** 본문이 PC 화면 부품(발주하기 등) — PC 전역 스타일을 켜 두고 본문을 PC 모양 그대로 그린다 */
+  pcContent?: boolean
+  /** 휴대폰 제목 위 작은 초록 글씨(기본 = 지금 묶음 이름, 홈은 거래처 이름 등) */
+  eyebrow?: string
 }) {
   const { pathname } = useLocation()
   const navigate = useNavigate()
@@ -91,7 +105,7 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, asideNarr
   // 공급사 사업장 매핑 색(왼쪽 웰스토리 주황 · 오른쪽 아워홈 파랑) — 본사만
   const suppliers = useAccountSuppliers(!accountUser && signedIn)
 
-  useTouchBody()
+  useTouchBody(pcContent)
 
   useEffect(() => {
     if (accountUser || !signedIn) return
@@ -100,7 +114,7 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, asideNarr
     return () => { alive = false }
   }, [accountUser, signedIn])
 
-  const groups = NAV
+  const groups = NAV.filter(group => SHOW_MALL || group.key !== 'mall')
     .filter(group => !((accountUser || !signedIn) && group.hqOnly))
     .map(group => ({ ...group, items: group.items.filter(item => signedIn ? visibleForRole(item.to) : !HQ_ONLY_PATHS.includes(item.to)) }))
     .filter(group => group.items.length > 0)
@@ -132,8 +146,29 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, asideNarr
   const accountName = accounts.find(option => option.value === accountId)?.text || localStorage.getItem('account_name') || ''
 
   const userName = localStorage.getItem('user_name') || ''
+  const topGroups = groups.filter(group => group.key !== 'home')
+  const homeGroup = groups.find(group => group.key === 'home')
+  const pressTop = (group: NavGroup) => {
+    if (group.items.length === 1) { if (canOpen(group.items[0].to)) go(group.items[0].to) }
+    else setOpenGroup(current => current === group.key ? '' : group.key)
+  }
+  const topItem = (group: NavGroup, index: number) => {
+    const locked = group.items.length === 1 && !canOpen(group.items[0].to)
+    return <button key={group.key} type="button"
+      className={`t-topnav__item is-${index % 2 ? 'blue' : 'orange'}${activeGroup === group.key ? ' is-active' : ''}${openGroup === group.key ? ' is-open' : ''}${locked ? ' is-locked' : ''}`}
+      aria-current={activeGroup === group.key ? 'page' : undefined} aria-disabled={locked || undefined}
+      aria-expanded={group.items.length > 1 ? openGroup === group.key : undefined} onClick={() => pressTop(group)}>
+      <i className="t-topnav__blob" aria-hidden="true" />
+      <span>{TOP_LABEL[group.key] || group.label}</span>
+    </button>
+  }
+  // 휴대폰(700px 미만, 2026-11-23 사용자 시안): 위 로고 · ☰(전체 메뉴), 아래 물방울 메뉴(모든 화면 고정, 선택한 묶음은 주황으로 떠오름)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const groupLabel = activeGroup && activeGroup !== 'home' ? (TOP_LABEL[activeGroup] || '') : '홈'
+  const leftTop = topGroups.filter(group => TOP_LEFT.includes(group.key))
+  const rightTop = topGroups.filter(group => !TOP_LEFT.includes(group.key))
 
-  return <div className={`t-app${aside ? ' has-aside' : ''}${aside && asideNarrow ? ' is-aside-narrow' : ''}`}>
+  return <div className={`t-app${pcContent ? ' is-pc-content' : ''}${aside ? ' has-aside' : ''}${aside && asideNarrow ? ' is-aside-narrow' : ''}`}>
     <nav className="t-rail" aria-label="메뉴">
       <div className="t-rail__brand">
         <img className="t-rail__logo" src={logo} alt="더채움" />
@@ -168,6 +203,50 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, asideNarr
       </div>}
     </nav>
 
+    {/* 태블릿 위 메뉴(휴대폰에서는 숨김) */}
+    <header className="t-topnav" aria-label="메뉴">
+      <span className="t-topnav__glow" aria-hidden="true" />
+      <nav className="t-topnav__side is-left">{leftTop.map((group, i) => topItem(group, i))}</nav>
+      <button type="button" className="t-topnav__brand" aria-label="홈으로" onClick={() => homeGroup ? go(homeGroup.items[0].to) : go('/home')}>
+        <img src={logo} alt="더채움 THE CHAEWOOM" />
+      </button>
+      <nav className="t-topnav__side is-right">{rightTop.map((group, i) => topItem(group, i + 1))}</nav>
+      {signedIn && <button type="button" className="t-topnav__logout" aria-label="로그아웃" title={userName ? `${userName} · 로그아웃` : '로그아웃'} onClick={logout}><TouchIcon name="logout" size={20} /></button>}
+    </header>
+
+    {/* 휴대폰 위 머리: 로고(=홈) · ☰ 전체 메뉴 */}
+    <header className="t-mhead">
+      <button type="button" className="t-mhead__brand" aria-label="홈으로" onClick={() => homeGroup ? go(homeGroup.items[0].to) : go('/home')}><img src={logo} alt="더채움 THE CHAEWOOM" /></button>
+      <button type="button" className="t-mhead__menu" aria-label="전체 메뉴" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}>
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+      </button>
+    </header>
+    {/* 휴대폰 아래 물방울 메뉴(모든 화면) */}
+    <nav className={`t-mnav${openGroup ? ' has-open' : ''}`} aria-label="메뉴">
+      {topGroups.map(group => {
+        const locked = group.items.length === 1 && !canOpen(group.items[0].to)
+        return <button key={group.key} type="button" className={`t-mnav__item${activeGroup === group.key ? ' is-active' : ''}${openGroup === group.key ? ' is-open' : ''}${locked ? ' is-locked' : ''}`}
+          aria-current={activeGroup === group.key ? 'page' : undefined} aria-disabled={locked || undefined} aria-expanded={group.items.length > 1 ? openGroup === group.key : undefined}
+          title={TOP_LABEL[group.key] || group.label} onClick={() => pressTop(group)}>
+          <i className="t-mnav__blob" aria-hidden="true" /><span>{TOP_LABEL[group.key] || group.label}</span>
+        </button>
+      })}
+    </nav>
+    {menuOpen && <div className="t-flyout-backdrop t-mdrawer-backdrop" role="presentation" onClick={() => setMenuOpen(false)}>
+      <section className="t-mdrawer" role="dialog" aria-label="전체 메뉴" onClick={e => e.stopPropagation()}>
+        <header className="t-mdrawer__head"><strong>{userName ? `${userName} 님` : '메뉴'}</strong>
+          <button type="button" className="t-mhead__menu" aria-label="메뉴 닫기" onClick={() => setMenuOpen(false)}><TouchIcon name="close" size={18} /></button></header>
+        <div className="t-mdrawer__body">
+          {groups.map(group => <div key={group.key} className="t-mdrawer__group">
+            <h3>{group.key === 'home' ? '홈' : TOP_LABEL[group.key] || group.label}</h3>
+            <ul>{group.items.map(item => <li key={item.to}><button type="button" className={`${pathname === item.to ? 'is-active' : ''}${canOpen(item.to) ? '' : ' is-locked'}`}
+              aria-disabled={canOpen(item.to) ? undefined : true} onClick={() => { setMenuOpen(false); go(item.to) }}>{item.label}</button></li>)}</ul>
+          </div>)}
+        </div>
+        {signedIn && <button type="button" className="t-btn is-block t-mdrawer__logout" onClick={logout}><TouchIcon name="logout" size={18} />로그아웃</button>}
+      </section>
+    </div>}
+
     {flyout && <div className="t-flyout-backdrop" role="presentation" onClick={() => setOpenGroup('')}>
       <section className="t-flyout" role="dialog" aria-label={`${flyout.label} 메뉴`} onClick={e => e.stopPropagation()}>
         <h2>{flyout.label}</h2>
@@ -185,7 +264,7 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, asideNarr
     <div className="t-page">
       <header className="t-top">
         <div className="t-top__title">
-          <p>{todayLabel()}</p>
+          <p><span className="t-top__date">{todayLabel()}</span><span className="t-top__group">{eyebrow ?? groupLabel}</span></p>
           <h1>{title}</h1>
           {subtitle && <span>{subtitle}</span>}
         </div>
@@ -197,7 +276,8 @@ export default function TouchLayout({ title, subtitle, toolbar, aside, asideNarr
         </div>}
       </header>
       <div className="t-body">
-        <main className="t-main">{children}</main>
+        {/* PC 본문: PC 틀(TopMenuLayout)과 같은 감싸는 칸(rd top-layout · top-page)을 둬서 PC 화면 규칙이 그대로 먹게 */}
+        <main className="t-main">{pcContent ? <div className="rd top-layout is-work t-pc-frame" data-theme="light"><div className="top-page">{children}</div></div> : children}</main>
         {aside && <aside className="t-aside">{aside}</aside>}
       </div>
     </div>

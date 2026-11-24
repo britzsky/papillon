@@ -119,9 +119,65 @@ body.t-ui .iv-pick button { --button-bg: var(--t-surface-2); --button-bg-hover: 
 .iv-picked > div { display: grid; flex: 1; }
 .iv-picked small { color: var(--t-muted); font-size: 13px; }
 
-@media (max-width: 767px) {
+@media (max-width: 699px) {
   .iv-search { flex: 1; min-width: 0; }
   .iv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .iv-card .product-image { height: 92px; }
 }
 .iv-inline .t-segment button { min-width: 56px; padding: 0 14px; }
+
+/* 2026-11-23 사용자 시안(태블릿): 버튼 줄(흰 알약) + 요약, 분류는 작은 칩, 카드 4열(이름이 맨 위) */
+.iv-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 4px 0 14px; }
+body.t-ui .iv-pill { min-height: 42px; padding: 0 22px; border-radius: 12px; box-shadow: 0 4px 12px rgba(16, 24, 20, .12); font-size: 14px; font-weight: 800; text-decoration: none; }
+.iv-actions__sum { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0 0 0 auto; color: var(--t-muted); font-size: 13px; font-weight: 600; }
+.iv-actions__sum b { color: var(--t-text); font-weight: 800; }
+.iv-actions__sum .is-danger b { color: var(--t-danger); }
+.iv-actions__sum .is-warn b { color: var(--t-warn); }
+.iv-tabs.t-tabs { gap: 8px; }
+.iv-tabs .t-tab { min-height: 40px; padding: 6px 14px; flex-direction: row; gap: 6px; border-radius: 999px; }
+.iv-tabs .t-tab .t-icon { display: none; }
+.iv-tabs .t-tab strong { font-size: 14px; }
+.iv-tabs .t-tab small { font-size: 12px; }
+@media (min-width: 700px) {
+  .iv-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+  .iv-card { min-height: 128px; padding: 14px 14px 16px; border-radius: 14px; box-shadow: 0 4px 14px rgba(16, 24, 20, .10); }
+}
+.iv-card { position: relative; }
+.iv-card__name { padding: 0; font-size: 15px; font-weight: 800; }
+.iv-card__tag { position: static; justify-self: start; }
+.iv-card__product, .iv-card__qty { padding: 0; }
+.iv-detail-sheet { max-width: 520px; height: min(760px, 88dvh); overflow: hidden; }
+.iv-detail-sheet .iv-panel { height: 100%; }
+/* 업무 순서 띠(TouchWorkflowBar) */
+.t-flow { margin: 0 0 14px; padding: 10px 16px; border-radius: 14px; background: var(--t-surface); box-shadow: 0 4px 12px rgba(16, 24, 20, .10); }
+.t-flow ol { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 0; padding: 0; list-style: none; font-size: 13px; font-weight: 800; }
+.t-flow li + li::before { content: '>'; margin: 0 10px 0 4px; color: var(--t-text); }
+.t-flow a { color: var(--t-text); text-decoration: none; }
+.t-flow li.is-current span { padding: 4px 12px; border-radius: 8px; background: #5E9A3A; color: #fff; }
+
+/* 휴대폰 재고(2026-11-23 사용자 시안): 업무 순서 칩 · 작은 버튼 · '관리 식재료' 줄 목록(아이콘 · 이름 · 설명 · >) */
+.iv-card__icon, .iv-card__chev { display: none; }
+@media (max-width: 699px) {
+  .t-flow { padding: 0; background: transparent; box-shadow: none; }
+  .t-flow ol { gap: 6px; font-size: 11px; }
+  .t-flow li + li::before { content: none; }
+  .t-flow a, .t-flow li span { display: inline-block; padding: 3px 10px; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--t-line); background: var(--t-surface); color: var(--t-muted); }
+  .t-flow li.is-current span { box-shadow: none; background: #5E9A3A; color: #fff; }
+  .iv-actions { gap: 8px; }
+  body.t-ui .iv-pill { min-height: 30px; padding: 0 12px; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--t-line); font-size: 12px; }
+  .iv-actions__sum { width: 100%; margin: 0; font-size: 11px; }
+  .iv-tabs .t-tab { min-height: 32px; padding: 4px 10px; }
+  .iv-tabs .t-tab strong { font-size: 12px; }
+  .iv-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 14px 12px; border-radius: 16px; background: var(--t-surface); box-shadow: 0 6px 18px rgba(16, 24, 20, .10); }
+  .iv-grid::before { content: '관리 식재료'; font-size: 15px; font-weight: 800; padding: 0 4px; }
+  .iv-card.iv-card { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto auto; grid-template-areas: 'icon name tag chev' 'icon sub sub chev'; align-items: center; column-gap: 12px; row-gap: 2px;
+    min-height: 0; padding: 14px 16px; border-radius: 26px 26px 26px 26px / 22px 22px 30px 30px; box-shadow: 0 6px 14px rgba(16, 24, 20, .14); }
+  .iv-card__icon { grid-area: icon; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 8px; background: #E6F0E7; color: #5E9A3A; }
+  .iv-card__icon.is-alt { background: #E6F4FB; color: #1E98CF; }
+  .iv-card__name { grid-area: name; font-size: 14px; }
+  .iv-card__tag { grid-area: tag; }
+  .iv-card__chev { grid-area: chev; display: block; color: var(--t-muted); }
+  .iv-card__product { grid-area: sub; font-size: 11px; }
+  .iv-card__qty, .iv-card > .t-badge { display: none; }
+}
+@media (max-width: 699px) { .iv-tabs .t-tab { display: inline-flex; align-items: baseline; gap: 4px; white-space: nowrap; } .iv-tabs .t-tab small { font-size: 10px; } }

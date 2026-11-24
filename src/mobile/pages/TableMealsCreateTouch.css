@@ -99,7 +99,7 @@ body.t-ui .tc-menus button { box-shadow: inset 0 0 0 1.5px var(--t-line); }
 .tc-stock__actions { flex-wrap: wrap; }
 
 @media (max-width: 1023px) { .tc-methods, .tc-methods.is-four { grid-template-columns: minmax(0, 1fr); } .tc-method { min-height: 0; } }
-@media (max-width: 767px) {
+@media (max-width: 699px) {
   .tc-slots { grid-template-columns: minmax(0, 1fr); }
   .tc-menus { max-height: 50vh; }
 }
@@ -127,3 +127,7 @@ body.t-ui .tc-slot li .tc-special { --button-bg: #fff; --button-bg-hover: #fff; 
 body.t-ui .tc-slot li .tc-special.is-on { --button-bg: #7a4fb0; --button-bg-hover: #7a4fb0; --button-text: #fff; box-shadow: none; }
 .tc-special-replace { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 8px 10px; border-radius: 10px; background: #f6f0fd; color: #5f3a91 !important; }
 .tc-special-replace .t-btn { margin-left: auto; }
+
+/* 저장 전 재고 확인: 레시피 없는 메뉴(2026-11-23) */
+.tc-stock__missing { display: grid; gap: 6px; margin-bottom: 12px; }
+.tc-stock__missing-list { display: flex; flex-wrap: wrap; gap: 6px; }

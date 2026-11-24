@@ -88,8 +88,8 @@ body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-seg button { border: 0 !i
 .rd .rd-order__split .rd-order__row > :nth-child(n+3) { border-left: 1px solid #EEF1EE; }
 .rd .rd-order__split .rd-order__row.is-head > :nth-child(n+3) { border-left-color: #E3E8E4; }
 .rd .rd-order__supplier { flex: 1 0 300px; max-width: 400px; position: sticky; top: 8px; display: flex; flex-direction: column; max-height: calc(100vh - 24px); overflow: hidden; border: 1px solid #E1E7E2; border-radius: 12px; background: #fff; }
-.rd .rd-order__supplier.is-WELSTORY { border-top: 3px solid var(--rd-blue-ink, #2B5C9E); }
-.rd .rd-order__supplier.is-OURHOME { border-top: 3px solid var(--rd-orange-ink, #B4561B); }
+.rd .rd-order__supplier.is-WELSTORY { border-top: 3px solid var(--sup-welstory); }
+.rd .rd-order__supplier.is-OURHOME { border-top: 3px solid var(--sup-ourhome); }
 .rd .rd-order__supplier-head { display: flex; flex-direction: column; gap: 2px; padding: 9px 14px; background: #F7F9F7; border-bottom: 1px solid #EEF1EE; --rd-fs: 13px; }
 .rd .rd-order__supplier-head strong { font-weight: 800; }
 .rd .rd-order__supplier-list { display: flex; flex-direction: column; gap: 8px; padding: 10px; overflow-y: auto; }
@@ -147,7 +147,8 @@ body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-stepper button { width: 3
 .rd .rd-order__summary { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
 .rd .rd-order__summary > p { margin: 0; }
 .rd .rd-order__sheet { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border: 1px solid var(--rd-line); border-radius: 12px; }
-.rd .rd-order__sheet.is-OURHOME { border-color: var(--rd-orange-line); background: #FFFAF4; }
+.rd .rd-order__sheet.is-OURHOME { border-color: var(--sup-ourhome-line); background: #F5FBFE; }
+.rd .rd-order__sheet.is-WELSTORY { border-color: var(--sup-welstory-line); background: #FFFAF4; }
 .rd .rd-order__sheet-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; }
 .rd .rd-order__sheet-sum { display: flex; justify-content: space-between; }
 .rd .rd-order__sheet-sum strong { font-weight: 800; }
@@ -257,9 +258,11 @@ body.workspace-ui .rd.rd button:disabled { background: var(--rd-btn-disabled-bg,
 .rd .rd-preview__chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .rd .rd-preview__chips .rd-chip { --rd-fs: 12px; padding: 5px 12px; }
 .rd .rd-preview__sheet { border: 1px solid var(--rd-line); border-radius: 14px; overflow: hidden; }
-.rd .rd-preview__sheet.is-OURHOME { border-color: var(--rd-orange-line); }
+.rd .rd-preview__sheet.is-OURHOME { border-color: var(--sup-ourhome-line); }
+.rd .rd-preview__sheet.is-WELSTORY { border-color: var(--sup-welstory-line); }
 .rd .rd-preview__sheet-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 16px; background: #F7F9F7; }
-.rd .rd-preview__sheet.is-OURHOME .rd-preview__sheet-head { background: #FFFAF4; }
+.rd .rd-preview__sheet.is-OURHOME .rd-preview__sheet-head { background: #F5FBFE; }
+.rd .rd-preview__sheet.is-WELSTORY .rd-preview__sheet-head { background: #FFFAF4; }
 .rd .rd-preview__row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, .7fr) minmax(0, .8fr) minmax(0, .9fr); gap: 10px; align-items: center; padding: 9px 16px; border-top: 1px solid #F0F2F0; }
 .rd .rd-preview__row.is-head { color: var(--rd-muted); font-weight: 700; padding: 7px 16px; }
 .rd .rd-preview__row.is-warn { background: #FFF8F0; }
@@ -309,6 +312,9 @@ body.workspace-ui > :is(#root, :not(#root)) .rd.rd .pos-card .rd-stepper input {
 .rd.rd-inv { display: flex; flex-direction: column; gap: 14px; height: 100%; min-height: 0; }
 .rd .account-inventory-layout { flex: 1 1 0; min-height: 320px; }
 .rd .account-inventory-layout .menu-manager-panel { height: 100% !important; }
+/* 2026-11-23 수정: 바깥 칸(.top-page) 높이가 정해져 있지 않아 flex 1 1 0 표 영역이 0px로 접혀 재고 표가 안 보이던 문제.
+   표 영역에 화면 높이 기준 높이를 직접 준다(표 안에서 스크롤). 공통 규칙(min-height:0 등)보다 세게 */
+body.workspace-ui .rd.rd-inv > .account-inventory-layout { flex: none !important; height: max(420px, calc(100vh - 330px)) !important; min-height: 420px !important; }
 /* 머리 줄 한 줄: 제목 · 발주 마감 알림(약 2/3) · 직접구매·기초재고·이력 (2026-10-16 사용자 요청) */
 .rd .rd-inv__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
 .rd .rd-inv__head > .rd-h1 { flex: none; }
@@ -444,3 +450,5 @@ body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-daystrip__day.is-active s
 .rd .rd-order__list-head > div:first-child { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; flex: none; }
 .rd .rd-order__list-head > div:first-child p { margin: 0; }
 .rd .rd-order__tools { flex: none; flex-wrap: wrap; }
+.rd .rd-order__cover { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -4px 0 0; }
+.rd .rd-order__cover select { min-width: 120px; }

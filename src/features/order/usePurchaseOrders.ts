@@ -2,8 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { buildApiUrl } from '../../config/api'
 import { getSupplierSites } from '../../api/supplierIntegration'
 import { newRequestKey } from '../../utils/requestKey'
+import { cancelShortage as cancelShortageApi, registerShortage, shortageMessage, type ShortageSource } from '../../api/receiving'
 
-export type OrderItem = { supplier_product_id?: number; favorite_yn?: 'Y' | 'N' | null; unit_price_snapshot?: number; line_amount?: number; source_ingredient_id?: string; ingredient_id?: string | null; ingredient_name?: string | null; base_unit?: string; base_qty_per_order_unit?: number; product_base_unit?: string; supplier_item_code?: string; client_ord_item: string; product_name: string; order_qty: number; received_order_qty: number; order_unit: string; item_status: string; supplier_result_code?: string; supplier_error_message?: string }
+export type OrderItem = { supplier_product_id?: number; favorite_yn?: 'Y' | 'N' | null; unit_price_snapshot?: number; line_amount?: number; source_ingredient_id?: string; ingredient_id?: string | null; ingredient_name?: string | null; base_unit?: string; base_qty_per_order_unit?: number; product_base_unit?: string; supplier_item_code?: string; client_ord_item: string; product_name: string; order_qty: number; received_order_qty: number; shortage_order_qty?: number | null; delivery_type?: string | null; delivery_type_raw?: string | null; order_unit: string; item_status: string; supplier_result_code?: string; supplier_error_message?: string }
 export type PurchaseOrder = { supplier_id?: number | string; sold_to?: string; site_name?: string; account_name?: string; created_at?: string; client_note?: string; purchase_order_id: string; client_ord: string; supplier_name: string; status: string; requested_delivery_date: string; total_amount: number; items: OrderItem[]; supplier_result_code?: string; supplier_result_message?: string; supplier_code?: string; inspected_at?: string | null; inspected_by?: string | null }
 
 export const ORDER_STATUS_LABELS: Record<string, string> = { SENDING: '전송 중', UNKNOWN: '결과 확인 필요', ORDERED: '주문 접수', CONFIRMED: '주문 확인', PARTIAL_FAILED: '일부 품목 확인 필요', FAILED: '실패', PARTIAL_RECEIVED: '부분입고', RECEIVED: '입고완료', NOT_RECEIVED: '미입고', CANCELED: '취소' }
@@ -13,6 +14,14 @@ export const RECEIVABLE_STATUSES = ['ORDERED', 'CONFIRMED', 'PARTIAL_RECEIVED', 
 export const UNCERTAIN_STATUSES = ['UNKNOWN', 'SENDING', 'PARTIAL_FAILED']
 
 const today = () => new Date().toLocaleDateString('sv-SE')
+const round3 = (value: number) => Math.round(value * 1000) / 1000
+/** 아직 안 들어온 수량: 주문 − 이미 입고 − 결품 처리 */
+export const remainingQty = (item: OrderItem) => Math.max(0, round3(Number(item.order_qty) - Number(item.received_order_qty) - Number(item.shortage_order_qty || 0)))
+/** 남는 수량 처리: 배송 대기(나중에 옴, 기본) 또는 결품(남은 수량을 닫음) */
+export type LeftoverChoice = 'WAIT' | 'SHORTAGE'
+/** 남은 품목을 모두 결품으로 닫은 발주서(서버 상태는 미입고지만 더 처리할 것이 없음) */
+export const closedByShortage = (order: PurchaseOrder) => order.status === 'NOT_RECEIVED' && order.items?.length > 0
+  && order.items.some(i => Number(i.shortage_order_qty || 0) > 0) && order.items.every(i => ['FAILED', 'CANCELED'].includes(i.item_status) || remainingQty(i) === 0)
 export const daysAgo = (days: number) => { const date = new Date(); date.setDate(date.getDate() - days); return date.toLocaleDateString('sv-SE') }
 
 async function request(path: string, body?: unknown) {
@@ -86,7 +95,15 @@ export function usePurchaseOrders(accountId: string, focusedId: string) {
     return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name, 'ko'))
   }, [siteSuppliers, orders])
 
-  const selectOrder = (order: PurchaseOrder | null) => { setSelected(order); setQuantities({}); setChoices({}); receiptRequest.current = null }
+  // 결품: 받은 수량이 남은 수량보다 적은 줄의 나머지를 "배송 대기"로 둘지 "결품"으로 닫을지(기본 배송 대기)
+  const [leftovers, setLeftovers] = useState<Record<string, LeftoverChoice>>({})
+  const [shortageForm, setShortageForm] = useState<{ source: ShortageSource; reason: string; contact_name: string }>({ source: 'SITE_CHECK', reason: '', contact_name: '' })
+  const [shortageNotice, setShortageNotice] = useState<{ orderId: string; text: string } | null>(null)
+  const leftoverQty = (item: OrderItem) => Math.max(0, round3(remainingQty(item) - (Number(receiptQuantity(item)) || 0)))
+  const leftoverChoice = (item: OrderItem): LeftoverChoice => leftovers[item.client_ord_item] ?? 'WAIT'
+  const setLeftoverChoice = (item: OrderItem, choice: LeftoverChoice) => setLeftovers(current => ({ ...current, [item.client_ord_item]: choice }))
+  const shortageLines = (order: PurchaseOrder | null) => order ? order.items.filter(item => leftoverChoice(item) === 'SHORTAGE' && leftoverQty(item) > 0) : []
+  const selectOrder = (order: PurchaseOrder | null) => { setSelected(order); setQuantities({}); setChoices({}); setLeftovers({}); receiptRequest.current = null }
 
   const reconcile = async () => {
     if (!selected) return
@@ -115,27 +132,56 @@ export function usePurchaseOrders(accountId: string, focusedId: string) {
   }
 
   /** 이번 입고 수량: 직접 고친 값, 없으면 미입고 잔량(주문량 − 기입고) */
-  const receiptQuantity = (item: OrderItem) => quantities[item.client_ord_item]
-    ?? String(Math.max(0, Math.round((Number(item.order_qty) - Number(item.received_order_qty)) * 1000) / 1000))
+  const receiptQuantity = (item: OrderItem) => quantities[item.client_ord_item] ?? String(remainingQty(item))
   const setReceiptQuantity = (item: OrderItem, value: string) => setQuantities(current => ({ ...current, [item.client_ord_item]: value }))
 
-  const receive = async () => {
+  /** 입고(검수완료 뒤) + 결품 확정. shortageOnly면 결품만 확정(공급사가 먼저 연락한 경우 등 검수 전에도 됨) */
+  const receive = async (shortageOnly = false) => {
     if (!selected) return
-    if (!selected.inspected_at) { setMessage('검수완료 전 · 검수서로 확인 후 검수완료 요망'); return }
-    const receiving = selected.items.filter(item => Number(receiptQuantity(item)) > 0)
+    const receiving = shortageOnly ? [] : selected.items.filter(item => Number(receiptQuantity(item)) > 0)
+    const shortages = shortageLines(selected).map(item => ({ item, qty: leftoverQty(item) }))
     const missing = receiving.filter(item => needsIngredient(item) && !receiptChoice(item).ingredient_id)
     if (missing.length) { setMessage(`재고에 넣을 식재료 선택 요망: ${missing.map(item => item.product_name).join(', ')}`); return }
     const items = receiving.map(item => ({ client_ord_item: item.client_ord_item, received_qty: Number(receiptQuantity(item)),
       ...(needsIngredient(item) ? { ingredient_id: receiptChoice(item).ingredient_id, ...(Number(receiptChoice(item).per_unit) > 0 ? { base_qty_per_order_unit: Number(receiptChoice(item).per_unit) } : {}) } : {}) }))
-    if (!items.length) { setMessage('이번에 실제 입고된 수량을 입력해 주세요.'); return }
+    if (!items.length && !shortages.length) { setMessage('이번에 실제 입고된 수량을 입력해 주세요.'); return }
+    // 입고는 검수완료 뒤에만. 결품만 확정(공급사가 먼저 연락 등)은 검수 전에도 된다
+    if (items.length && !selected.inspected_at) { setMessage('검수완료 전 · 검수서로 확인 후 검수완료 요망'); return }
     const signature = JSON.stringify({ order: selected.purchase_order_id, receiptDate, items })
     if (receiptRequest.current?.signature !== signature) receiptRequest.current = { signature, key: newRequestKey() }
     setBusy(true)
+    let received = false
     try {
-      await request('/Procurement/Receive', { account_id: accountId, purchase_order_id: selected.purchase_order_id, receipt_date: receiptDate, receipt_key: receiptRequest.current.key, user_id: localStorage.getItem('user_id') || '', items })
-      setQuantities({}); setChoices({}); receiptRequest.current = null
-      await load(); setMessage('실제 입고수량을 재고에 반영했습니다.')
-    } catch (error) { setMessage(error instanceof Error ? error.message : '입고 처리 실패') }
+      if (items.length) {
+        await request('/Procurement/Receive', { account_id: accountId, purchase_order_id: selected.purchase_order_id, receipt_date: receiptDate, receipt_key: receiptRequest.current.key, user_id: localStorage.getItem('user_id') || '', items })
+        received = true
+      }
+      if (shortages.length) {
+        await registerShortage({ account_id: accountId, purchase_order_id: selected.purchase_order_id, source: shortageForm.source,
+          reason: shortageForm.reason.trim(), contact_name: shortageForm.contact_name.trim(), user_id: localStorage.getItem('user_id') || '',
+          items: shortages.map(({ item, qty }) => ({ client_ord_item: item.client_ord_item, shortage_qty: qty })) })
+        setShortageNotice({ orderId: selected.purchase_order_id, text: shortageMessage(selected, shortages.map(({ item, qty }) => ({ product_name: item.product_name, supplier_item_code: item.supplier_item_code, order_qty: Number(item.order_qty), shortage_qty: qty, order_unit: item.order_unit })), shortageForm.reason.trim()) })
+      }
+      setQuantities({}); setChoices({}); setLeftovers({}); setShortageForm(form => ({ ...form, reason: '', contact_name: '' })); receiptRequest.current = null
+      await load()
+      setMessage([received ? '실제 입고수량을 재고에 반영했습니다.' : '', shortages.length ? `결품 ${shortages.length}품목을 확정했습니다 · 입고 예정·재고·금액에서 뺐어요.` : ''].filter(Boolean).join(' '))
+    } catch (error) {
+      const text = error instanceof Error ? error.message : '처리 실패'
+      if (received) { setQuantities({}); setChoices({}); receiptRequest.current = null; await load() }
+      setMessage(received ? `입고는 반영했지만 결품 확정 실패: ${text}` : text)
+    }
+    finally { setBusy(false) }
+  }
+
+  /** 결품 취소(늦게라도 들어옴): 남은 수량이 다시 입고 예정으로 돌아간다 */
+  const cancelShortage = async (item: OrderItem) => {
+    if (!selected) return
+    setBusy(true)
+    try {
+      await cancelShortageApi({ account_id: accountId, purchase_order_id: selected.purchase_order_id, client_ord_item: item.client_ord_item, user_id: localStorage.getItem('user_id') || '' })
+      setQuantities(current => { const next = { ...current }; delete next[item.client_ord_item]; return next })
+      await load(); setMessage(`${item.product_name} 결품을 취소했습니다 · 다시 입고할 수 있어요.`)
+    } catch (error) { setMessage(error instanceof Error ? error.message : '결품 취소 실패') }
     finally { setBusy(false) }
   }
 
@@ -143,6 +189,7 @@ export function usePurchaseOrders(accountId: string, focusedId: string) {
     from, setFrom, to, setTo, status, setStatus, offset, setOffset, supplierId, setSupplierId, suppliers,
     orders, selected, selectOrder, busy, message, load, reconcile, inspect, ordersForDelivery,
     receiptDate, setReceiptDate, receiptQuantity, setReceiptQuantity, receive,
+    leftoverQty, leftoverChoice, setLeftoverChoice, shortageLines, shortageForm, setShortageForm, shortageNotice, setShortageNotice, cancelShortage,
     ingredients, receiptChoice, setReceiptChoice, needsIngredient,
   }
 }

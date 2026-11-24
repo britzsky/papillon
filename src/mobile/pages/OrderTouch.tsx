@@ -88,7 +88,7 @@ export function RecommendedOrder({ methodBar }: { methodBar: ReactNode }) {
             <span><b>{qty(row.order_qty)}</b> {row.offer.order_unit}</span>
             <strong>{money(row.item_amount)}원</strong>
           </div>
-          <p className="ot-item__why">필요 {qty(row.required_qty)} + 안전 {qty(row.safe_stock_qty)} − 현재 {qty(row.current_qty)} − 입고예정 {qty(row.incoming_qty)} {row.base_unit}</p>
+          <p className="ot-item__why">필요 {qty(row.required_qty)} + 안전 {qty(row.safe_stock_qty)}{row.prior_usage_qty ? ` + 그 전 식단 ${qty(row.prior_usage_qty)}` : ''} − 현재 {qty(row.current_qty)} − 입고예정 {qty(row.incoming_qty)} {row.base_unit}</p>
         </article>)}
       </div>
     </section>)}

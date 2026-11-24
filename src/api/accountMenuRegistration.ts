@@ -36,6 +36,21 @@ export function importStandardMenu(accountId: string, menuId: string) {
   return post<{ menu_id: string; menu_name: string }>('/v2/menu-management/menus/import-standard', { account_id: accountId, menu_id: menuId }, '본사 메뉴를 가져오지 못했습니다.')
 }
 
+/**
+ * '레시피 없는 메뉴' 표시(2026-11-23). Y면 1인분 식재료가 없어도 식단 저장·부족량 계산에서 건너뛴다(원가·필요량 0, 발주·재고와 무관한 메뉴).
+ * 완제품(요구르트·바나나 등)은 표시 대신 자기 자신을 식재료 1줄로 넣는다(발주·재고가 맞음).
+ */
+export function setAccountMenuNoRecipe(accountId: string, menuId: string, noRecipe: boolean) {
+  return post<{ no_recipe_yn: 'Y' | 'N'; message: string }>('/v2/menu-management/menus/no-recipe', { account_id: accountId, menu_id: menuId, no_recipe_yn: noRecipe ? 'Y' : 'N' }, '레시피 없는 메뉴 표시를 바꾸지 못했습니다.')
+}
+
+/** 이 업장 메뉴의 '레시피 없는 메뉴' 표시(거래처 메뉴가 아직 없으면 false) */
+export async function getAccountMenuNoRecipe(accountId: string, menuId: string) {
+  const response = await fetch(buildApiUrl(`/v2/menu-management/menus?${new URLSearchParams({ account_id: accountId, menu_id: menuId })}`))
+  const rows = await response.json().catch(() => []) as Array<{ no_recipe_yn?: string }>
+  return Array.isArray(rows) && rows[0]?.no_recipe_yn === 'Y'
+}
+
 /** 이 업장 레시피를 본사 레시피로 되돌린다(거래처 레시피 줄을 지우고 본사 레시피 복사, 메뉴 정보는 그대로). 거래처 전용 메뉴는 서버가 거부 */
 export function resetAccountRecipeToStandard(accountId: string, menuId: string) {
   return post<{ removed_count: number; copied_ingredient_count: number; message: string }>('/v2/menu-management/menus/reset-to-standard', { account_id: accountId, menu_id: menuId }, '본사 레시피로 되돌리지 못했습니다.')

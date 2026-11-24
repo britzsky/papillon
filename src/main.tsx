@@ -29,6 +29,8 @@ import SearchAnalytics from './pages/operations/SearchAnalytics.tsx'
 import AiUsage from './pages/operations/AiUsage.tsx'
 import MealPlanTemplates from './pages/operations/MealPlanTemplates.tsx'
 import MealSlots from './pages/operations/MealSlots.tsx'
+import InitialSetup from './pages/operations/InitialSetup.tsx'
+import PurchaseLedger from './pages/operations/PurchaseLedger.tsx'
 import DistProducts from './pages/distribution/DistProducts.tsx'
 import DistPartners from './pages/distribution/DistPartners.tsx'
 import DistOrders from './pages/distribution/DistOrders.tsx'
@@ -111,6 +113,8 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/operations/account-menu/import" element={<DeviceRoute pc={<AccountMenuImport />} touch={<AccountMenuTouch />} />} />
         <Route path="/operations/meal-plan-templates" element={<DeviceRoute pc={<MealPlanTemplates />} touch={<MealPlanTemplatesTouch />} />} />
         <Route path="/operations/meal-slots" element={<MealSlots />} />
+        <Route path="/operations/initial-setup" element={<InitialSetup />} />
+        <Route path="/operations/purchase-ledger" element={<PurchaseLedger />} />
         {/* 더채움 유통 협력사 관리(본사 전용, 2026-11-02) */}
         <Route path="/distribution/products" element={<DistProducts />} />
         <Route path="/distribution/partners" element={<DistPartners />} />

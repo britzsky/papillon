@@ -47,7 +47,7 @@ body.t-ui .mm-chips button.is-active { --button-bg: var(--t-accent); --button-bg
 .mm-ings__qty { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: 6px; }
 body.t-ui .mm-ings :is(input, .t-select) { min-height: 42px; font-size: 16px; }
 
-@media (max-width: 767px) {
+@media (max-width: 699px) {
   .mm-search { flex: 1; min-width: 0; }
   .mm-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .mm-panel__body { overflow: visible; }

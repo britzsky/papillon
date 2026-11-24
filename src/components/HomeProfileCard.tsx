@@ -9,6 +9,7 @@ import { useReportReady } from '../features/home/homeReady'
 import { useSignedIn } from '../features/auth/session'
 import { useLogin } from '../features/auth/useLogin'
 import { HQ_CONTACT } from '../features/home/hqContact'
+import { SHOW_MALL } from '../features/mall/mallVisibility'
 
 /**
  * PC 홈 슬라이드 오른쪽 접속자 카드(2026-11-10 시안): 사람 아이콘(누르면 사용자 정보) + 인사·거래처 | 이름·담당자,
@@ -57,7 +58,7 @@ function LoginCard({ className = '' }: { className?: string }) {
           {alertState.message}
           {alertState.kind === 'payment' ? <button type="button" className="rd-btn" onClick={handleMoveToPayment}>결제하러 가기</button> : null}
         </p> : null}
-        <p className="home-profile__login-help">로그인 없이도 더채움몰 상품은 볼 수 있어요.</p>
+        {SHOW_MALL && <p className="home-profile__login-help">로그인 없이도 더채움몰 상품은 볼 수 있어요.</p>}
       </form>
     </section>
   )

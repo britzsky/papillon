@@ -9,6 +9,8 @@ import { LOCATION_OPTIONS, getInventoryStockStatus, getLocationName, inventoryOr
 import { purchaseUnits, todayValue, useDirectPurchase } from '../../features/inventory/useDirectPurchase'
 import { stockInputUnits } from '../../utils/quantityUnits'
 import './InventoryTouch.css'
+import TouchWorkflowBar from '../TouchWorkflowBar'
+import OpeningStockModal from '../../pages/inventory/OpeningStockModal'
 
 const PAGE = 48
 const qty = (value?: number) => Number(value || 0).toLocaleString('ko-KR', { maximumFractionDigits: 2 })
@@ -26,7 +28,8 @@ function statusTone(item: AccountInventoryItem) {
 }
 
 /**
- * 재고 현황(태블릿·휴대폰). POS 배치: 위 분류 칸(전체·발주 필요·재고 없음·보관위치) → 상품 카드, 오른쪽 상세·실행 패널.
+ * 재고 현황(태블릿·휴대폰). 2026-11-23 사용자 시안: 업무 순서 띠 → 직접 구매 등록·기초재고 등록·재고 이력 → 분류 칩 → 식재료 카드(4열).
+ * 카드를 누르면 상세·실행 창(예전 오른쪽 패널 내용 그대로). 재고 요약(전체·발주 필요·재고 없음·재고 금액)은 버튼 줄 오른쪽.
  * 재고 수정은 상품 하나씩(PC 표 한 행 저장과 같은 API), 직접 구매는 PC와 같은 로직(useDirectPurchase).
  */
 export default function InventoryTouch() {
@@ -38,7 +41,7 @@ export default function InventoryTouch() {
   const [filter, setFilter] = useState<Filter>('all')
   const [limit, setLimit] = useState(PAGE)
   const [selectedKey, setSelectedKey] = useState('')
-  const [sheet, setSheet] = useState<'' | 'adjust' | 'purchase'>(() => params.get('direct_purchase') === '1' ? 'purchase' : '')
+  const [sheet, setSheet] = useState<'' | 'adjust' | 'purchase' | 'opening'>(() => params.get('direct_purchase') === '1' ? 'purchase' : '')
   const [toast, setToast] = useState('')
 
   const searched = useMemo(() => orderStockFirst(inventory.items).filter(item => matchesInventoryKeyword(item, keyword)), [inventory.items, keyword])
@@ -68,15 +71,24 @@ export default function InventoryTouch() {
     <button type="button" className="t-btn is-icon" aria-label="새로고침" disabled={inventory.isLoading} onClick={inventory.reload}><TouchIcon name="refresh" /></button>
   </>
 
-  const aside = selected
-    ? <DetailPanel item={selected} accountId={accountId} onClose={() => setSelectedKey('')} onAdjust={() => setSheet('adjust')} onOrder={() => navigate(inventoryOrderPath(accountId, selected))} />
-    : <SummaryPanel total={inventory.items.length} amount={totalAmount} order={counts.order} empty={counts.empty} disabled={!accountId} onPurchase={() => setSheet('purchase')} />
-
-  return <TouchLayout title="재고 현황" subtitle={accountId ? `${inventory.items.length}개 상품` : undefined} toolbar={toolbar} aside={aside}
+  return <TouchLayout title="거래처별 재고관리" subtitle={accountId ? `${inventory.items.length}개 상품` : undefined} toolbar={toolbar}
     onAccountChange={value => { setAccountId(value); setSelectedKey(''); setLimit(PAGE) }}>
+    <TouchWorkflowBar />
     {toast && <p className="t-msg iv-toast" role="status" onClick={() => setToast('')}><TouchIcon name="check" />{toast}</p>}
 
-    <div className="t-tabs" role="tablist" aria-label="분류">
+    <div className="iv-actions">
+      <button type="button" className="t-btn iv-pill" disabled={!accountId} onClick={() => setSheet('purchase')}>직접 구매 등록</button>
+      <button type="button" className="t-btn iv-pill" disabled={!accountId || inventory.isLoading} title="도입 전부터 보유한 재고를 수량과 단가로 등록합니다" onClick={() => setSheet('opening')}>기초재고 등록</button>
+      <Link className="t-btn iv-pill" to={`/inventory/history?${new URLSearchParams(accountId ? { account_id: accountId } : {})}`}>재고 이력</Link>
+      {accountId && <p className="iv-actions__sum" aria-label="재고 요약">
+        <span>전체 <b>{inventory.items.length}</b></span>
+        <span className={counts.order ? 'is-danger' : ''}>발주 필요 <b>{counts.order}</b></span>
+        <span className={counts.empty ? 'is-warn' : ''}>재고 없음 <b>{counts.empty}</b></span>
+        <span>재고 금액 <b>{won(totalAmount)}</b></span>
+      </p>}
+    </div>
+
+    <div className="t-tabs iv-tabs" role="tablist" aria-label="분류">
       {filters.map(item => <button key={item.key} type="button" role="tab" aria-selected={filter === item.key}
         className={`t-tab${filter === item.key ? ' is-active' : ''}${item.key === 'order' && counts.order > 0 ? ' iv-tab--alert' : ''}`}
         onClick={() => { setFilter(item.key); setLimit(PAGE) }}>
@@ -96,11 +108,11 @@ export default function InventoryTouch() {
         const status = getInventoryStockStatus(item)
         const key = itemKey(item)
         return <button key={key} type="button" className={`t-card iv-card${key === selectedKey ? ' is-selected' : ''}`} onClick={() => setSelectedKey(key === selectedKey ? '' : key)}>
-          <span className="iv-card__image">
-            <ProductImage src={item.image_url} name={item.product_name || item.ingredient_name} />
-            {item.supplier_code === 'DIRECT' && <span className="t-badge is-yellow iv-card__tag">직접구매</span>}
-          </span>
+          {/* 휴대폰(시안): 아이콘 · 이름 · 설명 · > 줄 목록. 태블릿은 카드(아이콘·꺾쇠 숨김) */}
+          <span className={`iv-card__icon${statusTone(item) === 'is-ok' ? '' : ' is-alt'}`} aria-hidden="true"><TouchIcon name="box" size={18} /></span>
           <strong className="iv-card__name">{item.ingredient_name}</strong>
+          <span className="iv-card__chev" aria-hidden="true"><TouchIcon name="chevronRight" size={16} /></span>
+          {item.supplier_code === 'DIRECT' && <span className="t-badge is-yellow iv-card__tag">직접구매</span>}
           <small className="iv-card__product">{item.product_name || '입고 기록 없음'}</small>
           <span className="iv-card__qty">
             <b>{qty(item.current_qty)}</b> {item.current_unit || item.base_unit}
@@ -112,34 +124,19 @@ export default function InventoryTouch() {
     </div>
     {shown.length > limit && <button type="button" className="t-btn is-soft is-block iv-more" onClick={() => setLimit(value => value + PAGE)}>더 보기 ({shown.length - limit}개 남음)</button>}
 
+    {/* 카드를 누르면 상세(예전 오른쪽 패널) 창 */}
+    {selected && sheet === '' && <div className="t-sheet-backdrop" role="presentation" onClick={() => setSelectedKey('')}>
+      <section className="t-sheet iv-detail-sheet" role="dialog" aria-modal="true" aria-label={`${selected.ingredient_name} 재고`} onClick={e => e.stopPropagation()}>
+        <DetailPanel item={selected} accountId={accountId} onClose={() => setSelectedKey('')} onAdjust={() => setSheet('adjust')} onOrder={() => navigate(inventoryOrderPath(accountId, selected))} />
+      </section>
+    </div>}
+    {sheet === 'opening' && accountId && <OpeningStockModal accountId={accountId} items={inventory.items} onClose={() => setSheet('')}
+      onDone={(saved, failed) => { if (saved) inventory.reload(); setToast(failed ? `${saved}건 등록, ${failed}건 실패 · 실패 사유는 목록에서 확인하세요.` : `기초재고 ${saved}건을 등록했습니다.`); if (!failed) setSheet('') }} />}
     {sheet === 'adjust' && selected && <AdjustSheet item={selected} onClose={() => setSheet('')}
       onSave={async changes => { await inventory.saveItem(selected, changes); setSheet(''); setToast(`${selected.ingredient_name} 재고를 바꿨습니다.`) }} />}
     {sheet === 'purchase' && accountId && <PurchaseSheet accountId={accountId} items={inventory.items} onClose={() => setSheet('')}
       onDone={message => { setSheet(''); inventory.reload(); setToast(message) }} />}
   </TouchLayout>
-}
-
-function SummaryPanel({ total, amount, order, empty, disabled, onPurchase }: { total: number; amount: number; order: number; empty: number; disabled: boolean; onPurchase: () => void }) {
-  return <div className="iv-panel">
-    <div className="iv-panel__head">
-      <h2>재고 요약</h2>
-      <p>상품을 누르면 자세한 재고와 할 일이 여기에 나옵니다.</p>
-    </div>
-    <div className="iv-panel__body">
-      <div className="iv-stats">
-        <div><span>전체 상품</span><strong>{total}개</strong></div>
-        <div className={order ? 'is-danger' : ''}><span>발주 필요</span><strong>{order}개</strong></div>
-        <div className={empty ? 'is-warn' : ''}><span>재고 없음</span><strong>{empty}개</strong></div>
-      </div>
-      <div className="t-summary">
-        <div className="is-total"><span>재고 금액</span><span>{won(amount)}</span></div>
-      </div>
-      <p className="iv-panel__hint">마트·쿠팡 등에서 급하게 산 식재료는 직접 구매로 넣으면 재고와 단가에 바로 반영됩니다.</p>
-    </div>
-    <div className="iv-panel__actions">
-      <button type="button" className="t-btn is-primary is-large is-block" disabled={disabled} onClick={onPurchase}><TouchIcon name="order" />직접 구매 입력</button>
-    </div>
-  </div>
 }
 
 function DetailPanel({ item, accountId, onClose, onAdjust, onOrder }: { item: AccountInventoryItem; accountId: string; onClose: () => void; onAdjust: () => void; onOrder: () => void }) {

@@ -80,7 +80,7 @@ body.t-ui :is(.ingredient-link-selection, .ingredient-link-suggestions, .ingredi
 
 body.t-ui .ingredient-link-current { background: var(--t-surface-2); }
 
-@media (max-width: 767px) {
+@media (max-width: 699px) {
   body.t-ui :is(.ingredient-link-overlay) { align-items: flex-end; padding: 0; }
   body.t-ui :is(.ingredient-link-dialog) { max-height: 94dvh; border-radius: 22px 22px 0 0; }
 }

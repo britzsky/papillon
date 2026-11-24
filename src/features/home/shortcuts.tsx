@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { visibleForRole } from '../workspace/roleScreens'
 import { workspaceAccountId } from '../workspace/workspaceAccount'
+import { SHOW_MALL } from '../mall/mallVisibility'
 
 export type Shortcut = { key: string; label: string; paths: string[]; icon: ReactNode }
 
@@ -38,7 +39,8 @@ export function useShortcutLinks(keys?: string[]) {
   const [params] = useSearchParams()
   const accountId = workspaceAccountId(params)
   const withAccount = (to: string) => accountId ? `${to}?${new URLSearchParams({ account_id: accountId })}` : to
-  const list = keys ? keys.map(key => SHORTCUTS.find(item => item.key === key)).filter((item): item is Shortcut => Boolean(item)) : SHORTCUTS
+  const shown = SHOW_MALL ? SHORTCUTS : SHORTCUTS.filter(item => item.key !== 'mall')
+  const list = keys ? keys.map(key => shown.find(item => item.key === key)).filter((item): item is Shortcut => Boolean(item)) : shown
   return list
     .map(item => ({ ...item, to: item.paths.find(path => visibleForRole(path)) }))
     .filter((item): item is Shortcut & { to: string } => Boolean(item.to))

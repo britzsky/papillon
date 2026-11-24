@@ -20,6 +20,7 @@ import RecipeViewModal from '../../components/RecipeViewModal'
 import RecipeRegisterModal from '../../components/RecipeRegisterModal'
 import { createAiRecipeGestureHandlers } from '../../components/aiRecipeGesture'
 import './TableMealsCreateTouch.css'
+import AccountRecipeEditModal from '../../pages/operations/AccountRecipeEditModal'
 import TouchSelect from '../TouchSelect'
 import SpecialMenuInput, { SpecialMenuDatalist } from '../../components/SpecialMenuInput'
 
@@ -296,11 +297,25 @@ function StockCheckSheet({ w }: { w: W }) {
   const check = w.savedStockCheck
   if (!check) return null
   const rows = check.result?.ingredients || []
-  return <div className="t-sheet-backdrop" role="presentation" onClick={() => w.setSavedStockCheck(null)}>
+  const missing = check.result?.missing_recipe_menus || []
+  return <StockCheckBody w={w} check={check} rows={rows} missing={missing} />
+}
+
+/** 레시피 없는 메뉴(2026-11-23): 목록 + 메뉴를 누르면 '이 업장 레시피 수정'(완제품·레시피 없는 메뉴 표시 포함) */
+function StockCheckBody({ w, check, rows, missing }: { w: W; check: NonNullable<W['savedStockCheck']>; rows: NonNullable<NonNullable<W['savedStockCheck']>['result']>['ingredients']; missing: { menu_id: string; menu_name: string }[] }) {
+  const [recipeMenu, setRecipeMenu] = useState<{ menu_id: string; menu_name: string } | null>(null)
+  const [notice, setNotice] = useState('')
+  return <><div className="t-sheet-backdrop" role="presentation" onClick={() => w.setSavedStockCheck(null)}>
     <section className="t-sheet tc-stock" role="dialog" aria-modal="true" aria-labelledby="tc-stock-title" onClick={e => e.stopPropagation()}>
       <header className="t-sheet__head"><h2 id="tc-stock-title">저장 전 재고 확인</h2><p>{check.loading ? '식단 필요량과 재고를 확인하고 있습니다…' : rows.length ? `부족하거나 확인이 필요한 식재료 ${rows.length}개` : '추가로 발주할 식재료가 없습니다'}</p></header>
       <div className="t-sheet__body">
         {check.error && <p className="t-msg is-error">부족량 확인 실패: {check.error}</p>}
+        {missing.length > 0 && <div className="t-msg is-warn tc-stock__missing" role="alert">
+          <strong>1인분 식재료(레시피)가 없는 메뉴 {missing.length}개 · 이대로는 저장할 수 없어요</strong>
+          <span>메뉴를 눌러 식재료를 넣거나 '완제품', 발주·재고와 무관하면 '레시피 없는 메뉴'를 체크한 뒤 '다시 확인'을 누르세요.</span>
+          <span className="tc-stock__missing-list">{missing.map(menu => <button key={menu.menu_id} type="button" className="t-btn is-small is-soft" onClick={() => setRecipeMenu(menu)}>{menu.menu_name || menu.menu_id} · 레시피 넣기</button>)}</span>
+        </div>}
+        {notice && <p className="t-msg" role="status">{notice}</p>}
         <ul className="tc-stock__list">{rows.map(row => <li key={row.ingredient_id}>
           <div><strong>{row.ingredient_name}</strong>{row.issues.map(issue => <small key={issue} className="tc-stock__issue">{issue}</small>)}</div>
           <dl><div><dt>필요</dt><dd>{formatQty(row.required_qty, row.base_unit)}</dd></div><div><dt>현재</dt><dd>{formatQty(row.current_qty, row.base_unit)}</dd></div><div className="is-short"><dt>부족</dt><dd>{formatQty(row.shortage_qty, row.base_unit)}</dd></div></dl>
@@ -311,8 +326,10 @@ function StockCheckSheet({ w }: { w: W }) {
         <button type="button" className="t-btn" onClick={() => w.setSavedStockCheck(null)}>닫기</button>
         <button type="button" className="t-btn" disabled={check.loading} onClick={() => void w.preparePlan(check.payload, check.saveWhenSufficient)}>다시 확인</button>
         <button type="button" className="t-btn is-soft" disabled={check.loading || !rows.length} onClick={() => w.openDraftProcurement(check.criteria)}>부족 식재료 먼저 발주</button>
-        <button type="button" className="t-btn is-primary" disabled={check.loading || w.isTableSaving || !!check.error || rows.some(row => row.issues.length > 0)} onClick={() => void w.persistPlan(check.payload)}>식단만 저장</button>
+        <button type="button" className="t-btn is-primary" disabled={check.loading || w.isTableSaving || !!check.error || missing.length > 0 || rows.some(row => row.issues.length > 0)} onClick={() => void w.persistPlan(check.payload)}>식단만 저장</button>
       </footer>
     </section>
   </div>
+  {recipeMenu && check.criteria.account_id ? <AccountRecipeEditModal accountId={check.criteria.account_id} menuId={recipeMenu.menu_id} menuName={recipeMenu.menu_name || recipeMenu.menu_id}
+    onClose={() => setRecipeMenu(null)} onSaved={setNotice} /> : null}</>
 }

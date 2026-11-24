@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom'
-import type { PurchaseOrder } from '../../features/order/usePurchaseOrders'
+import { remainingQty, type PurchaseOrder } from '../../features/order/usePurchaseOrders'
+import { deliveryLabel } from '../../api/receiving'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 const withWeekday = (date: string) => { const d = new Date(`${date}T00:00:00`); return Number.isNaN(d.getTime()) ? date : `${date} (${WEEKDAYS[d.getDay()]})` }
@@ -34,8 +35,8 @@ export default function InspectionPrint({ date, orders, accountId }: { date: str
       <table className="po-doc__items">
         <thead><tr><th>No</th><th>확인</th><th>상품코드</th><th>상품명</th><th>주문수량</th><th>단위</th><th>실제 수량</th><th>비고(결품·파손·규격·원산지)</th></tr></thead>
         <tbody>{live(order).map((item, index) => <tr key={item.client_ord_item}>
-          <td className="is-center">{index + 1}</td><td className="is-center insp-doc__check">☐</td><td>{item.supplier_item_code}</td><td className="is-name">{item.product_name}</td>
-          <td className="is-number"><strong>{qty(Number(item.order_qty) - Number(item.received_order_qty || 0))}</strong></td><td className="is-center">{item.order_unit}</td>
+          <td className="is-center">{index + 1}</td><td className="is-center insp-doc__check">☐</td><td>{item.supplier_item_code}</td><td className="is-name">{item.product_name}{item.delivery_type && item.delivery_type !== 'CENTER' ? <small> [{deliveryLabel(item.delivery_type)} · 따로 올 수 있음]</small> : null}</td>
+          <td className="is-number"><strong>{qty(remainingQty(item))}</strong></td><td className="is-center">{item.order_unit}</td>
           <td className="insp-doc__blank" /><td className="insp-doc__note" />
         </tr>)}</tbody>
       </table>

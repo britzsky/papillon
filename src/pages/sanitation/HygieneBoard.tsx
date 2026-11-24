@@ -15,7 +15,8 @@ const NOTE_PLACEHOLDER: Record<HygieneSide, string> = { problem: '부적합 내�
  * 위생 점검 관리 본문(PC VendorSanitation·터치 SanitationTouch 공용). 점검 현황·기간·상태 → 카테고리 카드(전·후·상태·기록 요약) →
  * '상세 보기'로 그 카테고리 기록 카드(부적합 | 조치) → 등록·수정 창(사진 칸마다 1장, ERP 구조) · 사진 크게 보기 · 카테고리 편집(본사).
  */
-export default function HygieneBoard({ board }: { board: HygieneBoardState }) {
+/** compact: 휴대폰(2026-11-23 사용자 시안) — 진행 막대 + '점검 항목' 한 장 안의 줄 목록(이름 · 전/후 · 상세보기), 다 끝나면 '점검할게 없어요!' */
+export default function HygieneBoard({ board, compact = false }: { board: HygieneBoardState; compact?: boolean }) {
   const [viewer, setViewer] = useState<{ url: string; label: string } | null>(null)
   const [categoryOpen, setCategoryOpen] = useState(false)
   const b = board
@@ -54,6 +55,7 @@ export default function HygieneBoard({ board }: { board: HygieneBoardState }) {
           <strong className="hg-summary__rate">{b.doneRate}%</strong>
           <span className="hg-summary__chip is-done"><i aria-hidden="true" />완료 <b>{b.counts.DONE}건</b></span>
           <span className="hg-summary__chip is-check"><i aria-hidden="true" />조치 필요 <b>{b.counts.CHECK}건</b></span>
+          {compact ? <span className="hg-summary__bar" aria-hidden="true"><i style={{ width: `${Math.min(100, Math.max(0, b.doneRate))}%` }} /></span> : null}
         </div>
         <span className="hg-period">
           <select aria-label="연도" value={year} onChange={event => b.setMonth(event.target.value ? `${event.target.value}-${monthNo || thisMonthNo}` : '')}>
@@ -82,7 +84,20 @@ export default function HygieneBoard({ board }: { board: HygieneBoardState }) {
     {b.loading ? <p className="hg-msg" role="status">위생 점검 기록을 불러오는 중…</p> : null}
 
     {/* 카테고리 카드(2026-10-29 사용자 시안): 전·후 건수, 상태, 기록 요약. '상세 보기'를 누르면 그 카테고리 기록 카드(부적합 | 조치) */}
-    {!b.loading && !detail ? <section className="hg-grid" aria-label="점검 항목">
+    {/* 휴대폰: 한 장 안의 줄 목록 */}
+    {compact && !b.loading && !detail ? (cards.length ? <section className="hg-compact" aria-label="점검 항목">
+      <header><strong>점검 항목</strong><span>{cards.length}개</span></header>
+      <ul>{cards.map(card => <li key={card.row.category_key} className={`is-${card.state}`}>
+        <span className="hg-compact__name">{card.row.category_name}</span>
+        <span className="hg-compact__pill is-before" title="부적합(전)">전 {card.before}</span>
+        <span className="hg-compact__pill is-after" title="조치(후)">후 {card.after}</span>
+        <button type="button" className="hg-compact__more" onClick={() => b.setCategoryFilter(card.row.category_key || UNKEYED)}>상세보기 <span aria-hidden="true">›</span></button>
+      </li>)}</ul>
+    </section> : <section className="hg-done" aria-label="점검할 항목 없음">
+      <span className="hg-done__art" aria-hidden="true"><svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 3.5h6v2H9z" /><path d="M8.5 12.5l2.2 2.2 4.8-4.8" /></svg></span>
+      <strong>점검할게 없어요!</strong><small>{b.categories.length ? '아주 최고인데요?!' : '등록된 위생 카테고리가 없습니다.'}</small>
+    </section>) : null}
+    {!compact && !b.loading && !detail ? <section className="hg-grid" aria-label="점검 항목">
       {cards.map(card => <article key={card.row.category_key} className={`hg-cat is-${card.state}`}>
         <header className="hg-cat__head">
           <strong title={[card.row.description, card.row.manage_point].filter(Boolean).join(' · ') || undefined}>{card.row.category_name}</strong>

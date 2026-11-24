@@ -9,6 +9,17 @@ import { getPlanDates, getShortages, MANUAL_MAX_ORDER_QTY, matchesStockFilter, p
 import { showAlert, showOrderResult } from '../../utils/dialog'
 
 export const day = (offset = 0) => { const date = new Date(); date.setDate(date.getDate() + offset); return date.toLocaleDateString('sv-SE') }
+const shiftDay = (value: string, days: number) => { const d = new Date(`${value}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + days); return d.toISOString().slice(0, 10) }
+const isSunday = (value: string) => new Date(`${value}T00:00:00Z`).getUTCDay() === 0
+/** 다음 납품 가능일(일요일엔 납품이 없다) */
+export const nextDeliveryDay = (value: string) => { const next = shiftDay(value, 1); return isSunday(next) ? shiftDay(next, 1) : next }
+/**
+ * 납품일이 맡는 식단 기간(2026-11-19 사용자 결정): 납품 다음 날 ~ 다음 납품일. 토요일 납품 = 일·월 식단, 월요일 납품 = 화 식단.
+ * 요일 표를 두지 않고 '일요일 납품 없음'만 쓴다. 더 길게 받고 싶으면 마지막 식단일(date_to)만 늘린다.
+ */
+export const coverFor = (delivery: string) => ({ date_from: shiftDay(delivery, 1), date_to: nextDeliveryDay(delivery) })
+/** 식단일을 받을 납품일: 전날, 전날이 일요일이면 토요일. 오늘보다 앞이면 오늘 */
+export const deliveryFor = (mealDate: string) => { const before = shiftDay(mealDate, -1); const d = isSunday(before) ? shiftDay(before, -1) : before; return d < day() ? day() : d }
 export const number = (value: number) => value.toLocaleString('ko-KR', { maximumFractionDigits: 3 })
 export const money = (value: number) => value.toLocaleString('ko-KR', { maximumFractionDigits: 2 })
 export const taxLabel = (value: string) => value === 'No tax' ? '면세' : ['Full tax', 'CONS', 'CONS(소모품)'].includes(value) ? '과세 · 세액 확인 필요' : '과세정보 확인 필요'
@@ -20,6 +31,14 @@ export function availableSelection(rows: ShortageResult['ingredients']): Record<
   return Object.fromEntries(rows.flatMap(row => {
     const offer = row.offers.find(o => o.orderable && o.orderability_status === 'AVAILABLE')
     return offer ? [[row.ingredient_id, { ingredient_id: row.ingredient_id, supplier_offer_id: offer.supplier_offer_id, order_qty: offer.recommended_qty }]] : []
+  }))
+}
+
+/** 추천 발주안(2026-11-23 식단표 기준 화면으로 통일): 늘 쓰는 상품(recommended_offer_id)이 바로 발주 가능하고 확인할 점이 없는 품목만 미리 고른다 */
+export function recommendedSelection(rows: ShortageResult['ingredients']): Record<string, OrderSelection> {
+  return Object.fromEntries(rows.flatMap(row => {
+    const offer = row.offers.find(o => o.supplier_offer_id === row.recommended_offer_id && o.orderable && o.orderability_status === 'AVAILABLE')
+    return offer && !row.issues.length ? [[row.ingredient_id, { ingredient_id: row.ingredient_id, supplier_offer_id: offer.supplier_offer_id, order_qty: offer.recommended_qty }]] : []
   }))
 }
 
@@ -77,6 +96,8 @@ export function useShortageOrder(fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY' | 
   const params = override ? frozen : urlParams
   const accountId = workspaceAccountId(params)
   const focusIngredient = params.get('ingredient_id') || ''
+  // 마감 알림에서 정해 온 납품일(첫 렌더 값). 식단표 기간을 불러와도 이 납품일을 유지한다
+  const requestedDeliveryRef = useRef(/^\d{4}-\d{2}-\d{2}$/.test(params.get('delivery_date') || '') && (params.get('delivery_date') as string) >= day() ? params.get('delivery_date') as string : '')
   const [criteria, setCriteria] = useState<ShortageCriteria>(() => {
     const resumeKey = !params.get('source') && !params.get('table_id') && !params.get('ingredient_id') && sessionStorage.getItem(`plan-editor:${accountId}`) ? `plan-procurement:${accountId}` : ''
     const draftKey = !fixedSource || fixedSource === 'PLAN' ? params.get('draft_key') || (resumeKey && sessionStorage.getItem(resumeKey) ? resumeKey : '') : ''
@@ -89,8 +110,11 @@ export function useShortageOrder(fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY' | 
     }
     // 마감 알림의 '발주하기'는 해당 납품일(delivery_date)로 연다. 조회 기간은 납품일까지 포함하도록 늘린다.
     const requestedDelivery = /^\d{4}-\d{2}-\d{2}$/.test(params.get('delivery_date') || '') && (params.get('delivery_date') as string) >= day() ? params.get('delivery_date') as string : ''
+    const source = fixedSource ?? (params.get('source') === 'PLAN' || (!params.get('source') && params.get('table_id')) ? 'PLAN' : params.get('source') === 'STOCK' ? 'STOCK' : 'INVENTORY')
+    // 식단 기준: 납품일이 맡는 기간(납품 다음 날 ~ 다음 납품일)만 계산한다. 그 전 식단 사용량은 서버가 먼저 뺀다
+    if (source === 'PLAN') { const delivery = requestedDelivery || day(1); return { account_id: accountId, source, table_id: params.get('table_id') || '', ...coverFor(delivery), delivery_date: delivery, sold_to: '', average_days: 30, coverage_days: 1, all_tables: 'Y' } }
     return ({
-    account_id: accountId, source: fixedSource ?? (params.get('source') === 'PLAN' || (!params.get('source') && params.get('table_id')) ? 'PLAN' : params.get('source') === 'STOCK' ? 'STOCK' : 'INVENTORY'),
+    account_id: accountId, source,
     table_id: params.get('table_id') || '', date_from: day(), date_to: requestedDelivery > day(6) ? requestedDelivery : day(6), delivery_date: requestedDelivery || day(1),
     sold_to: '', average_days: 30, coverage_days: 1,
   })})
@@ -121,6 +145,8 @@ export function useShortageOrder(fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY' | 
   const [completed, setCompleted] = useState(false)
   // 식단표의 '저장하고 발주하기'(?autoselect=1): 식단 기간이 정해진 첫 조회에서 바로 시킬 수 있는 품목을 미리 고른다(한 번만).
   const autoSelectPending = useRef(params.get('autoselect') === '1')
+  // autoselect_mode=recommended: 추천 발주안 탭(늘 쓰는 상품만 미리 고름)
+  const autoSelectRecommended = useRef(params.get('autoselect_mode') === 'recommended')
   const planDatesLoaded = useRef(false)
 
   useEffect(() => {
@@ -143,7 +169,9 @@ export function useShortageOrder(fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY' | 
     void getPlanDates(accountId, criteria.table_id).then(dates => {
       planDatesLoaded.current = true
       if (!active || !dates.length) return
-      setCriteria(current => ({ ...current, date_from: dates[0], date_to: dates[dates.length - 1], delivery_date: dates[0] < day() ? day() : dates[0] }))
+      // 식단표 첫날을 받을 납품일(전날, 일요일이면 토요일)과 그 납품이 맡는 기간. 알림에서 납품일을 정해 왔으면 그 납품일
+      const delivery = requestedDeliveryRef.current || deliveryFor(dates[0] < day() ? day() : dates[0])
+      setCriteria(current => ({ ...current, ...coverFor(delivery), delivery_date: delivery, all_tables: 'Y' }))
     }).catch((e: unknown) => { planDatesLoaded.current = true; if (active) setError(e instanceof Error ? e.message : '식단 기간 조회 실패') })
     return () => { active = false }
   }, [accountId, criteria.table_id, criteria.source])
@@ -158,7 +186,7 @@ export function useShortageOrder(fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY' | 
       if (autoSelectPending.current) {
         // 식단 기간 조회가 끝나기 전 첫 조회 결과는 기간이 달라 다시 조회되므로 그때 고른다
         if (criteria.source !== 'PLAN' || !criteria.table_id || planDatesLoaded.current) autoSelectPending.current = false
-        setSelected(availableSelection(data.ingredients))
+        setSelected(autoSelectRecommended.current ? recommendedSelection(data.ingredients) : availableSelection(data.ingredients))
         return
       }
       setSelected(current => Object.fromEntries(Object.entries(current).filter(([id, selection]) => {
@@ -180,6 +208,14 @@ export function useShortageOrder(fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY' | 
   const update = (patch: Partial<ShortageCriteria>) => {
     setSelected({}); setPreview(null); setMessage(''); setCriteria(current => ({ ...current, ...patch }))
   }
+  /** 납품일 고르기: 식단 기준이면 그 납품이 맡는 기간(다음 날 ~ 다음 납품일)으로 바꾼다. 그 밖의 기준은 예전처럼 납품일만 */
+  const chooseDelivery = (value: string) => {
+    if (!value) return
+    if (criteria.source === 'PLAN') update({ delivery_date: value, ...coverFor(value), all_tables: 'Y' })
+    else update(value > criteria.date_to ? { delivery_date: value, date_to: value } : { delivery_date: value })
+  }
+  /** 이 납품으로 쓸 마지막 식단일(더 길게 받기) */
+  const chooseLastMealDay = (value: string) => { if (value && value >= criteria.date_from) update({ date_to: value }) }
   const stockCounts = useMemo(() => {
     const all = result?.ingredients || []
     return { '': all.length, RED: all.filter(row => matchesStockFilter(row, 'RED')).length,
@@ -225,5 +261,5 @@ export function useShortageOrder(fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY' | 
   }
   const closePreview = () => { if (submitting) return; setPreview(null); setRevision(value => value + 1) }
 
-  return { accountId, focusIngredient, criteria, setCriteria, guidanceNow, plans, sites, result, selected, setSelected, keyword, setKeyword, stockFilter, setStockFilter, autoRefresh, setAutoRefresh, revision, setRevision, loading, error, setError, message, setMessage, batchResult, setBatchResult, preview, setPreview, previewing, submitting, setSubmitting, completed, setCompleted, update, stockCounts, rows, selectionCount, selectedAmount, selectedSuppliers, makePreview, submit, closePreview }
+  return { accountId, focusIngredient, criteria, setCriteria, chooseDelivery, chooseLastMealDay, guidanceNow, plans, sites, result, selected, setSelected, keyword, setKeyword, stockFilter, setStockFilter, autoRefresh, setAutoRefresh, revision, setRevision, loading, error, setError, message, setMessage, batchResult, setBatchResult, preview, setPreview, previewing, submitting, setSubmitting, completed, setCompleted, update, stockCounts, rows, selectionCount, selectedAmount, selectedSuppliers, makePreview, submit, closePreview }
 }

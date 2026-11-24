@@ -94,7 +94,7 @@ a.ht-tile:active { transform: scale(0.99); }
 .ht-quick__item strong { padding: 0 4px; font-size: 17px; }
 .ht-quick__item small { padding: 0 4px; margin-bottom: 8px; color: var(--t-muted); font-size: 14px; }
 
-@media (max-width: 767px) {
+@media (max-width: 699px) {
   .ht-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .ht-tile { min-height: 150px; padding: 14px; }
   .ht-tile__value { font-size: 25px; }
@@ -131,7 +131,7 @@ body.t-ui .hs-action:active { background: var(--t-accent-softer); }
 .hs-keywords > div { display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; }
 .hs-keywords b { flex: none; color: var(--t-muted); font-size: 14px; }
 body.t-ui .hs-keyword { flex: none; min-height: 34px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--t-surface); color: var(--t-text); font-weight: 600; box-shadow: var(--t-shadow); white-space: nowrap; }
-@media (max-width: 767px) { .hs-actions { grid-template-columns: 1fr; } .hs-top { flex-wrap: wrap; } .hs-bar { flex-basis: 100%; } }
+@media (max-width: 699px) { .hs-actions { grid-template-columns: 1fr; } .hs-top { flex-wrap: wrap; } .hs-bar { flex-basis: 100%; } }
 
 /* 현장 홈 이번 주 식단표: 터치는 바깥 여백만 줄임(카드 모양은 WeekMealBoard.css) */
 .rd.ht-week { margin-bottom: 8px; }
@@ -186,7 +186,7 @@ body.t-ui .t-btn.ht-login__btn:active:not(:disabled) { background: #CF7A1F; }
 .ht-stories .home-main__lower { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .ht-stories .home-main__banner { height: 160px; }
 @media (min-width: 1000px) { .ht-stories .home-main__lower { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .ht-stories .home-main__hero { min-height: 320px; } }
-@media (max-width: 767px) {
+@media (max-width: 699px) {
   .ht-profile__avatar { width: 56px; height: 56px; }
   .ht-profile__avatar svg { width: 48px; height: 48px; }
   /* 휴대폰 예산: 칸마다 사용률·막대·여유 한 줄만(예산·사용 금액은 뺌) */
@@ -202,3 +202,53 @@ body.t-ui .t-btn.ht-login__btn:active:not(:disabled) { background: #CF7A1F; }
   .ht-stories .home-main__cards::-webkit-scrollbar { display: none; }
   .ht-stories .home-main__photo { scroll-snap-align: start; }
 }
+
+/* 2026-11-23 태블릿 홈(사용자 시안): PC 홈 부품을 좁은 폭에서도 시안처럼 두 칸으로 */
+.rd.ht-tab .home-main { padding: 6px 4px 8px; background: transparent; box-shadow: none; }
+.rd.ht-tab .home-main .home-main__hero-row { grid-template-columns: minmax(0, 1.6fr) minmax(250px, 1fr); }
+.rd.ht-tab .home-main .home-main__lower { grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); }
+/* 접속자 카드 얼굴 버튼: PC에선 업무 화면 전역 규칙(body.workspace-ui)이 파란 원을 그리는데 태블릿엔 그 규칙이 없어 여기서 */
+body.t-ui .rd.ht-tab .home-profile button.home-profile__avatar { flex: none; display: flex; align-items: flex-end; justify-content: center; width: 76px; height: 76px; min-height: 76px; padding: 0; overflow: hidden; border: 0; border-radius: 50%;
+  --button-width: 76px; --button-height: 76px; --button-bg: #1E98CF; --button-bg-hover: #1786B8; --button-text: #fff; box-shadow: none; }
+body.t-ui .rd.ht-tab .home-profile button.home-profile__avatar svg { width: 60px; height: 60px; }
+/* 인스타그램 2개(시안: 엇갈린 사진 두 장) */
+.rd.ht-tab .home-insta__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* 좁은 태블릿(아이패드 미니 744·768 세로): 접속자 카드가 좁아 글자가 한 자씩 꺾이고 슬라이드가 세로로 늘어나던 문제(2026-11-23) */
+@media (max-width: 1099px) {
+  .rd.ht-tab .home-main .home-main__hero-row { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); align-items: stretch; }
+  .rd.ht-tab .home-main__hero { min-height: 300px; }
+  .rd.ht-tab .home-profile { gap: 10px; padding: 16px 14px; }
+  .rd.ht-tab .home-profile__head { align-items: flex-start; gap: 10px; }
+  .rd.ht-tab .home-profile__text { padding-right: 26px; gap: 2px; }
+  body.t-ui .rd.ht-tab .home-profile button.home-profile__avatar, .rd.ht-tab span.home-profile__avatar { width: 52px; height: 52px; min-height: 52px; --button-width: 52px; --button-height: 52px; }
+  body.t-ui .rd.ht-tab .home-profile button.home-profile__avatar svg, .rd.ht-tab span.home-profile__avatar svg { width: 44px; height: 44px; }
+  .rd.ht-tab .home-profile__hello { --rd-fs: 13px; font-size: 13px; }
+  .rd.ht-tab .home-profile__who { --rd-fs: 13px; font-size: 13px; overflow-wrap: normal; word-break: keep-all; }
+  /* 담당자 두 줄: 이름표 위, 이름·전화 아래(낱말 단위로 줄바꿈) */
+  .rd.ht-tab .home-profile__contacts { display: block; }
+  .rd.ht-tab .home-profile__contacts dt { display: block; margin-top: 4px; font-size: 11px; }
+  .rd.ht-tab .home-profile__contacts dd { display: block; font-size: 11px; white-space: normal; word-break: keep-all; overflow-wrap: break-word; }
+  .rd.ht-tab .home-profile__budget { gap: 6px; }
+}
+.rd.ht-tab .home-main .home-main__cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* 휴대폰 홈(2026-11-23 사용자 시안) */
+.mh-account { display: grid; gap: 8px; margin-bottom: 14px; padding: 16px 18px; }
+.mh-account header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mh-account header strong { font-size: 16px; font-weight: 800; }
+.mh-badge { padding: 3px 10px; border-radius: 999px; background: #E6F0E7; color: #2E6B3A; font-size: 11px; font-weight: 800; }
+.mh-account dl { display: grid; gap: 4px; margin: 0; color: var(--t-muted); font-size: 12px; }
+.mh-account dl > div { display: flex; gap: 6px; }
+.mh-account dt { font-weight: 600; }
+.mh-account dd { margin: 0; }
+.mh-account dt::after { content: ' ·'; }
+.mh-muted { color: var(--t-muted); font-size: 13px; }
+.mh-shortcuts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+body.t-ui .mh-shortcut { display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 14px; border: 0; border-radius: 14px; box-shadow: 0 6px 14px rgba(16, 24, 20, .12); font-size: 14px; font-weight: 800; text-align: left;
+  --button-bg: var(--t-surface); --button-bg-hover: var(--t-surface-2); --button-text: var(--t-text); }
+.mh-shortcut .t-icon:first-child { color: #5E9A3A; }
+.mh-shortcut span { flex: 1; }
+.mh-shortcut .t-icon:last-child { color: var(--t-muted); }
+.rd.mh-stories { display: grid; gap: 16px; }
+.rd.mh-stories .home-main__hero { min-height: 230px; border-radius: 16px; }
+.rd.mh-stories .home-news { border-radius: 16px; box-shadow: 0 6px 18px rgba(16, 24, 20, .10); }

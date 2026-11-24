@@ -789,7 +789,7 @@ export function useTableMealsWorkspace() {
       const impact = await impactResponse.json() as PlanImpact & { message?: string }
       if (!impactResponse.ok) throw new Error(impact.message || '식단 변경 영향 조회 실패')
       setSavedStockCheck({ loading: false, saveWhenSufficient, criteria, payload, result, impact })
-      if (!result.ingredients.length && !impact.affected_orders.length && !impact.completed_meals && saveWhenSufficient) await persistPlan(payload)
+      if (!result.ingredients.length && !result.missing_recipe_menus?.length && !impact.affected_orders.length && !impact.completed_meals && saveWhenSufficient) await persistPlan(payload)
     } catch (error) {
       setSavedStockCheck({ loading: false, saveWhenSufficient, criteria, payload, error: error instanceof Error ? error.message : '필요량을 확인하지 못했습니다.' })
     } finally { setIsTableSaving(false) }

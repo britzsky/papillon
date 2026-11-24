@@ -48,7 +48,8 @@ export default function HistoryTouch() {
   const toolbar = <>
     <form className="t-chip hs-search" onSubmit={submit}>
       <TouchIcon name="search" />
-      <input type="search" value={keywordInput} placeholder="식재료 · 상품 검색" onChange={e => setKeywordInput(e.target.value)} onBlur={() => h.setKeyword(keywordInput.trim())} />
+      <input type="search" value={keywordInput} placeholder="식재료명 · 상품명 · 품목코드" onChange={e => setKeywordInput(e.target.value)} onBlur={() => h.setKeyword(keywordInput.trim())} />
+      <button type="submit" className="hs-search__go">검색</button>
     </form>
     <div className="t-segment" role="group" aria-label="기간">
       {PERIODS.map(p => <button key={p.days} type="button" className={period === p.days ? 'is-active' : ''} onClick={() => choosePeriod(p.days)}>{p.label}</button>)}
@@ -76,7 +77,11 @@ export default function HistoryTouch() {
     {!accountId && <p className="t-msg">위에서 거래처를 고르면 이력이 나옵니다.</p>}
     {h.error && <p className="t-msg is-error">{h.error}</p>}
     {h.loading && <p className="t-msg" role="status">이력을 불러오는 중…</p>}
-    {h.ready && !h.loading && !h.error && h.rows.length === 0 && <p className="t-msg">이 기간에 재고 변동이 없습니다.</p>}
+    {/* 2026-11-23 사용자 시안(휴대폰): '재고 이력' 카드 안에 일시·구분·식재료/상품·증감, 없으면 빈 안내 */}
+    <section className="t-card hs-card" aria-label="재고 이력">
+    <h2 className="hs-card__title">재고 이력</h2>
+    <div className="hs-card__cols" aria-hidden="true"><span>일시</span><span>구분</span><span>식재료 / 상품</span><span>증감</span></div>
+    {h.ready && !h.loading && !h.error && h.rows.length === 0 && <div className="hs-empty"><TouchIcon name="box" /><b>표시할 재고 변동이 없습니다</b></div>}
 
     {days.map(([date, rows]) => <section key={date} className="hs-day">
       <h2 className="t-section-title">{dayTitle(date)}<small>{rows.length}건</small></h2>
@@ -104,6 +109,7 @@ export default function HistoryTouch() {
         })}
       </ul>
     </section>)}
+    </section>
 
     {h.total > HISTORY_PAGE_SIZE && <div className="hs-pages">
       <button type="button" className="t-btn is-soft" disabled={h.loading || h.offset === 0} onClick={() => h.movePage(h.offset - HISTORY_PAGE_SIZE)}>이전</button>

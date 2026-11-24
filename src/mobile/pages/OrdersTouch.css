@@ -61,8 +61,21 @@
 .od-date { min-height: 36px; padding: 0 8px; border: 1px solid var(--t-line); border-radius: 8px; background: var(--t-surface); font-size: 16px; }
 .t-summary > div:has(.od-date) { align-items: center; }
 
-@media (max-width: 767px) {
+@media (max-width: 699px) {
   .od-card { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: 'dot main badge' 'dot date amount'; }
   .od-card__date { justify-self: start; grid-auto-flow: column; gap: 6px; padding: 2px 8px; }
   .od-panel__body { overflow: visible; }
 }
+
+/* 2026-11-19 결품·배송 구분 */
+.od-pending { display: grid; gap: 8px; }
+.od-pending ul { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.od-pending li { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.od-pending li > span { min-width: 0; font-size: 14px; }
+.od-items li.od-items__group { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; border-style: dashed; background: var(--t-surface-2); }
+.od-items__shortage { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.od-items__left { margin-top: 6px; align-items: center; }
+.od-items__left > span { padding: 0 8px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.od-shortage, .od-notice-copy { display: grid; gap: 8px; margin-top: 12px; padding: 12px 14px; border: 1px solid var(--t-line); border-radius: 14px; }
+.od-shortage { border-color: var(--t-danger); }
+.od-notice-copy textarea { width: 100%; font-family: inherit; resize: vertical; }

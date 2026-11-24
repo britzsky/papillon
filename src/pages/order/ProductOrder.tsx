@@ -1,6 +1,6 @@
 import { workspaceAccountId } from '../../features/workspace/workspaceAccount'
 import CatalogPreparation from '../../components/CatalogPreparation'
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useSearchParams } from 'react-router-dom'
 import TopMenuLayout from '../../components/TopMenuLayout'
@@ -12,6 +12,7 @@ import { deadlineInfo } from '../../features/order/orderDeadline'
 import '../operations/MenuManager.css'
 import './ProductOrder.css'
 import './OrderPos.css'
+import './FoodOrderExpand.css'
 
 const PAGE_SIZE = 24
 const SOURCE_TITLE = '담는 상품 모두 이 식재료 재고로 들어갑니다. 비우면 상품마다 맞힌 식재료로 담고, 장바구니에서 바꿀 수 있습니다'
@@ -22,7 +23,8 @@ const stepQty = (line: CartLine, direction: 1 | -1) => {
   const next = Math.round((line.quantity + direction * step) * 1000) / 1000
   return Math.max(line.offer.minimum_order_qty || step, next)
 }
-const supplierTone = (code: string) => code === 'WELSTORY' ? 'is-blue' : code === 'OURHOME' ? 'is-orange' : ''
+// 2026-11-23 앱 공통 공급사 색: 웰스토리 주황 · 아워홈 파랑
+const supplierTone = (code: string) => code === 'WELSTORY' ? 'is-orange' : code === 'OURHOME' ? 'is-blue' : ''
 /** 기준단위 100g(100ml·1개)당 가격 — 규격이 다른 상품끼리 비교(2026-10-15 개편 시안 ⑤) */
 function unitCost(offer: SupplierOffer) {
   const qty = Number(offer.base_qty) || 0
@@ -139,6 +141,9 @@ function ProductOrderContent({ accountId, initialSource, embedded, favorites, he
       {message && <p role="status" className="pos-message">{message}</p>}
     </div>
 
+    {favoriteMode ? <FavoriteOrderList sorted={sorted} shown={shown} cart={cart} date={date} busy={busy} locked={locked} canAdd={canAdd} addToCart={addToCart} removeLine={removeLine}
+      setLineQuantity={setLineQuantity} setLineSource={setLineSource} ingredients={ingredients} ingredientName={ingredientName} toggleFavorite={toggleFavorite}
+      groups={groups} cartTotal={cartTotal} canOrder={canOrder} order={order} newCart={newCart} accountId={accountId} /> :
     <div className="pos-layout">
       <section className="pos-catalog" aria-label="공급상품">
         <header className="pos-catalog__head">
@@ -204,9 +209,121 @@ function ProductOrderContent({ accountId, initialSource, embedded, favorites, he
         </div>
         <p className="pos-cart__hint">최종 금액·발주 가능 여부는 확정 시 공급사 기준으로 재검증</p>
       </aside>
-    </div>
+    </div>}
     <BatchOrderResults result={result} accountId={accountId} />
   </div>
   if (embedded) return <div className="mixed-product-order">{body}</div>
   return <div className="menu-manager-page mixed-product-order"><div className="menu-manager-content"><TopMenuLayout title="상품발주">{body}</TopMenuLayout></div></div>
+}
+
+type FavoriteListProps = {
+  sorted: SupplierOffer[]; shown: SupplierOffer[]; cart: CartLine[]; date: string; busy: boolean; locked: boolean
+  canAdd: (offer: SupplierOffer) => boolean; addToCart: (offer: SupplierOffer) => void | Promise<void>; removeLine: (line: CartLine) => void
+  setLineQuantity: (line: CartLine, quantity: number) => void; setLineSource: (line: CartLine, value: string) => void
+  ingredients: { ingredient_id: string; ingredient_name: string }[]; ingredientName: (id: string) => string | undefined; toggleFavorite: (offer: SupplierOffer) => void | Promise<void>
+  groups: Record<string, CartLine[]>; cartTotal: number; canOrder: boolean; order: (recover?: boolean) => void | Promise<void>; newCart: () => void; accountId: string
+}
+
+/**
+ * 나만의 식재료(2026-11-23 사용자 결정: 발주하기 탭 화면 통일) — 식단표 기준과 같은 표(체크 · 상품 · 재고 식재료 · 상품 가격 · 주문 수량)와
+ * 오른쪽 발주서 미리보기, '발주하기' → 최종 검토(아워홈 · 전체 · 웰스토리). 줄 단위가 식재료가 아니라 ♥ 상품이라 '재고 → 필요' 대신 '재고 식재료'.
+ * 발주 경로는 예전 상품 발주(useProductOrder.order) 그대로.
+ */
+function FavoriteOrderList(p: FavoriteListProps) {
+  const [review, setReview] = useState(false)
+  const lineOf = (offer: SupplierOffer) => p.cart.find(line => line.offer.supplier_offer_id === offer.supplier_offer_id && line.date === p.date)
+  const disabled = p.busy || p.locked
+  const reviewCard = (code: 'OURHOME' | 'WELSTORY' | '', label: string) => {
+    const lines = p.cart.filter(line => !code || line.offer.supplier_code === code)
+    const total = lines.reduce((sum, line) => sum + line.quantity * line.offer.purchase_price, 0)
+    return <article className={`rd-review__card${code ? ` is-${code}` : ' is-all'}`} aria-label={`${label} 발주서 미리보기`}>
+      {code ? <p className="rd-review__legend"><span className={`is-${code}`}>{label}</span></p> : null}
+      <h3>발주서 미리보기</h3>
+      {!code ? <p className="rd-review__legend"><span className="is-OURHOME">아워홈</span><span className="is-WELSTORY">삼성웰스토리</span></p> : null}
+      <ul>{lines.map(line => <li key={lineKey(line)}><span>{line.offer.product_name}<small>{line.quantity}{line.offer.order_unit} · {line.date} 납품</small></span><span className={`rd-review__dot is-${line.offer.supplier_code}`} aria-hidden="true" /><b>{won(line.quantity * line.offer.purchase_price)}</b></li>)}</ul>
+      {!lines.length ? <p className="rd-review__empty">담은 상품이 없어요.</p> : null}
+      <div className="rd-review__total"><span>총 계</span><b>{won(total)}</b></div>
+    </article>
+  }
+  return <div className="rd rd-order rd-fav"><div className="rd-order__grid">
+    <section className="rd-card rd-order__list" aria-label="나만의 식재료">
+      <div className="rd-order__list-head"><div><h2 className="rd-h2">나만의 식재료 {p.shown.length}개</h2>
+        <p className="rd-muted rd-fs-sm">♥ 표시한 웰스토리·아워홈 상품이에요. 체크하거나 수량을 정해 담으면 오른쪽 발주서에 들어가요.</p></div></div>
+      <div className="rd-order__split"><div className="rd-order__scroll"><div className="rd-order__table">
+        <div className="rd-order__row is-head rd-fs-xs"><span /><span>상품</span><span>재고 식재료</span><span>상품 가격 (100g당 가격)</span><span>주문 수량</span></div>
+        {p.sorted.map(offer => {
+          const line = lineOf(offer)
+          const cost = unitCost(offer)
+          const available = offer.orderability_status === 'AVAILABLE'
+          const reason = offer.orderability_reason || offer.availability_reason
+          const deadline = deadlineInfo(offer.order_deadline)
+          return <Fragment key={offer.supplier_offer_id}><div className={`rd-order__row${line ? ' is-open' : ''} is-by-${offer.supplier_code}`}>
+            <input aria-label={`${offer.product_name} 담기`} type="checkbox" checked={Boolean(line)} disabled={disabled || (!line && !p.canAdd(offer))}
+              onChange={e => { if (e.target.checked) void p.addToCart(offer); else if (line) p.removeLine(line) }} />
+            <div className="rd-order__name">
+              <strong className="rd-fs-md" title={offer.product_name}>{offer.product_name}</strong>
+              <span className="rd-order__tags"><span className={`rd-supplier is-${offer.supplier_code}`}>{offer.supplier_name}</span>
+                <button type="button" className="rd-fav__heart" aria-pressed={offer.favorite_yn === 'Y'} aria-label={`${offer.product_name} 나만의 식재료 해제`} title="나만의 식재료(하트) 해제" disabled={disabled} onClick={() => void p.toggleFavorite(offer)}>{offer.favorite_yn === 'Y' ? '♥' : '♡'}</button></span>
+            </div>
+            <div className="rd-order__stock rd-fs-sm">
+              {line ? <select className="rd-input rd-fav__source" aria-label={`${offer.product_name} 재고에 넣을 식재료`} title="이 상품이 들어갈 재고 식재료" disabled={disabled} value={line.source} onChange={e => p.setLineSource(line, e.target.value)}>
+                <option value="">입고 때</option>
+                {line.source && !p.ingredientName(line.source) && <option value={line.source}>{line.offer.suggested_ingredient_name || line.source}</option>}
+                {p.ingredients.map(i => <option key={i.ingredient_id} value={i.ingredient_id}>{i.ingredient_name}</option>)}
+              </select> : <span className="rd-muted">{offer.suggested_ingredient_name || '담으면 고를 수 있어요'}</span>}
+              {line?.source && line.sourceBy ? <small className="rd-muted">{SOURCE_REASON[line.sourceBy]}</small> : null}
+            </div>
+            <div className="rd-order__offer">
+              <span className="rd-pick__img"><ProductImage zoomable src={offer.thumbnail_url || offer.image_url} fullSrc={offer.image_url} name={offer.product_name} /></span>
+              <span className="rd-fav__offer rd-fs-sm">
+                <span><b>{won(offer.purchase_price)}</b>({offer.order_unit}){cost ? ` / ${cost.per}당 ${won(cost.value)}` : ''} · <span className={available ? 'rd-text-ok' : 'rd-text-warn'}>{available ? '발주 가능' : reason || '납품일자·마감 확인 요망'}</span></span>
+                <small className="rd-muted">{offer.supplier_item_code} · {offer.base_qty}{offer.base_unit}/{offer.order_unit}{deadline && !deadline.passed ? ` · 마감 ${deadline.text}` : ''}</small>
+              </span>
+            </div>
+            <div className="rd-order__qty">
+              {line ? <span className="rd-stepper">
+                <button type="button" aria-label={`${offer.product_name} 수량 줄이기`} disabled={disabled || line.quantity <= line.offer.minimum_order_qty} onClick={() => p.setLineQuantity(line, stepQty(line, -1))}>−</button>
+                <input aria-label={`${offer.product_name} 발주수량`} disabled={disabled} type="number" min={line.offer.minimum_order_qty} step={line.offer.order_increment_qty} value={line.quantity} onChange={e => p.setLineQuantity(line, Number(e.target.value))} />
+                <button type="button" aria-label={`${offer.product_name} 수량 늘리기`} disabled={disabled} onClick={() => p.setLineQuantity(line, stepQty(line, 1))}>+</button>
+              </span> : <button type="button" className="rd-btn is-selected" disabled={disabled || !p.canAdd(offer)} onClick={() => void p.addToCart(offer)}>담기</button>}
+              <small className="rd-muted rd-fs-xs">{offer.order_unit} · 최소 {offer.minimum_order_qty}{line ? ` · ${won(line.quantity * offer.purchase_price)}` : ''}</small>
+            </div>
+          </div></Fragment>
+        })}
+        {!p.shown.length ? <div className="rd-order__empty">{p.busy ? '나만의 식재료를 불러오고 있어요.' : '나만의 식재료가 없어요. 상품 검색에서 ♡를 눌러 지정하세요.'}</div> : null}
+      </div></div></div>
+    </section>
+    <aside className="rd-order__side" aria-label="발주서 미리보기">
+      <div className="rd-card rd-order__summary">
+        <h2 className="rd-h2 rd-order__summary-title">발주서 미리보기</h2>
+        <p className="rd-order__legend rd-fs-xs"><span className="is-WELSTORY">웰스토리</span><span className="is-OURHOME">아워홈</span></p>
+        {p.cart.length ? <ul className="rd-order__picked">{p.cart.map(line => <li key={lineKey(line)}><span>{line.offer.product_name}</span><i className={`rd-order__dot is-${line.offer.supplier_code}`} title={line.offer.supplier_name} /><b>{won(line.quantity * line.offer.purchase_price)}</b></li>)}</ul>
+          : <p className="rd-order__empty">상품을 체크하거나 '담기'를 누르면 여기에 담겨요.</p>}
+        <div className="rd-order__total"><span>총 계</span><strong>{won(p.cartTotal)}</strong></div>
+        <button type="button" className="rd-btn is-primary rd-order__confirm" disabled={!p.canOrder} onClick={() => setReview(true)}>{p.cart.length ? `발주하기 · ${p.cart.length}품목` : '발주하기'}</button>
+        <div className="rd-order__side-actions">
+          <button type="button" className="rd-btn is-ghost" disabled={p.busy} onClick={p.newCart}>새 발주 작성</button>
+          <button type="button" className="rd-btn is-ghost" disabled={p.busy || !p.accountId} onClick={() => void p.order(true)}>이전 요청 결과 확인</button>
+        </div>
+        <p className="rd-fs-xs rd-muted">최종 금액·발주 가능 여부는 발주할 때 공급사 기준으로 다시 검증해요.</p>
+      </div>
+    </aside>
+    </div>
+    {review ? createPortal(<div className="shortage-order-page shortage-order-overlay rd rd-preview-overlay" onClick={() => !p.busy && setReview(false)}>
+      <section className="shortage-order-sheet rd-preview" role="dialog" aria-modal="true" aria-labelledby="fav-review-title" onClick={e => e.stopPropagation()}>
+        <header className="rd-preview__head rd-review__head">
+          <div><h2 id="fav-review-title" className="rd-h1">최종 검토</h2><span className="rd-muted rd-fs-sm">발주서 {Object.keys(p.groups).length}장(공급사·사업장·납품일별) · {p.cart.length}품목</span></div>
+          <button type="button" className="rd-btn rd-icon-btn" aria-label="닫기" disabled={p.busy} onClick={() => setReview(false)}>×</button>
+        </header>
+        <div className="rd-preview__body"><div className="rd-review__cards">{reviewCard('OURHOME', '아워홈')}{reviewCard('', '전체')}{reviewCard('WELSTORY', '삼성웰스토리')}</div></div>
+        <footer className="rd-preview__foot">
+          <div><span className="rd-muted rd-fs-sm">상품금액 합계</span><strong className="shortage-order-total">{won(p.cartTotal)}</strong></div>
+          <div className="rd-preview__actions">
+            <button type="button" className="rd-btn" disabled={p.busy} onClick={() => setReview(false)}>돌아가서 고치기</button>
+            <button type="button" className="rd-btn is-primary rd-preview__send rd-review__order" disabled={!p.canOrder} onClick={() => { setReview(false); void p.order() }}>{p.busy ? '발주 중…' : `발주하기 · 발주서 ${Object.keys(p.groups).length}장`}</button>
+          </div>
+        </footer>
+      </section>
+    </div>, document.body) : null}
+  </div>
 }

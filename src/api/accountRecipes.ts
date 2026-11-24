@@ -22,7 +22,8 @@ export type AccountRecipeRow = {
 /** 레시피 줄 저장(같은 recipe_id·menu_id·ingredient_seq면 덮어씀). 서버가 식재료 기준단위로 qty_base·1인 사용량을 다시 계산한다 */
 export type AccountRecipeUpsert = {
   account_id: string
-  recipe_id: number
+  /** 없으면(레시피가 하나도 없던 메뉴의 첫 줄) 서버가 만든다 */
+  recipe_id?: number
   menu_id: string
   ingredient_id: string
   ingredient_seq: number

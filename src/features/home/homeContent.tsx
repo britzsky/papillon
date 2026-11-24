@@ -5,6 +5,7 @@ import PressSlide, { type PressArticle } from '../../components/PressSlide'
 import lunchboxImage from '../../assets/image/home-d1-lunchbox.jpg'
 import novemberMenuImage from '../../assets/image/home-d2-november-menu.jpg'
 import esportsImage from '../../assets/image/home-d3-esports.jpg'
+import { SHOW_MALL } from '../mall/mallVisibility'
 
 /** PC 홈(pages/Home)·터치 홈(mobile/pages/HomeTouch)이 같이 쓰는 홈 내용(2026-11-12 m버전도 PC 구성으로) */
 
@@ -57,7 +58,8 @@ const NOT_IN_SLIDES = new Set(['https://www.kdpress.co.kr/news/articleView.html?
 
 export const pressSlides: HeroSlide[] = pressArticles.filter(article => !NOT_IN_SLIDES.has(article.url)).map(article => ({ key: article.url, label: `언론 보도: ${article.title}`, content: <PressSlide article={article} /> }))
 
-export const heroSlides: HeroSlide[] = [
+/** 더채움몰 홍보 장 — SHOW_MALL(features/mall/mallVisibility)이 false면 안 보임 */
+const mallSlide: HeroSlide =
   {
     key: 'mall', label: '더채움몰 바로가기', curves: false,
     content: <Link to="/mall" className="hero-mall" aria-label="더채움몰 가기 — 산지 직송 신선 식자재 기획전">
@@ -78,6 +80,9 @@ export const heroSlides: HeroSlide[] = [
         <span className="hero-mall__tag is-2">산지 직송</span>
       </span>
     </Link>,
-  },
+  }
+
+export const heroSlides: HeroSlide[] = [
+  ...(SHOW_MALL ? [mallSlide] : []),
   ...pressSlides, // 기사는 최신순(e스포츠 대회가 첫 기사)
 ]

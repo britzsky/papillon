@@ -24,7 +24,7 @@ body.t-ui .mt-card__open { --button-bg: transparent; --button-bg-hover: transpar
 .mt-options { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .mt-options__label { color: var(--t-muted); font-size: 13px; font-weight: 700; }
 
-@media (max-width: 767px) {
+@media (max-width: 699px) {
   .mt-meta { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .mt-meta .is-wide, .mt-meta .mt-field:first-child { grid-column: 1 / -1; }
 }
