@@ -56,9 +56,8 @@ export default function InventoryHistory() {
               </span>
               <div className="rd-pills" role="group" aria-label="기간 빠른 선택">
                 <button type="button" onClick={() => setPeriod(0)}>오늘</button>
-                <button type="button" onClick={() => setPeriod(7)}>7일</button>
-                <button type="button" onClick={() => setPeriod(30)}>30일</button>
-                <button type="button" onClick={() => setPeriod(90)}>90일</button>
+                {/* 2026-11-25 사용자 요청: 재고는 대부분 2주 안에 소진 → 5·10·15·20일(예전 7·30·90일) */}
+                {[5, 10, 15, 20].map(days => <button key={days} type="button" onClick={() => setPeriod(days)}>{days}일</button>)}
               </div>
             </form>
 

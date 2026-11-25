@@ -328,3 +328,9 @@ body.workspace-ui > :is(#root, :not(#root)) .rd.rd-page .rd-page__actions .rd-in
 
 /* 본문 제목을 숨긴 머리 줄: 제목만 있던 칸은 자리를 차지하지 않게(알림·버튼이 왼쪽부터) */
 .rd :is(.rd-page__head, .rd-home__head) > div:first-child:has(> .rd-sr-only:only-child) { display: contents; }
+/* 2026-11-25 사용자 요청: 홈 인사카드 안 거래처 고르기에서 '전체 거래처' 둘째 줄(홈에서 모든 거래처 현황)이 잘림 — 전역 버튼 높이 고정보다 세게 */
+body .rd .workspace-account__list button { height: auto !important; max-height: none !important; min-height: 36px !important; flex: none; }
+/* 2026-11-25 사용자 요청: '관리할 거래처를 먼저 고르세요' 카드 안 거래처 고르기 창이 바깥 판(.rd-page, overflow auto·카드 높이)에 잘려 검색창만 보임 → 이 안내 판은 넘침 허용 */
+.rd.rd-page:has(> .rd-account-choice) { overflow: visible !important; }
+.rd .rd-account-choice { overflow: visible !important; }
+.rd .rd-account-choice .workspace-account__pop { z-index: 60; }

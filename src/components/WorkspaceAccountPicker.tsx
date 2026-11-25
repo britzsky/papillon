@@ -21,6 +21,8 @@ export default function WorkspaceAccountPicker() {
   const headquarters = isHeadquarters()
   const current = workspaceAccountId(location.search)
   const [options, setOptions] = useState<AccountOption[]>([])
+  // 거래처 목록을 받기 전엔 account_id 대신 '로딩 중…'(2026-11-25 사용자 요청)
+  const [loading, setLoading] = useState(headquarters)
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const suppliers = useAccountSuppliers(headquarters)
@@ -29,7 +31,7 @@ export default function WorkspaceAccountPicker() {
   useEffect(() => {
     if (!headquarters) return
     let alive = true
-    getAccountOptions().then(items => { if (alive) setOptions(items) }).catch(() => { if (alive) setOptions([]) })
+    getAccountOptions().then(items => { if (alive) setOptions(items) }).catch(() => { if (alive) setOptions([]) }).finally(() => { if (alive) setLoading(false) })
     return () => { alive = false }
   }, [headquarters])
 
@@ -50,7 +52,7 @@ export default function WorkspaceAccountPicker() {
     return <div className="rd workspace-account is-fixed" title="거래처 계정은 자기 거래처만 관리합니다"><span className="rd-muted">거래처</span><strong>{name}</strong></div>
   }
 
-  const name = current ? options.find(o => o.value === current)?.text || current : '전체 거래처'
+  const name = current ? options.find(o => o.value === current)?.text || (loading ? '로딩 중…' : current) : '전체 거래처'
   const choose = (accountId: string) => {
     setOpen(false); setQuery('')
     if (accountId === current) return
@@ -77,7 +79,7 @@ export default function WorkspaceAccountPicker() {
               <SupplierTint flags={flags} /><span>{o.text || o.value}</span>
             </button>
           })}
-          {!filtered.length ? <p className="rd-muted">검색 결과가 없습니다.</p> : null}
+          {!filtered.length ? <p className="rd-muted">{loading ? '거래처 목록을 불러오는 중…' : '검색 결과가 없습니다.'}</p> : null}
         </div>
       </div> : null}
     </div>

@@ -68,7 +68,8 @@ export function referenceText(row: InventoryMovement) {
  * 응답을 요청 키와 함께 보관해, 키가 다르면 '조회 중'으로 본다.
  */
 export function useInventoryHistory(accountId: string, _productId: string, ingredientId: string) {
-  const [from, setFrom] = useState(() => historyDaysAgo(30))
+  // 기본 조회 기간 20일(빠른 선택 5·10·15·20일의 가장 긴 것, 2026-11-25)
+  const [from, setFrom] = useState(() => historyDaysAgo(20))
   const [to, setTo] = useState(() => dateText(new Date()))
   const [keyword, setKeyword] = useState('')
   const [tab, setTab] = useState<HistoryTabKey>('all')

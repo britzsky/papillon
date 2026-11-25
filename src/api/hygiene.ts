@@ -96,3 +96,23 @@ export function hygienePhotoUrl(imageBase: string, path: string) {
   if (/^https?:\/\//i.test(path)) return path
   return `${imageBase.replace(/\/+$/, '')}${path.split('/').map(part => encodeURIComponent(part)).join('/')}`
 }
+
+/** 점검 완료(이상 없음) 표시 — 발주 서버 tb_hygiene_check(2026-11-25). 기간 month 'YYYY-MM'(빈 값 = 전체) */
+export type HygieneCheck = { category_key: string; check_date: string; user_id: string }
+const toChecks = (rows: Array<Record<string, unknown>>): HygieneCheck[] => (rows ?? []).map(row => ({ category_key: text(row.category_key), check_date: text(row.check_date), user_id: text(row.user_id) }))
+
+export async function getHygieneChecks(accountId: string, month: string): Promise<HygieneCheck[]> {
+  const [year, mm] = month ? month.split('-') : ['', '']
+  return toChecks(await readJson<Array<Record<string, unknown>>>(
+    await fetch(buildApiUrl(`/v2/hygiene/checks?${new URLSearchParams({ account_id: accountId, year: year ?? '', month: mm ?? '' })}`)), '점검 완료 표시를 불러오지 못했습니다.'))
+}
+
+/** done true = 오늘 점검 완료 표시, false = 지금 기간의 표시 취소. 결과 = 그 기간 표시 목록 */
+export async function markHygieneCheck(accountId: string, categoryKey: string, done: boolean, month: string): Promise<HygieneCheck[]> {
+  const [year, mm] = month ? month.split('-') : ['', '']
+  const body = await readJson<{ checks: Array<Record<string, unknown>> }>(await fetch(buildApiUrl('/v2/hygiene/checks'), {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ account_id: accountId, category_key: categoryKey, done: done ? 'Y' : 'N', year: year ?? '', month: mm ?? '' }),
+  }), done ? '점검 완료로 표시하지 못했습니다.' : '점검 완료 표시를 취소하지 못했습니다.')
+  return toChecks(body.checks)
+}

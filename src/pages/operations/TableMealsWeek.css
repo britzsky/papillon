@@ -86,7 +86,8 @@
   .rd .tmw .tmw-action.is-open .tmw-action__trigger { --rd-btn-bg: var(--tmw-orange); --rd-btn-hover-bg: #C97518; box-shadow: 0 6px 14px rgba(227, 138, 42, .35); }
   .rd .tmw-action__trigger svg { transition: transform .2s ease; }
   .rd .tmw-action.is-open .tmw-action__trigger svg { transform: rotate(90deg); }
-  .rd .tmw-action__panel { width: 232px; }
+  /* 창은 fixed(useFloatingPanel) — 넘치면 창 안 스크롤, 그림자·hover 밀림이 잘리지 않게 여백(오른쪽 8px는 inset으로 보정) */
+  .rd .tmw-action__panel { width: 232px; padding: 2px 8px 16px 10px; overscroll-behavior: contain; }
   .rd .tmw-action__extra, .rd .tmw .tmw-action__item { animation: tmw-drop .22s cubic-bezier(.2, .8, .3, 1.2) both; animation-delay: calc(var(--i, 0) * 38ms); }
   .rd .tmw-action__extra { padding: 8px 12px; border-radius: 14px; background: var(--rd-card); border: 1px solid var(--rd-line); box-shadow: 0 8px 20px rgba(20, 32, 24, .14); }
   .rd .tmw-action__type { display: flex; align-items: center; justify-content: space-between; gap: 8px; --rd-fs: 12px; font-weight: 700; color: var(--rd-soft-ink); }

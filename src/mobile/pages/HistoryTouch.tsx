@@ -9,7 +9,7 @@ import {
 import './HistoryTouch.css'
 
 const TAB_ICON: Record<string, TouchIconName> = { all: 'inventory', in: 'truck', out: 'meals', return: 'refresh', adjust: 'alert', opening: 'box' }
-const PERIODS: { days: number; label: string }[] = [{ days: 0, label: '오늘' }, { days: 7, label: '7일' }, { days: 30, label: '30일' }, { days: 90, label: '90일' }]
+const PERIODS: { days: number; label: string }[] = [{ days: 0, label: '오늘' }, ...[5, 10, 15, 20].map(days => ({ days, label: `${days}일` }))]
 const TONE_CLASS: Record<string, string> = { success: 'is-in', warning: 'is-out', danger: 'is-danger', neutral: 'is-neutral' }
 const dayTitle = (date: string) => {
   const d = new Date(`${date}T00:00:00`)
@@ -27,7 +27,7 @@ export default function HistoryTouch() {
   const ingredientId = params.get('ingredient_id') || ''
   const h = useInventoryHistory(accountId, productId, ingredientId)
   const [keywordInput, setKeywordInput] = useState('')
-  const [period, setPeriod] = useState(30)
+  const [period, setPeriod] = useState(20)
 
   const countByTab = useMemo(() => Object.fromEntries(TYPE_TABS.map(tab => [tab.key, tab.types
     ? h.orderedSummary.filter(item => tab.types.split(',').includes(item.movement_type)).reduce((sum, item) => sum + item.movement_count, 0)

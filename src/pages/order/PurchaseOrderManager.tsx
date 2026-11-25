@@ -1,6 +1,6 @@
 import { workspaceAccountId } from '../../features/workspace/workspaceAccount'
 import { OrderStatusBadge } from '../../components/WorkspaceTheme'
-import { Fragment, useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import TopMenuLayout from '../../components/TopMenuLayout'
 import TouchLayout from '../../mobile/TouchLayout'
@@ -48,13 +48,14 @@ export default function PurchaseOrderManager({ shell = 'pc' }: { shell?: 'pc' | 
     receiptDate, setReceiptDate, receiptQuantity, setReceiptQuantity, receive,
     leftoverQty, leftoverChoice, setLeftoverChoice, shortageLines, shortageForm, setShortageForm, shortageNotice, setShortageNotice, cancelShortage,
     ingredients, receiptChoice, setReceiptChoice, needsIngredient,
-  } = usePurchaseOrders(accountId, focusedId)
+  } = usePurchaseOrders(accountId, focusedId, 'select')
 
   // 안 들어온 품목(배송 대기·결품 확인 필요·웰스토리 미입 등록) — 터치 화면과 공용
   const { pending, error: pendingError, attention } = useReceivingPending(accountId, orders)
 
   // 이번 주 칸(납품일 기준) — 고른 날이 없으면 오늘 들어올 발주서가 있을 때 오늘, 없으면 전체
-  const [day, setDay] = useState<string | null>(null)
+  // 특정 발주서로 들어오면(재고 변동 이력 '발주서 보기' 등) 날짜로 거르지 않고 전체 목록에서 그 발주서를 골라 보여 준다
+  const [day, setDay] = useState<string | null>(() => focusedId ? '' : null)
   const [weekStart, setWeekStart] = useState(() => mondayOf(kstDay()))
   const today = kstDay()
   const activeDay = day ?? (orders.some(o => o.requested_delivery_date === today) ? today : '')
@@ -84,7 +85,11 @@ export default function PurchaseOrderManager({ shell = 'pc' }: { shell?: 'pc' | 
       const list = await ordersForDelivery(inspectionDay)
       if (!list.length) { setPrintError(`${shortDate(inspectionDay)} 납품 예정 발주서 없음`); return }
       flushSync(() => setInspection({ date: inspectionDay, orders: list }))
-      window.print()
+      // PDF로 저장할 때 파일 이름 = 브라우저 제목 → '고객사명_검수서_납품일자'(2026-11-25 사용자 요청). 인쇄 창을 닫으면 원래 제목으로
+      const name = (list[0]?.account_name || localStorage.getItem('account_name') || accountId).replace(/[\\/:*?"<>|]+/g, ' ').trim()
+      const previousTitle = document.title
+      document.title = `${name}_검수서_${inspectionDay}`
+      try { window.print() } finally { document.title = previousTitle }
     } catch (error) { setPrintError(error instanceof Error ? error.message : '검수서를 불러오지 못했습니다.') }
     finally { setInspection(null) }
   }
@@ -105,6 +110,13 @@ export default function PurchaseOrderManager({ shell = 'pc' }: { shell?: 'pc' | 
   const [shipment, setShipment] = useState<{ id: string; lines: ShipmentLine[]; error?: string } | null>(null)
   const isOurhome = (order: PurchaseOrder | null) => Boolean(order && ((order as PurchaseOrder & { supplier_code?: string }).supplier_code === 'OURHOME' || order.supplier_name.includes('아워홈')))
   const selectedId = selected?.purchase_order_id || ''
+  // 들어온 발주서 카드로 한 번 스크롤(목록 안에서 보이게)
+  const scrolledTo = useRef('')
+  useEffect(() => {
+    if (!focusedId || scrolledTo.current === focusedId || selectedId !== focusedId) return
+    const card = document.querySelector<HTMLElement>(`.rd-recv__card[data-po="${CSS.escape(focusedId)}"]`)
+    if (card) { scrolledTo.current = focusedId; card.scrollIntoView({ block: 'center', behavior: 'smooth' }); card.focus({ preventScroll: true }) }
+  }, [focusedId, selectedId, orders])
   const watch = selected && isOurhome(selected) && !DONE.includes(selected.status) ? selectedId : ''
   useEffect(() => {
     if (!watch) return
@@ -165,7 +177,6 @@ export default function PurchaseOrderManager({ shell = 'pc' }: { shell?: 'pc' | 
         </div>
         <DeadlineAlertSlot />
       </header>
-      {focusedId ? <p className="rd-muted">선택한 발주서만 보고 있어요. <button type="button" className="rd-btn is-ghost" onClick={() => { setParams({ account_id: accountId }); setOffset(0) }}>전체 발주서 보기</button></p> : null}
 
       <section className="rd-week" aria-label="이번 주 납품일">
         <button type="button" className="rd-icon-btn" aria-label="이전 주" onClick={() => setWeekStart(addDays(weekStart, -7))}>‹</button>
@@ -218,7 +229,7 @@ export default function PurchaseOrderManager({ shell = 'pc' }: { shell?: 'pc' | 
             <h2 className="rd-h2">{activeDay ? `${shortDate(activeDay)}${activeDay === today ? '(오늘)' : ''} 들어올 발주서 ${shown.length}장` : `발주서 ${shown.length}장`}</h2>
             {activeDay ? <button type="button" className="rd-btn is-ghost" onClick={() => setDay('')}>전체 보기</button> : null}
           </div>
-          {shown.map(order => <button key={order.purchase_order_id} type="button" className={`rd-recv__card${selectedId === order.purchase_order_id ? ' is-selected' : ''}`} onClick={() => selectOrder(order)}>
+          {shown.map(order => <button key={order.purchase_order_id} type="button" data-po={order.purchase_order_id} className={`rd-recv__card${selectedId === order.purchase_order_id ? ' is-selected' : ''}`} onClick={() => selectOrder(order)}>
             <span className="rd-recv__card-top"><span className={`rd-recv__supplier is-${order.supplier_code || ''}`}>{order.supplier_name}</span><span className={`rd-recv__state is-${cardStatus(order).tone}`} title={labels[order.status] || order.status}>{cardStatus(order).text}</span></span>
             <strong className="rd-fs-md">{order.site_name || order.sold_to || order.client_ord}</strong>
             <span className="rd-muted rd-fs-sm">{shortDate(order.requested_delivery_date)} 납품{order.inspected_at && RECEIVABLE_STATUSES.includes(order.status) ? ' · 검수완료' : ''} · {order.items?.length ? `${order.items.length}품목 · ` : ''}{money(order.total_amount)}원</span>

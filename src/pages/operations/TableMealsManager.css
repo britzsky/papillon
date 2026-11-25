@@ -1919,3 +1919,19 @@ body.meal-print-measure .table-meals-hangyeol__logo { width: 52px; }
 .rd .top-page .rd-meals__filters { border-color: transparent; border-radius: 16px; box-shadow: 0 6px 16px rgba(30, 42, 34, .12); }
 .rd .top-page .rd-meals { display: flex; flex-direction: column; gap: 18px; }
 .rd .top-page .rd-meals__grid { gap: 18px; }
+
+/* 메뉴 추가 검색 + 연관 메뉴(MenuSearchSuggest, 2026-11-25) — 분류·유형 칩, 고르면 필터가 그 분류로 */
+.table-meals-manual__filters .menu-suggest { position: relative; grid-column: 1 / -1; min-width: 0; }
+.table-meals-manual__filters .menu-suggest input { width: 100%; box-sizing: border-box; }
+.menu-suggest__list { position: absolute; z-index: 30; top: calc(100% + 4px); left: 0; right: 0; max-height: 320px; overflow-y: auto; overscroll-behavior: contain;
+  padding: 4px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; box-shadow: 0 14px 30px rgba(20, 32, 24, .18); }
+.menu-suggest__head { margin: 2px 6px 4px; font-size: 11px; color: #64748b; }
+body .table-meals-manual__filters .menu-suggest__item { display: flex; width: 100%; height: auto; min-height: 34px; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 6px 8px; border: 0; border-radius: 7px; background: transparent; text-align: left; cursor: pointer; color: #243036; }
+body .table-meals-manual__filters .menu-suggest__item.is-active { background: var(--theme-color-soft, #eef6ee); }
+.menu-suggest__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+.menu-suggest__chips { display: inline-flex; flex: none; gap: 4px; }
+.menu-suggest__chip { padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 700; line-height: 1.4; }
+.menu-suggest__chip.is-food { background: #fff1e2; color: #a55d1d; }
+.menu-suggest__chip.is-type { background: #e6f3fa; color: #1b6f99; }
+body.workspace-ui > :is(#root, :not(#root)) .table-meals-manual__filters .menu-suggest input { field-sizing: fixed; width: 100% !important; max-width: none !important; }

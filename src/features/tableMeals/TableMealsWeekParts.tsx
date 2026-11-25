@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { formatDateValue, weekOfDate, type MealSlotRow, type TableMealsDetailDay } from './tableMealsView'
 import MealDocumentButtons from './MealDocumentButtons'
@@ -20,6 +20,29 @@ function useDismiss(open: boolean, close: () => void) {
     return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey) }
   }, [open, close])
   return ref
+}
+
+/**
+ * 펼침 창을 화면에 고정(fixed)으로 띄운다 — absolute면 판(스크롤 영역)이 창만큼 길어져 스크롤이 생겼음(2026-11-25).
+ * 버튼 바로 아래·오른쪽 끝 맞춤, 창이 화면 아래를 넘으면 창 안에서만 스크롤. 스크롤·크기 바뀜엔 따라 움직인다.
+ */
+function useFloatingPanel(open: boolean, anchorRef: { current: HTMLElement | null }, inset = 0) {
+  const [style, setStyle] = useState<CSSProperties>({ visibility: 'hidden' })
+  useLayoutEffect(() => {
+    if (!open) return
+    const place = () => {
+      const anchor = anchorRef.current
+      if (!anchor) return
+      const rect = anchor.getBoundingClientRect()
+      const top = rect.bottom + 3
+      setStyle({ position: 'fixed', top, right: Math.max(4, window.innerWidth - rect.right - inset), maxHeight: Math.max(120, window.innerHeight - top - 8), overflowY: 'auto' })
+    }
+    place()
+    window.addEventListener('scroll', place, true)
+    window.addEventListener('resize', place)
+    return () => { window.removeEventListener('scroll', place, true); window.removeEventListener('resize', place) }
+  }, [open, anchorRef, inset])
+  return style
 }
 
 const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일']
@@ -111,12 +134,13 @@ export function ActionMenu({ items, extra }: { items: ActionItem[]; extra?: Reac
   const [open, setOpen] = useState(false)
   const close = () => setOpen(false)
   const ref = useDismiss(open, close)
+  const panelStyle = useFloatingPanel(open, ref, 8)
   return <div className={`tmw-action${open ? ' is-open' : ''}`} ref={ref}>
     <button type="button" className="tmw-action__trigger" aria-expanded={open} aria-haspopup="menu" onClick={() => setOpen(value => !value)}>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
       <span>동작</span>
     </button>
-    {open ? <div className="tmw-action__panel" role="menu" aria-label="식단표 동작">
+    {open ? <div className="tmw-action__panel" role="menu" aria-label="식단표 동작" style={panelStyle}>
       {extra ? <div className="tmw-action__extra" style={{ ['--i' as string]: 0 }}>{extra}</div> : null}
       {items.map((item, index) => <button key={item.key} type="button" role="menuitem" className="tmw-action__item" disabled={item.disabled} title={item.hint}
         style={{ ['--i' as string]: index + 1 }} onClick={() => { close(); item.onClick() }}>{item.label}</button>)}
@@ -130,10 +154,11 @@ export function DownloadMenu({ accountId, tableId, onPrint }: { accountId: strin
   const close = () => setOpen(false)
   const ref = useDismiss(open, close)
   const disabled = !accountId || !tableId
+  const panelStyle = useFloatingPanel(open, ref)
   return <div className="tmw-download" ref={ref}>
     <button type="button" className="tmw-download__trigger" disabled={disabled} aria-expanded={open} onClick={() => setOpen(value => !value)}
       title={disabled ? '이 주 식단표가 없습니다' : '서류 받기·인쇄'}>다운로드</button>
-    {open ? <div className="tmw-download__panel">
+    {open ? <div className="tmw-download__panel" style={panelStyle}>
       <MealDocumentButtons accountId={accountId} tableId={tableId} buttonClassName="tmw-download__item" className="tmw-download__docs" />
       <button type="button" className="tmw-download__item" onClick={() => { close(); onPrint() }}>인쇄</button>
     </div> : null}

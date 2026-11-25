@@ -452,3 +452,30 @@ body.workspace-ui > :is(#root, :not(#root)) .rd.rd .rd-daystrip__day.is-active s
 .rd .rd-order__tools { flex: none; flex-wrap: wrap; }
 .rd .rd-order__cover { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -4px 0 0; }
 .rd .rd-order__cover select { min-width: 120px; }
+
+/* 공급사 상품 준비 동그라미(CatalogPreparation, 2026-11-25 사용자 요청): 웰·아 — 준비 중 주황 · 준비 완료 초록 · 실패 빨강(! 위에 마우스 = 이유) */
+.catalog-prep { display: inline-flex; align-items: center; gap: 6px; flex-wrap: nowrap; vertical-align: middle; }
+.catalog-prep__title { margin-right: 2px; font-size: 13px; font-weight: 700; color: var(--rd-soft-ink, #3d4a42); white-space: nowrap; }
+.catalog-prep__empty { font-size: 12px; font-weight: 700; color: #b45309; white-space: nowrap; }
+.catalog-prep__dot { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none; width: 28px; height: 28px; border-radius: 50%;
+  color: #fff; font-size: 13px; font-weight: 800; line-height: 1; cursor: default; box-shadow: 0 2px 5px rgba(20, 32, 24, .18); outline: none; }
+.catalog-prep__dot.is-ready { background: #2E9B4E; }
+.catalog-prep__dot.is-preparing { background: #F08A1C; }
+.catalog-prep__dot.is-failed { background: #D93636; cursor: help; }
+.catalog-prep__dot.is-failed:focus-visible { box-shadow: 0 0 0 3px rgba(217, 54, 54, .35); }
+.catalog-prep__bang { position: absolute; top: -4px; right: -4px; display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%;
+  background: #fff; color: #D93636; border: 1.5px solid #D93636; font-size: 10px; font-weight: 900; line-height: 1; }
+.catalog-prep__tip { position: absolute; z-index: 80; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); width: max-content; max-width: 280px; padding: 8px 10px; border-radius: 8px;
+  background: #2A2F2C; color: #fff; font-size: 12px; font-weight: 500; line-height: 1.5; text-align: left; white-space: normal; box-shadow: 0 8px 20px rgba(0, 0, 0, .25); visibility: hidden; opacity: 0; transition: opacity .12s; pointer-events: none; }
+.catalog-prep__tip::before { content: ""; position: absolute; top: -5px; left: 50%; margin-left: -5px; border: 5px solid transparent; border-top: 0; border-bottom-color: #2A2F2C; }
+.catalog-prep__dot:hover .catalog-prep__tip, .catalog-prep__dot:focus .catalog-prep__tip { visibility: visible; opacity: 1; }
+body .catalog-prep .catalog-prep__retry { display: inline-flex; align-items: center; justify-content: center; width: 26px !important; min-width: 26px !important; height: 26px !important; min-height: 26px !important; padding: 0 !important;
+  border: 1px solid #D5DDD7; border-radius: 50%; background: #fff; color: var(--rd-soft-ink, #3d4a42); font-size: 14px; line-height: 1; cursor: pointer; }
+.rd .rd-order__prep { max-width: none; display: inline-flex; align-items: center; gap: 6px; }
+/* 발주하기 머리 줄: 기준 탭 + 바로 옆 상품 검색(2026-11-25), 마감 알림은 오른쪽 */
+.rd.rd-order__head > .rd-order__head-main { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: center; gap: 10px; min-width: 0; }
+.rd.rd-order__head > .rd-order__head-main > .rd-order__search { flex: 0 1 360px; min-width: 260px; }
+.rd.rd-order__head > .rd-order__head-main > .rd-order__head-tools { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 8px; margin-left: 0; min-width: 0; }
+.rd.rd-order__head > .rd-order__head-main > .rd-order__head-tools > .rd-input { width: auto; min-width: 0; max-width: 190px; padding: 0 12px; border: 1px solid #D5DDD7; border-radius: 12px; background: #fff; }
+.rd.rd-order__head > .rd-order__head-main > .rd-order__head-tools > .rd-input:not(#_):not(#__) { height: 48px !important; min-height: 48px !important; }
+.rd.rd-order__head > .deadline-alert { margin-left: auto; }

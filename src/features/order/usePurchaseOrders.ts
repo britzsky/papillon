@@ -34,8 +34,9 @@ async function request(path: string, body?: unknown) {
 /**
  * 발주서 조회·공급사 접수 재조회·입고 확정(PC 발주서 관리·터치 화면 공용).
  * focusedId가 있으면 그 발주서 하나만 조회한다(알림·식단 사용 확정에서 바로 가기).
+ * focusMode 'select'(PC, 2026-11-25 사용자 요청): 목록은 평소처럼 전부 조회하고 그 발주서만 골라 둔다. 조회 기간 밖이면 따로 불러와 맨 위에 붙인다.
  */
-export function usePurchaseOrders(accountId: string, focusedId: string) {
+export function usePurchaseOrders(accountId: string, focusedId: string, focusMode: 'only' | 'select' = 'only') {
   const [from, setFrom] = useState(() => daysAgo(30))
   const [to, setTo] = useState(today)
   const [status, setStatus] = useState('')
@@ -81,13 +82,18 @@ export function usePurchaseOrders(accountId: string, focusedId: string) {
     try {
       const query = new URLSearchParams({ account_id: accountId, date_from: from, date_to: to, status, offset: String(offset), limit: '50' })
       if (supplierId) query.set('supplier_id', supplierId)
-      if (focusedId) { query.set('purchase_order_id', focusedId); query.delete('date_from'); query.delete('date_to'); query.delete('status'); query.delete('supplier_id') }
+      if (focusedId && focusMode === 'only') { query.set('purchase_order_id', focusedId); query.delete('date_from'); query.delete('date_to'); query.delete('status'); query.delete('supplier_id') }
       const result = await request(`/Procurement/Orders?${query}`)
-      setOrders(result.orders)
-      setSelected(current => result.orders.find((order: PurchaseOrder) => order.purchase_order_id === (focusedId || current?.purchase_order_id)) || result.orders[0] || null)
+      let list: PurchaseOrder[] = result.orders
+      if (focusedId && focusMode === 'select' && !list.some(order => order.purchase_order_id === focusedId)) {
+        const one = await request(`/Procurement/Orders?${new URLSearchParams({ account_id: accountId, purchase_order_id: focusedId, offset: '0', limit: '1' })}`).catch(() => null)
+        if (one?.orders?.length) list = [...one.orders, ...list]
+      }
+      setOrders(list)
+      setSelected(current => list.find(order => order.purchase_order_id === (focusMode === 'select' ? current?.purchase_order_id || focusedId : focusedId || current?.purchase_order_id)) || list[0] || null)
     } catch (error) { setMessage(error instanceof Error ? error.message : '조회 실패') }
     finally { setBusy(false) }
-  }, [accountId, from, to, status, supplierId, offset, focusedId])
+  }, [accountId, from, to, status, supplierId, offset, focusedId, focusMode])
   useEffect(() => { void load() }, [load])
   const suppliers = useMemo(() => {
     const byId = new Map(siteSuppliers.map(s => [s.id, s]))

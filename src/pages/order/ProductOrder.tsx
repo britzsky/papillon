@@ -250,7 +250,7 @@ function FavoriteOrderList(p: FavoriteListProps) {
       <div className="rd-order__list-head"><div><h2 className="rd-h2">나만의 식재료 {p.shown.length}개</h2>
         <p className="rd-muted rd-fs-sm">♥ 표시한 웰스토리·아워홈 상품이에요. 체크하거나 수량을 정해 담으면 오른쪽 발주서에 들어가요.</p></div></div>
       <div className="rd-order__split"><div className="rd-order__scroll"><div className="rd-order__table">
-        <div className="rd-order__row is-head rd-fs-xs"><span /><span>상품</span><span>재고 식재료</span><span>상품 가격 (100g당 가격)</span><span>주문 수량</span></div>
+        <div className="rd-order__row is-head rd-fs-xs"><span /><span>사진</span><span>상품</span><span>상품 가격 (100g당 가격)</span><span>재고 식재료</span><span>주문 수량</span></div>
         {p.sorted.map(offer => {
           const line = lineOf(offer)
           const cost = unitCost(offer)
@@ -260,10 +260,18 @@ function FavoriteOrderList(p: FavoriteListProps) {
           return <Fragment key={offer.supplier_offer_id}><div className={`rd-order__row${line ? ' is-open' : ''} is-by-${offer.supplier_code}`}>
             <input aria-label={`${offer.product_name} 담기`} type="checkbox" checked={Boolean(line)} disabled={disabled || (!line && !p.canAdd(offer))}
               onChange={e => { if (e.target.checked) void p.addToCart(offer); else if (line) p.removeLine(line) }} />
+            {/* 2026-11-25 사용자 결정: 체크 · 사진(110px 정사각) · 상품 · 상품 가격 · 재고 식재료 · 주문 수량 순 */}
+            <span className="rd-pick__img rd-fav__img"><ProductImage zoomable src={offer.thumbnail_url || offer.image_url} fullSrc={offer.image_url} name={offer.product_name} /></span>
             <div className="rd-order__name">
               <strong className="rd-fs-md" title={offer.product_name}>{offer.product_name}</strong>
               <span className="rd-order__tags"><span className={`rd-supplier is-${offer.supplier_code}`}>{offer.supplier_name}</span>
                 <button type="button" className="rd-fav__heart" aria-pressed={offer.favorite_yn === 'Y'} aria-label={`${offer.product_name} 나만의 식재료 해제`} title="나만의 식재료(하트) 해제" disabled={disabled} onClick={() => void p.toggleFavorite(offer)}>{offer.favorite_yn === 'Y' ? '♥' : '♡'}</button></span>
+            </div>
+            <div className="rd-order__offer">
+              <span className="rd-fav__offer rd-fs-sm">
+                <span><b>{won(offer.purchase_price)}</b>({offer.order_unit}){cost ? ` / ${cost.per}당 ${won(cost.value)}` : ''} · <span className={available ? 'rd-text-ok' : 'rd-text-warn'}>{available ? '발주 가능' : reason || '납품일자·마감 확인 요망'}</span></span>
+                <small className="rd-muted">{offer.supplier_item_code} · {offer.base_qty}{offer.base_unit}/{offer.order_unit}{deadline && !deadline.passed ? ` · 마감 ${deadline.text}` : ''}</small>
+              </span>
             </div>
             <div className="rd-order__stock rd-fs-sm">
               {line ? <select className="rd-input rd-fav__source" aria-label={`${offer.product_name} 재고에 넣을 식재료`} title="이 상품이 들어갈 재고 식재료" disabled={disabled} value={line.source} onChange={e => p.setLineSource(line, e.target.value)}>
@@ -272,13 +280,6 @@ function FavoriteOrderList(p: FavoriteListProps) {
                 {p.ingredients.map(i => <option key={i.ingredient_id} value={i.ingredient_id}>{i.ingredient_name}</option>)}
               </select> : <span className="rd-muted">{offer.suggested_ingredient_name || '담으면 고를 수 있어요'}</span>}
               {line?.source && line.sourceBy ? <small className="rd-muted">{SOURCE_REASON[line.sourceBy]}</small> : null}
-            </div>
-            <div className="rd-order__offer">
-              <span className="rd-pick__img"><ProductImage zoomable src={offer.thumbnail_url || offer.image_url} fullSrc={offer.image_url} name={offer.product_name} /></span>
-              <span className="rd-fav__offer rd-fs-sm">
-                <span><b>{won(offer.purchase_price)}</b>({offer.order_unit}){cost ? ` / ${cost.per}당 ${won(cost.value)}` : ''} · <span className={available ? 'rd-text-ok' : 'rd-text-warn'}>{available ? '발주 가능' : reason || '납품일자·마감 확인 요망'}</span></span>
-                <small className="rd-muted">{offer.supplier_item_code} · {offer.base_qty}{offer.base_unit}/{offer.order_unit}{deadline && !deadline.passed ? ` · 마감 ${deadline.text}` : ''}</small>
-              </span>
             </div>
             <div className="rd-order__qty">
               {line ? <span className="rd-stepper">

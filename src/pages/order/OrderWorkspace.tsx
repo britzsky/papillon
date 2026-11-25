@@ -56,21 +56,21 @@ export function OrderWorkspaceBody({ initialTab }: { initialTab?: OrderTab | Leg
   const BASIS: { key: OrderTab; label: string }[] = [{ key: 'plan', label: '식단표 기준' }, { key: 'stock', label: '지금 부족한 재고' }, { key: 'usage', label: '최근 사용량' }, { key: 'recommended', label: '추천 발주안' }, { key: 'myProducts', label: '♥ 나만의 식재료' }]
 
   return <>
-    {/* 2026-10-16 정리: 한 줄에 ① 기준(식단표·재고·사용량·추천 발주안) ② 마감 알림 ③ 상품 직접 검색. 화면 이름은 위 경로 줄 */}
+        {/* 2026-11-25 사용자 요청: '다른 상품 직접 찾아 담기'가 멀다 → 기준 탭(♥ 나만의 식재료) 바로 오른쪽. 마감 알림은 그 뒤 오른쪽 끝 */}
     <header className="rd rd-order__head">
       <h1 className="rd-sr-only">발주하기</h1>
-      <div role="tablist" aria-label="무엇을 기준으로 시킬까요" className="rd-seg">
-        {BASIS.map(item => <button key={item.key} type="button" role="tab" aria-selected={tab === item.key} className={tab === item.key ? 'is-active' : ''}
-          title={TABS.find(t => t.key === item.key)?.hint} onClick={() => select(item.key)}>{item.label}</button>)}
-      </div>
-      <DeadlineAlertSlot />
-      {productTab ? <div ref={setHeadSlot} className="rd-order__head-tools" /> : <div className="rd-order__head-right">
-        <form className="rd-order__search" role="search" onSubmit={event => { event.preventDefault(); go('products', search.trim() ? { q: search.trim() } : undefined) }}>
+      <div className="rd-order__head-main">
+        <div role="tablist" aria-label="무엇을 기준으로 시킬까요" className="rd-seg">
+          {BASIS.map(item => <button key={item.key} type="button" role="tab" aria-selected={tab === item.key} className={tab === item.key ? 'is-active' : ''}
+            title={TABS.find(t => t.key === item.key)?.hint} onClick={() => select(item.key)}>{item.label}</button>)}
+        </div>
+        {productTab ? <div ref={setHeadSlot} className="rd-order__head-tools" /> : <form className="rd-order__search" role="search" onSubmit={event => { event.preventDefault(); go('products', search.trim() ? { q: search.trim() } : undefined) }}>
           <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="#5B6660" strokeWidth="2" fill="none" /><path d="M16 16 L21 21" stroke="#5B6660" strokeWidth="2" strokeLinecap="round" /></svg>
           <input type="search" className="rd-bare-input" aria-label="상품 직접 검색" placeholder="다른 상품 직접 찾아 담기" value={search} onChange={e => setSearch(e.target.value)} />
           <button type="submit" className="rd-btn">검색</button>
-        </form>
-      </div>}
+        </form>}
+      </div>
+      <DeadlineAlertSlot />
     </header>
     <div role="tabpanel" aria-label={TABS.find(item => item.key === tab)?.label}>
       {tab === 'recommended' ? <FoodOrder key="recommended" embedded fixedSource="PLAN" recommended /> : tab === 'products' ? <ProductOrder embedded headSlot={headSlot} /> : tab === 'myProducts' ? <ProductOrder key="my" embedded favorites headSlot={headSlot} /> : <FoodOrder key={tab} embedded fixedSource={SOURCE[tab]} />}

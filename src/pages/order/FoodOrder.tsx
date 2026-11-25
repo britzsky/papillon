@@ -195,7 +195,7 @@ function FoodOrder({ embedded = false, fixedSource, recommended = false }: { emb
           </button> })}
       </div>
       <div className="rd-order__bar-side">
-        <span className="rd-order__prep rd-fs-sm"><b>상품 준비</b> <CatalogPreparation inline key={accountId + criteria.delivery_date} accountId={accountId} date={criteria.delivery_date} onReady={() => setRevision(n => n + 1)} /></span>
+        <span className="rd-order__prep rd-fs-sm"><CatalogPreparation key={accountId + criteria.delivery_date} accountId={accountId} date={criteria.delivery_date} onReady={() => setRevision(n => n + 1)} /></span>
         <button type="button" className={`rd-btn${showFilters ? ' is-selected' : ''}`} aria-expanded={showFilters} aria-controls="order-filters" onClick={() => setShowFilters(value => !value)}>조회 조건 {showFilters ? '접기' : '보기'}</button>
       </div>
     </div>
@@ -217,6 +217,10 @@ function FoodOrder({ embedded = false, fixedSource, recommended = false }: { emb
         <label>공급사 사업장<select className="workplace-select" value={criteria.sold_to ? (criteria.supplier_code || 'WELSTORY') + ':' + criteria.sold_to : ''} onChange={e => { const [supplier_code = '', sold_to = ''] = e.target.value.split(':'); update({ sold_to, supplier_code }) }}><option value="">전체 공급사·사업장</option>{sites.map(site => <option key={site.supplier_account_site_id} value={site.supplier_code + ':' + site.external_site_code}>{site.supplier_name} · {site.external_site_name} ({site.external_site_code})</option>)}</select></label>
         <button type="button" className="rd-btn is-primary" disabled={loading || previewing} onClick={() => setRevision(value => value + 1)}>{loading ? '조회 중…' : '다시 계산'}</button>
         <label className="shortage-order-check"><input type="checkbox" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} />60초마다 다시 계산</label>
+        {/* 2026-11-25 사용자 요청: 조회 시작일·종료일이 무엇에 쓰이는지 먼저 알려 준다(서버 ShortageProcurementService·Mapper 기준) */}
+        <p className="rd-order__period-help rd-fs-xs rd-muted">{criteria.source === 'PLAN' || criteria.source === 'DRAFT'
+          ? <><b>조회 시작일~종료일</b> = 이 납품으로 쓸 식단 기간이에요. 이 기간 식단의 필요량을 더하고, 오늘~시작일 전 식단이 쓸 양은 재고에서 먼저 빼요. 납품일을 고르면 '납품 다음 날 ~ 다음 납품일'로 자동으로 바뀌어요.</>
+          : <><b>조회 시작일</b> = 재고 기준일(소비기한이 이 날 전에 끝나는 재고는 없는 것으로 봐요). <b>조회 종료일</b> = 이 날까지 들어올 입고 예정 주문만 재고에 더해요. 납품일은 종료일 안이어야 하고, 기본은 시작일부터 일주일 — 납품일이 그보다 늦으면 종료일이 납품일로 늘었다가, 다시 앞 날짜를 고르면 일주일로 돌아가요.</>}</p>
       </section>
     </section> : null}
 

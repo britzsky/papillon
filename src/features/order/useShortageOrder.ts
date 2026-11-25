@@ -148,6 +148,10 @@ export function useShortageOrder(fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY' | 
   // autoselect_mode=recommended: 추천 발주안 탭(늘 쓰는 상품만 미리 고름)
   const autoSelectRecommended = useRef(params.get('autoselect_mode') === 'recommended')
   const planDatesLoaded = useRef(false)
+  // 탭을 옮겼다 돌아와도 담은 품목을 기억한다(2026-11-25 사용자 요청). 거래처·기준·납품일마다 sessionStorage에 두고,
+  // 그 조합으로 처음 조회가 끝나면 지금 목록에서 아직 시킬 수 있는 것만 되살린다. 되살리기 전에는 저장하지 않는다(빈 선택으로 덮지 않게).
+  const picksKey = `order-picks:${accountId}:${criteria.source}:${criteria.delivery_date}`
+  const restoredPicks = useRef(new Set<string>())
 
   useEffect(() => {
     let active = true
@@ -183,21 +187,30 @@ export function useShortageOrder(fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY' | 
     void getShortages(criteria, controller.signal).then(data => {
       if (controller.signal.aborted) return
       setResult(data)
+      const valid = (id: string, selection: OrderSelection) => {
+        const offer = data.ingredients.find(row => row.ingredient_id === id)?.offers.find(candidate => candidate.supplier_offer_id === selection.supplier_offer_id)
+        return Boolean(offer?.orderable && selection.order_qty > 0 && selection.order_qty <= (offer.quantity_basis === 'MANUAL' ? MANUAL_MAX_ORDER_QTY : offer.recommended_qty))
+      }
+      const firstForKey = !restoredPicks.current.has(picksKey)
+      restoredPicks.current.add(picksKey)
       if (autoSelectPending.current) {
         // 식단 기간 조회가 끝나기 전 첫 조회 결과는 기간이 달라 다시 조회되므로 그때 고른다
         if (criteria.source !== 'PLAN' || !criteria.table_id || planDatesLoaded.current) autoSelectPending.current = false
         setSelected(autoSelectRecommended.current ? recommendedSelection(data.ingredients) : availableSelection(data.ingredients))
         return
       }
-      setSelected(current => Object.fromEntries(Object.entries(current).filter(([id, selection]) => {
-        const offer = data.ingredients.find(row => row.ingredient_id === id)?.offers.find(candidate => candidate.supplier_offer_id === selection.supplier_offer_id)
-        return offer?.orderable && selection.order_qty > 0 && selection.order_qty <= (offer.quantity_basis === 'MANUAL' ? MANUAL_MAX_ORDER_QTY : offer.recommended_qty)
-      })))
+      let remembered: Record<string, OrderSelection> = {}
+      if (firstForKey) { try { remembered = JSON.parse(sessionStorage.getItem(picksKey) || '{}') || {} } catch { remembered = {} } }
+      setSelected(current => Object.fromEntries(Object.entries({ ...remembered, ...current }).filter(([id, selection]) => valid(id, selection))))
     }).catch((e: unknown) => {
       if (!controller.signal.aborted) { setResult(null); setSelected({}); setError(e instanceof Error ? e.message : '부족재고 조회 실패') }
     }).finally(() => { if (!controller.signal.aborted) setLoading(false) })
     return () => controller.abort()
-  }, [criteria, revision])
+  }, [criteria, revision, picksKey])
+  useEffect(() => {
+    if (!accountId || !restoredPicks.current.has(picksKey)) return
+    try { if (Object.keys(selected).length) sessionStorage.setItem(picksKey, JSON.stringify(selected)); else sessionStorage.removeItem(picksKey) } catch { /* 저장소를 못 써도 발주는 된다 */ }
+  }, [accountId, picksKey, selected])
 
   useEffect(() => {
     if (!autoRefresh || preview || submitting || previewing) return
@@ -212,7 +225,8 @@ export function useShortageOrder(fixedSource?: 'PLAN' | 'STOCK' | 'INVENTORY' | 
   const chooseDelivery = (value: string) => {
     if (!value) return
     if (criteria.source === 'PLAN') update({ delivery_date: value, ...coverFor(value), all_tables: 'Y' })
-    else update(value > criteria.date_to ? { delivery_date: value, date_to: value } : { delivery_date: value })
+    // 2026-11-25: 종료일은 '시작일+6일(기본 일주일)'과 납품일 중 늦은 날. 예전엔 늘리기만 해서 차주 납품을 골랐다가 이번 주로 돌아와도 차주 종료일이 남았음
+    else { const base = shiftDay(criteria.date_from, 6); update({ delivery_date: value, date_to: value > base ? value : base }) }
   }
   /** 이 납품으로 쓸 마지막 식단일(더 길게 받기) */
   const chooseLastMealDay = (value: string) => { if (value && value >= criteria.date_from) update({ date_to: value }) }

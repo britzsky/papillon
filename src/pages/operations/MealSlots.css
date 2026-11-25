@@ -16,3 +16,5 @@ body.workspace-ui > :is(#root, :not(#root)) .rd-meal-slots table input.rd-input:
 .rd-meal-slots .meal-slots__msg { margin: 0; padding: 10px 14px; border: 1px solid #b7dcc4; border-radius: 12px; background: #eef8f1; color: #14532d; }
 .rd-meal-slots .meal-slots__msg.is-error { border-color: var(--rd-red-line); background: var(--rd-red-soft); color: var(--rd-red-ink); }
 @media (max-width: 600px) { body.workspace-ui > :is(#root, :not(#root)) .rd-meal-slots table input.rd-input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file]) { width: 130px !important; min-width: 100px !important; } }
+/* 2026-11-25 사용자 요청: 순서 ▲▼가 버튼 오른쪽 아래로 쏠림(전역 버튼 안쪽 여백) → 가운데 */
+body .rd-meal-slots .meal-slots__order button { display: inline-flex !important; align-items: center !important; justify-content: center !important; padding: 0 !important; line-height: 1 !important; font-size: 11px; text-align: center; }

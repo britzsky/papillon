@@ -3,8 +3,8 @@ import { useSearchParams } from 'react-router-dom'
 import { requestAiSanitationNote } from '../../api/ai'
 import { getAccountOptions } from '../../api/operations'
 import {
-  getHygieneCategories, getHygieneRecords, hygienePhotoUrl, saveHygieneCategories, saveHygieneRecord, uploadHygienePhoto,
-  type HygieneCategory, type HygieneRecord,
+  getHygieneCategories, getHygieneChecks, getHygieneRecords, hygienePhotoUrl, markHygieneCheck, saveHygieneCategories, saveHygieneRecord, uploadHygienePhoto,
+  type HygieneCategory, type HygieneCheck, type HygieneRecord,
 } from '../../api/hygiene'
 import { isHeadquarters, workspaceAccountId } from '../workspace/workspaceAccount'
 import { confirmDialog } from '../../utils/dialog'
@@ -48,6 +48,9 @@ export function useHygieneBoard() {
   const [accountName, setAccountName] = useState(() => (headquarters ? '' : localStorage.getItem('account_name') || ''))
   const [categories, setCategories] = useState<HygieneCategory[]>([])
   const [records, setRecords] = useState<HygieneRecord[]>([])
+  // 점검 완료(이상 없음) 표시 — 기록이 없는 카테고리도 '점검 완료'로 보이게(2026-11-25). 못 불러오면(서버 재시작 전) 표시만 빠지고 화면은 그대로
+  const [checks, setChecks] = useState<HygieneCheck[]>([])
+  const [checksError, setChecksError] = useState('')
   const [imageBase, setImageBase] = useState('')
   // 주소 ?month=(빈 값=누적 전체)&status=CHECK — 본사 홈 '위생 조치 필요'에서 지난달 미조치 기록까지 바로 보이게(2026-10-29)
   const [month, setMonth] = useState(() => searchParams.has('month') ? searchParams.get('month') || '' : thisMonth())
@@ -72,12 +75,15 @@ export function useHygieneBoard() {
     if (!accountId) { setRecords([]); setCategories([]); return }
     let alive = true
     setLoading(true); setError('')
-    Promise.all([getHygieneCategories(accountId), getHygieneRecords(accountId, month)])
-      .then(([nextCategories, result]) => {
+    Promise.all([getHygieneCategories(accountId), getHygieneRecords(accountId, month),
+      getHygieneChecks(accountId, month).then(rows => ({ rows, error: '' })).catch((e: unknown) => ({ rows: [] as HygieneCheck[], error: e instanceof Error ? e.message : '점검 완료 표시를 불러오지 못했습니다.' }))])
+      .then(([nextCategories, result, checkResult]) => {
         if (!alive) return
         setCategories(nextCategories)
         setRecords(result.records)
         setImageBase(result.imageBase)
+        setChecks(checkResult.rows)
+        setChecksError(checkResult.error)
       })
       .catch(e => { if (alive) { setError(e instanceof Error ? e.message : '위생 점검 기록을 불러오지 못했습니다.'); setRecords([]) } })
       .finally(() => { if (alive) setLoading(false) })
@@ -152,6 +158,21 @@ export function useHygieneBoard() {
     return ok
   }
 
+  /** 카테고리별 지금 기간의 가장 최근 점검 완료일 */
+  const checkedOn = useMemo(() => checks.reduce<Record<string, string>>((acc, row) => {
+    if (!acc[row.category_key] || acc[row.category_key] < row.check_date) acc[row.category_key] = row.check_date
+    return acc
+  }, {}), [checks])
+  /** 이상 없음 · 점검 완료 표시(오늘) / 지금 기간 표시 취소 */
+  const markChecked = (categoryKey: string, done: boolean) => {
+    if (!accountId || !categoryKey) return
+    void run(`check:${categoryKey}`, async () => {
+      setChecks(await markHygieneCheck(accountId, categoryKey, done, month))
+      setChecksError('')
+      setNotice(done ? `${categoryName(categoryKey) || '카테고리'} — 이상 없음 · 점검 완료로 표시했습니다.` : `${categoryName(categoryKey) || '카테고리'} 점검 완료 표시를 취소했습니다.`)
+    })
+  }
+
   /** 편집 중 기록의 부적합·조치 문구를 AI로 다듬는다(저장은 사람이) */
   const polishWithAi = () => {
     if (!draft) return
@@ -170,7 +191,7 @@ export function useHygieneBoard() {
     accountId, accountName, headquarters, categories, records, visibleRecords, counts, doneRate, month, setMonth,
     categoryFilter, setCategoryFilter, statusFilter, setStatusFilter, loading, error, setError, notice, setNotice,
     draft, setDraft, startNew, startEdit, updateDraft, uploadPhoto, saveDraft, remove, saveCategories, polishWithAi, busy,
-    photoUrl, categoryName, reload,
+    photoUrl, categoryName, reload, checks, checkedOn, checksError, markChecked,
   }
 }
 
