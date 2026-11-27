@@ -4,7 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import TopMenuLayout from '../../components/TopMenuLayout'
 import DeadlineAlertSlot from '../../components/DeadlineAlertSlot'
 import LoadingScreen from '../../components/LoadingScreen'
-import { useWelstoryWorkspace } from '../../features/order/useWelstoryWorkspace'
+import { OFFER_PAGE_SIZE, useWelstoryWorkspace } from '../../features/order/useWelstoryWorkspace'
 import { useOurhomeSite } from '../../features/order/useOurhomeSite'
 import type { SupplierSyncStatus } from '../../api/supplierIntegration'
 import { OurhomeSiteBar, OurhomeWork } from './OurhomeSitesPanel'
@@ -69,9 +69,10 @@ function SupplierWorkspace({ accountId }: { accountId: string }) {
   const [supplier, setSupplier] = useState('WELSTORY')
   const [tab, setTab] = useState('products')
   const {
-    deliveryDate, setDeliveryDate, sites, offers, statuses, search, setSearch, loading, error,
+    deliveryDate, setDeliveryDate, sites, statuses, search, setSearch, loading, error,
     periodYear, setPeriodYear, periodGroup, setPeriodGroup, selectedSite, setSelectedSite, syncMessage, setSyncMessage, reload,
     runSiteSync, runCatalogSync, runAutoSync, runReceiptSync, filtered, selected, unavailableCount,
+    page, setPage, pageCount, totalCount, allCount, unavailableOnly, setUnavailableOnly,
   } = useWelstoryWorkspace(accountId)
   const ourhome = useOurhomeSite(accountId)
 
@@ -130,8 +131,13 @@ function SupplierWorkspace({ accountId }: { accountId: string }) {
           {loading ? <LoadingScreen compact message="공급사 통합 정보를 불러오는 중입니다." /> : null}
           {error ? <div className="supplier-integration-error">{error}</div> : null}
           {!loading && !error && tab === 'products' && selectedSite ? <div className="supplier-work-result">
-            <h3>상품·판가 {filtered.length}건 {unavailableCount > 0 && <small className="is-danger">· 주문 불가 {unavailableCount}건</small>}<span>납품일 {deliveryDate} · {selected?.external_site_name || selectedSite}</span></h3>
-            <div className="supplier-work-table"><table><thead><tr><th>상품코드</th><th>상품명</th><th>가격</th><th>발주단위</th><th>최소/증가량</th><th>가용성</th><th>동기화</th></tr></thead><tbody>{filtered.map((item) => <tr key={item.supplier_offer_id}><td>{item.supplier_item_code}</td><td>{item.product_name}</td><td>{item.purchase_price.toLocaleString('ko-KR')}원</td><td>{item.order_unit} ({item.base_qty}{item.base_unit})</td><td>{item.minimum_order_qty} / {item.order_increment_qty}</td><td className={item.orderable_yn === 'N' || item.product_status !== 'ACTIVE' ? 'is-danger' : 'is-success'}>{item.availability_reason || (item.orderable_yn === 'N' ? '주문 불가' : item.product_status === 'ACTIVE' ? '주문 가능' : item.product_status)}</td><td>{item.stale ? '확인 필요' : shortTime(item.last_synced_at)}</td></tr>)}{!filtered.length ? <tr><td colSpan={7} className="supplier-work-empty">{offers.length ? '검색어에 해당하는 상품이 없습니다. 검색어를 지우고 다시 확인해주세요.' : '선택한 사업장·납품일에 조회되는 상품/가격이 없습니다. 납품일이 동기화한 판가의 적용 기간에 포함되는지 확인해주세요.'}</td></tr> : null}</tbody></table></div>
+            <h3>상품·판가 {allCount.toLocaleString('ko-KR')}건 {unavailableCount > 0 && <button type="button" className="supplier-unavailable-toggle is-danger" aria-pressed={unavailableOnly} onClick={() => setUnavailableOnly(!unavailableOnly)}>{unavailableOnly ? '전체 보기' : `주문 불가 ${unavailableCount.toLocaleString('ko-KR')}건만 보기`}</button>}<span>납품일 {deliveryDate} · {selected?.external_site_name || selectedSite}</span></h3>
+            <div className="supplier-work-table"><table><thead><tr><th>상품코드</th><th>상품명</th><th>가격</th><th>발주단위</th><th>최소/증가량</th><th>가용성</th><th>동기화</th></tr></thead><tbody>{filtered.map((item) => <tr key={item.supplier_offer_id}><td>{item.supplier_item_code}</td><td>{item.product_name}</td><td>{item.purchase_price.toLocaleString('ko-KR')}원</td><td>{item.order_unit} ({item.base_qty}{item.base_unit})</td><td>{item.minimum_order_qty} / {item.order_increment_qty}</td><td className={item.orderable_yn === 'N' || item.product_status !== 'ACTIVE' ? 'is-danger' : 'is-success'}>{item.availability_reason || (item.orderable_yn === 'N' ? '주문 불가' : item.product_status === 'ACTIVE' ? '주문 가능' : item.product_status)}</td><td>{item.stale ? '확인 필요' : shortTime(item.last_synced_at)}</td></tr>)}{!filtered.length ? <tr><td colSpan={7} className="supplier-work-empty">{allCount || search.trim() ? '검색어에 해당하는 상품이 없습니다. 검색어를 지우고 다시 확인해주세요.' : '선택한 사업장·납품일에 조회되는 상품/가격이 없습니다. 납품일이 동기화한 판가의 적용 기간에 포함되는지 확인해주세요.'}</td></tr> : null}</tbody></table></div>
+            {totalCount > filtered.length || page > 1 ? <div className="ourhome-page-controls supplier-offer-pager">
+              <button type="button" disabled={page <= 1} onClick={() => setPage(page - 1)}>이전 페이지</button>
+              <span>{page} / {pageCount}페이지 · {totalCount.toLocaleString('ko-KR')}건 중 {((page - 1) * OFFER_PAGE_SIZE + 1).toLocaleString('ko-KR')}~{((page - 1) * OFFER_PAGE_SIZE + filtered.length).toLocaleString('ko-KR')}</span>
+              <button type="button" disabled={page >= pageCount} onClick={() => setPage(page + 1)}>다음 페이지</button>
+            </div> : null}
           </div> : null}
         </div>
       </section>

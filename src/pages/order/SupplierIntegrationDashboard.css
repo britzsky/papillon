@@ -113,3 +113,6 @@ body.workspace-ui .supplier-integration-page .supplier-work-panel td.supplier-wo
 @media(max-width:1100px){.supplier-split{grid-template-columns:minmax(0,1fr)}.supplier-sync-status{max-height:360px}}
 @media(max-width:650px){.supplier-segment{margin-left:0;width:100%}.supplier-integration-page .supplier-segment button{flex:1}.supplier-account-picker select,.supplier-site-bar__site select{min-width:0;flex:1}.supplier-site-bar__actions{margin-left:0}}
 .supplier-site-bar__site strong{white-space:nowrap}
+/* 상품·판가 표 페이지(2026-11-27): 주문 불가만 보기 전환 */
+body.workspace-ui > :is(#root, :not(#root)) .rd.rd button.supplier-unavailable-toggle{margin-left:6px;height:auto !important;min-height:0 !important;padding:2px 10px !important;border:1px solid var(--rd-red) !important;border-radius:999px !important;background:transparent !important;color:var(--rd-red) !important;font-size:12px !important;font-weight:700;cursor:pointer}body.workspace-ui > :is(#root, :not(#root)) .rd.rd button.supplier-unavailable-toggle[aria-pressed="true"]{background:var(--rd-red) !important;color:#fff !important}
+.supplier-offer-pager{justify-content:center}

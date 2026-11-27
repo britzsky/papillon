@@ -37,7 +37,6 @@ export default function SupplierTouch() {
 function Welstory({ accountId, toolbar, onAccountChange }: { accountId: string; toolbar: ReactNode; onAccountChange: (value: string) => void }) {
   const w = useWelstoryWorkspace(accountId)
   const [task, setTask] = useState<Task>('products')
-  const [limit, setLimit] = useState(60)
 
   const aside = <div className="su-panel">
     <div className="su-panel__head">
@@ -49,9 +48,9 @@ function Welstory({ accountId, toolbar, onAccountChange }: { accountId: string; 
         <div><span>물류센터</span><span>{w.selected?.center_code || '-'}</span></div>
         <div><span>대표코드</span><span>{w.selected?.representative_site_code || '-'}</span></div>
         <div><span>사업장 동기화</span><span>{w.selected?.last_synced_at?.slice(0, 16) || '미동기화'}</span></div>
-        <div className="is-total"><span>조회 상품</span><span>{w.offers.length}개</span></div>
+        <div className="is-total"><span>조회 상품</span><span>{w.allCount.toLocaleString('ko-KR')}개</span></div>
       </div>
-      {w.unavailableCount > 0 && <p className="t-msg is-warn">주문할 수 없는 상품 {w.unavailableCount}개</p>}
+      {w.unavailableCount > 0 && <p className="t-msg is-warn">주문할 수 없는 상품 {w.unavailableCount.toLocaleString('ko-KR')}개 <button type="button" className="t-btn is-soft" aria-pressed={w.unavailableOnly} onClick={() => w.setUnavailableOnly(!w.unavailableOnly)}>{w.unavailableOnly ? '전체 보기' : '이것만 보기'}</button></p>}
       <div className="su-links">
         <Link className="t-btn is-soft is-block" to="/order_manager/supplier-sites">사업장 매핑</Link>
         <Link className="t-btn is-soft is-block" to="/order_manager/welstory">웰스토리 원문 조회</Link>
@@ -85,9 +84,9 @@ function Welstory({ accountId, toolbar, onAccountChange }: { accountId: string; 
         <label className="t-chip su-search"><TouchIcon name="search" /><input type="search" value={w.search} placeholder="상품명 · 코드" onChange={e => w.setSearch(e.target.value)} /></label>
         <button type="button" className="t-btn is-icon" aria-label="새로고침" disabled={w.loading || !w.selectedSite} onClick={w.reload}><TouchIcon name="refresh" /></button>
       </div>
-      {!w.loading && w.selectedSite && w.filtered.length === 0 && <p className="t-msg">{w.offers.length ? '검색어에 맞는 상품이 없습니다.' : '이 사업장·납품일에 조회되는 상품/가격이 없습니다. 납품일이 동기화한 판가 기간에 들어가는지 확인해주세요.'}</p>}
+      {!w.loading && w.selectedSite && w.filtered.length === 0 && <p className="t-msg">{w.allCount || w.search.trim() ? '검색어에 맞는 상품이 없습니다.' : '이 사업장·납품일에 조회되는 상품/가격이 없습니다. 납품일이 동기화한 판가 기간에 들어가는지 확인해주세요.'}</p>}
       <div className="su-grid">
-        {w.filtered.slice(0, limit).map(item => {
+        {w.filtered.map(item => {
           const blocked = item.orderable_yn === 'N' || item.product_status !== 'ACTIVE'
           return <article key={item.supplier_offer_id} className="t-card su-offer">
             <span className={`t-badge ${blocked ? 'is-danger' : 'is-ok'}`}>{item.availability_reason || (item.orderable_yn === 'N' ? '주문 불가' : item.product_status === 'ACTIVE' ? '주문 가능' : item.product_status)}</span>
@@ -98,7 +97,11 @@ function Welstory({ accountId, toolbar, onAccountChange }: { accountId: string; 
           </article>
         })}
       </div>
-      {w.filtered.length > limit && <button type="button" className="t-btn is-soft is-block su-more" onClick={() => setLimit(v => v + 60)}>더 보기 ({w.filtered.length - limit}개 남음)</button>}
+      {w.pageCount > 1 && <div className="su-pager">
+        <button type="button" className="t-btn is-soft" disabled={w.loading || w.page <= 1} onClick={() => w.setPage(w.page - 1)}>이전</button>
+        <span>{w.page} / {w.pageCount}</span>
+        <button type="button" className="t-btn is-soft" disabled={w.loading || w.page >= w.pageCount} onClick={() => w.setPage(w.page + 1)}>다음</button>
+      </div>}
     </>}
 
     {task === 'receipts' && <section className="t-card su-action">

@@ -17,7 +17,7 @@
 .su-offer strong { font-size: 16px; line-height: 1.35; }
 .su-offer small { color: var(--t-muted); font-size: 13px; }
 .su-offer__price { margin-top: 6px; color: var(--t-accent-strong); font-size: 20px; font-weight: 800; }
-.su-more { margin-top: 16px; }
+.su-pager { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 16px; }
 
 .su-action { display: grid; gap: 10px; justify-items: start; margin-bottom: 14px; }
 .su-action h2 { font-size: 19px; }

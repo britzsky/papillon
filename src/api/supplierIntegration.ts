@@ -150,7 +150,11 @@ export async function getSupplierOffers(accountId: string, deliveryDate: string,
   if (search?.favoriteOnly) query.set('favorite_only', 'Y')
   if (search?.guessIngredient) query.set('guess_ingredient', 'Y')
   const rows = await getRows(`/v2/supplier-integration/offers?${query}`)
-  return rows.map((row) => ({
+  return rows.map(toOffer)
+}
+
+function toOffer(row: Row): SupplierOffer {
+  return {
     supplier_offer_id: number(row.supplier_offer_id), supplier_account_site_id: number(row.supplier_account_site_id),
     supplier_product_id: number(row.supplier_product_id),
     external_site_code: text(row.external_site_code), external_site_name: text(row.external_site_name),
@@ -173,7 +177,36 @@ export async function getSupplierOffers(accountId: string, deliveryDate: string,
     suggested_order_qty: number(row.suggested_order_qty),
     image_url: text(row.image_url), thumbnail_url: text(row.thumbnail_url),
     lead_time_days: row.lead_time_days == null || row.lead_time_days === '' ? null : number(row.lead_time_days),
-  }))
+  }
+}
+
+export type SupplierOfferPage = {
+  rows: SupplierOffer[]
+  /** 지금 조건(검색어·주문 불가만)에 맞는 전체 건수 */
+  totalCount: number
+  /** 검색어에 맞는 전체 건수(주문 불가만 보기와 상관없이) */
+  allCount: number
+  unavailableCount: number
+  page: number
+  size: number
+}
+
+/** 공급사 통합 연동 상품·판가 표 한 페이지(2026-11-27). 웰스토리 사업장 판가가 2만여 건이라 전체를 받으면 화면이 멈췄다. */
+export async function getSupplierOfferPage(accountId: string, deliveryDate: string, externalSiteCode: string,
+  options: { page: number; size?: number; keyword?: string; unavailableOnly?: boolean }): Promise<SupplierOfferPage> {
+  const query = new URLSearchParams({ account_id: accountId, delivery_date: deliveryDate, orderable_only: 'N',
+    supplier_code: 'WELSTORY', page: String(options.page), size: String(options.size ?? 100) })
+  if (externalSiteCode) query.set('external_site_code', externalSiteCode)
+  if (options.keyword?.trim()) query.set('keyword', options.keyword.trim())
+  if (options.unavailableOnly) query.set('unavailable_only', 'Y')
+  const response = await fetch(buildApiUrl(`/v2/supplier-integration/offers/page?${query}`))
+  const payload = await response.json().catch(() => null) as Row | null
+  if (!response.ok || !payload) throw new Error(text(payload?.message) || '공급사 상품을 불러오지 못했습니다.')
+  return {
+    rows: Array.isArray(payload.rows) ? (payload.rows as Row[]).map(toOffer) : [],
+    totalCount: number(payload.total_count), allCount: number(payload.all_count), unavailableCount: number(payload.unavailable_count),
+    page: number(payload.page) || 1, size: number(payload.size) || 100,
+  }
 }
 
 /** 나만의 식재료 지정·해제(상품 하트). 서버가 로그인으로 주인을 정한다(현장=거래처, 본사=사용자) */
